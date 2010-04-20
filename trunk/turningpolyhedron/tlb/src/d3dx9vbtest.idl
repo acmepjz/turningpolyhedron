@@ -1,0 +1,2671 @@
+/*************************************************************************
+*
+* D3DX9 of Direct3D9 VB6 Type library
+* --- test only ---
+*
+* from D3DX9 include file of FreeBasic
+*
+*************************************************************************/
+
+//d3dx9.bi
+
+enum D3DXENUM{
+	D3DX_DEFAULT=-1,
+	D3DX_DEFAULT_NONPOW2=-2,
+	//int const D3DX_DEFAULT_FLOAT FLT_MAX
+	D3DX_FROM_FILE=-3,
+	//d3dx9tex.bi
+	D3DX_FILTER_NONE=(1 << 0),
+	D3DX_FILTER_POINT=(2 << 0),
+	D3DX_FILTER_LINEAR=(3 << 0),
+	D3DX_FILTER_TRIANGLE=(4 << 0),
+	D3DX_FILTER_BOX=(5 << 0),
+	D3DX_FILTER_MIRROR_U=(1 << 16),
+	D3DX_FILTER_MIRROR_V=(2 << 16),
+	D3DX_FILTER_MIRROR_W=(4 << 16),
+	D3DX_FILTER_MIRROR=(7 << 16),
+	D3DX_FILTER_DITHER=(1 << 19),
+	D3DX_FILTER_DITHER_DIFFUSION=(2 << 19),
+	D3DX_FILTER_SRGB_IN=(1 << 21),
+	D3DX_FILTER_SRGB_OUT=(2 << 21),
+	D3DX_FILTER_SRGB=(3 << 21),
+};
+
+enum D3DXERR{
+    D3DXERR_CANNOTMODIFYINDEXBUFFER = (0x88760000|2900),
+    D3DXERR_INVALIDMESH = (0x88760000|2901),
+    D3DXERR_CANNOTATTRSORT = (0x88760000|2902),
+    D3DXERR_SKINNINGNOTSUPPORTED = (0x88760000|2903),
+    D3DXERR_TOOMANYINFLUENCES = (0x88760000|2904),
+    D3DXERR_INVALIDDATA = (0x88760000|2905),
+    D3DXERR_LOADEDMESHASNODATA = (0x88760000|2906),
+    D3DXERR_DUPLICATENAMEDFRAGMENT = (0x88760000|2907),
+    D3DXERR_CANNOTREMOVELASTITEM = (0x88760000|2908),
+	//d3dx9xof.bi
+	D3DXFERR_BADOBJECT = (0x88760000| 900 ),
+	D3DXFERR_BADVALUE = (0x88760000| 901 ),
+	D3DXFERR_BADTYPE = (0x88760000| 902 ),
+	D3DXFERR_NOTFOUND = (0x88760000| 903 ),
+	D3DXFERR_NOTDONEYET = (0x88760000| 904 ),
+	D3DXFERR_FILENOTFOUND = (0x88760000| 905 ),
+	D3DXFERR_RESOURCENOTFOUND = (0x88760000| 906 ),
+	D3DXFERR_BADRESOURCE = (0x88760000| 907 ),
+	D3DXFERR_BADFILETYPE = (0x88760000| 908 ),
+	D3DXFERR_BADFILEVERSION = (0x88760000| 909 ),
+	D3DXFERR_BADFILEFLOATSIZE = (0x88760000| 910 ),
+	D3DXFERR_BADFILE = (0x88760000| 911 ),
+	D3DXFERR_PARSEERROR = (0x88760000| 912 ),
+	D3DXFERR_BADARRAYSIZE = (0x88760000| 913 ),
+	D3DXFERR_BADDATAREFERENCE = (0x88760000| 914 ),
+	D3DXFERR_NOMOREOBJECTS = (0x88760000| 915 ),
+	D3DXFERR_NOMOREDATA = (0x88760000| 916 ),
+	D3DXFERR_BADCACHEFILE = (0x88760000| 917 )
+};
+
+//d3dx9math.bi
+
+struct D3DXFLOAT16{
+	WORD Value;
+};
+
+struct D3DXVECTOR2{
+	float x,y;
+};
+
+struct D3DXVECTOR2_16F{
+	struct D3DXFLOAT16 x,y;
+};
+
+#define D3DXVECTOR3 D3DVECTOR
+
+struct D3DXVECTOR3_16F{
+	struct D3DXFLOAT16 x,y,z;
+};
+
+struct D3DXVECTOR4{
+	float x,y,z,w;
+};
+
+struct D3DXVECTOR4_16F{
+	struct D3DXFLOAT16 x,y,z,w;
+};
+
+#define D3DXMATRIX D3DMATRIX
+#define D3DXMATRIXA16 D3DXMATRIX
+
+#define D3DXQUATERNION D3DXVECTOR4
+
+#define D3DXPLANE D3DPLANE
+
+#define D3DXCOLOR D3DCOLORVALUE
+
+#define FLOAT float
+
+typedef int HMODULE;
+
+[odl,uuid(C7885BA7-F990-4fe7-922D-8515E477DD85)]
+interface D3DXMatrixStack:IUnknown{
+	HRESULT Pop();
+	HRESULT Push();
+	HRESULT LoadIdentity();
+	HRESULT LoadMatrix(struct D3DXMATRIX* pM);
+	HRESULT MultMatrix(struct D3DXMATRIX* pM);
+	HRESULT MultMatrixLocal(struct D3DXMATRIX* pM);
+	HRESULT RotateAxis(struct D3DXVECTOR3* pV, FLOAT Angle);
+	HRESULT RotateAxisLocal(struct D3DXVECTOR3* pV, FLOAT Angle);
+	HRESULT RotateYawPitchRoll(FLOAT Yaw, FLOAT Pitch, FLOAT Roll);
+	HRESULT RotateYawPitchRollLocal(FLOAT Yaw, FLOAT Pitch, FLOAT Roll);
+	HRESULT Scale(FLOAT x, FLOAT y, FLOAT z);
+	HRESULT ScaleLocal(FLOAT x, FLOAT y, FLOAT z);
+	HRESULT Translate(FLOAT x, FLOAT y, FLOAT z);
+	HRESULT TranslateLocal(FLOAT x, FLOAT y, FLOAT z);
+	[helpstring("D3DXMATRIX* GetTop();")]
+	int GetTop();
+};
+
+[dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX math types and functions\n\nSome constants:\nD3DX_PI=3.141592654\nD3DX_1BYPI=0.318309886\nD3DX_16F_EPSILON=4.8875809e-4\nD3DX_16F_MAX=6.550400e4\nD3DX_16F_MIN=6.1035156e-5")]
+module D3DX9_Math{
+	int const D3DX_16F_DIG=3;
+	int const D3DX_16F_MANT_DIG=11;
+	int const D3DX_16F_MAX_10_EXP=4;
+	int const D3DX_16F_MAX_EXP=15;
+	int const D3DX_16F_MIN_10_EXP=(-4);
+	int const D3DX_16F_MIN_EXP=(-12);
+	int const D3DX_16F_RADIX=2;
+	int const D3DX_16F_ROUNDS=1;
+	//some functions are inline!!!
+	[entry("D3DXFloat32To16Array")] void D3DXFloat32To16Array(struct D3DXFLOAT16* pOut, FLOAT* pIn, UINT n);
+	[entry("D3DXFloat16To32Array")] void D3DXFloat16To32Array(FLOAT* pOut, struct D3DXFLOAT16* pIn, UINT n);
+	//[entry("D3DXVec2Length")] FLOAT D3DXVec2Length(struct D3DXVECTOR2* pV);
+	//[entry("D3DXVec2LengthSq")] FLOAT D3DXVec2LengthSq(struct D3DXVECTOR2* pV);
+	//[entry("D3DXVec2Dot")] FLOAT D3DXVec2Dot(struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pV2);
+	//[entry("D3DXVec2CCW")] FLOAT D3DXVec2CCW(struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pV2);
+	//[entry("D3DXVec2Add")] void D3DXVec2Add(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pV2);
+	//[entry("D3DXVec2Subtract")] void D3DXVec2Subtract(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pV2);
+	//[entry("D3DXVec2Minimize")] void D3DXVec2Minimize(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pV2);
+	//[entry("D3DXVec2Maximize")] void D3DXVec2Maximize(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pV2);
+	//[entry("D3DXVec2Scale")] void D3DXVec2Scale(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV, FLOAT s);
+	//[entry("D3DXVec2Lerp")] void D3DXVec2Lerp(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pV2, FLOAT s);
+	[entry("D3DXVec2Normalize")] void D3DXVec2Normalize(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV);
+	[entry("D3DXVec2Hermite")] void D3DXVec2Hermite(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pT1, struct D3DXVECTOR2* pV2, struct D3DXVECTOR2* pT2, FLOAT s);
+	[entry("D3DXVec2CatmullRom")] void D3DXVec2CatmullRom(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV0, struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pV2, struct D3DXVECTOR2* pV3, FLOAT s);
+	[entry("D3DXVec2BaryCentric")] void D3DXVec2BaryCentric(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV1, struct D3DXVECTOR2* pV2, struct D3DXVECTOR2* pV3, FLOAT f, FLOAT g);
+	[entry("D3DXVec2Transform")] void D3DXVec2Transform(struct D3DXVECTOR4* pOut, struct D3DXVECTOR2* pV, struct D3DXMATRIX* pM);
+	[entry("D3DXVec2TransformCoord")] void D3DXVec2TransformCoord(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV, struct D3DXMATRIX* pM);
+	[entry("D3DXVec2TransformNormal")] void D3DXVec2TransformNormal(struct D3DXVECTOR2* pOut, struct D3DXVECTOR2* pV, struct D3DXMATRIX* pM);
+	[entry("D3DXVec2TransformArray")] void D3DXVec2TransformArray(struct D3DXVECTOR4* pOut, UINT OutStride, struct D3DXVECTOR2* pV, UINT VStride, struct D3DXMATRIX* pM, UINT n);
+	[entry("D3DXVec2TransformCoordArray")] void D3DXVec2TransformCoordArray(struct D3DXVECTOR2* pOut, UINT OutStride, struct D3DXVECTOR2* pV, UINT VStride, struct D3DXMATRIX* pM, UINT n);
+	[entry("D3DXVec2TransformNormalArray")] void D3DXVec2TransformNormalArray(struct D3DXVECTOR2* pOut, UINT OutStride, struct D3DXVECTOR2* pV, UINT VStride, struct D3DXMATRIX* pM, UINT n);
+	//[entry("D3DXVec3Length")] FLOAT D3DXVec3Length(struct D3DXVECTOR3* pV);
+	//[entry("D3DXVec3LengthSq")] FLOAT D3DXVec3LengthSq(struct D3DXVECTOR3* pV);
+	//[entry("D3DXVec3Dot")] FLOAT D3DXVec3Dot(struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2);
+	//[entry("D3DXVec3Cross")] void D3DXVec3Cross(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2);
+	//[entry("D3DXVec3Add")] void D3DXVec3Add(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2);
+	//[entry("D3DXVec3Subtract")] void D3DXVec3Subtract(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2);
+	//[entry("D3DXVec3Minimize")] void D3DXVec3Minimize(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2);
+	//[entry("D3DXVec3Maximize")] void D3DXVec3Maximize(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2);
+	//[entry("D3DXVec3Scale")] void D3DXVec3Scale(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV, FLOAT s);
+	//[entry("D3DXVec3Lerp")] void D3DXVec3Lerp(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2, FLOAT s);
+	[entry("D3DXVec3Normalize")] void D3DXVec3Normalize(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV);
+	[entry("D3DXVec3Hermite")] void D3DXVec3Hermite(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pT1, struct D3DXVECTOR3* pV2, struct D3DXVECTOR3* pT2, FLOAT s);
+	[entry("D3DXVec3CatmullRom")] void D3DXVec3CatmullRom(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV0, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2, struct D3DXVECTOR3* pV3, FLOAT s);
+	[entry("D3DXVec3BaryCentric")] void D3DXVec3BaryCentric(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2, struct D3DXVECTOR3* pV3, FLOAT f, FLOAT g);
+	[entry("D3DXVec3Transform")] void D3DXVec3Transform(struct D3DXVECTOR4* pOut, struct D3DXVECTOR3* pV, struct D3DXMATRIX* pM);
+	[entry("D3DXVec3TransformCoord")] void D3DXVec3TransformCoord(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV, struct D3DXMATRIX* pM);
+	[entry("D3DXVec3TransformNormal")] void D3DXVec3TransformNormal(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV, struct D3DXMATRIX* pM);
+	[entry("D3DXVec3TransformArray")] void D3DXVec3TransformArray(struct D3DXVECTOR4* pOut, UINT OutStride, struct D3DXVECTOR3* pV, UINT VStride, struct D3DXMATRIX* pM, UINT n);
+	[entry("D3DXVec3TransformCoordArray")] void D3DXVec3TransformCoordArray(struct D3DXVECTOR3* pOut, UINT OutStride, struct D3DXVECTOR3* pV, UINT VStride, struct D3DXMATRIX* pM, UINT n);
+	[entry("D3DXVec3TransformNormalArray")] void D3DXVec3TransformNormalArray(struct D3DXVECTOR3* pOut, UINT OutStride, struct D3DXVECTOR3* pV, UINT VStride, struct D3DXMATRIX* pM, UINT n);
+	[entry("D3DXVec3Project")] void D3DXVec3Project(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV, struct D3DVIEWPORT9* pViewport, struct D3DXMATRIX* pProjection, struct D3DXMATRIX* pView, struct D3DXMATRIX* pWorld);
+	[entry("D3DXVec3Unproject")] void D3DXVec3Unproject(struct D3DXVECTOR3* pOut, struct D3DXVECTOR3* pV, struct D3DVIEWPORT9* pViewport, struct D3DXMATRIX* pProjection, struct D3DXMATRIX* pView, struct D3DXMATRIX* pWorld);
+	[entry("D3DXVec3ProjectArray")] void D3DXVec3ProjectArray(struct D3DXVECTOR3* pOut, UINT OutStride, struct D3DXVECTOR3* pV, UINT VStride, struct D3DVIEWPORT9* pViewport, struct D3DXMATRIX* pProjection, struct D3DXMATRIX* pView, struct D3DXMATRIX* pWorld, UINT n);
+	[entry("D3DXVec3UnprojectArray")] void D3DXVec3UnprojectArray(struct D3DXVECTOR3* pOut, UINT OutStride, struct D3DXVECTOR3* pV, UINT VStride, struct D3DVIEWPORT9* pViewport, struct D3DXMATRIX* pProjection, struct D3DXMATRIX* pView, struct D3DXMATRIX* pWorld, UINT n);
+	//[entry("D3DXVec4Length")] FLOAT D3DXVec4Length(struct D3DXVECTOR4* pV);
+	//[entry("D3DXVec4LengthSq")] FLOAT D3DXVec4LengthSq(struct D3DXVECTOR4* pV);
+	//[entry("D3DXVec4Dot")] FLOAT D3DXVec4Dot(struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pV2);
+	//[entry("D3DXVec4Add")] void D3DXVec4Add(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pV2);
+	//[entry("D3DXVec4Subtract")] void D3DXVec4Subtract(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pV2);
+	//[entry("D3DXVec4Minimize")] void D3DXVec4Minimize(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pV2);
+	//[entry("D3DXVec4Maximize")] void D3DXVec4Maximize(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pV2);
+	//[entry("D3DXVec4Scale")] void D3DXVec4Scale(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV, FLOAT s);
+	//[entry("D3DXVec4Lerp")] void D3DXVec4Lerp(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pV2, FLOAT s);
+	[entry("D3DXVec4Cross")] void D3DXVec4Cross(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pV2, struct D3DXVECTOR4* pV3);
+	[entry("D3DXVec4Normalize")] void D3DXVec4Normalize(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV);
+	[entry("D3DXVec4Hermite")] void D3DXVec4Hermite(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pT1, struct D3DXVECTOR4* pV2, struct D3DXVECTOR4* pT2, FLOAT s);
+	[entry("D3DXVec4CatmullRom")] void D3DXVec4CatmullRom(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV0, struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pV2, struct D3DXVECTOR4* pV3, FLOAT s);
+	[entry("D3DXVec4BaryCentric")] void D3DXVec4BaryCentric(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV1, struct D3DXVECTOR4* pV2, struct D3DXVECTOR4* pV3, FLOAT f, FLOAT g);
+	[entry("D3DXVec4Transform")] void D3DXVec4Transform(struct D3DXVECTOR4* pOut, struct D3DXVECTOR4* pV, struct D3DXMATRIX* pM);
+	[entry("D3DXVec4TransformArray")] void D3DXVec4TransformArray(struct D3DXVECTOR4* pOut, UINT OutStride, struct D3DXVECTOR4* pV, UINT VStride, struct D3DXMATRIX* pM, UINT n);
+	//[entry("D3DXMatrixIdentity")] void D3DXMatrixIdentity(struct D3DXMATRIX* pOut);
+	//[entry("D3DXMatrixIsIdentity")] int D3DXMatrixIsIdentity(struct D3DXMATRIX* pM);
+	[entry("D3DXMatrixDeterminant")] FLOAT D3DXMatrixDeterminant(struct D3DXMATRIX* pM);
+	[entry("D3DXMatrixDecompose")] int D3DXMatrixDecompose(struct D3DXVECTOR3* pOutScale, struct D3DXQUATERNION* pOutRotation, struct D3DXVECTOR3* pOutTranslation, struct D3DXMATRIX* pM);
+	[entry("D3DXMatrixTranspose")] void D3DXMatrixTranspose(struct D3DXMATRIX* pOut, struct D3DXMATRIX* pM);
+	[entry("D3DXMatrixMultiply")] void D3DXMatrixMultiply(struct D3DXMATRIX* pOut, struct D3DXMATRIX* pM1, struct D3DXMATRIX* pM2);
+	[entry("D3DXMatrixMultiplyTranspose")] void D3DXMatrixMultiplyTranspose(struct D3DXMATRIX* pOut, struct D3DXMATRIX* pM1, struct D3DXMATRIX* pM2);
+	[entry("D3DXMatrixInverse")] void D3DXMatrixInverse(struct D3DXMATRIX* pOut, FLOAT* pDeterminant, struct D3DXMATRIX* pM);
+	[entry("D3DXMatrixScaling")] void D3DXMatrixScaling(struct D3DXMATRIX* pOut, FLOAT sx, FLOAT sy, FLOAT sz);
+	[entry("D3DXMatrixTranslation")] void D3DXMatrixTranslation(struct D3DXMATRIX* pOut, FLOAT x, FLOAT y, FLOAT z);
+	[entry("D3DXMatrixRotationX")] void D3DXMatrixRotationX(struct D3DXMATRIX* pOut, FLOAT Angle);
+	[entry("D3DXMatrixRotationY")] void D3DXMatrixRotationY(struct D3DXMATRIX* pOut, FLOAT Angle);
+	[entry("D3DXMatrixRotationZ")] void D3DXMatrixRotationZ(struct D3DXMATRIX* pOut, FLOAT Angle);
+	[entry("D3DXMatrixRotationAxis")] void D3DXMatrixRotationAxis(struct D3DXMATRIX* pOut, struct D3DXVECTOR3* pV, FLOAT Angle);
+	[entry("D3DXMatrixRotationQuaternion")] void D3DXMatrixRotationQuaternion(struct D3DXMATRIX* pOut, struct D3DXQUATERNION* pQ);
+	[entry("D3DXMatrixRotationYawPitchRoll")] void D3DXMatrixRotationYawPitchRoll(struct D3DXMATRIX* pOut, FLOAT Yaw, FLOAT Pitch, FLOAT Roll);
+	[entry("D3DXMatrixTransformation")] void D3DXMatrixTransformation(struct D3DXMATRIX* pOut, struct D3DXVECTOR3* pScalingCenter, struct D3DXQUATERNION* pScalingRotation, struct D3DXVECTOR3* pScaling, struct D3DXVECTOR3* pRotationCenter, struct D3DXQUATERNION* pRotation, struct D3DXVECTOR3* pTranslation);
+	[entry("D3DXMatrixTransformation2D")] void D3DXMatrixTransformation2D(struct D3DXMATRIX* pOut, struct D3DXVECTOR2* pScalingCenter, FLOAT ScalingRotation, struct D3DXVECTOR2* pScaling, struct D3DXVECTOR2* pRotationCenter, FLOAT Rotation, struct D3DXVECTOR2* pTranslation);
+	[entry("D3DXMatrixAffineTransformation")] void D3DXMatrixAffineTransformation(struct D3DXMATRIX* pOut, FLOAT Scaling, struct D3DXVECTOR3* pRotationCenter, struct D3DXQUATERNION* pRotation, struct D3DXVECTOR3* pTranslation);
+	[entry("D3DXMatrixAffineTransformation2D")] void D3DXMatrixAffineTransformation2D(struct D3DXMATRIX* pOut, FLOAT Scaling, struct D3DXVECTOR2* pRotationCenter, FLOAT Rotation, struct D3DXVECTOR2* pTranslation);
+	[entry("D3DXMatrixLookAtRH")] void D3DXMatrixLookAtRH(struct D3DXMATRIX* pOut, struct D3DXVECTOR3* pEye, struct D3DXVECTOR3* pAt, struct D3DXVECTOR3* pUp);
+	[entry("D3DXMatrixLookAtLH")] void D3DXMatrixLookAtLH(struct D3DXMATRIX* pOut, struct D3DXVECTOR3* pEye, struct D3DXVECTOR3* pAt, struct D3DXVECTOR3* pUp);
+	[entry("D3DXMatrixPerspectiveRH")] void D3DXMatrixPerspectiveRH(struct D3DXMATRIX* pOut, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixPerspectiveLH")] void D3DXMatrixPerspectiveLH(struct D3DXMATRIX* pOut, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixPerspectiveFovRH")] void D3DXMatrixPerspectiveFovRH(struct D3DXMATRIX* pOut, FLOAT fovy, FLOAT Aspect, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixPerspectiveFovLH")] void D3DXMatrixPerspectiveFovLH(struct D3DXMATRIX* pOut, FLOAT fovy, FLOAT Aspect, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixPerspectiveOffCenterRH")] void D3DXMatrixPerspectiveOffCenterRH(struct D3DXMATRIX* pOut, FLOAT l, FLOAT r, FLOAT b, FLOAT t, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixPerspectiveOffCenterLH")] void D3DXMatrixPerspectiveOffCenterLH(struct D3DXMATRIX* pOut, FLOAT l, FLOAT r, FLOAT b, FLOAT t, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixOrthoRH")] void D3DXMatrixOrthoRH(struct D3DXMATRIX* pOut, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixOrthoLH")] void D3DXMatrixOrthoLH(struct D3DXMATRIX* pOut, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixOrthoOffCenterRH")] void D3DXMatrixOrthoOffCenterRH(struct D3DXMATRIX* pOut, FLOAT l, FLOAT r, FLOAT b, FLOAT t, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixOrthoOffCenterLH")] void D3DXMatrixOrthoOffCenterLH(struct D3DXMATRIX* pOut, FLOAT l, FLOAT r, FLOAT b, FLOAT t, FLOAT zn, FLOAT zf);
+	[entry("D3DXMatrixShadow")] void D3DXMatrixShadow(struct D3DXMATRIX* pOut, struct D3DXVECTOR4* pLight, struct D3DXPLANE* pPlane);
+	[entry("D3DXMatrixReflect")] void D3DXMatrixReflect(struct D3DXMATRIX* pOut, struct D3DXPLANE* pPlane);
+	//[entry("D3DXQuaternionLength")] FLOAT D3DXQuaternionLength(struct D3DXQUATERNION* pQ);
+	//[entry("D3DXQuaternionLengthSq")] FLOAT D3DXQuaternionLengthSq(struct D3DXQUATERNION* pQ);
+	//[entry("D3DXQuaternionDot")] FLOAT D3DXQuaternionDot(struct D3DXQUATERNION* pQ1, struct D3DXQUATERNION* pQ2);
+	//[entry("D3DXQuaternionIdentity")] void D3DXQuaternionIdentity(struct D3DXQUATERNION* pOut);
+	//[entry("D3DXQuaternionIsIdentity")] int D3DXQuaternionIsIdentity(struct D3DXQUATERNION* pQ);
+	//[entry("D3DXQuaternionConjugate")] void D3DXQuaternionConjugate(struct D3DXQUATERNION* pOut, struct D3DXQUATERNION* pQ);
+	[entry("D3DXQuaternionToAxisAngle")] void D3DXQuaternionToAxisAngle(struct D3DXQUATERNION* pQ, struct D3DXVECTOR3* pAxis, FLOAT* pAngle);
+	[entry("D3DXQuaternionRotationMatrix")] void D3DXQuaternionRotationMatrix(struct D3DXQUATERNION* pOut, struct D3DXMATRIX* pM);
+	[entry("D3DXQuaternionRotationAxis")] void D3DXQuaternionRotationAxis(struct D3DXQUATERNION* pOut, struct D3DXVECTOR3* pV, FLOAT Angle);
+	[entry("D3DXQuaternionRotationYawPitchRoll")] void D3DXQuaternionRotationYawPitchRoll(struct D3DXQUATERNION* pOut, FLOAT Yaw, FLOAT Pitch, FLOAT Roll);
+	[entry("D3DXQuaternionMultiply")] void D3DXQuaternionMultiply(struct D3DXQUATERNION* pOut, struct D3DXQUATERNION* pQ1, struct D3DXQUATERNION* pQ2);
+	[entry("D3DXQuaternionNormalize")] void D3DXQuaternionNormalize(struct D3DXQUATERNION* pOut, struct D3DXQUATERNION* pQ);
+	[entry("D3DXQuaternionInverse")] void D3DXQuaternionInverse(struct D3DXQUATERNION* pOut, struct D3DXQUATERNION* pQ);
+	[entry("D3DXQuaternionLn")] void D3DXQuaternionLn(struct D3DXQUATERNION* pOut, struct D3DXQUATERNION* pQ);
+	[entry("D3DXQuaternionExp")] void D3DXQuaternionExp(struct D3DXQUATERNION* pOut, struct D3DXQUATERNION* pQ);
+	[entry("D3DXQuaternionSlerp")] void D3DXQuaternionSlerp(struct D3DXQUATERNION* pOut, struct D3DXQUATERNION* pQ1, struct D3DXQUATERNION* pQ2, FLOAT t);
+	[entry("D3DXQuaternionSquad")] void D3DXQuaternionSquad(struct D3DXQUATERNION* pOut, struct D3DXQUATERNION* pQ1, struct D3DXQUATERNION* pA, struct D3DXQUATERNION* pB, struct D3DXQUATERNION* pC, FLOAT t);
+	[entry("D3DXQuaternionSquadSetup")] void D3DXQuaternionSquadSetup(struct D3DXQUATERNION* pAOut, struct D3DXQUATERNION* pBOut, struct D3DXQUATERNION* pCOut, struct D3DXQUATERNION* pQ0, struct D3DXQUATERNION* pQ1, struct D3DXQUATERNION* pQ2, struct D3DXQUATERNION* pQ3);
+	[entry("D3DXQuaternionBaryCentric")] void D3DXQuaternionBaryCentric(struct D3DXQUATERNION* pOut, struct D3DXQUATERNION* pQ1, struct D3DXQUATERNION* pQ2, struct D3DXQUATERNION* pQ3, FLOAT f, FLOAT g);
+	//[entry("D3DXPlaneDot")] FLOAT D3DXPlaneDot(struct D3DXPLANE* pP, struct D3DXVECTOR4* pV);
+	//[entry("D3DXPlaneDotCoord")] FLOAT D3DXPlaneDotCoord(struct D3DXPLANE* pP, struct D3DXVECTOR3* pV);
+	//[entry("D3DXPlaneDotNormal")] FLOAT D3DXPlaneDotNormal(struct D3DXPLANE* pP, struct D3DXVECTOR3* pV);
+	//[entry("D3DXPlaneScale")] void D3DXPlaneScale(struct D3DXPLANE* pOut, struct D3DXPLANE* pP, FLOAT s);
+	[entry("D3DXPlaneNormalize")] void D3DXPlaneNormalize(struct D3DXPLANE* pOut, struct D3DXPLANE* pP);
+	[entry("D3DXPlaneIntersectLine")] void D3DXPlaneIntersectLine(struct D3DXVECTOR3* pOut, struct D3DXPLANE* pP, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2);
+	[entry("D3DXPlaneFromPointNormal")] void D3DXPlaneFromPointNormal(struct D3DXPLANE* pOut, struct D3DXVECTOR3* pPoint, struct D3DXVECTOR3* pNormal);
+	[entry("D3DXPlaneFromPoints")] void D3DXPlaneFromPoints(struct D3DXPLANE* pOut, struct D3DXVECTOR3* pV1, struct D3DXVECTOR3* pV2, struct D3DXVECTOR3* pV3);
+	[entry("D3DXPlaneTransform")] void D3DXPlaneTransform(struct D3DXPLANE* pOut, struct D3DXPLANE* pP, struct D3DXMATRIX* pM);
+	[entry("D3DXPlaneTransformArray")] void D3DXPlaneTransformArray(struct D3DXPLANE* pOut, UINT OutStride, struct D3DXPLANE* pP, UINT PStride, struct D3DXMATRIX* pM, UINT n);
+	//[entry("D3DXColorNegative")] void D3DXColorNegative(struct D3DXCOLOR* pOut, struct D3DXCOLOR* pC);
+	//[entry("D3DXColorAdd")] void D3DXColorAdd(struct D3DXCOLOR* pOut, struct D3DXCOLOR* pC1, struct D3DXCOLOR* pC2);
+	//[entry("D3DXColorSubtract")] void D3DXColorSubtract(struct D3DXCOLOR* pOut, struct D3DXCOLOR* pC1, struct D3DXCOLOR* pC2);
+	//[entry("D3DXColorScale")] void D3DXColorScale(struct D3DXCOLOR* pOut, struct D3DXCOLOR* pC, FLOAT s);
+	//[entry("D3DXColorModulate")] void D3DXColorModulate(struct D3DXCOLOR* pOut, struct D3DXCOLOR* pC1, struct D3DXCOLOR* pC2);
+	//[entry("D3DXColorLerp")] void D3DXColorLerp(struct D3DXCOLOR* pOut, struct D3DXCOLOR* pC1, struct D3DXCOLOR* pC2, FLOAT s);
+	[entry("D3DXColorAdjustSaturation")] void D3DXColorAdjustSaturation(struct D3DXCOLOR* pOut, struct D3DXCOLOR* pC, FLOAT s);
+	[entry("D3DXColorAdjustContrast")] void D3DXColorAdjustContrast(struct D3DXCOLOR* pOut, struct D3DXCOLOR* pC, FLOAT c);
+	[entry("D3DXFresnelTerm")] FLOAT D3DXFresnelTerm(FLOAT CosTheta, FLOAT RefractionIndex);
+	//matrix stack
+	[entry("D3DXCreateMatrixStack")] int D3DXCreateMatrixStack(DWORD Flags, D3DXMatrixStack** ppStack);
+	int const D3DXSH_MINORDER=2;
+	int const D3DXSH_MAXORDER=6;
+	[entry("D3DXSHEvalDirection")] void D3DXSHEvalDirection(FLOAT* pOut, UINT Order, struct D3DXVECTOR3* pDir);
+	[entry("D3DXSHRotate")] void D3DXSHRotate(FLOAT* pOut, UINT Order, struct D3DXMATRIX* pMatrix, FLOAT* pIn);
+	[entry("D3DXSHRotateZ")] void D3DXSHRotateZ(FLOAT* pOut, UINT Order, FLOAT Angle, FLOAT* pIn);
+	[entry("D3DXSHAdd")] void D3DXSHAdd(FLOAT* pOut, UINT Order, FLOAT* pA, FLOAT* pB);
+	[entry("D3DXSHScale")] void D3DXSHScale(FLOAT* pOut, UINT Order, FLOAT* pIn, FLOAT Scale);
+	[entry("D3DXSHDot")] FLOAT D3DXSHDot(UINT Order, FLOAT* pA, FLOAT* pB);
+	[entry("D3DXSHEvalDirectionalLight")] int D3DXSHEvalDirectionalLight(UINT Order, struct D3DXVECTOR3* pDir, FLOAT RIntensity, FLOAT GIntensity, FLOAT BIntensity, FLOAT* pROut, FLOAT* pGOut, FLOAT* pBOut);
+	[entry("D3DXSHEvalSphericalLight")] int D3DXSHEvalSphericalLight(UINT Order, struct D3DXVECTOR3* pPos, FLOAT Radius, FLOAT RIntensity, FLOAT GIntensity, FLOAT BIntensity, FLOAT* pROut, FLOAT* pGOut, FLOAT* pBOut);
+	[entry("D3DXSHEvalConeLight")] int D3DXSHEvalConeLight(UINT Order, struct D3DXVECTOR3* pDir, FLOAT Radius, FLOAT RIntensity, FLOAT GIntensity, FLOAT BIntensity, FLOAT* pROut, FLOAT* pGOut, FLOAT* pBOut);
+	[entry("D3DXSHEvalHemisphereLight")] int D3DXSHEvalHemisphereLight(UINT Order, struct D3DXVECTOR3* pDir, struct D3DXCOLOR Top, struct D3DXCOLOR Bottom, FLOAT* pROut, FLOAT* pGOut, FLOAT* pBOut);
+	[entry("D3DXSHProjectCubeMap")] int D3DXSHProjectCubeMap(UINT uOrder, Direct3DCubeTexture9* pCubeMap, FLOAT* pROut, FLOAT* pGOut, FLOAT* pBOut);
+};
+//d3dx9core.bi
+[odl,uuid(8BA5FB08-5195-40e2-AC58-0D989C3A0102)]
+interface D3DXBuffer:IUnknown{
+	int GetBufferPointer();
+	DWORD GetBufferSize();
+};
+enum D3DXSPRITEFLAGS{
+	D3DXSPRITE_DONOTSAVESTATE=(1 << 0),
+	D3DXSPRITE_DONOTMODIFY_RENDERSTATE=(1 << 1),
+	D3DXSPRITE_OBJECTSPACE=(1 << 2),
+	D3DXSPRITE_BILLBOARD=(1 << 3),
+	D3DXSPRITE_ALPHABLEND=(1 << 4),
+	D3DXSPRITE_SORT_TEXTURE=(1 << 5),
+	D3DXSPRITE_SORT_DEPTH_FRONTTOBACK=(1 << 6),
+	D3DXSPRITE_SORT_DEPTH_BACKTOFRONT=(1 << 7)
+};
+[odl,uuid(BA0B762D-7D28-43ec-B9DC-2F84443B0614)]
+interface D3DXSprite:IUnknown{
+	HRESULT GetDevice([out,retval] Direct3DDevice9** ret);
+    HRESULT GetTransform(struct D3DXMATRIX *pTransform);
+    HRESULT SetTransform(struct D3DXMATRIX *pTransform);
+    HRESULT SetWorldViewRH(struct D3DXMATRIX *pWorld, struct D3DXMATRIX *pView);
+    HRESULT SetWorldViewLH(struct D3DXMATRIX *pWorld, struct D3DXMATRIX *pView);
+    HRESULT Begin(enum D3DXSPRITEFLAGS Flags);
+    HRESULT Draw(Direct3DTexture9* pTexture, struct D3DRECT* pSrcRect, struct D3DVECTOR* pCenter, struct D3DVECTOR* pPosition, int Color);
+    HRESULT Flush();
+    HRESULT End();
+    HRESULT OnLostDevice();
+    HRESULT OnResetDevice();
+};
+struct D3DXFONT_DESC{
+    int Height;
+    UINT Width;
+    UINT Weight;
+    UINT MipLevels;
+    int Italic;
+    UBYTE CharSet;
+    UBYTE OutputPrecision;
+    UBYTE Quality;
+    UBYTE PitchAndFamily;
+    UBYTE strFaceName[32];
+};
+struct D3DXFONT_DESCW{
+    int Height;
+    UINT Width;
+    UINT Weight;
+    UINT MipLevels;
+    int Italic;
+    UBYTE CharSet;
+    UBYTE OutputPrecision;
+    UBYTE Quality;
+    UBYTE PitchAndFamily;
+    UBYTE wstrFaceName[64];
+};
+[odl,uuid(D79DBB70-5F21-4d36-BBC2-FF525C213CDC)]
+interface D3DXFont:IUnknown{
+	HRESULT GetDevice([out,retval] Direct3DDevice9** ret);
+	HRESULT GetDescA(struct D3DXFONT_DESC pDesc);
+	HRESULT GetDescW(struct D3DXFONT_DESCW pDesc);
+	int GetTextMetricsA(void* pTextMetrics);
+	int GetTextMetricsW(void* pTextMetrics);
+	int GetDC();
+	[helpstring("RECT *pBlackBox, POINT *pCellInc")]
+	HRESULT GetGlyphData(UINT Glyph, Direct3DTexture9** ppTexture, void* pBlackBox, void* pCellInc);
+	HRESULT PreloadCharacters(UINT First, UINT Last);
+	HRESULT PreloadGlyphs(UINT First, UINT Last);
+	[helpstring("String must be StrConv-vbFromUnicode")]
+	HRESULT PreloadTextA(BSTR pString,int Count);
+	HRESULT PreloadTextW(BSTR pString,int Count);
+	[helpstring("String must be StrConv-vbFromUnicode")]
+	HRESULT DrawTextA(D3DXSprite* pSprite,BSTR pString, int Count, void* pRect, DWORD Format, int Color);
+	HRESULT DrawTextW(D3DXSprite* pSprite,BSTR pString, int Count, void* pRect, DWORD Format, int Color);
+    HRESULT OnLostDevice();
+    HRESULT OnResetDevice();
+};
+struct D3DXRTS_DESC{
+	UINT Width,
+	Height;
+	enum D3DFORMAT Format;
+	int DepthStencil;
+	enum D3DFORMAT DepthStencilFormat;
+};
+[odl,uuid(6985F346-2C3D-43b3-BE8B-DAAE8A03D894)]
+interface D3DXRenderToSurface:IUnknown{
+	HRESULT GetDevice([out,retval] Direct3DDevice9** ret);
+	HRESULT GetDesc(struct D3DXRTS_DESC pDesc);
+	HRESULT BeginScene(Direct3DSurface9* pSurface, struct D3DVIEWPORT9* pViewport);
+	HRESULT EndScene(DWORD MipFilter);
+    HRESULT OnLostDevice();
+    HRESULT OnResetDevice();
+};
+struct D3DXRTE_DESC
+{
+    UINT        Size;
+    UINT        MipLevels;
+    enum D3DFORMAT   Format;
+    int        DepthStencil;
+    enum D3DFORMAT   DepthStencilFormat;
+};
+[odl,uuid(313F1B4B-C7B0-4fa2-9D9D-8D380B64385E)]
+interface D3DXRenderToEnvMap:IUnknown{
+	HRESULT GetDevice([out,retval] Direct3DDevice9** ret);
+	HRESULT GetDesc(struct D3DXRTS_DESC pDesc);
+    HRESULT BeginCube(Direct3DCubeTexture9* pCubeTex);
+    HRESULT BeginSphere(Direct3DTexture9* pCubeTex);
+    HRESULT BeginHemisphere(Direct3DTexture9* pTexZPos,Direct3DTexture9* pTexZNeg);
+    HRESULT BeginParabolic(Direct3DTexture9* pTexZPos,Direct3DTexture9* pTexZNeg);
+    HRESULT Face(enum D3DCUBEMAP_FACES Face, DWORD MipFilter);
+    HRESULT End(DWORD MipFilter);
+    HRESULT OnLostDevice();
+    HRESULT OnResetDevice();
+};
+[odl,uuid(D379BA7F-9042-4ac4-9F5E-58192A4C6BD8)]
+interface D3DXLine:IUnknown{
+	HRESULT GetDevice([out,retval] Direct3DDevice9** ret);
+	HRESULT Begin();
+    HRESULT Draw(struct D3DXVECTOR2 *pVertexList,
+        DWORD dwVertexListCount, int Color);
+    HRESULT DrawTransform(struct D3DXVECTOR3 *pVertexList,
+        DWORD dwVertexListCount, struct D3DXMATRIX* pTransform,
+        int Color);
+    HRESULT SetPattern(DWORD dwPattern);
+    DWORD GetPattern();
+    HRESULT SetPatternScale(FLOAT fPatternScale);
+    FLOAT GetPatternScale();
+    HRESULT SetWidth(FLOAT fWidth);
+    FLOAT GetWidth();
+    HRESULT SetAntialias(int bAntialias);
+    int GetAntialias();
+    HRESULT SetGLLines(int bGLLines);
+    int GetGLLines();
+    HRESULT End();
+    HRESULT OnLostDevice();
+    HRESULT OnResetDevice();
+};
+[dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX core types and functions")]
+module D3DX9_Core{
+	int const D3DX_VERSION=0x0902;
+	[helpstring("Too old? 23???")]
+	int const D3DX_SDK_VERSION=22;
+	[entry("D3DXCheckVersion")] int D3DXCheckVersion (UINT D3DSdkVersion, UINT D3DXSdkVersion);
+	[entry("D3DXGetDriverLevel")] UINT D3DXGetDriverLevel (Direct3DDevice9* pDevice);
+	[entry("D3DXDebugMute")] int D3DXDebugMute(int bMute);
+	[entry("D3DXCreateSprite")] int D3DXCreateSprite(Direct3DDevice9* pDevice, D3DXSprite** ppSprite);
+	[entry("D3DXCreateFontA"),helpstring("String must be StrConv-vbFromUnicode")] int D3DXCreateFontA(Direct3DDevice9* pDevice,int Height,UINT Width,UINT Weight,UINT MipLevels,int Italic,DWORD CharSet,DWORD OutputPrecision,DWORD Quality,DWORD PitchAndFamily,BSTR pFaceName,D3DXFont** ppFont);
+	[entry("D3DXCreateFontIndirectA")] int D3DXCreateFontIndirectA(Direct3DDevice9* pDevice,struct D3DXFONT_DESC* pDesc,D3DXFont** ppFont);
+	[entry("D3DXCreateFontW")] int D3DXCreateFontW(Direct3DDevice9* pDevice,int Height,UINT Width,UINT Weight,UINT MipLevels,int Italic,DWORD CharSet,DWORD OutputPrecision,DWORD Quality,DWORD PitchAndFamily,BSTR pFaceName,D3DXFont** ppFont);
+	[entry("D3DXCreateFontIndirectW")] int D3DXCreateFontIndirectW(Direct3DDevice9* pDevice,struct D3DXFONT_DESCW* pDesc,D3DXFont** ppFont);
+    [entry("D3DXCreateRenderToSurface")] int D3DXCreateRenderToSurface(Direct3DDevice9* pDevice,UINT Width,UINT Height,enum D3DFORMAT Format,int DepthStencil,enum D3DFORMAT DepthStencilFormat,D3DXRenderToSurface** ppRenderToSurface);
+	[entry("D3DXCreateRenderToEnvMap")] HRESULT D3DXCreateRenderToEnvMap(Direct3DDevice9* pDevice,UINT Size,UINT MipLevels,enum D3DFORMAT Format,int DepthStencil,enum D3DFORMAT DepthStencilFormat,D3DXRenderToEnvMap** ppRenderToEnvMap);
+	[entry("D3DXCreateLine")] int D3DXCreateLine(Direct3DDevice9* pDevice, D3DXLine** ppLine);
+};
+//d3dx9xof.bi
+enum D3DXF_FILEFORMAT{
+	D3DXF_FILEFORMAT_BINARY=0,
+	D3DXF_FILEFORMAT_TEXT=1,
+	D3DXF_FILEFORMAT_COMPRESSED=2
+};
+enum D3DXF_FILESAVEOPTIONS{
+	D3DXF_FILESAVE_TOFILE = 0,
+	D3DXF_FILESAVE_TOWFILE = 1
+};
+enum D3DXF_FILELOADOPTIONS{
+	D3DXF_FILELOAD_FROMFILE = 0x00,
+	D3DXF_FILELOAD_FROMWFILE = 0x01,
+	D3DXF_FILELOAD_FROMRESOURCE = 0x02,
+	D3DXF_FILELOAD_FROMMEMORY = 0x03
+};
+struct D3DXF_FILELOADRESOURCE
+{
+    HMODULE hModule; // Desc
+    int lpstrName;  // Desc
+    int lpstrType;  // Desc
+};
+struct D3DXF_FILELOADMEMORY
+{
+    int lpMemory; // Desc
+    int  dwSize;     // Desc
+};
+interface D3DXFile;
+interface D3DXFileSaveObject;
+interface D3DXFileSaveData;
+interface D3DXFileEnumObject;
+interface D3DXFileData;
+[odl,uuid( cef08cf9-7b4f-4429-9624-2a690a933201 )]
+interface D3DXFile:IUnknown{//???????? TODO:
+    HRESULT  CreateEnumObject (void* filename ,enum D3DXF_FILELOADOPTIONS arg2,[out,retval]D3DXFileEnumObject** ret);
+    HRESULT  CreateSaveObject (void* filename ,enum D3DXF_FILESAVEOPTIONS arg2,enum D3DXF_FILEFORMAT arg3, [out,retval]D3DXFileSaveObject** ret);
+    HRESULT  RegisterTemplates (void* templatedata , UINT Size  );
+    HRESULT  RegisterEnumTemplates (D3DXFileEnumObject* arg1);
+};
+[odl,uuid( cef08cfa-7b4f-4429-9624-2a690a933201 )]
+interface D3DXFileSaveObject:IUnknown{
+    HRESULT  GetFile([out,retval]D3DXFile** ret);
+    HRESULT  AddDataObject(void* templateGuid , void* lpstrName , void* dataTypeGuid ,
+        UINT bytecount  , void* Data , [out,retval]D3DXFileSaveData** ret);
+    HRESULT  Save();
+};
+[odl,uuid( cef08cfb-7b4f-4429-9624-2a690a933201 )]
+interface D3DXFileSaveData:IUnknown{
+    HRESULT  GetSave ([out,retval]D3DXFileSaveObject** ret);
+    HRESULT  GetName (void* lpStr, int* RetSize);
+    HRESULT  GetId ( void* RetGuid );
+    HRESULT  GetType ( void* RetGuid );
+    HRESULT  AddDataObject(void* templateGuid , void* lpstrName , void* dataTypeGuid ,
+        UINT bytecount  , void* Data , [out,retval]D3DXFileSaveData** ret);
+    HRESULT  AddDataReference (void* guid);
+};
+[odl,uuid( cef08cfc-7b4f-4429-9624-2a690a933201 )]
+interface D3DXFileEnumObject:IUnknown{
+    HRESULT  GetFile ([out,retval]D3DXFile** ret);
+    HRESULT  GetChildren([out,retval]int* ret);
+    HRESULT  GetChild(int arg1, [out,retval]D3DXFileData** ret);
+    HRESULT  GetDataObjectById ( void* refguid,[out,retval] D3DXFileData** ret);
+    HRESULT  GetDataObjectByName ( void* lpstrName,[out,retval] D3DXFileData** ret);
+};
+[odl,uuid( cef08cfd-7b4f-4429-9624-2a690a933201 )]
+interface D3DXFileData:IUnknown{
+    HRESULT  GetEnum ([out,retval]D3DXFileEnumObject** ret);
+    HRESULT  GetName (void* lpStr, int* RetSize);
+    HRESULT  GetId ( void* RetGuid );
+    HRESULT  Lock (int* RetSize, int* RetPointer);
+    HRESULT  Unlock ();
+    HRESULT  GetType ( void* RetGuid );
+    int IsReference();
+    HRESULT  GetChildren([out,retval]int* ret);
+    HRESULT  GetChild(int arg1, [out,retval]D3DXFileData** ret);
+};
+[dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX .X File types and functions")]
+module D3DX9_Xof{
+	[entry("D3DXFileCreate")] int D3DXFileCreate( D3DXFile** lplpDirectXFile );
+};
+
+//d3dx9mesh.bi
+
+interface D3DXBaseMesh;
+interface D3DXMesh;
+interface D3DXPMesh;
+interface D3DXSPMesh;
+interface D3DXSkinInfo;
+interface D3DXPatchMesh;
+
+//patch mesh can be quads or tris
+enum D3DXPATCHMESHTYPE {
+    D3DXPATCHMESH_RECT   = 0x001,
+    D3DXPATCHMESH_TRI    = 0x002,
+    D3DXPATCHMESH_NPATCH = 0x003,
+} ;
+
+// Mesh options - lower 3 bytes only, upper byte used by _D3DXMESHOPT option flags
+enum D3DXMESHOPTIONS {
+    D3DXMESH_32BIT                  = 0x001, // If set, then use 32 bit indices, if not set use 16 bit indices.
+    D3DXMESH_DONOTCLIP              = 0x002, // Use D3DUSAGE_DONOTCLIP for VB & IB.
+    D3DXMESH_POINTS                 = 0x004, // Use D3DUSAGE_POINTS for VB & IB.
+    D3DXMESH_RTPATCHES              = 0x008, // Use D3DUSAGE_RTPATCHES for VB & IB.
+    D3DXMESH_NPATCHES               = 0x4000,// Use D3DUSAGE_NPATCHES for VB & IB.
+    D3DXMESH_VB_SYSTEMMEM           = 0x010, // Use D3DPOOL_SYSTEMMEM for VB. Overrides D3DXMESH_MANAGEDVERTEXBUFFER
+    D3DXMESH_VB_MANAGED             = 0x020, // Use D3DPOOL_MANAGED for VB.
+    D3DXMESH_VB_WRITEONLY           = 0x040, // Use D3DUSAGE_WRITEONLY for VB.
+    D3DXMESH_VB_DYNAMIC             = 0x080, // Use D3DUSAGE_DYNAMIC for VB.
+    D3DXMESH_VB_SOFTWAREPROCESSING = 0x8000, // Use D3DUSAGE_SOFTWAREPROCESSING for VB.
+    D3DXMESH_IB_SYSTEMMEM           = 0x100, // Use D3DPOOL_SYSTEMMEM for IB. Overrides D3DXMESH_MANAGEDINDEXBUFFER
+    D3DXMESH_IB_MANAGED             = 0x200, // Use D3DPOOL_MANAGED for IB.
+    D3DXMESH_IB_WRITEONLY           = 0x400, // Use D3DUSAGE_WRITEONLY for IB.
+    D3DXMESH_IB_DYNAMIC             = 0x800, // Use D3DUSAGE_DYNAMIC for IB.
+    D3DXMESH_IB_SOFTWAREPROCESSING= 0x10000, // Use D3DUSAGE_SOFTWAREPROCESSING for IB.
+    D3DXMESH_VB_SHARE               = 0x1000, // Valid for Clone* calls only, forces cloned mesh/pmesh to share vertex buffer
+    D3DXMESH_USEHWONLY              = 0x2000, // Valid for ID3DXSkinInfo::ConvertToBlendedMesh
+    // Helper options
+    D3DXMESH_SYSTEMMEM              = 0x110, // D3DXMESH_VB_SYSTEMMEM | D3DXMESH_IB_SYSTEMMEM
+    D3DXMESH_MANAGED                = 0x220, // D3DXMESH_VB_MANAGED | D3DXMESH_IB_MANAGED
+    D3DXMESH_WRITEONLY              = 0x440, // D3DXMESH_VB_WRITEONLY | D3DXMESH_IB_WRITEONLY
+    D3DXMESH_DYNAMIC                = 0x880, // D3DXMESH_VB_DYNAMIC | D3DXMESH_IB_DYNAMIC
+    D3DXMESH_SOFTWAREPROCESSING   = 0x18000, // D3DXMESH_VB_SOFTWAREPROCESSING | D3DXMESH_IB_SOFTWAREPROCESSING
+	// ID3DXMesh::Optimize options - upper byte only, lower 3 bytes used from _D3DXMESH option flags
+	//enum _D3DXMESHOPT {
+    D3DXMESHOPT_COMPACT       = 0x01000000,
+    D3DXMESHOPT_ATTRSORT      = 0x02000000,
+    D3DXMESHOPT_VERTEXCACHE   = 0x04000000,
+    D3DXMESHOPT_STRIPREORDER  = 0x08000000,
+    D3DXMESHOPT_IGNOREVERTS   = 0x10000000,  // optimize faces only, don't touch vertices
+    D3DXMESHOPT_DONOTSPLIT    = 0x20000000,  // do not split vertices shared between attribute groups when attribute sorting
+    D3DXMESHOPT_DEVICEINDEPENDENT = 0x00400000,  // Only affects VCache.  uses a static known good cache size for all cards
+};
+
+// option field values for specifying min value in D3DXGeneratePMesh and D3DXSimplifyMesh
+enum D3DXMESHSIMP
+{
+    D3DXMESHSIMP_VERTEX   = 0x1,
+    D3DXMESHSIMP_FACE     = 0x2,
+};
+
+enum D3DXCLEANTYPE {
+        D3DXCLEAN_BACKFACING    = 0x00000001,
+        D3DXCLEAN_BOWTIES               = 0x00000002,
+
+        // Helper options
+        D3DXCLEAN_SKINNING              = D3DXCLEAN_BACKFACING, // Bowtie cleaning modifies geometry and breaks skinning
+        D3DXCLEAN_OPTIMIZATION  = D3DXCLEAN_BACKFACING,
+        D3DXCLEAN_SIMPLIFICATION= D3DXCLEAN_BACKFACING | D3DXCLEAN_BOWTIES,
+};
+
+enum D3DXTANGENT
+{
+    D3DXTANGENT_WRAP_U =                    0x01,
+    D3DXTANGENT_WRAP_V =                    0x02,
+    D3DXTANGENT_WRAP_UV =                   0x03,
+    D3DXTANGENT_DONT_NORMALIZE_PARTIALS =   0x04,
+    D3DXTANGENT_DONT_ORTHOGONALIZE =        0x08,
+    D3DXTANGENT_ORTHOGONALIZE_FROM_V =      0x010,
+    D3DXTANGENT_ORTHOGONALIZE_FROM_U =      0x020,
+    D3DXTANGENT_WEIGHT_BY_AREA =            0x040,
+    D3DXTANGENT_WEIGHT_EQUAL =              0x080,
+    D3DXTANGENT_WIND_CW =                   0x0100,
+    D3DXTANGENT_CALCULATE_NORMALS =         0x0200,
+    D3DXTANGENT_GENERATE_IN_PLACE =         0x0400,
+};
+
+struct D3DXATTRIBUTERANGE
+{
+    DWORD AttribId;
+    DWORD FaceStart;
+    DWORD FaceCount;
+    DWORD VertexStart;
+    DWORD VertexCount;
+} ;
+
+struct D3DXMATERIAL
+{
+    struct D3DMATERIAL9  MatD3D;
+    int         lpstrTextureFilename;
+};
+
+enum D3DXEFFECTDEFAULTTYPE
+{
+    D3DXEDT_STRING = 0x1,       // pValue points to a null terminated ASCII string
+    D3DXEDT_FLOATS = 0x2,       // pValue points to an array of floats - number of floats is NumBytes / sizeof(float)
+    D3DXEDT_DWORD  = 0x3,       // pValue points to a DWORD
+};
+
+struct D3DXEFFECTDEFAULT
+{
+    int                 lpstrParamName;
+    enum D3DXEFFECTDEFAULTTYPE Type;           // type of the data pointed to by pValue
+    DWORD                 NumBytes;       // size in bytes of the data pointed to by pValue
+    int                pValue;         // data for the default of the effect
+};
+
+struct D3DXEFFECTINSTANCE
+{
+    int               lpstrEffectFilename;
+    DWORD               NumDefaults;
+	[helpstring("D3DXEFFECTDEFAULT* pDefaults")]
+    int pDefaults;
+};
+
+struct D3DXATTRIBUTEWEIGHTS
+{
+    FLOAT Position;
+    FLOAT Boundary;
+    FLOAT Normal;
+    FLOAT Diffuse;
+    FLOAT Specular;
+    FLOAT Texcoord[8];
+    FLOAT Tangent;
+    FLOAT Binormal;
+};
+
+enum D3DXWELDEPSILONSFLAGS
+{
+    D3DXWELDEPSILONS_WELDALL             = 0x1,  // weld all vertices marked by adjacency as being overlapping
+    D3DXWELDEPSILONS_WELDPARTIALMATCHES  = 0x2,  // if a given vertex component is within epsilon, modify partial matched
+                                                    // vertices so that both components identical AND if all components "equal"
+                                                    // remove one of the vertices
+    D3DXWELDEPSILONS_DONOTREMOVEVERTICES = 0x4,  // instructs weld to only allow modifications to vertices and not removal
+                                                    // ONLY valid if D3DXWELDEPSILONS_WELDPARTIALMATCHES is set
+                                                    // useful to modify vertices to be equal, but not allow vertices to be removed
+    D3DXWELDEPSILONS_DONOTSPLIT          = 0x8,  // instructs weld to specify the D3DXMESHOPT_DONOTSPLIT flag when doing an Optimize(ATTR_SORT)
+                                                    // if this flag is not set, all vertices that are in separate attribute groups
+                                                    // will remain split and not welded.  Setting this flag can slow down software vertex processing
+};
+
+struct D3DXWELDEPSILONS
+{
+    FLOAT Position;                 // NOTE: This does NOT replace the epsilon in GenerateAdjacency
+                                            // in general, it should be the same value or greater than the one passed to GeneratedAdjacency
+    FLOAT BlendWeights;
+    FLOAT Normal;
+    FLOAT PSize;
+    FLOAT Specular;
+    FLOAT Diffuse;
+    FLOAT Texcoord[8];
+    FLOAT Tangent;
+    FLOAT Binormal;
+    FLOAT TessFactor;
+};
+
+// Subset of the mesh that has the same attribute and bone combination.
+// This subset can be rendered in a single draw call
+struct D3DXBONECOMBINATION
+{
+    DWORD AttribId;
+    DWORD FaceStart;
+    DWORD FaceCount;
+    DWORD VertexStart;
+    DWORD VertexCount;
+    int lpdwBoneId;
+};
+
+// The following types of patch combinations are supported:
+// Patch type   Basis       Degree
+// Rect         Bezier      2,3,5
+// Rect         B-Spline    2,3,5
+// Rect         Catmull-Rom 3
+// Tri          Bezier      2,3,5
+// N-Patch      N/A         3
+
+struct D3DXPATCHINFO
+{
+    enum D3DXPATCHMESHTYPE PatchType;
+    enum D3DDEGREETYPE Degree;
+    enum D3DBASISTYPE Basis;
+};
+
+[odl,uuid(7ED943DD-52E8-40b5-A8D8-76685C406330)]
+interface D3DXBaseMesh:IUnknown{
+    HRESULT DrawSubset(DWORD AttribId);
+    DWORD GetNumFaces();
+    DWORD GetNumVertices();
+    DWORD GetFVF();
+	[helpstring("Declaration(0 To 64)")]
+    HRESULT GetDeclaration(struct D3DVERTEXELEMENT9* Declaration);
+    DWORD GetNumBytesPerVertex();
+    DWORD GetOptions();
+	HRESULT GetDevice([out,retval]Direct3DDevice9** ppDevice);
+    HRESULT CloneMeshFVF(DWORD Options,DWORD FVF, Direct3DDevice9* pD3DDevice, [out,retval]D3DXMesh** ppCloneMesh);
+    HRESULT CloneMesh(DWORD Options,struct D3DVERTEXELEMENT9 *pDeclaration, Direct3DDevice9* pD3DDevice, [out,retval]D3DXMesh** ppCloneMesh);
+	HRESULT GetVertexBuffer([out,retval]Direct3DVertexBuffer9** ppVB);
+    HRESULT GetIndexBuffer([out,retval]Direct3DIndexBuffer9** ppIB);
+    HRESULT LockVertexBuffer(DWORD Flags, int *ppData);
+    HRESULT UnlockVertexBuffer();
+    HRESULT LockIndexBuffer(DWORD Flags, int *ppData);
+    HRESULT UnlockIndexBuffer();
+    HRESULT GetAttributeTable(struct D3DXATTRIBUTERANGE *pAttribTable, DWORD* pAttribTableSize);
+    HRESULT ConvertPointRepsToAdjacency(DWORD* pPRep, DWORD* pAdjacency);
+    HRESULT ConvertAdjacencyToPointReps(DWORD* pAdjacency, DWORD* pPRep);
+    HRESULT GenerateAdjacency(FLOAT Epsilon, DWORD* pAdjacency);
+	[helpstring("Declaration(0 To 64)")]
+    HRESULT UpdateSemantics(struct D3DVERTEXELEMENT9* Declaration);
+};
+
+[odl,uuid(4020E5C2-1403-4929-883F-E2E849FAC195)]
+interface D3DXMesh:D3DXBaseMesh{
+    HRESULT LockAttributeBuffer(DWORD Flags, int *ppData);
+    HRESULT UnlockAttributeBuffer();
+    HRESULT Optimize(DWORD Flags, DWORD* pAdjacencyIn, DWORD* pAdjacencyOut,
+                     DWORD* pFaceRemap, D3DXBuffer **ppVertexRemap,
+                     D3DXMesh** ppOptMesh);
+    HRESULT OptimizeInplace(DWORD Flags, DWORD* pAdjacencyIn, DWORD* pAdjacencyOut,
+                     DWORD* pFaceRemap, D3DXBuffer **ppVertexRemap);
+    HRESULT SetAttributeTable(struct D3DXATTRIBUTERANGE *pAttribTable, DWORD cAttribTableSize);
+};
+
+[odl,uuid(8875769A-D579-4088-AAEB-534D1AD84E96)]
+interface D3DXPMesh:D3DXBaseMesh{
+    HRESULT ClonePMeshFVF(DWORD Options,
+                DWORD FVF, Direct3DDevice9* pD3DDevice, [out,retval]D3DXPMesh** ppCloneMesh);
+    HRESULT ClonePMesh(DWORD Options,
+                struct D3DVERTEXELEMENT9 *pDeclaration, Direct3DDevice9* pD3DDevice, [out,retval]D3DXPMesh** ppCloneMesh);
+    HRESULT SetNumFaces(DWORD Faces);
+    HRESULT SetNumVertices(DWORD Vertices);
+    DWORD GetMaxFaces();
+    DWORD GetMinFaces();
+    DWORD GetMaxVertices();
+    DWORD GetMinVertices();
+	[helpstring("IStream *pStream")]
+    HRESULT Save(IUnknown *pStream, struct D3DXMATERIAL* pMaterials, struct D3DXEFFECTINSTANCE* pEffectInstances, DWORD NumMaterials);
+    HRESULT Optimize(DWORD Flags, DWORD* pAdjacencyOut,
+                     DWORD* pFaceRemap, D3DXBuffer **ppVertexRemap,
+                     D3DXMesh** ppOptMesh);
+    HRESULT OptimizeBaseLOD(DWORD Flags, DWORD* pFaceRemap);
+    HRESULT TrimByFaces(DWORD NewFacesMin, DWORD NewFacesMax, DWORD *rgiFaceRemap, DWORD *rgiVertRemap);
+    HRESULT TrimByVertices(DWORD NewVerticesMin, DWORD NewVerticesMax, DWORD *rgiFaceRemap, DWORD *rgiVertRemap);
+    HRESULT GetAdjacency(DWORD* pAdjacency);
+    //  Used to generate the immediate "ancestor" for each vertex when it is removed by a vsplit.  Allows generation of geomorphs
+    //     Vertex buffer must be equal to or greater than the maximum number of vertices in the pmesh
+    HRESULT GenerateVertexHistory(DWORD* pVertexHistory);
+};
+
+[odl,uuid(667EA4C7-F1CD-4386-B523-7C0290B83CC5)]
+interface D3DXSPMesh:IUnknown{
+    DWORD GetNumFaces();
+    DWORD GetNumVertices();
+    DWORD GetFVF();
+	[helpstring("Declaration(0 To 64)")]
+    HRESULT GetDeclaration(struct D3DVERTEXELEMENT9* Declaration);
+    DWORD GetOptions();
+	HRESULT GetDevice([out,retval]Direct3DDevice9** ppDevice);
+    HRESULT CloneMeshFVF(DWORD Options,
+                DWORD FVF, Direct3DDevice9* pD3DDevice, DWORD *pAdjacencyOut, DWORD *pVertexRemapOut, [out,retval]D3DXMesh** ppCloneMesh);
+    HRESULT CloneMesh(DWORD Options,
+                struct D3DVERTEXELEMENT9 *pDeclaration, Direct3DDevice9* pD3DDevice, DWORD *pAdjacencyOut, DWORD *pVertexRemapOut, [out,retval]D3DXMesh** ppCloneMesh);
+    HRESULT ClonePMeshFVF(DWORD Options,
+                DWORD FVF, Direct3DDevice9* pD3DDevice, DWORD *pVertexRemapOut, FLOAT *pErrorsByFace, [out,retval]D3DXPMesh** ppCloneMesh);
+    HRESULT ClonePMesh(DWORD Options,
+                struct D3DVERTEXELEMENT9 *pDeclaration, Direct3DDevice9* pD3DDevice, DWORD *pVertexRemapOut, FLOAT *pErrorsbyFace, [out,retval]D3DXPMesh** ppCloneMesh);
+    HRESULT ReduceFaces(DWORD Faces);
+    HRESULT ReduceVertices(DWORD Vertices);
+    DWORD GetMaxFaces();
+    DWORD GetMaxVertices();
+    HRESULT GetVertexAttributeWeights(struct D3DXATTRIBUTEWEIGHTS *pVertexAttributeWeights);
+    HRESULT GetVertexWeights(FLOAT *pVertexWeights);
+};
+
+[odl,uuid(11EAA540-F9A6-4d49-AE6A-E19221F70CC4)]
+interface D3DXSkinInfo{
+	// Specify the which vertices do each bones influence and by how much
+	HRESULT SetBoneInfluence(DWORD bone, DWORD numInfluences, DWORD* vertices, FLOAT* weights);
+	HRESULT SetBoneVertexInfluence(DWORD boneNum, DWORD influenceNum, float weight);
+	DWORD GetNumBoneInfluences(DWORD bone);
+	HRESULT GetBoneInfluence(DWORD bone, DWORD* vertices, FLOAT* weights);
+	HRESULT GetBoneVertexInfluence(DWORD boneNum, DWORD influenceNum, float *pWeight, DWORD *pVertexNum);
+	HRESULT GetMaxVertexInfluences(DWORD* maxVertexInfluences);
+	DWORD GetNumBones();
+	HRESULT FindBoneVertexInfluenceIndex(DWORD boneNum, DWORD vertexNum, DWORD *pInfluenceIndex);
+	// This gets the max face influences based on a triangle mesh with the specified index buffer
+	HRESULT GetMaxFaceInfluences(Direct3DIndexBuffer9 *pIB, DWORD NumFaces, DWORD* maxFaceInfluences);
+	// Set min bone influence. Bone influences that are smaller than this are ignored
+	HRESULT SetMinBoneInfluence(FLOAT MinInfl);
+	// Get min bone influence.
+	FLOAT GetMinBoneInfluence();
+	// Bone names are returned by D3DXLoadSkinMeshFromXof. They are not used by any other method of this object
+	HRESULT SetBoneName(DWORD Bone, void* lpstrName); // pName is copied to an internal string buffer
+	[helpstring("LPCSTR GetBoneName(DWORD Bone)")]
+	int GetBoneName(DWORD Bone); // A pointer to an internal string buffer is returned. Do not free this.
+	// Bone offset matrices are returned by D3DXLoadSkinMeshFromXof. They are not used by any other method of this object
+	HRESULT SetBoneOffsetMatrix(DWORD Bone, struct D3DXMATRIX *pBoneTransform); // pBoneTransform is copied to an internal buffer
+	[helpstring("D3DXMATRIX* GetBoneOffsetMatrix(DWORD Bone)")]
+	int GetBoneOffsetMatrix(DWORD Bone); // A pointer to an internal matrix is returned. Do not free this.
+	// Clone a skin info object
+	HRESULT Clone([out,retval]D3DXSkinInfo** ppSkinInfo);
+	// Update bone influence information to match vertices after they are reordered. This should be called
+	// if the target vertex buffer has been reordered externally.
+	HRESULT Remap(DWORD NumVertices, DWORD* pVertexRemap);
+	// These methods enable the modification of the vertex layout of the vertices that will be skinned
+	HRESULT SetFVF(DWORD FVF);
+	HRESULT SetDeclaration(struct D3DVERTEXELEMENT9 *pDeclaration);
+	DWORD GetFVF();
+	[helpstring("Declaration(0 To 64)")]
+	HRESULT GetDeclaration(struct D3DVERTEXELEMENT9 *Declaration);
+	// Apply SW skinning based on current pose matrices to the target vertices.
+	HRESULT UpdateSkinnedMesh(struct D3DXMATRIX* pBoneTransforms,struct D3DXMATRIX* pBoneInvTransposeTransforms,void* pVerticesSrc,void* pVerticesDst);
+	// Takes a mesh and returns a new mesh with per vertex blend weights and a bone combination
+	// table that describes which bones affect which subsets of the mesh
+	HRESULT ConvertToBlendedMesh(D3DXMesh *pMesh,DWORD Options,DWORD *pAdjacencyIn,DWORD* pAdjacencyOut,DWORD* pFaceRemap,D3DXBuffer **ppVertexRemap,DWORD* pMaxFaceInfl,DWORD* pNumBoneCombinations,D3DXBuffer **ppBoneCombinationTable,[out,retval]D3DXMesh** ppMesh);
+	// Takes a mesh and returns a new mesh with per vertex blend weights and indices
+	// and a bone combination table that describes which bones palettes affect which subsets of the mesh
+	HRESULT ConvertToIndexedBlendedMesh(D3DXMesh *pMesh,DWORD Options,DWORD paletteSize,DWORD *pAdjacencyIn,DWORD* pAdjacencyOut,DWORD* pFaceRemap,D3DXBuffer **ppVertexRemap,DWORD* pMaxVertexInfl,DWORD* pNumBoneCombinations,D3DXBuffer **ppBoneCombinationTable,[out,retval]D3DXMesh** ppMesh);
+};
+
+[odl,uuid(3CE6CC22-DBF2-44f4-894D-F9C34A337139)]
+interface D3DXPatchMesh{
+    // Return creation parameters
+    DWORD GetNumPatches();
+    DWORD GetNumVertices();
+	[helpstring("Declaration(0 To 64)")]
+    HRESULT GetDeclaration(struct D3DVERTEXELEMENT9* Declaration);
+    DWORD GetControlVerticesPerPatch();
+    DWORD GetOptions();
+	HRESULT GetDevice([out,retval]Direct3DDevice9** ppDevice);
+    HRESULT GetPatchInfo(struct D3DXPATCHINFO* PatchInfo);
+    // Control mesh access
+	HRESULT GetVertexBuffer([out,retval]Direct3DVertexBuffer9** ppVB);
+    HRESULT GetIndexBuffer([out,retval]Direct3DIndexBuffer9** ppIB);
+    HRESULT LockVertexBuffer(DWORD Flags, int *ppData);
+    HRESULT UnlockVertexBuffer();
+    HRESULT LockIndexBuffer(DWORD Flags, int *ppData);
+    HRESULT UnlockIndexBuffer();
+    HRESULT LockAttributeBuffer(DWORD flags, int *ppData);
+    HRESULT UnlockAttributeBuffer();
+    // This function returns the size of the tessellated mesh given a tessellation level.
+    // This assumes uniform tessellation. For adaptive tessellation the Adaptive parameter must
+    // be set to TRUE and TessellationLevel should be the max tessellation.
+    // This will result in the max mesh size necessary for adaptive tessellation.
+    HRESULT GetTessSize(FLOAT fTessLevel,DWORD Adaptive, DWORD *NumTriangles,DWORD *NumVertices);
+    //GenerateAdjacency determines which patches are adjacent with provided tolerance
+    //this information is used internally to optimize tessellation
+    HRESULT GenerateAdjacency(FLOAT Tolerance);
+    //CloneMesh Creates a new patchmesh with the specified decl, and converts the vertex buffer
+    //to the new decl. Entries in the new decl which are new are set to 0. If the current mesh
+    //has adjacency, the new mesh will also have adjacency
+    HRESULT CloneMesh(DWORD Options, struct D3DVERTEXELEMENT9 *pDecl, [out,retval]D3DXPatchMesh **pMesh);
+    // Optimizes the patchmesh for efficient tessellation. This function is designed
+    // to perform one time optimization for patch meshes that need to be tessellated
+    // repeatedly by calling the Tessellate() method. The optimization performed is
+    // independent of the actual tessellation level used.
+    // Currently Flags is unused.
+    // If vertices are changed, Optimize must be called again
+    HRESULT Optimize(DWORD flags);
+    //gets and sets displacement parameters
+    //displacement maps can only be 2D textures MIP-MAPPING is ignored for non adapative tessellation
+	HRESULT SetDisplaceParam(Direct3DBaseTexture9 *Texture, enum D3DTEXTUREFILTERTYPE MinFilter, enum D3DTEXTUREFILTERTYPE MagFilter, enum D3DTEXTUREFILTERTYPE MipFilter, enum D3DTEXTUREADDRESS Wrap, DWORD dwLODBias);
+	HRESULT GetDisplaceParam(Direct3DBaseTexture9 **RetTexture, enum D3DTEXTUREFILTERTYPE *RetMinFilter, enum D3DTEXTUREFILTERTYPE *RetMagFilter, enum D3DTEXTUREFILTERTYPE *RetMipFilter, enum D3DTEXTUREADDRESS *RetWrap, DWORD *RetLODBias);
+    // Performs the uniform tessellation based on the tessellation level.
+    // This function will perform more efficiently if the patch mesh has been optimized using the Optimize() call.
+    HRESULT Tessellate(FLOAT fTessLevel,D3DXMesh *pMesh);
+    // Performs adaptive tessellation based on the Z based adaptive tessellation criterion.
+    // pTrans specifies a 4D vector that is dotted with the vertices to get the per vertex
+    // adaptive tessellation amount. Each edge is tessellated to the average of the criterion
+    // at the 2 vertices it connects.
+    // MaxTessLevel specifies the upper limit for adaptive tesselation.
+    // This function will perform more efficiently if the patch mesh has been optimized using the Optimize() call.
+    HRESULT TessellateAdaptive(struct D3DXVECTOR4 *pTrans,DWORD dwMaxTessLevel,DWORD dwMinTessLevel,D3DXMesh *pMesh);
+};
+
+struct D3DXINTERSECTINFO
+{
+    DWORD FaceIndex;                // index of face intersected
+    FLOAT U;                        // Barycentric Hit Coordinates
+    FLOAT V;                        // Barycentric Hit Coordinates
+    FLOAT Dist;                     // Ray-Intersection Parameter Distance
+};
+
+enum D3DXSHCOMPRESSQUALITYTYPE {
+    D3DXSHCQUAL_FASTLOWQUALITY  = 1,
+    D3DXSHCQUAL_SLOWHIGHQUALITY = 2,
+} ;
+
+enum D3DXSHGPUSIMOPT {
+    D3DXSHGPUSIMOPT_SHADOWRES256  = 1,
+    D3DXSHGPUSIMOPT_SHADOWRES512  = 0,
+    D3DXSHGPUSIMOPT_SHADOWRES1024 = 2,
+    D3DXSHGPUSIMOPT_SHADOWRES2048 = 3,
+    D3DXSHGPUSIMOPT_HIGHQUALITY = 4,
+};
+
+// for all properties that are colors the luminance is computed
+// if the simulator is run with a single channel using the following
+// formula:  R * 0.2125 + G * 0.7154 + B * 0.0721
+
+struct D3DXSHMATERIAL {
+    struct D3DCOLORVALUE Diffuse;  // Diffuse albedo of the surface.  (Ignored if object is a Mirror)
+    int          bMirror;  // Must be set to FALSE.  bMirror == TRUE not currently supported
+    int          bSubSurf; // true if the object does subsurface scattering - can't do this and be a mirror
+    // subsurface scattering parameters
+    FLOAT         RelativeIndexOfRefraction;
+    struct D3DCOLORVALUE Absorption;
+    struct D3DCOLORVALUE ReducedScattering;
+};
+
+// allocated in D3DXSHPRTCompSplitMeshSC
+// vertices are duplicated into multiple super clusters but
+// only have a valid status in one super cluster (fill in the rest)
+
+struct D3DXSHPRTSPLITMESHVERTDATA {
+    UINT  uVertRemap;   // vertex in original mesh this corresponds to
+    UINT  uSubCluster;  // cluster index relative to super cluster
+    UBYTE ucVertStatus; // 1 if vertex has valid data, 0 if it is "fill"
+};
+
+// used in D3DXSHPRTCompSplitMeshSC
+// information for each super cluster that maps into face/vert arrays
+
+struct D3DXSHPRTSPLITMESHCLUSTERDATA {
+    UINT uVertStart;     // initial index into remapped vertex array
+    UINT uVertLength;    // number of vertices in this super cluster
+    UINT uFaceStart;     // initial index into face array
+    UINT uFaceLength;    // number of faces in this super cluster
+    UINT uClusterStart;  // initial index into cluster array
+    UINT uClusterLength; // number of clusters in this super cluster
+};
+
+/*
+// call back function for simulator
+// return S_OK to keep running the simulator - anything else represents
+// failure and the simulator will abort.
+
+typedef HRESULT (WINAPI *LPD3DXSHPRTSIMCB)(float fPercentDone,  LPVOID lpUserContext);
+*/
+
+interface D3DXPRTBuffer;
+interface D3DXPRTCompBuffer;
+interface D3DXTextureGutterHelper;
+interface D3DXPRTEngine;
+
+[odl,uuid(F1827E47-00A8-49cd-908C-9D11955F8728)]
+interface D3DXPRTBuffer:IUnknown{
+    UINT GetNumSamples();
+    UINT GetNumCoeffs();
+    UINT GetNumChannels();
+    int IsTexture();
+    UINT GetWidth();
+    UINT GetHeight();
+    // changes the number of samples allocated in the buffer
+    HRESULT Resize(UINT NewSize);
+    // ppData will point to the memory location where sample Start begins
+    // pointer is valid for at least NumSamples samples
+    HRESULT LockBuffer(UINT Start, UINT NumSamples, int *ppData);
+    HRESULT UnlockBuffer();
+    // every scalar in buffer is multiplied by Scale
+    HRESULT ScaleBuffer(FLOAT Scale);
+    // every scalar contains the sum of this and pBuffers values
+    // pBuffer must have the same storage class/dimensions
+    HRESULT AddBuffer(D3DXPRTBuffer *pBuffer);
+    // GutterHelper (described below) will fill in the gutter
+    // regions of a texture by interpolating "internal" values
+    HRESULT AttachGH(D3DXTextureGutterHelper *pGH);
+    HRESULT ReleaseGH();
+    // Evaluates attached gutter helper on the contents of this buffer
+    HRESULT EvalGH();
+    // extracts a given channel into texture pTexture
+    // NumCoefficients starting from StartCoefficient are copied
+    HRESULT ExtractTexture(UINT Channel, UINT StartCoefficient,UINT NumCoefficients, Direct3DTexture9 *pTexture);
+    // extracts NumCoefficients coefficients into mesh - only applicable on single channel
+    // buffers, otherwise just lockbuffer and copy data.  With SHPRT data NumCoefficients
+    // should be Order^2
+    HRESULT ExtractToMesh(UINT NumCoefficients,enum D3DDECLUSAGE Usage, UINT UsageIndexStart,D3DXMesh *pScene);
+};
+
+[odl,uuid(A758D465-FE8D-45ad-9CF0-D01E56266A07)]
+interface D3DXPRTCompBuffer:IUnknown{
+    // NumCoeffs and NumChannels are properties of input buffer
+    UINT GetNumSamples();
+    UINT GetNumCoeffs();
+    UINT GetNumChannels();
+    BOOL IsTexture();
+    UINT GetWidth();
+    UINT GetHeight();
+    // number of clusters, and PCA vectors per-cluster
+    UINT GetNumClusters();
+    UINT GetNumPCA();
+    // normalizes PCA weights so that they are between [-1,1]
+    // basis vectors are modified to reflect this
+    HRESULT NormalizeData();
+    // copies basis vectors for cluster "Cluster" into pClusterBasis
+    // (NumPCA+1)*NumCoeffs*NumChannels floats
+    HRESULT ExtractBasis(UINT Cluster, FLOAT *pClusterBasis);
+    // UINT per sample - which cluster it belongs to
+    HRESULT ExtractClusterIDs(UINT *pClusterIDs);
+    // copies NumExtract PCA projection coefficients starting at StartPCA
+    // into pPCACoefficients - NumSamples*NumExtract floats copied
+    HRESULT ExtractPCA(UINT StartPCA, UINT NumExtract, FLOAT *pPCACoefficients);
+    // copies NumPCA projection coefficients starting at StartPCA
+    // into pTexture - should be able to cope with signed formats
+    HRESULT ExtractTexture(UINT StartPCA, UINT NumpPCA,Direct3DTexture9 * pTexture);
+    // copies NumPCA projection coefficients into mesh pScene
+    // Usage is D3DDECLUSAGE where coefficients are to be stored
+    // UsageIndexStart is starting index
+    HRESULT ExtractToMesh(UINT NumPCA,enum D3DDECLUSAGE Usage, UINT UsageIndexStart,D3DXMesh * pScene);
+};
+
+[odl,uuid(06F57E0A-BD95-43f1-A3DA-791CF6CA297B)]
+interface D3DXTextureGutterHelper:IUnknown{
+    // dimensions of texture this is bound too
+    UINT GetWidth();
+    UINT GetHeight();
+    // Applying gutters recomputes all of the gutter texels of class "2"
+    // based on texels of class "1" or "4"
+    // Applies gutters to a raw float buffer - each texel is NumCoeffs floats
+    // Width and Height must match GutterHelper
+    HRESULT ApplyGuttersFloat(FLOAT *pDataIn, UINT NumCoeffs, UINT Width, UINT Height);
+    // Applies gutters to pTexture
+    // Dimensions must match GutterHelper
+    HRESULT ApplyGuttersTex(Direct3DTexture9* pTexture);
+    // Applies gutters to a D3DXPRTBuffer
+    // Dimensions must match GutterHelper
+    HRESULT ApplyGuttersPRT(D3DXPRTBuffer* pBuffer);
+    // the routines below provide access to the data structures
+    // used by the Apply functions
+    // face map is a UINT per texel that represents the
+    // face of the mesh that texel belongs too -
+    // only valid if same texel is valid in pGutterData
+    // pFaceData must be allocated by the user
+    HRESULT GetFaceMap(UINT *pFaceData);
+    // BaryMap is a D3DXVECTOR2 per texel
+    // the 1st two barycentric coordinates for the corresponding
+    // face (3rd weight is always 1-sum of first two)
+    // only valid if same texel is valid in pGutterData
+    // pBaryData must be allocated by the user
+    HRESULT GetBaryMap(struct D3DXVECTOR2 *pBaryData);
+    // TexelMap is a D3DXVECTOR2 per texel that
+    // stores the location in pixel coordinates where the
+    // corresponding texel is mapped
+    // pTexelData must be allocated by the user
+    HRESULT GetTexelMap(struct D3DXVECTOR2 *pTexelData);
+    // GutterMap is a BYTE per texel
+    // 0/1/2 for Invalid/Internal/Gutter texels
+    // 4 represents a gutter texel that will be computed
+    // during PRT
+    // pGutterData must be allocated by the user
+    HRESULT GetGutterMap(UBYTE *pGutterData);
+    // face map is a UINT per texel that represents the
+    // face of the mesh that texel belongs too -
+    // only valid if same texel is valid in pGutterData
+    HRESULT SetFaceMap(UINT *pFaceData);
+    // BaryMap is a D3DXVECTOR2 per texel
+    // the 1st two barycentric coordinates for the corresponding
+    // face (3rd weight is always 1-sum of first two)
+    // only valid if same texel is valid in pGutterData
+    HRESULT SetBaryMap(struct D3DXVECTOR2 *pBaryData);
+    // TexelMap is a D3DXVECTOR2 per texel that
+    // stores the location in pixel coordinates where the
+    // corresponding texel is mapped
+    HRESULT SetTexelMap(struct D3DXVECTOR2 *pTexelData);
+    // GutterMap is a BYTE per texel
+    // 0/1/2 for Invalid/Internal/Gutter texels
+    // 4 represents a gutter texel that will be computed
+    // during PRT
+    HRESULT SetGutterMap(UBYTE *pGutterData);
+};
+
+[odl,uuid(C3F4ADBF-E6D2-4b7b-BFE8-9E7208746ADF)]
+interface D3DXPRTEngine:IUnknown{
+	[helpstring("D3DXSHMATERIAL **ppMaterials")]
+	HRESULT SetMeshMaterials(int *ppMaterials, UINT NumMeshes,UINT NumChannels, int bSetAlbedo, FLOAT fLengthScale);
+	HRESULT SetPerVertexAlbedo(void *pDataIn, UINT NumChannels, UINT Stride);
+	HRESULT SetPerTexelAlbedo(Direct3DTexture9* pAlbedoTexture,UINT NumChannels,D3DXTextureGutterHelper* pGH);
+	HRESULT GetVertexAlbedo(struct D3DXCOLOR *pVertColors, UINT NumVerts);
+	HRESULT SetPerTexelNormal(Direct3DTexture9* pNormalTexture);
+	HRESULT ExtractPerVertexAlbedo(D3DXMesh* pMesh,enum D3DDECLUSAGE Usage,UINT NumChannels);
+	HRESULT ResampleBuffer(D3DXPRTBuffer* pBufferIn, D3DXPRTBuffer* pBufferOut);
+	HRESULT GetAdaptedMesh(Direct3DDevice9* pD3DDevice,UINT *pFaceRemap, UINT *pVertRemap, FLOAT *pfVertWeights, [out,retval]D3DXMesh **ppMesh);
+	UINT GetNumVerts();
+	UINT GetNumFaces();
+	HRESULT SetMinMaxIntersection(FLOAT fMin, FLOAT fMax);
+	HRESULT RobustMeshRefine(FLOAT MinEdgeLength, UINT MaxSubdiv);
+	HRESULT SetSamplingInfo(UINT NumRays,int bUseSphere,int bUseCosine,int bAdaptive,FLOAT AdaptiveThresh);
+	HRESULT ComputeDirectLightingSH(UINT SHOrder,D3DXPRTBuffer* pDataOut);
+	HRESULT ComputeDirectLightingSHAdaptive(UINT SHOrder,FLOAT AdaptiveThresh,FLOAT MinEdgeLength,UINT MaxSubdiv,D3DXPRTBuffer* pDataOut);
+	HRESULT ComputeDirectLightingSHGPU(Direct3DDevice9* pD3DDevice,UINT Flags,UINT SHOrder,FLOAT ZBias,FLOAT ZAngleBias,D3DXPRTBuffer* pDataOut);
+	HRESULT ComputeSS(D3DXPRTBuffer* pDataIn,D3DXPRTBuffer* pDataOut, D3DXPRTBuffer* pDataTotal);
+	HRESULT ComputeSSAdaptive(D3DXPRTBuffer* pDataIn,FLOAT AdaptiveThresh,FLOAT MinEdgeLength,UINT MaxSubdiv,D3DXPRTBuffer* pDataOut, D3DXPRTBuffer* pDataTotal);
+	HRESULT ComputeBounce(D3DXPRTBuffer* pDataIn,D3DXPRTBuffer* pDataOut,D3DXPRTBuffer* pDataTotal);
+	HRESULT ComputeBounceAdaptive(D3DXPRTBuffer* pDataIn,FLOAT AdaptiveThresh,FLOAT MinEdgeLength,UINT MaxSubdiv,D3DXPRTBuffer* pDataOut,D3DXPRTBuffer* pDataTotal);
+	HRESULT ComputeVolumeSamplesDirectSH(UINT SHOrderIn,UINT SHOrderOut,UINT NumVolSamples,struct D3DXVECTOR3 *pSampleLocs,D3DXPRTBuffer* pDataOut);
+	HRESULT ComputeVolumeSamples(D3DXPRTBuffer* pSurfDataIn,UINT SHOrder,UINT NumVolSamples,struct D3DXVECTOR3 *pSampleLocs,D3DXPRTBuffer* pDataOut);
+	HRESULT ComputeSurfSamplesDirectSH(UINT SHOrder,UINT NumSamples,struct D3DXVECTOR3 *pSampleLocs,struct D3DXVECTOR3 *pSampleNorms,D3DXPRTBuffer* pDataOut);
+	HRESULT ComputeSurfSamplesBounce(D3DXPRTBuffer* pSurfDataIn,UINT NumSamples,struct D3DXVECTOR3 *pSampleLocs,struct D3DXVECTOR3 *pSampleNorms,D3DXPRTBuffer* pDataOut,D3DXPRTBuffer* pDataTotal);
+	HRESULT FreeSSData();
+	HRESULT FreeBounceData();
+	HRESULT ComputeLDPRTCoeffs(D3DXPRTBuffer* pDataIn,UINT SHOrder,struct D3DXVECTOR3 *pNormOut,D3DXPRTBuffer* pDataOut);
+	HRESULT ScaleMeshChunk(UINT uMeshChunk, FLOAT fScale, D3DXPRTBuffer* pDataOut);
+	HRESULT MultiplyAlbedo(D3DXPRTBuffer* pDataOut);
+	[helpstring("CallBack(Single fPercentDone,Long lpUserContext) as Long")]
+	HRESULT SetCallBack(int pCallBack, FLOAT Frequency,  int lpUserContext);
+};
+
+// D3DXIMT_WRAP_U means the texture wraps in the U direction
+// D3DXIMT_WRAP_V means the texture wraps in the V direction
+// D3DXIMT_WRAP_UV means the texture wraps in both directions
+typedef enum D3DXIMT
+{
+    D3DXIMT_WRAP_U =                    0x01,
+    D3DXIMT_WRAP_V =                    0x02,
+    D3DXIMT_WRAP_UV =                   0x03,
+} D3DXIMT;
+
+// These options are only valid for UVAtlasCreate and UVAtlasPartition, we may add more for UVAtlasPack if necessary
+// D3DXUVATLAS_DEFAULT - Meshes with more than 25k faces go through fast, meshes with fewer than 25k faces go through quality
+// D3DXUVATLAS_GEODESIC_FAST - Uses approximations to improve charting speed at the cost of added stretch or more charts.
+// D3DXUVATLAS_GEODESIC_QUALITY - Provides better quality charts, but requires more time and memory than fast.
+typedef enum D3DXUVATLAS
+{
+    D3DXUVATLAS_DEFAULT               = 0x00,
+    D3DXUVATLAS_GEODESIC_FAST         = 0x01,
+    D3DXUVATLAS_GEODESIC_QUALITY      = 0x02,
+} D3DXUVATLAS;
+
+//============================================================================
+//
+// UVAtlas apis
+//
+//============================================================================
+/*
+typedef HRESULT (WINAPI *LPD3DXUVATLASCB)(FLOAT fPercentDone,  LPVOID lpUserContext);
+*/
+
+typedef int LPD3DXUVATLASCB;
+
+// This function creates atlases for meshes. There are two modes of operation,
+// either based on the number of charts, or the maximum allowed stretch. If the
+// maximum allowed stretch is 0, then each triangle will likely be in its own
+// chart.
+
+//============================================================================
+//
+// IMT Calculation apis
+//
+// These functions all compute the Integrated Metric Tensor for use in the
+// UVAtlas API. They all calculate the IMT with respect to the canonical
+// triangle, where the coordinate system is set up so that the u axis goes
+// from vertex 0 to 1 and the v axis is N x u. So, for example, the second
+// vertex's canonical uv coordinates are (d,0) where d is the distance between
+// vertices 0 and 1. This way the IMT does not depend on the parameterization
+// of the mesh, and if the signal over the surface doesn't change, then
+// the IMT doesn't need to be recalculated.
+//============================================================================
+
+// This callback is used by D3DXComputeIMTFromSignal.
+//
+// uv               - The texture coordinate for the vertex.
+// uPrimitiveID     - Face ID of the triangle on which to compute the signal.
+// uSignalDimension - The number of floats to store in pfSignalOut.
+// pUserData        - The pUserData pointer passed in to ComputeIMTFromSignal.
+// pfSignalOut      - A pointer to where to store the signal data.
+/*
+typedef HRESULT (WINAPI* LPD3DXIMTSIGNALCALLBACK)
+    (CONST D3DXVECTOR2 *uv,
+     UINT uPrimitiveID,
+     UINT uSignalDimension,
+     VOID *pUserData,
+     FLOAT *pfSignalOut);
+*/
+
+typedef int LPD3DXIMTSIGNALCALLBACK;
+
+[dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX mesh types and functions")]
+module D3DX9_Mesh{
+    int const D3DXPATCHMESH_DEFAULT = 000;
+	int const MAX_FVF_DECL_SIZE=64+1;
+	[entry("D3DXCreateMesh")] void D3DXCreateMesh(DWORD NumFaces, DWORD NumVertices, DWORD Options, struct D3DVERTEXELEMENT9* pDeclaration, Direct3DDevice9* pD3DDevice, D3DXMesh** ppMesh);
+	[entry("D3DXCreateMeshFVF")] void D3DXCreateMeshFVF(DWORD NumFaces, DWORD NumVertices, DWORD Options, DWORD FVF, Direct3DDevice9* pD3DDevice, D3DXMesh** ppMesh);
+	[entry("D3DXCreateSPMesh")] void D3DXCreateSPMesh(D3DXMesh* pMesh, DWORD* pAdjacency, struct D3DXATTRIBUTEWEIGHTS* pVertexAttributeWeights, FLOAT* pVertexWeights, D3DXSPMesh** ppSMesh);
+	[entry("D3DXCleanMesh")] void D3DXCleanMesh(enum D3DXCLEANTYPE CleanType, D3DXMesh* pMeshIn, DWORD* pAdjacencyIn, D3DXMesh** ppMeshOut, DWORD* pAdjacencyOut, D3DXBuffer** ppErrorsAndWarnings);
+	[entry("D3DXValidMesh")] void D3DXValidMesh(D3DXMesh* pMeshIn, DWORD* pAdjacency, D3DXBuffer** ppErrorsAndWarnings);
+	[entry("D3DXGeneratePMesh")] void D3DXGeneratePMesh(D3DXMesh* pMesh, DWORD* pAdjacency, struct D3DXATTRIBUTEWEIGHTS* pVertexAttributeWeights, FLOAT* pVertexWeights, DWORD MinValue, DWORD Options, D3DXPMesh** ppPMesh);
+	[entry("D3DXSimplifyMesh")] void D3DXSimplifyMesh(D3DXMesh* pMesh, DWORD* pAdjacency, struct D3DXATTRIBUTEWEIGHTS* pVertexAttributeWeights, FLOAT* pVertexWeights, DWORD MinValue, DWORD Options, D3DXMesh** ppMesh);
+	[entry("D3DXComputeBoundingSphere")] void D3DXComputeBoundingSphere(struct D3DXVECTOR3* pFirstPosition, DWORD NumVertices, DWORD dwStride, struct D3DXVECTOR3* pCenter, FLOAT* pRadius);
+	[entry("D3DXComputeBoundingBox")] void D3DXComputeBoundingBox(struct D3DXVECTOR3* pFirstPosition, DWORD NumVertices, DWORD dwStride, struct D3DXVECTOR3* pMin, struct D3DXVECTOR3* pMax);
+	[entry("D3DXComputeNormals")] void D3DXComputeNormals(D3DXBaseMesh* pMesh, DWORD* pAdjacency);
+	[entry("D3DXCreateBuffer")] void D3DXCreateBuffer(DWORD NumBytes, D3DXBuffer** ppBuffer);
+	[entry("D3DXLoadMeshFromXInMemory")] void D3DXLoadMeshFromXInMemory(void* Memory, DWORD SizeOfMemory, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
+	[entry("D3DXLoadMeshFromXResource")] void D3DXLoadMeshFromXResource(HMODULE Module, void* lpstrName, void* lpstrType, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
+	[entry("D3DXLoadMeshFromXW")] void D3DXLoadMeshFromXW(LPCWSTR pFilename, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
+	[entry("D3DXSaveMeshToXW")] void D3DXSaveMeshToXW(LPCWSTR pFilename, D3DXMesh* pMesh, DWORD* pAdjacency, struct D3DXMATERIAL* pMaterials, D3DXBuffer* pEffectInstances, DWORD NumMaterials, DWORD Format);
+	[entry("D3DXCreatePMeshFromStream"),helpstring("IStream *pStream")]
+	void D3DXCreatePMeshFromStream(IUnknown* pStream, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXPMesh** ppPMesh);
+	[entry("D3DXCreateSkinInfo")] void D3DXCreateSkinInfo(DWORD NumVertices, struct D3DVERTEXELEMENT9* pDeclaration, DWORD NumBones, D3DXSkinInfo** ppSkinInfo);
+	[entry("D3DXCreateSkinInfoFVF")] void D3DXCreateSkinInfoFVF(DWORD NumVertices, DWORD FVF, DWORD NumBones, D3DXSkinInfo** ppSkinInfo);
+	[entry("D3DXLoadMeshFromXof")] void D3DXLoadMeshFromXof(D3DXFileData* pxofMesh, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
+	[entry("D3DXLoadSkinMeshFromXof")] void D3DXLoadSkinMeshFromXof(D3DXFileData* pxofMesh, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pMatOut, D3DXSkinInfo** ppSkinInfo, D3DXMesh** ppMesh);
+	[entry("D3DXCreateSkinInfoFromBlendedMesh")] void D3DXCreateSkinInfoFromBlendedMesh(D3DXBaseMesh* pMesh, DWORD NumBones, struct D3DXBONECOMBINATION* pBoneCombinationTable, D3DXSkinInfo** ppSkinInfo);
+	[entry("D3DXTessellateNPatches")] void D3DXTessellateNPatches(D3DXMesh* pMeshIn, DWORD* pAdjacencyIn, FLOAT NumSegs, int QuadraticInterpNormals, D3DXMesh** ppMeshOut, D3DXBuffer** ppAdjacencyOut);
+	[entry("D3DXGenerateOutputDecl")] void D3DXGenerateOutputDecl(struct D3DVERTEXELEMENT9* pOutput, struct D3DVERTEXELEMENT9* pInput);
+	[entry("D3DXLoadPatchMeshFromXof")] void D3DXLoadPatchMeshFromXof(D3DXFileData* pXofObjMesh, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXPatchMesh** ppMesh);
+	[entry("D3DXRectPatchSize")] void D3DXRectPatchSize(FLOAT* pfNumSegs, DWORD* pdwTriangles, DWORD* pdwVertices);
+	[entry("D3DXTriPatchSize")] void D3DXTriPatchSize(FLOAT* pfNumSegs, DWORD* pdwTriangles, DWORD* pdwVertices);
+	[entry("D3DXTessellateRectPatch")] void D3DXTessellateRectPatch(Direct3DVertexBuffer9* pVB, FLOAT* pNumSegs, struct D3DVERTEXELEMENT9* pdwInDecl, struct D3DRECTPATCH_INFO* pRectPatchInfo, D3DXMesh* pMesh);
+	[entry("D3DXTessellateTriPatch")] void D3DXTessellateTriPatch(Direct3DVertexBuffer9* pVB, FLOAT* pNumSegs, struct D3DVERTEXELEMENT9* pInDecl, struct D3DTRIPATCH_INFO* pTriPatchInfo, D3DXMesh* pMesh);
+	[entry("D3DXCreateNPatchMesh")] void D3DXCreateNPatchMesh(D3DXMesh* pMeshSysMem, D3DXPatchMesh** pPatchMesh);
+	[entry("D3DXCreatePatchMesh")] void D3DXCreatePatchMesh(struct D3DXPATCHINFO* pInfo, DWORD dwNumPatches, DWORD dwNumVertices, DWORD dwOptions, struct D3DVERTEXELEMENT9* pDecl, Direct3DDevice9* pD3DDevice, D3DXPatchMesh** pPatchMesh);
+	[entry("D3DXValidPatchMesh")] void D3DXValidPatchMesh(D3DXPatchMesh* pMesh, DWORD* dwcDegenerateVertices, DWORD* dwcDegeneratePatches, D3DXBuffer** ppErrorsAndWarnings);
+	[entry("D3DXGetFVFVertexSize")] UINT D3DXGetFVFVertexSize(DWORD FVF);
+	[entry("D3DXGetDeclVertexSize")] UINT D3DXGetDeclVertexSize(struct D3DVERTEXELEMENT9* pDecl, DWORD Stream);
+	[entry("D3DXGetDeclLength")] UINT D3DXGetDeclLength(struct D3DVERTEXELEMENT9* pDecl);
+	[entry("D3DXDeclaratorFromFVF")] void D3DXDeclaratorFromFVF(DWORD FVF, struct D3DVERTEXELEMENT9* pDeclarator);
+	[entry("D3DXFVFFromDeclarator")] void D3DXFVFFromDeclarator(struct D3DVERTEXELEMENT9* pDeclarator, DWORD* pFVF);
+	[entry("D3DXWeldVertices")] void D3DXWeldVertices(D3DXMesh* pMesh, DWORD Flags, struct D3DXWELDEPSILONS* pEpsilons, DWORD* pAdjacencyIn, DWORD* pAdjacencyOut, DWORD* pFaceRemap, D3DXBuffer** ppVertexRemap);
+	[entry("D3DXIntersect")] void D3DXIntersect(D3DXBaseMesh* pMesh, struct D3DXVECTOR3* pRayPos, struct D3DXVECTOR3* pRayDir, BOOL* pHit, DWORD* pFaceIndex, FLOAT* pU, FLOAT* pV, FLOAT* pDist, D3DXBuffer** ppAllHits, DWORD* pCountOfHits);
+	[entry("D3DXIntersectSubset")] void D3DXIntersectSubset(D3DXBaseMesh* pMesh, DWORD AttribId, struct D3DXVECTOR3* pRayPos, struct D3DXVECTOR3* pRayDir, BOOL* pHit, DWORD* pFaceIndex, FLOAT* pU, FLOAT* pV, FLOAT* pDist, D3DXBuffer** ppAllHits, DWORD* pCountOfHits);
+	[entry("D3DXSplitMesh")] void D3DXSplitMesh(D3DXMesh* pMeshIn, DWORD* pAdjacencyIn, DWORD MaxSize, DWORD Options, DWORD* pMeshesOut, D3DXBuffer** ppMeshArrayOut, D3DXBuffer** ppAdjacencyArrayOut, D3DXBuffer** ppFaceRemapArrayOut, D3DXBuffer** ppVertRemapArrayOut);
+	[entry("D3DXIntersectTri")] int D3DXIntersectTri(struct D3DXVECTOR3* p0, struct D3DXVECTOR3* p1, struct D3DXVECTOR3* p2, struct D3DXVECTOR3* pRayPos, struct D3DXVECTOR3* pRayDir, FLOAT* pU, FLOAT* pV, FLOAT* pDist);
+	[entry("D3DXSphereBoundProbe")] int D3DXSphereBoundProbe(struct D3DXVECTOR3* pCenter, FLOAT Radius, struct D3DXVECTOR3* pRayPosition, struct D3DXVECTOR3* pRayDirection);
+	[entry("D3DXBoxBoundProbe")] int D3DXBoxBoundProbe(struct D3DXVECTOR3* pMin, struct D3DXVECTOR3* pMax, struct D3DXVECTOR3* pRayPosition, struct D3DXVECTOR3* pRayDirection);
+	[entry("D3DXComputeTangent")] void D3DXComputeTangent(D3DXMesh* Mesh, DWORD TexStage, DWORD TangentIndex, DWORD BinormIndex, DWORD Wrap, DWORD* pAdjacency);
+	[entry("D3DXConvertMeshSubsetToSingleStrip")] void D3DXConvertMeshSubsetToSingleStrip(D3DXBaseMesh* MeshIn, DWORD AttribId, DWORD IBOptions, Direct3DIndexBuffer9** ppIndexBuffer, DWORD* pNumIndices);
+	[entry("D3DXConvertMeshSubsetToStrips")] void D3DXConvertMeshSubsetToStrips(D3DXBaseMesh* MeshIn, DWORD AttribId, DWORD IBOptions, Direct3DIndexBuffer9** ppIndexBuffer, DWORD* pNumIndices, D3DXBuffer** ppStripLengths, DWORD* pNumStrips);
+	[entry("D3DXOptimizeFaces")] void D3DXOptimizeFaces(void* pbIndices, UINT cFaces, UINT cVertices, int b32BitIndices, DWORD* pFaceRemap);
+	[entry("D3DXOptimizeVertices")] void D3DXOptimizeVertices(void* pbIndices, UINT cFaces, UINT cVertices, int b32BitIndices, DWORD* pVertexRemap);
+	[entry("D3DXCreatePRTBuffer")] void D3DXCreatePRTBuffer(UINT NumSamples, UINT NumCoeffs, UINT NumChannels, D3DXPRTBuffer** ppBuffer);
+	[entry("D3DXCreatePRTBufferTex")] void D3DXCreatePRTBufferTex(UINT Width, UINT Height, UINT NumCoeffs, UINT NumChannels, D3DXPRTBuffer** ppBuffer);
+	//[entry("D3DXLoadPRTBufferFromFileA")] void D3DXLoadPRTBufferFromFileA(LPCSTR pFilename, D3DXPRTBuffer** ppBuffer);
+	[entry("D3DXLoadPRTBufferFromFileW")] void D3DXLoadPRTBufferFromFileW(BSTR pFileName, D3DXPRTBuffer** ppBuffer);
+	//[entry("D3DXSavePRTBufferToFileA")] void D3DXSavePRTBufferToFileA(LPCSTR pFileName, D3DXPRTBuffer* pBuffer);
+	[entry("D3DXSavePRTBufferToFileW")] void D3DXSavePRTBufferToFileW(BSTR pFileName, D3DXPRTBuffer* pBuffer);
+	//[entry("D3DXLoadPRTCompBufferFromFileA")] void D3DXLoadPRTCompBufferFromFileA(LPCSTR pFilename, D3DXPRTCompBuffer** ppBuffer);
+	[entry("D3DXLoadPRTCompBufferFromFileW")] void D3DXLoadPRTCompBufferFromFileW(BSTR pFileName, D3DXPRTCompBuffer** ppBuffer);
+	//[entry("D3DXSavePRTCompBufferToFileA")] void D3DXSavePRTCompBufferToFileA(LPCSTR pFileName, D3DXPRTCompBuffer* pBuffer);
+	[entry("D3DXSavePRTCompBufferToFileW")] void D3DXSavePRTCompBufferToFileW(BSTR pFileName, D3DXPRTCompBuffer* pBuffer);
+	[entry("D3DXCreatePRTCompBuffer")] void D3DXCreatePRTCompBuffer(enum D3DXSHCOMPRESSQUALITYTYPE Quality, UINT NumClusters, UINT NumPCA, D3DXPRTBuffer* pBufferIn, D3DXPRTCompBuffer** ppBufferOut);
+	[entry("D3DXCreateTextureGutterHelper")] void D3DXCreateTextureGutterHelper(UINT Width, UINT Height, D3DXMesh* pMesh, FLOAT GutterSize, D3DXTextureGutterHelper** ppBuffer);
+	[entry("D3DXCreatePRTEngine")] void D3DXCreatePRTEngine(D3DXMesh* pMesh, int ExtractUVs, D3DXMesh* pBlockerMesh, D3DXPRTEngine** ppEngine);
+	[entry("D3DXConcatenateMeshes")] void D3DXConcatenateMeshes(D3DXMesh** ppMeshes, UINT NumMeshes, DWORD Options, struct D3DXMATRIX* pGeomXForms, struct D3DXMATRIX* pTextureXForms, struct D3DVERTEXELEMENT9* pDecl, Direct3DDevice9* pD3DDevice, D3DXMesh** ppMeshOut);
+	[entry("D3DXSHPRTCompSuperCluster")] void D3DXSHPRTCompSuperCluster(UINT* pClusterIDs, D3DXMesh* pScene, UINT MaxNumClusters, UINT NumClusters, UINT* pSuperClusterIDs, UINT* pNumSuperClusters);
+	[entry("D3DXSHPRTCompSplitMeshSC")] void D3DXSHPRTCompSplitMeshSC(UINT* pClusterIDs, UINT NumVertices, UINT NumClusters, UINT* pSuperClusterIDs, UINT NumSuperClusters, void* pInputIB, int InputIBIs32Bit, UINT NumFaces, D3DXBuffer** ppIBData, UINT* pIBDataLength, int OutputIBIs32Bit, D3DXBuffer** ppFaceRemap, D3DXBuffer** ppVertData, UINT* pVertDataLength, UINT* pSCClusterList, struct D3DXSHPRTSPLITMESHCLUSTERDATA* pSCData);
+	// The parameters are as follows:
+	//  pMesh - Input mesh to calculate an atlas for. This must have a position
+	//          channel and at least a 2-d texture channel.
+	//  uMaxChartNumber - The maximum number of charts required for the atlas.
+	//                    If this is 0, it will be parameterized based solely on
+	//                    stretch.
+	//  fMaxStretch - The maximum amount of stretch, if 0, no stretching is allowed,
+	//                if 1, then any amount of stretching is allowed.
+	//  uWidth - The width of the texture the atlas will be used on.
+	//  uHeight - The height of the texture the atlas will be used on.
+	//  fGutter - The minimum distance, in texels between two charts on the atlas.
+	//            this gets scaled by the width, so if fGutter is 2.5, and it is
+	//            used on a 512x512 texture, then the minimum distance will be
+	//            2.5 / 512 in u-v space.
+	//  dwTextureIndex - Specifies which texture coordinate to write to in the
+	//                   output mesh (which is cloned from the input mesh). Useful
+	//                   if your vertex has multiple texture coordinates.
+	//  pdwAdjacency - a pointer to an array with 3 DWORDs per face, indicating
+	//                 which triangles are adjacent to each other.
+	//  pdwFalseEdgeAdjacency - a pointer to an array with 3 DWORDS per face, indicating
+	//                          at each face, whether an edge is a false edge or not (using
+	//                          the same ordering as the adjacency data structure). If this
+	//                          is NULL, then it is assumed that there are no false edges. If
+	//                          not NULL, then a non-false edge is indicated by -1 and a false
+	//                          edge is indicated by any other value (it is not required, but
+	//                          it may be useful for the caller to use the original adjacency
+	//                          value). This allows you to parameterize a mesh of quads, and
+	//                          the edges down the middle of each quad will not be cut when
+	//                          parameterizing the mesh.
+	//  pfIMTArray - a pointer to an array with 3 FLOATs per face, describing the
+	//               integrated metric tensor for that face. This lets you control
+	//               the way this triangle may be stretched in the atlas. The IMT
+	//               passed in will be 3 floats (a,b,c) and specify a symmetric
+	//               matrix (a b) that, given a vector (s,t), specifies the 
+	//                      (b c)
+	//               distance between a vector v1 and a vector v2 = v1 + (s,t) as
+	//               sqrt((s, t) * M * (s, t)^T).
+	//               In other words, this lets one specify the magnitude of the
+	//               stretch in an arbitrary direction in u-v space. For example
+	//               if a = b = c = 1, then this scales the vector (1,1) by 2, and
+	//               the vector (1,-1) by 0. Note that this is multiplying the edge
+	//               length by the square of the matrix, so if you want the face to
+	//               stretch to twice its
+	//               size with no shearing, the IMT value should be (2, 0, 2), which
+	//               is just the identity matrix times 2.
+	//               Note that this assumes you have an orientation for the triangle
+	//               in some 2-D space. For D3DXUVAtlas, this space is created by
+	//               letting S be the direction from the first to the second
+	//               vertex, and T be the cross product between the normal and S.
+	//               
+	//  pStatusCallback - Since the atlas creation process can be very CPU intensive,
+	//                    this allows the programmer to specify a function to be called
+	//                    periodically, similarly to how it is done in the PRT simulation
+	//                    engine.
+	//  fCallbackFrequency - This lets you specify how often the callback will be
+	//                       called. A decent default should be 0.0001f.
+	//  pUserContext - a void pointer to be passed back to the callback function
+	//  dwOptions - A combination of flags in the D3DXUVATLAS enum
+	//  ppMeshOut - A pointer to a location to store a pointer for the newly created
+	//              mesh.
+	//  ppFacePartitioning - A pointer to a location to store a pointer for an array,
+	//                       one DWORD per face, giving the final partitioning
+	//                       created by the atlasing algorithm.
+	//  ppVertexRemapArray - A pointer to a location to store a pointer for an array,
+	//                       one DWORD per vertex, giving the vertex it was copied
+	//                       from, if any vertices needed to be split.
+	//  pfMaxStretchOut - A location to store the maximum stretch resulting from the
+	//                    atlasing algorithm.
+	//  puNumChartsOut - A location to store the number of charts created, or if the
+	//                   maximum number of charts was too low, this gives the minimum
+	//                    number of charts needed to create an atlas.
+
+	[entry("D3DXUVAtlasCreate")] void D3DXUVAtlasCreate(D3DXMesh* pMesh,
+									 int uMaxChartNumber,
+									 float fMaxStretch,
+									 int uWidth,
+									 int uHeight,
+									 float fGutter,
+									 int dwTextureIndex,
+									 int *pdwAdjacency,
+									 int *pdwFalseEdgeAdjacency,
+									 float *pfIMTArray,
+									 LPD3DXUVATLASCB pStatusCallback,
+									 float fCallbackFrequency,
+									 void* pUserContext,
+									 float dwOptions,
+									 D3DXMesh* *ppMeshOut,
+									 D3DXBuffer* *ppFacePartitioning,
+									 D3DXBuffer* *ppVertexRemapArray,
+									 float *pfMaxStretchOut,
+									 int *puNumChartsOut);
+
+	// This has the same exact arguments as Create, except that it does not perform the
+	// final packing step. This method allows one to get a partitioning out, and possibly
+	// modify it before sending it to be repacked. Note that if you change the
+	// partitioning, you'll also need to calculate new texture coordinates for any faces
+	// that have switched charts.
+	//
+	// The partition result adjacency output parameter is meant to be passed to the
+	// UVAtlasPack function, this adjacency cuts edges that are between adjacent
+	// charts, and also can include cuts inside of a chart in order to make it
+	// equivalent to a disc. For example:
+	//
+	// _______
+	// | ___ |
+	// | |_| |
+	// |_____|
+	//
+	// In order to make this equivalent to a disc, we would need to add a cut, and it
+	// Would end up looking like:
+	// _______
+	// | ___ |
+	// | |_|_|
+	// |_____|
+	//
+	// The resulting partition adjacency parameter cannot be NULL, because it is
+	// required for the packing step.
+
+
+
+	[entry("D3DXUVAtlasPartition")] void D3DXUVAtlasPartition(D3DXMesh * pMesh,
+										int uMaxChartNumber,
+										float fMaxStretch,
+										int dwTextureIndex,
+										int *pdwAdjacency,
+										int *pdwFalseEdgeAdjacency,
+										float *pfIMTArray,
+										LPD3DXUVATLASCB pStatusCallback,
+										float fCallbackFrequency,
+										void* pUserContext,
+										int dwOptions,
+										D3DXMesh * *ppMeshOut,
+										D3DXBuffer* *ppFacePartitioning,
+										D3DXBuffer* *ppVertexRemapArray,
+										D3DXBuffer* *ppPartitionResultAdjacency,
+										float *pfMaxStretchOut,
+										int *puNumChartsOut);
+
+	// This takes the face partitioning result from Partition and packs it into an
+	// atlas of the given size. pdwPartitionResultAdjacency should be derived from
+	// the adjacency returned from the partition step. This value cannot be NULL
+	// because Pack needs to know where charts were cut in the partition step in
+	// order to find the edges of each chart.
+	// The options parameter is currently reserved.
+	[entry("D3DXUVAtlasPack")] void D3DXUVAtlasPack(D3DXMesh *pMesh,
+								   int uWidth,
+								   int uHeight,
+								   float fGutter,
+								   int dwTextureIndex,
+								   int *pdwPartitionResultAdjacency,
+								   LPD3DXUVATLASCB pStatusCallback,
+								   float fCallbackFrequency,
+								   void* pUserContext,
+								   int dwOptions,
+								   D3DXBuffer* pFacePartitioning);
+
+	// This function is used to calculate the IMT from per vertex data. It sets
+	// up a linear system over the triangle, solves for the jacobian J, then
+	// constructs the IMT from that (J^TJ).
+	// This function allows you to calculate the IMT based off of any value in a
+	// mesh (color, normal, etc) by specifying the correct stride of the array.
+	// The IMT computed will cause areas of the mesh that have similar values to
+	// take up less space in the texture.
+	//
+	// pMesh            - The mesh to calculate the IMT for.
+	// pVertexSignal    - A float array of size uSignalStride * v, where v is the
+	//                    number of vertices in the mesh.
+	// uSignalDimension - How many floats per vertex to use in calculating the IMT.
+	// uSignalStride    - The number of bytes per vertex in the array. This must be
+	//                    a multiple of sizeof(float)
+	// ppIMTData        - Where to store the buffer holding the IMT data
+
+	[entry("D3DXComputeIMTFromPerVertexSignal")] void D3DXComputeIMTFromPerVertexSignal (
+		D3DXMesh * pMesh,
+		float *pfVertexSignal, // uSignalDimension floats per vertex
+		int uSignalDimension,
+		int uSignalStride,         // stride of signal in bytes
+		int dwOptions,            // reserved for future use
+		LPD3DXUVATLASCB pStatusCallback,
+		void* pUserContext,
+		D3DXBuffer* *ppIMTData);
+
+	// This function is used to calculate the IMT from data that varies over the
+	// surface of the mesh (generally at a higher frequency than vertex data).
+	// This function requires the mesh to already be parameterized (so it already
+	// has texture coordinates). It allows the user to define a signal arbitrarily
+	// over the surface of the mesh.
+	//
+	// pMesh            - The mesh to calculate the IMT for.
+	// dwTextureIndex   - This describes which set of texture coordinates in the
+	//                    mesh to use.
+	// uSignalDimension - How many components there are in the signal.
+	// fMaxUVDistance   - The subdivision will continue until the distance between
+	//                    all vertices is at most fMaxUVDistance.
+	// dwOptions        - reserved for future use
+	// pSignalCallback  - The callback to use to get the signal.
+	// pUserData        - A pointer that will be passed in to the callback.
+	// ppIMTData        - Where to store the buffer holding the IMT data
+	[entry("D3DXComputeIMTFromSignal")] void D3DXComputeIMTFromSignal(
+		D3DXMesh * pMesh,
+		int dwTextureIndex,
+		int uSignalDimension,
+		float fMaxUVDistance,
+		int dwOptions, // reserved for future use
+		LPD3DXIMTSIGNALCALLBACK pSignalCallback,
+		void* pUserData,
+		LPD3DXUVATLASCB pStatusCallback,
+		void* pUserContext,
+		D3DXBuffer* *ppIMTData);
+
+	// This function is used to calculate the IMT from texture data. Given a texture
+	// that maps over the surface of the mesh, the algorithm computes the IMT for
+	// each face. This will cause large areas that are very similar to take up less
+	// room when parameterized with UVAtlas. The texture is assumed to be
+	// interpolated over the mesh bilinearly.
+	//
+	// pMesh            - The mesh to calculate the IMT for.
+	// pTexture         - The texture to load data from.
+	// dwTextureIndex   - This describes which set of texture coordinates in the
+	//                    mesh to use.
+	// dwOptions        - Combination of one or more D3DXIMT flags.
+	// ppIMTData        - Where to store the buffer holding the IMT data
+	[entry("D3DXComputeIMTFromTexture")] void D3DXComputeIMTFromTexture (
+		D3DXMesh * pMesh,
+		Direct3DTexture9* pTexture,
+		int dwTextureIndex,
+		int dwOptions,
+		LPD3DXUVATLASCB pStatusCallback,
+		void* pUserContext,
+		D3DXBuffer* *ppIMTData);
+
+	// This function is very similar to ComputeIMTFromTexture, but it uses a
+	// float array to pass in the data, and it can calculate higher dimensional
+	// values than 4.
+	//
+	// pMesh            - The mesh to calculate the IMT for.
+	// dwTextureIndex   - This describes which set of texture coordinates in the
+	//                    mesh to use.
+	// pfFloatArray     - a pointer to a float array of size
+	//                    uWidth*uHeight*uComponents
+	// uWidth           - The width of the texture
+	// uHeight          - The height of the texture
+	// uSignalDimension - The number of floats per texel in the signal
+	// uComponents      - The number of floats in each texel
+	// dwOptions        - Combination of one or more D3DXIMT flags
+	// ppIMTData        - Where to store the buffer holding the IMT data
+	[entry("D3DXComputeIMTFromPerTexelSignal")] void D3DXComputeIMTFromPerTexelSignal(
+		D3DXMesh * pMesh,
+		int dwTextureIndex,
+		float *pfTexelSignal,
+		int uWidth,
+		int uHeight,
+		int uSignalDimension,
+		int uComponents,
+		int dwOptions,
+		LPD3DXUVATLASCB pStatusCallback,
+		void* pUserContext,
+		D3DXBuffer* *ppIMTData);
+};
+
+/*
+
+//////////////////////////////////////////////////////////////////////////////
+//
+//  Definitions of .X file templates used by mesh load/save functions
+//    that are not RM standard
+//
+//////////////////////////////////////////////////////////////////////////////
+
+// {3CF169CE-FF7C-44ab-93C0-F78F62D172E2}
+DEFINE_GUID(DXFILEOBJ_XSkinMeshHeader,
+
+// {B8D65549-D7C9-4995-89CF-53A9A8B031E3}
+DEFINE_GUID(DXFILEOBJ_VertexDuplicationIndices,
+
+// {A64C844A-E282-4756-8B80-250CDE04398C}
+DEFINE_GUID(DXFILEOBJ_FaceAdjacency,
+
+// {6F0D123B-BAD2-4167-A0D0-80224F25FABB}
+DEFINE_GUID(DXFILEOBJ_SkinWeights,
+
+// {A3EB5D44-FC22-429d-9AFB-3221CB9719A6}
+DEFINE_GUID(DXFILEOBJ_Patch,
+
+// {D02C95CC-EDBA-4305-9B5D-1820D7704BBF}
+DEFINE_GUID(DXFILEOBJ_PatchMesh,
+
+// {B9EC94E1-B9A6-4251-BA18-94893F02C0EA}
+DEFINE_GUID(DXFILEOBJ_PatchMesh9,
+
+// {B6C3E656-EC8B-4b92-9B62-681659522947}
+DEFINE_GUID(DXFILEOBJ_PMInfo,
+
+// {917E0427-C61E-4a14-9C64-AFE65F9E9844}
+DEFINE_GUID(DXFILEOBJ_PMAttributeRange,
+
+// {574CCC14-F0B3-4333-822D-93E8A8A08E4C}
+DEFINE_GUID(DXFILEOBJ_PMVSplitRecord,
+
+// {B6E70A0E-8EF9-4e83-94AD-ECC8B0C04897}
+DEFINE_GUID(DXFILEOBJ_FVFData,
+
+// {F752461C-1E23-48f6-B9F8-8350850F336F}
+DEFINE_GUID(DXFILEOBJ_VertexElement,
+
+// {BF22E553-292C-4781-9FEA-62BD554BDD93}
+DEFINE_GUID(DXFILEOBJ_DeclData,
+
+// {F1CFE2B3-0DE3-4e28-AFA1-155A750A282D}
+DEFINE_GUID(DXFILEOBJ_EffectFloats,
+
+// {D55B097E-BDB6-4c52-B03D-6051C89D0E42}
+DEFINE_GUID(DXFILEOBJ_EffectString,
+
+// {622C0ED0-956E-4da9-908A-2AF94F3CE716}
+DEFINE_GUID(DXFILEOBJ_EffectDWord,
+
+// {3014B9A0-62F5-478c-9B86-E4AC9F4E418B}
+DEFINE_GUID(DXFILEOBJ_EffectParamFloats,
+
+// {1DBC4C88-94C1-46ee-9076-2C28818C9481}
+DEFINE_GUID(DXFILEOBJ_EffectParamString,
+
+// {E13963BC-AE51-4c5d-B00F-CFA3A9D97CE5}
+DEFINE_GUID(DXFILEOBJ_EffectParamDWord,
+
+// {E331F7E4-0559-4cc2-8E99-1CEC1657928F}
+DEFINE_GUID(DXFILEOBJ_EffectInstance,
+
+// {9E415A43-7BA6-4a73-8743-B73D47E88476}
+DEFINE_GUID(DXFILEOBJ_AnimTicksPerSecond,
+
+// {7F9B00B3-F125-4890-876E-1CFFBF697C4D}
+DEFINE_GUID(DXFILEOBJ_CompressedAnimationSet,
+
+#define XSKINEXP_TEMPLATES \
+        "xof 0303txt 0032\
+        template XSkinMeshHeader \
+        { \
+            <3CF169CE-FF7C-44ab-93C0-F78F62D172E2> \
+            WORD nMaxSkinWeightsPerVertex; \
+            WORD nMaxSkinWeightsPerFace; \
+            WORD nBones; \
+        } \
+        template VertexDuplicationIndices \
+        { \
+            <B8D65549-D7C9-4995-89CF-53A9A8B031E3> \
+            DWORD nIndices; \
+            DWORD nOriginalVertices; \
+            array DWORD indices[nIndices]; \
+        } \
+        template FaceAdjacency \
+        { \
+            <A64C844A-E282-4756-8B80-250CDE04398C> \
+            DWORD nIndices; \
+            array DWORD indices[nIndices]; \
+        } \
+        template SkinWeights \
+        { \
+            <6F0D123B-BAD2-4167-A0D0-80224F25FABB> \
+            STRING transformNodeName; \
+            DWORD nWeights; \
+            array DWORD vertexIndices[nWeights]; \
+            array float weights[nWeights]; \
+            Matrix4x4 matrixOffset; \
+        } \
+        template Patch \
+        { \
+            <A3EB5D44-FC22-429D-9AFB-3221CB9719A6> \
+            DWORD nControlIndices; \
+            array DWORD controlIndices[nControlIndices]; \
+        } \
+        template PatchMesh \
+        { \
+            <D02C95CC-EDBA-4305-9B5D-1820D7704BBF> \
+            DWORD nVertices; \
+            array Vector vertices[nVertices]; \
+            DWORD nPatches; \
+            array Patch patches[nPatches]; \
+            [ ... ] \
+        } \
+        template PatchMesh9 \
+        { \
+            <B9EC94E1-B9A6-4251-BA18-94893F02C0EA> \
+            DWORD Type; \
+            DWORD Degree; \
+            DWORD Basis; \
+            DWORD nVertices; \
+            array Vector vertices[nVertices]; \
+            DWORD nPatches; \
+            array Patch patches[nPatches]; \
+            [ ... ] \
+        } " \
+        "template EffectFloats \
+        { \
+            <F1CFE2B3-0DE3-4e28-AFA1-155A750A282D> \
+            DWORD nFloats; \
+            array float Floats[nFloats]; \
+        } \
+        template EffectString \
+        { \
+            <D55B097E-BDB6-4c52-B03D-6051C89D0E42> \
+            STRING Value; \
+        } \
+        template EffectDWord \
+        { \
+            <622C0ED0-956E-4da9-908A-2AF94F3CE716> \
+            DWORD Value; \
+        } " \
+        "template EffectParamFloats \
+        { \
+            <3014B9A0-62F5-478c-9B86-E4AC9F4E418B> \
+            STRING ParamName; \
+            DWORD nFloats; \
+            array float Floats[nFloats]; \
+        } " \
+        "template EffectParamString \
+        { \
+            <1DBC4C88-94C1-46ee-9076-2C28818C9481> \
+            STRING ParamName; \
+            STRING Value; \
+        } \
+        template EffectParamDWord \
+        { \
+            <E13963BC-AE51-4c5d-B00F-CFA3A9D97CE5> \
+            STRING ParamName; \
+            DWORD Value; \
+        } \
+        template EffectInstance \
+        { \
+            <E331F7E4-0559-4cc2-8E99-1CEC1657928F> \
+            STRING EffectFilename; \
+            [ ... ] \
+        } " \
+        "template AnimTicksPerSecond \
+        { \
+            <9E415A43-7BA6-4a73-8743-B73D47E88476> \
+            DWORD AnimTicksPerSecond; \
+        } \
+        template CompressedAnimationSet \
+        { \
+            <7F9B00B3-F125-4890-876E-1C42BF697C4D> \
+            DWORD CompressedBlockSize; \
+            FLOAT TicksPerSec; \
+            DWORD PlaybackType; \
+            DWORD BufferLength; \
+            array DWORD CompressedData[BufferLength]; \
+        } "
+
+#define XEXTENSIONS_TEMPLATES \
+        "xof 0303txt 0032\
+        template FVFData \
+        { \
+            <B6E70A0E-8EF9-4e83-94AD-ECC8B0C04897> \
+            DWORD dwFVF; \
+            DWORD nDWords; \
+            array DWORD data[nDWords]; \
+        } \
+        template VertexElement \
+        { \
+            <F752461C-1E23-48f6-B9F8-8350850F336F> \
+            DWORD Type; \
+            DWORD Method; \
+            DWORD Usage; \
+            DWORD UsageIndex; \
+        } \
+        template DeclData \
+        { \
+            <BF22E553-292C-4781-9FEA-62BD554BDD93> \
+            DWORD nElements; \
+            array VertexElement Elements[nElements]; \
+            DWORD nDWords; \
+            array DWORD data[nDWords]; \
+        } \
+        template PMAttributeRange \
+        { \
+            <917E0427-C61E-4a14-9C64-AFE65F9E9844> \
+            DWORD iFaceOffset; \
+            DWORD nFacesMin; \
+            DWORD nFacesMax; \
+            DWORD iVertexOffset; \
+            DWORD nVerticesMin; \
+            DWORD nVerticesMax; \
+        } \
+        template PMVSplitRecord \
+        { \
+            <574CCC14-F0B3-4333-822D-93E8A8A08E4C> \
+            DWORD iFaceCLW; \
+            DWORD iVlrOffset; \
+            DWORD iCode; \
+        } \
+        template PMInfo \
+        { \
+            <B6C3E656-EC8B-4b92-9B62-681659522947> \
+            DWORD nAttributes; \
+            array PMAttributeRange attributeRanges[nAttributes]; \
+            DWORD nMaxValence; \
+            DWORD nMinLogicalVertices; \
+            DWORD nMaxLogicalVertices; \
+            DWORD nVSplits; \
+            array PMVSplitRecord splitRecords[nVSplits]; \
+            DWORD nAttributeMispredicts; \
+            array DWORD attributeMispredicts[nAttributeMispredicts]; \
+        } "
+*/
+
+struct XFILECOMPRESSEDANIMATIONSET
+{
+    DWORD CompressedBlockSize;
+    FLOAT TicksPerSec;
+    DWORD PlaybackType;
+    DWORD BufferLength;
+};
+
+//d3dx9shader.bi
+enum D3DXSHADERFLAGS{
+	D3DXSHADER_DEBUG                   =(1 << 0),
+	D3DXSHADER_SKIPVALIDATION          =(1 << 1),
+	D3DXSHADER_SKIPOPTIMIZATION        =(1 << 2),
+	D3DXSHADER_PACKMATRIX_ROWMAJOR     =(1 << 3),
+	D3DXSHADER_PACKMATRIX_COLUMNMAJOR  =(1 << 4),
+	D3DXSHADER_PARTIALPRECISION        =(1 << 5),
+	D3DXSHADER_FORCE_VS_SOFTWARE_NOOPT =(1 << 6),
+	D3DXSHADER_FORCE_PS_SOFTWARE_NOOPT =(1 << 7),
+	D3DXSHADER_NO_PRESHADER            =(1 << 8),
+	D3DXSHADER_AVOID_FLOW_CONTROL      =(1 << 9),
+	D3DXSHADER_PREFER_FLOW_CONTROL     =(1 << 10)
+};
+struct D3DXMACRO
+{
+    int lpstrName;
+    int lpstrDefinition;
+};
+struct D3DXSEMANTIC
+{
+    UINT Usage;
+    UINT UsageIndex;
+};
+struct D3DXFRAGMENT_DESC
+{
+    int lpstrName;
+    DWORD Target;
+};
+enum D3DXREGISTER_SET
+{
+    D3DXRS_BOOL,
+    D3DXRS_INT4,
+    D3DXRS_FLOAT4,
+    D3DXRS_SAMPLER
+};
+enum D3DXPARAMETER_CLASS
+{
+    D3DXPC_SCALAR,
+    D3DXPC_VECTOR,
+    D3DXPC_MATRIX_ROWS,
+    D3DXPC_MATRIX_COLUMNS,
+    D3DXPC_OBJECT,
+	D3DXPC_STRUCT
+};
+enum D3DXPARAMETER_TYPE
+{
+    D3DXPT_VOID,
+    D3DXPT_BOOL,
+    D3DXPT_INT,
+    D3DXPT_FLOAT,
+    D3DXPT_STRING,
+    D3DXPT_TEXTURE,
+    D3DXPT_TEXTURE1D,
+    D3DXPT_TEXTURE2D,
+    D3DXPT_TEXTURE3D,
+    D3DXPT_TEXTURECUBE,
+    D3DXPT_SAMPLER,
+    D3DXPT_SAMPLER1D,
+    D3DXPT_SAMPLER2D,
+    D3DXPT_SAMPLER3D,
+    D3DXPT_SAMPLERCUBE,
+    D3DXPT_PIXELSHADER,
+    D3DXPT_VERTEXSHADER,
+    D3DXPT_PIXELFRAGMENT,
+    D3DXPT_VERTEXFRAGMENT,
+};
+struct D3DXCONSTANTTABLE_DESC
+{
+    int lpstrCreator;                     // Creator string
+    DWORD Version;                      // Shader version
+    UINT Constants;                     // Number of constants
+};
+struct D3DXCONSTANT_DESC
+{
+    int lpstrName;                        // Constant name
+    enum D3DXREGISTER_SET RegisterSet;       // Register set
+    UINT RegisterIndex;                 // Register index
+    UINT RegisterCount;                 // Number of registers occupied
+    enum D3DXPARAMETER_CLASS Class;          // Class
+    enum D3DXPARAMETER_TYPE Type;            // Component type
+    UINT Rows;                          // Number of rows
+    UINT Columns;                       // Number of columns
+    UINT Elements;                      // Number of array elements
+    UINT StructMembers;                 // Number of structure member sub-parameters
+    UINT Bytes;                         // Data size, in bytes
+    int lpDefaultValue;               // Pointer to default value
+};
+enum D3DXINCLUDE_TYPE
+{
+    D3DXINC_LOCAL,
+    D3DXINC_SYSTEM,
+};
+typedef int D3DXHANDLE;//LPCSTR
+typedef D3DXHANDLE *LPD3DXHANDLE;
+[odl,uuid(AB3C758F-093E-4356-B762-4DB18F1B3A01)]
+interface D3DXConstantTable:IUnknown{
+	// Buffer
+    int GetBufferPointer();
+    DWORD GetBufferSize();
+    // Descs
+    HRESULT GetDesc( struct D3DXCONSTANTTABLE_DESC *pDesc);
+    HRESULT GetConstantDesc( D3DXHANDLE hConstant, struct D3DXCONSTANT_DESC *pConstantDesc, UINT *pCount);
+    UINT GetSamplerIndex( D3DXHANDLE hConstant);
+    // Handle operations
+    D3DXHANDLE GetConstant( D3DXHANDLE hConstant, UINT Index);
+    D3DXHANDLE GetConstantByName( D3DXHANDLE hConstant, int lpstrName);
+    D3DXHANDLE GetConstantElement( D3DXHANDLE hConstant, UINT Index);
+    // Set Constants
+    HRESULT SetDefaults( Direct3DDevice9* pDevice);
+    HRESULT SetValue( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, void* pData, UINT Bytes);
+    HRESULT SetBool( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, int b);
+    HRESULT SetBoolArray( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, int* pb, UINT Count);
+    HRESULT SetInt( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, int n);
+    HRESULT SetIntArray( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, int* pn, UINT Count);
+    HRESULT SetFloat( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, FLOAT f);
+    HRESULT SetFloatArray( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, FLOAT* pf, UINT Count);
+    HRESULT SetVector( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, struct D3DXVECTOR4* pVector);
+    HRESULT SetVectorArray( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, struct D3DXVECTOR4* pVector, UINT Count);
+    HRESULT SetMatrix( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, struct D3DXMATRIX* pMatrix);
+    HRESULT SetMatrixArray( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, struct D3DXMATRIX* pMatrix, UINT Count);
+    HRESULT SetMatrixPointerArray( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, int* ppMatrix, UINT Count);
+    HRESULT SetMatrixTranspose( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, struct D3DXMATRIX* pMatrix);
+    HRESULT SetMatrixTransposeArray( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, struct D3DXMATRIX* pMatrix, UINT Count);
+    HRESULT SetMatrixTransposePointerArray( Direct3DDevice9* pDevice, D3DXHANDLE hConstant, int* ppMatrix, UINT Count);
+};
+[odl,uuid(3E3D67F8-AA7A-405d-A857-BA01D4758426)]
+interface D3DXTextureShader:IUnknown{
+    // Gets
+    HRESULT GetFunction( [out,retval]D3DXBuffer **ppFunction);
+    HRESULT GetConstantBuffer( [out,retval]D3DXBuffer **ppConstantBuffer);
+    // Descs
+    HRESULT GetDesc( struct D3DXCONSTANTTABLE_DESC *pDesc);
+    HRESULT GetConstantDesc( D3DXHANDLE hConstant, struct D3DXCONSTANT_DESC *pConstantDesc, UINT *pCount);
+    // Handle operations
+    D3DXHANDLE GetConstant( D3DXHANDLE hConstant, UINT Index);
+    D3DXHANDLE GetConstantByName( D3DXHANDLE hConstant, int lpstrName);
+    D3DXHANDLE GetConstantElement( D3DXHANDLE hConstant, UINT Index);
+    // Set Constants
+    HRESULT SetDefaults();
+    HRESULT SetValue( D3DXHANDLE hConstant, void* pData, UINT Bytes);
+    HRESULT SetBool( D3DXHANDLE hConstant, int b);
+    HRESULT SetBoolArray( D3DXHANDLE hConstant, int* pb, UINT Count);
+    HRESULT SetInt( D3DXHANDLE hConstant, int n);
+    HRESULT SetIntArray( D3DXHANDLE hConstant, int* pn, UINT Count);
+    HRESULT SetFloat( D3DXHANDLE hConstant, FLOAT f);
+    HRESULT SetFloatArray( D3DXHANDLE hConstant, FLOAT* pf, UINT Count);
+    HRESULT SetVector( D3DXHANDLE hConstant, struct D3DXVECTOR4* pVector);
+    HRESULT SetVectorArray( D3DXHANDLE hConstant, struct D3DXVECTOR4* pVector, UINT Count);
+    HRESULT SetMatrix( D3DXHANDLE hConstant, struct D3DXMATRIX* pMatrix);
+    HRESULT SetMatrixArray( D3DXHANDLE hConstant, struct D3DXMATRIX* pMatrix, UINT Count);
+    HRESULT SetMatrixPointerArray( D3DXHANDLE hConstant, int* ppMatrix, UINT Count);
+    HRESULT SetMatrixTranspose( D3DXHANDLE hConstant, struct D3DXMATRIX* pMatrix);
+    HRESULT SetMatrixTransposeArray( D3DXHANDLE hConstant, struct D3DXMATRIX* pMatrix, UINT Count);
+    HRESULT SetMatrixTransposePointerArray( D3DXHANDLE hConstant, int* ppMatrix, UINT Count);
+};
+[odl,uuid(1A2C0CC2-E5B6-4ebc-9E8D-390E057811B6)]
+interface D3DXFragmentLinker:IUnknown{
+    // fragment access and information retrieval functions
+    HRESULT GetDevice( [out,retval]Direct3DDevice9** ppDevice);
+    UINT GetNumberOfFragments();
+    D3DXHANDLE GetFragmentHandleByIndex( UINT Index);
+    D3DXHANDLE GetFragmentHandleByName( int lpstrName);
+    HRESULT GetFragmentDesc( D3DXHANDLE Name, struct D3DXFRAGMENT_DESC* FragDesc);
+    // add the fragments in the buffer to the linker
+    HRESULT AddFragments( DWORD *Fragments);
+    // Create a buffer containing the fragments.  Suitable for saving to disk
+    HRESULT GetAllFragments( [out,retval]D3DXBuffer **ppBuffer);
+    HRESULT GetFragment( D3DXHANDLE Name, [out,retval]D3DXBuffer **ppBuffer);
+    HRESULT LinkShader( int lpstrProfile, DWORD Flags, D3DXHANDLE *rgFragmentHandles, UINT cFragments, D3DXBuffer **ppBuffer, D3DXBuffer **ppErrorMsgs);
+	HRESULT LinkVertexShader( int lpstrProfile, DWORD Flags, D3DXHANDLE *rgFragmentHandles, UINT cFragments, Direct3DVertexShader9 **pVShader, D3DXBuffer **ppErrorMsgs);
+    HRESULT LinkPixelShader( int lpstrProfile, DWORD Flags, D3DXHANDLE *rgFragmentHandles, UINT cFragments, Direct3DPixelShader9 **pPShader, D3DXBuffer **ppErrorMsgs);
+    HRESULT ClearCache();
+};
+typedef [helpstring("This interface is intended to be implemented by the application, and can\nbe used by various D3DX APIs.  This enables application-specific handling\nof #include directives in source files.")] struct
+ID3DXInclude{
+	[helpstring("STDMETHOD(THIS_ D3DXINCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes);")]
+	int lpfnOpen;
+	[helpstring("STDMETHOD(THIS_ LPCVOID pData);")]
+	int lpfnClose;
+}ID3DXInclude;
+struct D3DXSHADER_CONSTANTTABLE
+{
+    DWORD Size;             // sizeof(D3DXSHADER_CONSTANTTABLE)
+    DWORD Creator;          // LPCSTR offset
+    DWORD Version;          // shader version
+    DWORD Constants;        // number of constants
+    DWORD ConstantInfo;     // D3DXSHADER_CONSTANTINFO[Constants] offset
+    DWORD Flags;            // flags shader was compiled with
+    DWORD Target;           // LPCSTR offset
+};
+struct D3DXSHADER_CONSTANTINFO
+{
+    DWORD Name;             // LPCSTR offset
+    WORD  RegisterSet;      // D3DXREGISTER_SET
+    WORD  RegisterIndex;    // register number
+    WORD  RegisterCount;    // number of registers
+    WORD  Reserved;         // reserved
+    DWORD TypeInfo;         // D3DXSHADER_TYPEINFO offset
+    DWORD DefaultValue;     // offset of default value
+};
+struct D3DXSHADER_TYPEINFO
+{
+    WORD  Class;            // D3DXPARAMETER_CLASS
+    WORD  Type;             // D3DXPARAMETER_TYPE
+    WORD  Rows;             // number of rows (matrices)
+    WORD  Columns;          // number of columns (vectors and matrices)
+    WORD  Elements;         // array dimension
+    WORD  StructMembers;    // number of struct members
+    DWORD StructMemberInfo; // D3DXSHADER_STRUCTMEMBERINFO[Members] offset
+};
+struct D3DXSHADER_STRUCTMEMBERINFO
+{
+    DWORD Name;             // LPCSTR offset
+    DWORD TypeInfo;         // D3DXSHADER_TYPEINFO offset
+};
+[dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX Shader APIs")]
+module D3DX9_Shader{
+	[entry("D3DXAssembleShader")] int D3DXAssembleShader(LPCSTR pSrcData, UINT SrcDataLen, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
+	[entry("D3DXCompileShader")] int D3DXCompileShader(LPCSTR pSrcData, UINT SrcDataLen, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, LPCSTR pFunctionName, int lpstrProfile, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs, D3DXConstantTable** ppConstantTable);
+	[entry("D3DXDisassembleShader")] int D3DXDisassembleShader(DWORD* pShader, BOOL EnableColorCode, int lpstrComments, D3DXBuffer** ppDisassembly);
+	[entry("D3DXGetPixelShaderProfile"),helpstring("return value=LPCSTR")]
+	int D3DXGetPixelShaderProfile(Direct3DDevice9* pDevice);
+	[entry("D3DXGetVertexShaderProfile"),helpstring("return value=LPCSTR")]
+	int D3DXGetVertexShaderProfile(Direct3DDevice9* pDevice);
+	[entry("D3DXFindShaderComment")] int D3DXFindShaderComment(DWORD* pFunction, DWORD FourCC, int* ppData, UINT* pSizeInBytes);
+	[entry("D3DXGetShaderSize")] UINT D3DXGetShaderSize(DWORD* pFunction);
+	[entry("D3DXGetShaderVersion")] DWORD D3DXGetShaderVersion(DWORD* pFunction);
+	[entry("D3DXGetShaderInputSemantics")] int D3DXGetShaderInputSemantics(DWORD* pFunction, struct D3DXSEMANTIC* pSemantics, UINT* pCount);
+	[entry("D3DXGetShaderOutputSemantics")] int D3DXGetShaderOutputSemantics(DWORD* pFunction, struct D3DXSEMANTIC* pSemantics, UINT* pCount);
+	[entry("D3DXGetShaderSamplers")] int D3DXGetShaderSamplers(DWORD* pFunction, LPCSTR* pSamplers, UINT* pCount);
+	[entry("D3DXGetShaderConstantTable")] int D3DXGetShaderConstantTable(DWORD* pFunction, D3DXConstantTable** ppConstantTable);
+	[entry("D3DXCreateTextureShader")] int D3DXCreateTextureShader(DWORD* pFunction, D3DXTextureShader** ppTextureShader);
+	[entry("D3DXGatherFragments")] int D3DXGatherFragments(LPCSTR pSrcData, UINT SrcDataLen, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
+	[entry("D3DXCreateFragmentLinker")] int D3DXCreateFragmentLinker(Direct3DDevice9* pDevice, UINT ShaderCacheSize, D3DXFragmentLinker** ppFragmentLinker);
+	[entry("D3DXAssembleShaderFromFileW")] int D3DXAssembleShaderFromFileW(BSTR pSrcFile, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
+	[entry("D3DXAssembleShaderFromResourceW")] int D3DXAssembleShaderFromResourceW(HMODULE hSrcModule, void* lpwstrSrcResource, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
+	[entry("D3DXCompileShaderFromFileW")] int D3DXCompileShaderFromFileW(BSTR pSrcFile, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, LPCSTR pFunctionName, LPCSTR pProfile, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs, D3DXConstantTable** ppConstantTable);
+	[entry("D3DXCompileShaderFromResourceW")] int D3DXCompileShaderFromResourceW(HMODULE hSrcModule, void* lpwstrSrcResource, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, LPCSTR pFunctionName, LPCSTR pProfile, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs, D3DXConstantTable** ppConstantTable);
+	[entry("D3DXGatherFragmentsFromFileW")] int D3DXGatherFragmentsFromFileW(BSTR pSrcFile, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
+	[entry("D3DXGatherFragmentsFromResourceW")] int D3DXGatherFragmentsFromResourceW(HMODULE hSrcModule, void* lpwstrSrcResource, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
+};
+//d3dx9effect.bi
+typedef struct D3DXEFFECT_DESC
+{
+    int lpstrCreator;                     // Creator string
+    UINT Parameters;                    // Number of parameters
+    UINT Techniques;                    // Number of techniques
+    UINT Functions;                     // Number of function entrypoints
+} D3DXEFFECT_DESC;
+typedef struct D3DXPARAMETER_DESC
+{
+    int lpstrName;                        // Parameter name
+    int lpstrSemantic;                    // Parameter semantic
+    enum D3DXPARAMETER_CLASS Class;          // Class
+    enum D3DXPARAMETER_TYPE Type;            // Component type
+    UINT Rows;                          // Number of rows
+    UINT Columns;                       // Number of columns
+    UINT Elements;                      // Number of array elements
+    UINT Annotations;                   // Number of annotations
+    UINT StructMembers;                 // Number of structure member sub-parameters
+    DWORD Flags;                        // D3DX_PARAMETER_* flags
+    UINT Bytes;                         // Parameter size, in bytes
+} D3DXPARAMETER_DESC;
+typedef struct D3DXTECHNIQUE_DESC
+{
+    int lpstrName;                        // Technique name
+    UINT Passes;                        // Number of passes
+    UINT Annotations;                   // Number of annotations
+} D3DXTECHNIQUE_DESC;
+typedef struct D3DXPASS_DESC
+{
+    int lpstrName;                        // Pass name
+    UINT Annotations;                   // Number of annotations
+    int lpdwVertexShaderFunction; // Vertex shader function
+    int lpdwPixelShaderFunction;  // Pixel shader function
+} D3DXPASS_DESC;
+typedef struct D3DXFUNCTION_DESC
+{
+    int lpstrName;                        // Function name
+    UINT Annotations;                   // Number of annotations
+} D3DXFUNCTION_DESC;
+#define ID3DXEffectPool D3DXEffectPool
+#define LPD3DXEFFECTPOOL D3DXEffectPool*
+[odl,uuid(9537AB04-3250-412e-8213-FCD2F8677933)] interface D3DXEffectPool:IUnknown{/* No public methods */};
+#define ID3DXBaseEffect D3DXBaseEffect
+#define LPD3DXBASEEFFECT D3DXBaseEffect*
+[odl,uuid(017C18AC-103F-4417-8C51-6BF6EF1E56BE)]
+interface D3DXBaseEffect:IUnknown{
+	// Descs
+	HRESULT GetDesc( D3DXEFFECT_DESC* pDesc);
+	HRESULT GetParameterDesc( D3DXHANDLE hParameter, D3DXPARAMETER_DESC* pDesc);
+	HRESULT GetTechniqueDesc( D3DXHANDLE hTechnique, D3DXTECHNIQUE_DESC* pDesc);
+	HRESULT GetPassDesc( D3DXHANDLE hPass, D3DXPASS_DESC* pDesc);
+	HRESULT GetFunctionDesc( D3DXHANDLE hShader, D3DXFUNCTION_DESC* pDesc);
+	// Handle operations
+	D3DXHANDLE GetParameter( D3DXHANDLE hParameter, UINT Index);
+	D3DXHANDLE GetParameterByName( D3DXHANDLE hParameter, void* lpstrName);
+	D3DXHANDLE GetParameterBySemantic( D3DXHANDLE hParameter, void* lpstrSemantic);
+	D3DXHANDLE GetParameterElement( D3DXHANDLE hParameter, UINT Index);
+	D3DXHANDLE GetTechnique( UINT Index);
+	D3DXHANDLE GetTechniqueByName( void* lpstrName);
+	D3DXHANDLE GetPass( D3DXHANDLE hTechnique, UINT Index);
+	D3DXHANDLE GetPassByName( D3DXHANDLE hTechnique, void* lpstrName);
+	D3DXHANDLE GetFunction( UINT Index);
+	D3DXHANDLE GetFunctionByName( void* lpstrName);
+	D3DXHANDLE GetAnnotation( D3DXHANDLE hObject, UINT Index);
+	D3DXHANDLE GetAnnotationByName( D3DXHANDLE hObject, void* lpstrName);
+	// Get/Set Parameters
+	HRESULT SetValue( D3DXHANDLE hParameter, void* pData, UINT Bytes);
+	HRESULT GetValue( D3DXHANDLE hParameter, void* pData, UINT Bytes);
+	HRESULT SetBool( D3DXHANDLE hParameter, int b);
+	HRESULT GetBool( D3DXHANDLE hParameter, [out,retval]int* pb);
+	HRESULT SetBoolArray( D3DXHANDLE hParameter, int* pb, UINT Count);
+	HRESULT GetBoolArray( D3DXHANDLE hParameter, int* pb, UINT Count);
+	HRESULT SetInt( D3DXHANDLE hParameter, int n);
+	HRESULT GetInt( D3DXHANDLE hParameter, [out,retval]int* pn);
+	HRESULT SetIntArray( D3DXHANDLE hParameter, int* pn, UINT Count);
+	HRESULT GetIntArray( D3DXHANDLE hParameter, int* pn, UINT Count);
+	HRESULT SetFloat( D3DXHANDLE hParameter, FLOAT f);
+	HRESULT GetFloat( D3DXHANDLE hParameter, [out,retval]FLOAT* pf);
+	HRESULT SetFloatArray( D3DXHANDLE hParameter, FLOAT* pf, UINT Count);
+	HRESULT GetFloatArray( D3DXHANDLE hParameter, FLOAT* pf, UINT Count);
+	HRESULT SetVector( D3DXHANDLE hParameter, struct D3DXVECTOR4* pVector);
+	HRESULT GetVector( D3DXHANDLE hParameter, struct D3DXVECTOR4* pVector);
+	HRESULT SetVectorArray( D3DXHANDLE hParameter, struct D3DXVECTOR4* pVector, UINT Count);
+	HRESULT GetVectorArray( D3DXHANDLE hParameter, struct D3DXVECTOR4* pVector, UINT Count);
+	HRESULT SetMatrix( D3DXHANDLE hParameter, struct D3DXMATRIX* pMatrix);
+	HRESULT GetMatrix( D3DXHANDLE hParameter, struct D3DXMATRIX* pMatrix);
+	HRESULT SetMatrixArray( D3DXHANDLE hParameter, struct D3DXMATRIX* pMatrix, UINT Count);
+	HRESULT GetMatrixArray( D3DXHANDLE hParameter, struct D3DXMATRIX* pMatrix, UINT Count);
+	HRESULT SetMatrixPointerArray( D3DXHANDLE hParameter, int* ppMatrix, UINT Count);
+	HRESULT GetMatrixPointerArray( D3DXHANDLE hParameter, int* ppMatrix, UINT Count);
+	HRESULT SetMatrixTranspose( D3DXHANDLE hParameter, struct D3DXMATRIX* pMatrix);
+	HRESULT GetMatrixTranspose( D3DXHANDLE hParameter, struct D3DXMATRIX* pMatrix);
+	HRESULT SetMatrixTransposeArray( D3DXHANDLE hParameter, struct D3DXMATRIX* pMatrix, UINT Count);
+	HRESULT GetMatrixTransposeArray( D3DXHANDLE hParameter, struct D3DXMATRIX* pMatrix, UINT Count);
+	HRESULT SetMatrixTransposePointerArray( D3DXHANDLE hParameter, int* ppMatrix, UINT Count);
+	HRESULT GetMatrixTransposePointerArray( D3DXHANDLE hParameter, int* ppMatrix, UINT Count);
+	HRESULT SetString( D3DXHANDLE hParameter, void* lpstrString);
+	HRESULT GetString( D3DXHANDLE hParameter, int* ppString);
+	HRESULT SetTexture( D3DXHANDLE hParameter, Direct3DBaseTexture9* pTexture);
+	HRESULT GetTexture( D3DXHANDLE hParameter, [out,retval]Direct3DBaseTexture9** ppTexture);
+	HRESULT GetPixelShader( D3DXHANDLE hParameter, [out,retval]Direct3DPixelShader9** ppPShader);
+	HRESULT GetVertexShader( D3DXHANDLE hParameter, [out,retval]Direct3DVertexShader9** ppVShader);
+	//Set Range of an Array to pass to device
+	//Useful for sending only a subrange of an array down to the device
+	HRESULT SetArrayRange( D3DXHANDLE hParameter, UINT uStart, UINT uEnd);
+};
+#define ID3DXEffectStateManager D3DXEffectStateManager
+#define LPD3DXEFFECTSTATEMANAGER D3DXEffectStateManager*
+[odl,uuid(79AAB587-6DBC-4fa7-82DE-37FA1781C5CE)]
+interface D3DXEffectStateManager:IUnknown{
+	// The following methods are called by the Effect when it wants to make
+	// the corresponding device call.  Note that:
+	// 1. Users manage the state and are therefore responsible for making the
+	//    the corresponding device calls themselves inside their callbacks.
+	// 2. Effects pay attention to the return values of the callbacks, and so
+	//    users must pay attention to what they return in their callbacks.
+	HRESULT SetTransform( enum D3DTRANSFORMSTATETYPE State, struct D3DMATRIX *pMatrix);
+	HRESULT SetMaterial( struct D3DMATERIAL9 *pMaterial);
+	HRESULT SetLight( DWORD Index, struct D3DLIGHT9 *pLight);
+	HRESULT LightEnable( DWORD Index, int bEnable);
+	HRESULT SetRenderState( enum D3DRENDERSTATETYPE State, DWORD Value);
+	HRESULT SetTexture( DWORD Stage, Direct3DBaseTexture9 *pTexture);
+	HRESULT SetTextureStageState( DWORD Stage, enum D3DTEXTURESTAGESTATETYPE Type, DWORD Value);
+	HRESULT SetSamplerState( DWORD Sampler, enum D3DSAMPLERSTATETYPE Type, DWORD Value);
+	HRESULT SetNPatchMode( FLOAT NumSegments);
+	HRESULT SetFVF( DWORD FVF);
+	HRESULT SetVertexShader( Direct3DVertexShader9* pShader);
+	HRESULT SetVertexShaderConstantF( UINT RegisterIndex, FLOAT *pConstantData, UINT RegisterCount);
+	HRESULT SetVertexShaderConstantI( UINT RegisterIndex, int *pConstantData, UINT RegisterCount);
+	HRESULT SetVertexShaderConstantB( UINT RegisterIndex, int *pConstantData, UINT RegisterCount);
+	HRESULT SetPixelShader( Direct3DPixelShader9* pShader);
+	HRESULT SetPixelShaderConstantF( UINT RegisterIndex, FLOAT *pConstantData, UINT RegisterCount);
+	HRESULT SetPixelShaderConstantI( UINT RegisterIndex, int *pConstantData, UINT RegisterCount);
+	HRESULT SetPixelShaderConstantB( UINT RegisterIndex, int *pConstantData, UINT RegisterCount);
+};
+#define ID3DXEffect D3DXEffect
+#define LPD3DXEFFECT D3DXEffect*
+[odl,uuid(D165CCB1-62B0-4a33-B3FA-A92300305A11)]
+interface D3DXEffect:D3DXBaseEffect{
+	// Pool
+	HRESULT GetPool( [out,retval]LPD3DXEFFECTPOOL* ppPool);
+	// Selecting and setting a technique
+	HRESULT SetTechnique( D3DXHANDLE hTechnique);
+	D3DXHANDLE GetCurrentTechnique();
+	HRESULT ValidateTechnique( D3DXHANDLE hTechnique);
+	HRESULT FindNextValidTechnique( D3DXHANDLE hTechnique, D3DXHANDLE *pTechnique);
+	int IsParameterUsed( D3DXHANDLE hParameter, D3DXHANDLE hTechnique);
+	// Using current technique
+	// Begin           starts active technique
+	// BeginPass       begins a pass
+	// CommitChanges   updates changes to any set calls in the pass. This should be called before
+	//                 any DrawPrimitive call to d3d
+	// EndPass         ends a pass
+	// End             ends active technique
+	HRESULT Begin( UINT *pPasses, DWORD Flags);
+	HRESULT BeginPass( UINT Pass);
+	HRESULT CommitChanges();
+	HRESULT EndPass();
+	HRESULT End();
+	// Managing D3D Device
+	HRESULT GetDevice( [out,retval]Direct3DDevice9** ppDevice);
+	HRESULT OnLostDevice();
+	HRESULT OnResetDevice();
+	// Logging device calls
+	HRESULT SetStateManager( LPD3DXEFFECTSTATEMANAGER pManager);
+	HRESULT GetStateManager( [out,retval]LPD3DXEFFECTSTATEMANAGER *ppManager);
+	// Parameter blocks
+	HRESULT BeginParameterBlock();
+	D3DXHANDLE EndParameterBlock();
+	HRESULT ApplyParameterBlock( D3DXHANDLE hParameterBlock);
+	// Cloning
+	HRESULT CloneEffect( Direct3DDevice9* pDevice, [out,retval]LPD3DXEFFECT* ppEffect);
+};
+#define ID3DXEffectCompiler D3DXEffectCompiler
+#define LPD3DXEFFECTCOMPILER D3DXEffectCompiler*
+[odl,uuid(51B8A949-1A31-47e6-BEA0-4B30DB53F1E0)]
+interface D3DXEffectCompiler:D3DXBaseEffect{
+	// Parameter sharing, specialization, and information
+	HRESULT SetLiteral( D3DXHANDLE hParameter, int bLiteral);
+	HRESULT GetLiteral( D3DXHANDLE hParameter, [out,retval]int *ret);
+	// Compilation
+	HRESULT CompileEffect( DWORD Flags,D3DXBuffer** ppEffect, D3DXBuffer** ppErrorMsgs);
+	HRESULT CompileShader( D3DXHANDLE hFunction, void* lpstrTarget, DWORD Flags,D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs, D3DXConstantTable** ppConstantTable);
+};
+[dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX effect types and Shaders")]
+module D3DX9_Effect{
+	int const D3DXFX_DONOTSAVESTATE=(1 << 0);
+	int const D3DXFX_DONOTSAVESHADERSTATE=(1 << 1);
+	int const D3DXFX_DONOTSAVESAMPLERSTATE=(1 << 2);
+	int const D3DX_PARAMETER_SHARED=(1 << 0);
+	int const D3DX_PARAMETER_LITERAL=(1 << 1);
+	int const D3DX_PARAMETER_ANNOTATION=(1 << 2);
+	int const D3DXFX_NOT_CLONEABLE   =       (1 << 11);
+	int const D3DXFX_LARGEADDRESSAWARE =     (1 << 17);
+	[entry("D3DXCreateEffectPool")] int D3DXCreateEffectPool(LPD3DXEFFECTPOOL* ppPool);
+	[entry("D3DXCreateEffect"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffect(Direct3DDevice9* pDevice, void* pSrcData, UINT SrcDataLen, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTPOOL pPool, LPD3DXEFFECT* ppEffect, D3DXBuffer** ppCompilationErrors);
+	[entry("D3DXCreateEffectCompiler"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffectCompiler(void* lpstrSrcData, UINT SrcDataLen, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTCOMPILER* ppCompiler, D3DXBuffer** ppParseErrors);
+	[entry("D3DXDisassembleEffect")] int D3DXDisassembleEffect(LPD3DXEFFECT pEffect, int bEnableColorCode, D3DXBuffer** ppDisassembly);
+	[entry("D3DXCreateEffectFromFileW"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffectFromFileW(Direct3DDevice9* pDevice, BSTR pSrcFile, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTPOOL pPool, LPD3DXEFFECT* ppEffect, D3DXBuffer** ppCompilationErrors);
+	[entry("D3DXCreateEffectFromResourceW"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffectFromResourceW(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* lpwstrSrcResource, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTPOOL pPool, LPD3DXEFFECT* ppEffect, D3DXBuffer** ppCompilationErrors);
+	[entry("D3DXCreateEffectCompilerFromFileW"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffectCompilerFromFileW(BSTR pSrcFile, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTCOMPILER* ppCompiler, D3DXBuffer** ppParseErrors);
+	[entry("D3DXCreateEffectCompilerFromResourceW"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffectCompilerFromResourceW(HMODULE hSrcModule, void* lpwstrSrcResource, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTCOMPILER* ppCompiler, D3DXBuffer** ppParseErrors);
+};
+//d3dx9tex.bi
+enum D3DXIMAGE_FILEFORMAT{
+	D3DXIFF_BMP = 0,
+	D3DXIFF_JPG = 1,
+	D3DXIFF_TGA = 2,
+	D3DXIFF_PNG = 3,
+	D3DXIFF_DDS = 4,
+	D3DXIFF_PPM = 5,
+	D3DXIFF_DIB = 6,
+	D3DXIFF_HDR = 7,
+	D3DXIFF_PFM = 8
+};
+struct D3DXIMAGE_INFO
+{
+    UINT                    Width;
+    UINT                    Height;
+    UINT                    Depth;
+    UINT                    MipLevels;
+    enum D3DFORMAT               Format;
+    enum D3DRESOURCETYPE         ResourceType;
+    enum D3DXIMAGE_FILEFORMAT    ImageFileFormat;
+};
+[dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX texturing APIs")]
+module D3DX9_Tex{
+	int const D3DX_NORMALMAP_MIRROR_U=(1 << 16);
+	int const D3DX_NORMALMAP_MIRROR_V=(2 << 16);
+	int const D3DX_NORMALMAP_MIRROR=(3 << 16);
+	int const D3DX_NORMALMAP_INVERTSIGN=(8 << 16);
+	int const D3DX_NORMALMAP_COMPUTE_OCCLUSION=(16 << 16);
+	int const D3DX_CHANNEL_RED=(1 << 0);
+	int const D3DX_CHANNEL_BLUE=(1 << 1);
+	int const D3DX_CHANNEL_GREEN=(1 << 2);
+	int const D3DX_CHANNEL_ALPHA=(1 << 3);
+	int const D3DX_CHANNEL_LUMINANCE=(1 << 4);
+	[entry("D3DXGetImageInfoFromFileInMemory")] int D3DXGetImageInfoFromFileInMemory(void* pSrcData, UINT SrcDataSize, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXLoadSurfaceFromFileInMemory")] int D3DXLoadSurfaceFromFileInMemory(Direct3DSurface9* pDestSurface, void* pDestPalette, struct D3DRECT* pDestRect, void* pSrcData, UINT SrcDataSize, struct D3DRECT* pSrcRect, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXLoadSurfaceFromSurface")] int D3DXLoadSurfaceFromSurface(Direct3DSurface9* pDestSurface, void* pDestPalette, struct D3DRECT* pDestRect, Direct3DSurface9* pSrcSurface, void* pSrcPalette, struct D3DRECT* pSrcRect, DWORD Filter, int ColorKey);
+	[entry("D3DXLoadSurfaceFromMemory")] int D3DXLoadSurfaceFromMemory(Direct3DSurface9* pDestSurface, void* pDestPalette, struct D3DRECT* pDestRect, void* pSrcMemory, enum D3DFORMAT SrcFormat, UINT SrcPitch, void* pSrcPalette, struct D3DRECT* pSrcRect, DWORD Filter, int ColorKey);
+	[entry("D3DXSaveSurfaceToFileInMemory")] int D3DXSaveSurfaceToFileInMemory(D3DXBUFFER** ppDestBuf, enum D3DXIMAGE_FILEFORMAT DestFormat, Direct3DSurface9* pSrcSurface, void* pSrcPalette, struct D3DRECT* pSrcRect);
+	[entry("D3DXLoadVolumeFromFileInMemory")] int D3DXLoadVolumeFromFileInMemory(Direct3DVolume9* pDestVolume, void* pDestPalette, struct D3DBOX* pDestBox, void* pSrcData, UINT SrcDataSize, struct D3DBOX* pSrcBox, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXLoadVolumeFromVolume")] int D3DXLoadVolumeFromVolume(Direct3DVolume9* pDestVolume, void* pDestPalette, struct D3DBOX* pDestBox, Direct3DVolume9* pSrcVolume, void* pSrcPalette, struct D3DBOX* pSrcBox, DWORD Filter, int ColorKey);
+	[entry("D3DXLoadVolumeFromMemory")] int D3DXLoadVolumeFromMemory(Direct3DVolume9* pDestVolume, void* pDestPalette, struct D3DBOX* pDestBox, void* pSrcMemory, enum D3DFORMAT SrcFormat, UINT SrcRowPitch, UINT SrcSlicePitch, void* pSrcPalette, struct D3DBOX* pSrcBox, DWORD Filter, int ColorKey);
+	[entry("D3DXSaveVolumeToFileInMemory")] int D3DXSaveVolumeToFileInMemory(D3DXBUFFER** ppDestBuf, enum D3DXIMAGE_FILEFORMAT DestFormat, Direct3DVolume9* pSrcVolume, void* pSrcPalette, struct D3DBOX* pSrcBox);
+	[entry("D3DXCheckTextureRequirements")] int D3DXCheckTextureRequirements(Direct3DDevice9* pDevice, UINT* pWidth, UINT* pHeight, UINT* pNumMipLevels, DWORD Usage, enum D3DFORMAT* pFormat, enum D3DPOOL Pool);
+	[entry("D3DXCheckCubeTextureRequirements")] int D3DXCheckCubeTextureRequirements(Direct3DDevice9* pDevice, UINT* pSize, UINT* pNumMipLevels, DWORD Usage, enum D3DFORMAT* pFormat, enum D3DPOOL Pool);
+	[entry("D3DXCheckVolumeTextureRequirements")] int D3DXCheckVolumeTextureRequirements(Direct3DDevice9* pDevice, UINT* pWidth, UINT* pHeight, UINT* pDepth, UINT* pNumMipLevels, DWORD Usage, enum D3DFORMAT* pFormat, enum D3DPOOL Pool);
+	[entry("D3DXCreateTexture")] int D3DXCreateTexture(Direct3DDevice9* pDevice, UINT Width, UINT Height, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTexture")] int D3DXCreateCubeTexture(Direct3DDevice9* pDevice, UINT Size, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTexture")] int D3DXCreateVolumeTexture(Direct3DDevice9* pDevice, UINT Width, UINT Height, UINT Depth, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXCreateTextureFromFileInMemory")] int D3DXCreateTextureFromFileInMemory(Direct3DDevice9* pDevice, void* pSrcData, UINT SrcDataSize, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromFileInMemory")] int D3DXCreateCubeTextureFromFileInMemory(Direct3DDevice9* pDevice, void* pSrcData, UINT SrcDataSize, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromFileInMemory")] int D3DXCreateVolumeTextureFromFileInMemory(Direct3DDevice9* pDevice, void* pSrcData, UINT SrcDataSize, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXCreateTextureFromFileInMemoryEx")] int D3DXCreateTextureFromFileInMemoryEx(Direct3DDevice9* pDevice, void* pSrcData, UINT SrcDataSize, UINT Width, UINT Height, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromFileInMemoryEx")] int D3DXCreateCubeTextureFromFileInMemoryEx(Direct3DDevice9* pDevice, void* pSrcData, UINT SrcDataSize, UINT Size, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromFileInMemoryEx")] int D3DXCreateVolumeTextureFromFileInMemoryEx(Direct3DDevice9* pDevice, void* pSrcData, UINT SrcDataSize, UINT Width, UINT Height, UINT Depth, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXSaveTextureToFileInMemory")] int D3DXSaveTextureToFileInMemory(D3DXBUFFER** ppDestBuf, enum D3DXIMAGE_FILEFORMAT DestFormat, Direct3DBaseTexture9* pSrcTexture, void* pSrcPalette);
+	[entry("D3DXFilterTexture")] int D3DXFilterTexture(Direct3DBaseTexture9* pBaseTexture, void* pPalette, UINT SrcLevel, DWORD Filter);
+	[entry("D3DXFillTexture")] int D3DXFillTexture(Direct3DTexture9* pTexture, /*D3DXFILL2D* */int pFunction, void* pData);
+	[entry("D3DXFillCubeTexture")] int D3DXFillCubeTexture(Direct3DCubeTexture9* pCubeTexture, /*D3DXFILL3D* */int pFunction, void* pData);
+	[entry("D3DXFillVolumeTexture")] int D3DXFillVolumeTexture(Direct3DVolumeTexture9* pVolumeTexture, /*D3DXFILL3D* */int pFunction, void* pData);
+	[entry("D3DXFillTextureTX")] int D3DXFillTextureTX(Direct3DTexture9* pTexture, D3DXTEXTURESHADER* pTextureShader);
+	[entry("D3DXFillCubeTextureTX")] int D3DXFillCubeTextureTX(Direct3DCubeTexture9* pCubeTexture, D3DXTEXTURESHADER* pTextureShader);
+	[entry("D3DXFillVolumeTextureTX")] int D3DXFillVolumeTextureTX(Direct3DVolumeTexture9* pVolumeTexture, D3DXTEXTURESHADER* pTextureShader);
+	[entry("D3DXComputeNormalMap")] int D3DXComputeNormalMap(Direct3DTexture9* pTexture, Direct3DTexture9* pSrcTexture, void* pSrcPalette, DWORD Flags, DWORD Channel, FLOAT Amplitude);
+	[entry("D3DXGetImageInfoFromFileW")] int D3DXGetImageInfoFromFileW(BSTR pSrcFile, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXGetImageInfoFromResourceW")] int D3DXGetImageInfoFromResourceW(HMODULE hSrcModule, void* pSrcResource, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXLoadSurfaceFromFileW")] int D3DXLoadSurfaceFromFileW(Direct3DSurface9* pDestSurface, void* pDestPalette, void* pDestRect, BSTR pSrcFile, void* pSrcRect, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXLoadSurfaceFromResourceW")] int D3DXLoadSurfaceFromResourceW(Direct3DSurface9* pDestSurface, void* pDestPalette, void* pDestRect, HMODULE hSrcModule, void* pSrcResource, void* pSrcRect, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXSaveSurfaceToFileW")] int D3DXSaveSurfaceToFileW(BSTR pDestFile, enum D3DXIMAGE_FILEFORMAT DestFormat, Direct3DSurface9* pSrcSurface, void* pSrcPalette, void* pSrcRect);
+	[entry("D3DXLoadVolumeFromFileW")] int D3DXLoadVolumeFromFileW(Direct3DVolume9* pDestVolume, void* pDestPalette, struct D3DBOX* pDestBox, BSTR pSrcFile, struct D3DBOX* pSrcBox, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXLoadVolumeFromResourceW")] int D3DXLoadVolumeFromResourceW(Direct3DVolume9* pDestVolume, void* pDestPalette, struct D3DBOX* pDestBox, HMODULE hSrcModule, void* pSrcResource, struct D3DBOX* pSrcBox, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXSaveVolumeToFileW")] int D3DXSaveVolumeToFileW(BSTR pDestFile, enum D3DXIMAGE_FILEFORMAT DestFormat, Direct3DVolume9* pSrcVolume, void* pSrcPalette, struct D3DBOX* pSrcBox);
+	[entry("D3DXCreateTextureFromFileW")] int D3DXCreateTextureFromFileW(Direct3DDevice9* pDevice, BSTR pSrcFile, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromFileW")] int D3DXCreateCubeTextureFromFileW(Direct3DDevice9* pDevice, BSTR pSrcFile, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromFileW")] int D3DXCreateVolumeTextureFromFileW(Direct3DDevice9* pDevice, BSTR pSrcFile, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXCreateTextureFromResourceW")] int D3DXCreateTextureFromResourceW(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromResourceW")] int D3DXCreateCubeTextureFromResourceW(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromResourceW")] int D3DXCreateVolumeTextureFromResourceW(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXCreateTextureFromFileExW")] int D3DXCreateTextureFromFileExW(Direct3DDevice9* pDevice, BSTR pSrcFile, UINT Width, UINT Height, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromFileExW")] int D3DXCreateCubeTextureFromFileExW(Direct3DDevice9* pDevice, BSTR pSrcFile, UINT Size, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromFileExW")] int D3DXCreateVolumeTextureFromFileExW(Direct3DDevice9* pDevice, BSTR pSrcFile, UINT Width, UINT Height, UINT Depth, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXCreateTextureFromResourceExW")] int D3DXCreateTextureFromResourceExW(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, UINT Width, UINT Height, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromResourceExW")] int D3DXCreateCubeTextureFromResourceExW(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, UINT Size, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromResourceExW")] int D3DXCreateVolumeTextureFromResourceExW(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, UINT Width, UINT Height, UINT Depth, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXSaveTextureToFileW")] int D3DXSaveTextureToFileW(BSTR pDestFile, enum D3DXIMAGE_FILEFORMAT DestFormat, Direct3DBaseTexture9* pSrcTexture, void* pSrcPalette);
+};
+//d3dx9shape.bi
+struct POINTFLOAT {
+  FLOAT   x;
+  FLOAT   y;
+};
+struct GLYPHMETRICSFLOAT {
+  FLOAT       gmfBlackBoxX;
+  FLOAT       gmfBlackBoxY;
+  struct POINTFLOAT  gmfptGlyphOrigin;
+  FLOAT       gmfCellIncX;
+  FLOAT       gmfCellIncY;
+};
+[dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX simple shapes")]
+module D3DX9_Shape{
+	[entry("D3DXCreatePolygon")] int D3DXCreatePolygon(Direct3DDevice9* pDevice, FLOAT Length, UINT Sides, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency);
+	[entry("D3DXCreateBox")] int D3DXCreateBox(Direct3DDevice9* pDevice, FLOAT Width, FLOAT Height, FLOAT Depth, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency);
+	[entry("D3DXCreateCylinder")] int D3DXCreateCylinder(Direct3DDevice9* pDevice, FLOAT Radius1, FLOAT Radius2, FLOAT Length, UINT Slices, UINT Stacks, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency);
+	[entry("D3DXCreateSphere")] int D3DXCreateSphere(Direct3DDevice9* pDevice, FLOAT Radius, UINT Slices, UINT Stacks, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency);
+	[entry("D3DXCreateTorus")] int D3DXCreateTorus(Direct3DDevice9* pDevice, FLOAT InnerRadius, FLOAT OuterRadius, UINT Sides, UINT Rings, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency);
+	[entry("D3DXCreateTeapot")] int D3DXCreateTeapot(Direct3DDevice9* pDevice, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency);
+	[entry("D3DXCreateTextW")] int D3DXCreateTextW(Direct3DDevice9* pDevice, int hDC, BSTR pText, FLOAT Deviation, FLOAT Extrusion, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency, struct GLYPHMETRICSFLOAT* pGlyphMetrics);
+};
+//d3dx9anim.bi
+interface D3DXAnimationSet;
+interface D3DXKeyframedAnimationSet;
+interface D3DXCompressedAnimationSet;
+interface D3DXAnimationController;
+typedef enum D3DXMESHDATATYPE {
+    D3DXMESHTYPE_MESH      = 0x001,             // Normal ID3DXMesh data
+    D3DXMESHTYPE_PMESH     = 0x002,             // Progressive Mesh - ID3DXPMesh
+    D3DXMESHTYPE_PATCHMESH = 0x003,             // Patch Mesh - ID3DXPatchMesh
+} D3DXMESHDATATYPE;
+typedef struct D3DXMESHDATA
+{
+    D3DXMESHDATATYPE Type;
+    // current mesh data interface
+	[helpstring("union\n{\n\tD3DXMesh* pMesh;\n\tD3DXPMesh* pPMesh;\n\tD3DXPatchMesh* pPatchMesh;\n};")]
+	int pMesh;
+} D3DXMESHDATA, *LPD3DXMESHDATA;
+typedef struct D3DXMESHCONTAINER
+{
+    int                   lpstrName;
+    D3DXMESHDATA            MeshData;
+	[helpstring("D3DXMATERIAL* pMaterials;")]
+    int          pMaterials;
+	[helpstring("D3DXEFFECTINSTANCE* pEffects;")]
+    int    pEffects;
+    DWORD                   NumMaterials;
+    int                  lpdwAdjacency;
+    D3DXSkinInfo*          pSkinInfo;
+	[helpstring("D3DXMESHCONTAINER* pNextMeshContainer;")]
+    int pNextMeshContainer;
+} D3DXMESHCONTAINER, *LPD3DXMESHCONTAINER;
+typedef struct D3DXFRAME
+{
+    int                   lpstrName;
+    struct D3DXMATRIX              TransformationMatrix;
+	[helpstring("D3DXMESHCONTAINER* pMeshContainer;")]
+    int     pMeshContainer;
+	[helpstring("D3DXFRAME* pFrameSibling;")]
+    int pFrameSibling;
+	[helpstring("D3DXFRAME* pFrameFirstChild;")]
+    int pFrameFirstChild;
+} D3DXFRAME, *LPD3DXFRAME;
+typedef [helpstring("This interface is implemented by the application to allocate/free frame and\nmesh container objects. Methods on this are called during loading and\ndestroying frame hierarchies.")]
+struct ID3DXAllocateHierarchy
+{
+	[helpstring("STDMETHOD(THIS_ LPCSTR Name,LPD3DXFRAME *ppNewFrame);")]
+	int lpfnCreateFrame;
+    [helpstring("STDMETHOD(THIS_\nLPCSTR Name,\nD3DXMESHDATA *pMeshData,\nD3DXMATERIAL *pMaterials,\nD3DXEFFECTINSTANCE *pEffectInstances,\nDWORD NumMaterials,\nDWORD *pAdjacency,\nD3DXSKININFO *pSkinInfo,\nD3DXMESHCONTAINER **ppNewMeshContainer);")]
+	int lpfnCreateMeshContainer;
+    [helpstring("STDMETHOD(THIS_ LPD3DXFRAME pFrameToFree);")]
+	int lpfnDestroyFrame;
+	[helpstring("STDMETHOD(THIS_ LPD3DXMESHCONTAINER pMeshContainerToFree);")]
+	int lpfnDestroyMeshContainer;
+}ID3DXAllocateHierarchy;
+#define LPD3DXALLOCATEHIERARCHY ID3DXAllocateHierarchy*
+typedef [helpstring("This interface is implemented by the application to load user data in a .X file\nWhen user data is found, these callbacks will be used to allow the application\nto load the data.")]
+struct ID3DXLoadUserData{
+	[helpstring("STDMETHOD(LPD3DXFILEDATA pXofChildData);")]
+	int lpfnLoadTopLevelData;
+	[helpstring("STDMETHOD(LPD3DXFRAME pFrame,LPD3DXFILEDATA pXofChildData);")]
+	int lpfnLoadFrameChildData;
+	[helpstring("STDMETHOD(LPD3DXMESHCONTAINER pMeshContainer,LPD3DXFILEDATA pXofChildData);")]
+	int lpfnLoadMeshChildData;
+}ID3DXLoadUserData;
+#define LPD3DXLOADUSERDATA ID3DXLoadUserData*
+typedef [helpstring("This interface is implemented by the application to save user data in a .X file\nThe callbacks are called for all data saved.  The user can then add any\nchild data objects to the object provided to the callback.")]
+struct ID3DXSaveUserData{
+	[helpstring("STDMETHOD(CONST D3DXFRAME *pFrame,LPD3DXFILESAVEOBJECT pXofSave,LPD3DXFILESAVEDATA pXofFrameData);")]
+	int lpfnAddFrameChildData;
+	[helpstring("STDMETHOD(CONST D3DXMESHCONTAINER *pMeshContainer,LPD3DXFILESAVEOBJECT pXofSave,LPD3DXFILESAVEDATA pXofMeshData);")]
+	int lpfnAddMeshChildData;
+	[helpstring("STDMETHOD(LPD3DXFILESAVEOBJECT pXofSave);")]
+	int lpfnAddTopLevelDataObjectsPre;
+	[helpstring("STDMETHOD(LPD3DXFILESAVEOBJECT pXofSave);")]
+	int lpfnAddTopLevelDataObjectsPost;
+	[helpstring("STDMETHOD(LPD3DXFILE pXFileApi);")]
+	int lpfnRegisterTemplates;
+	[helpstring("STDMETHOD(LPD3DXFILESAVEOBJECT pXofSave);")]
+	int lpfnSaveTemplates;
+}ID3DXSaveUserData;
+#define LPD3DXSAVEUSERDATA ID3DXSaveUserData*
+typedef enum D3DXCALLBACK_SEARCH_FLAGS
+{
+    D3DXCALLBACK_SEARCH_EXCLUDING_INITIAL_POSITION = 0x01,  // exclude callbacks at the initial position from the search
+    D3DXCALLBACK_SEARCH_BEHIND_INITIAL_POSITION    = 0x02,  // reverse the callback search direction
+} D3DXCALLBACK_SEARCH_FLAGS;
+typedef double DOUBLE;
+typedef enum D3DXPLAYBACK_TYPE
+{
+    D3DXPLAY_LOOP          = 0,
+    D3DXPLAY_ONCE          = 1,
+    D3DXPLAY_PINGPONG      = 2,
+} D3DXPLAYBACK_TYPE;
+typedef struct D3DXKEY_VECTOR3
+{
+    FLOAT Time;
+    struct D3DXVECTOR3 Value;
+} D3DXKEY_VECTOR3, *LPD3DXKEY_VECTOR3;
+typedef struct D3DXKEY_QUATERNION
+{
+    FLOAT Time;
+    struct D3DXQUATERNION Value;
+} D3DXKEY_QUATERNION, *LPD3DXKEY_QUATERNION;
+typedef struct D3DXKEY_CALLBACK
+{
+    FLOAT Time;
+    int lpCallbackData;
+} D3DXKEY_CALLBACK, *LPD3DXKEY_CALLBACK;
+typedef enum D3DXPRIORITY_TYPE {
+    D3DXPRIORITY_LOW         = 0,           // This track should be blended with all low priority tracks before mixed with the high priority result
+    D3DXPRIORITY_HIGH        = 1,           // This track should be blended with all high priority tracks before mixed with the low priority result
+} D3DXPRIORITY_TYPE;
+typedef struct D3DXTRACK_DESC
+{
+    D3DXPRIORITY_TYPE   Priority;
+    FLOAT               Weight;
+    FLOAT               Speed;
+    DOUBLE              Position;
+    int                bEnable;
+} D3DXTRACK_DESC, *LPD3DXTRACK_DESC;
+typedef enum D3DXEVENT_TYPE
+{
+    D3DXEVENT_TRACKSPEED    = 0,
+    D3DXEVENT_TRACKWEIGHT   = 1,
+    D3DXEVENT_TRACKPOSITION = 2,
+    D3DXEVENT_TRACKENABLE   = 3,
+    D3DXEVENT_PRIORITYBLEND = 4,
+} D3DXEVENT_TYPE;
+typedef enum D3DXTRANSITION_TYPE {
+    D3DXTRANSITION_LINEAR        = 0x000,     // Linear transition from one value to the next
+    D3DXTRANSITION_EASEINEASEOUT = 0x001,     // Ease-In Ease-Out spline transtion from one value to the next
+} D3DXTRANSITION_TYPE;
+typedef struct D3DXEVENT_DESC
+{
+    D3DXEVENT_TYPE      Type;
+    UINT                Track;
+    DOUBLE              StartTime;
+    DOUBLE              Duration;
+    D3DXTRANSITION_TYPE Transition;
+	[helpstring("union\n{\n\tFLOAT Weight;\n\tFLOAT Speed;\n\tDOUBLE Position;\n\tBOOL Enable;\n};")]
+	int Data[2];
+} D3DXEVENT_DESC, *LPD3DXEVENT_DESC;
+typedef DWORD D3DXEVENTHANDLE;
+typedef D3DXEVENTHANDLE *LPD3DXEVENTHANDLE;
+typedef [helpstring("This interface is intended to be implemented by the application, and can\nbe used to handle callbacks in animation sets generated when\nID3DXAnimationController::AdvanceTime() is called.")]
+struct ID3DXAnimationCallbackHandler{
+	[helpstring("STDMETHOD(THIS_ UINT Track, LPVOID pCallbackData);")]
+	int lpfnHandleCallback;
+}ID3DXAnimationCallbackHandler;
+#define LPD3DXANIMATIONCALLBACKHANDLER ID3DXAnimationCallbackHandler*
+#define ID3DXAnimationSet D3DXAnimationSet
+#define LPD3DXANIMATIONSET D3DXAnimationSet*
+#define ID3DXKeyframedAnimationSet D3DXKeyframedAnimationSet
+#define LPD3DXKEYFRAMEDANIMATIONSET D3DXKeyframedAnimationSet*
+#define ID3DXCompressedAnimationSet D3DXCompressedAnimationSet
+#define LPD3DXCOMPRESSEDANIMATIONSET D3DXCompressedAnimationSet*
+#define ID3DXAnimationController D3DXAnimationController
+#define LPD3DXANIMATIONCONTROLLER D3DXAnimationController*
+[odl,uuid(698CFB3F-9289-4d95-9A57-33A94B5A65F9)]
+interface D3DXAnimationSet:IUnknown{
+    // Name
+	[helpstring("LPCSTR GetName();")]
+    int GetName();
+    // Period
+    DOUBLE GetPeriod();
+    DOUBLE GetPeriodicPosition( DOUBLE Position);    // Maps position into animation period
+    // Animation names
+    UINT GetNumAnimations();
+    HRESULT GetAnimationNameByIndex( UINT Index, int *ppName);
+    HRESULT GetAnimationIndexByName( void* lpstrName, [out,retval]UINT *pIndex);
+    // SRT
+    HRESULT GetSRT(
+        DOUBLE PeriodicPosition,            // Position mapped to period (use GetPeriodicPosition)
+        UINT Animation,                     // Animation index
+        struct D3DXVECTOR3 *pScale,                // Returns the scale
+        struct D3DXQUATERNION *pRotation,          // Returns the rotation as a quaternion
+        struct D3DXVECTOR3 *pTranslation);    // Returns the translation
+    // Callbacks
+    HRESULT GetCallback(
+        DOUBLE Position,                    // Position from which to find callbacks
+        DWORD Flags,                        // Callback search flags
+        DOUBLE *pCallbackPosition,          // Returns the position of the callback
+        int *ppCallbackData);       // Returns the callback data pointer
+};
+[odl,uuid(FA4E8E3A-9786-407d-8B4C-5995893764AF)]
+interface D3DXKeyframedAnimationSet:D3DXAnimationSet{
+    // Callbacks
+    HRESULT GetCallback(
+        DOUBLE Position,                    // Position from which to find callbacks
+        DWORD Flags,                        // Callback search flags
+        DOUBLE *pCallbackPosition,          // Returns the position of the callback
+        int *ppCallbackData);       // Returns the callback data pointer
+    // Playback
+    D3DXPLAYBACK_TYPE GetPlaybackType();
+    DOUBLE GetSourceTicksPerSecond();
+    // Scale keys
+    UINT GetNumScaleKeys( UINT Animation);
+    HRESULT GetScaleKeys( UINT Animation, LPD3DXKEY_VECTOR3 pScaleKeys);
+    HRESULT GetScaleKey( UINT Animation, UINT Key, LPD3DXKEY_VECTOR3 pScaleKey);
+    HRESULT SetScaleKey( UINT Animation, UINT Key, LPD3DXKEY_VECTOR3 pScaleKey);
+    // Rotation keys
+    UINT GetNumRotationKeys( UINT Animation);
+    HRESULT GetRotationKeys( UINT Animation, LPD3DXKEY_QUATERNION pRotationKeys);
+    HRESULT GetRotationKey( UINT Animation, UINT Key, LPD3DXKEY_QUATERNION pRotationKey);
+    HRESULT SetRotationKey( UINT Animation, UINT Key, LPD3DXKEY_QUATERNION pRotationKey);
+    // Translation keys
+    UINT GetNumTranslationKeys( UINT Animation);
+    HRESULT GetTranslationKeys( UINT Animation, LPD3DXKEY_VECTOR3 pTranslationKeys);
+    HRESULT GetTranslationKey( UINT Animation, UINT Key, LPD3DXKEY_VECTOR3 pTranslationKey);
+    HRESULT SetTranslationKey( UINT Animation, UINT Key, LPD3DXKEY_VECTOR3 pTranslationKey);
+    // Callback keys
+    UINT GetNumCallbackKeys();
+    HRESULT GetCallbackKeys( LPD3DXKEY_CALLBACK pCallbackKeys);
+    HRESULT GetCallbackKey( UINT Key, LPD3DXKEY_CALLBACK pCallbackKey);
+    HRESULT SetCallbackKey( UINT Key, LPD3DXKEY_CALLBACK pCallbackKey);
+    // Key removal methods. These are slow, and should not be used once the animation starts playing
+    HRESULT UnregisterScaleKey( UINT Animation, UINT Key);
+    HRESULT UnregisterRotationKey( UINT Animation, UINT Key);
+    HRESULT UnregisterTranslationKey( UINT Animation, UINT Key);
+    // One-time animaton SRT keyframe registration
+    HRESULT RegisterAnimationSRTKeys(
+        void* lpstrName,                                   // Animation name
+        UINT NumScaleKeys,                              // Number of scale keys
+        UINT NumRotationKeys,                           // Number of rotation keys
+        UINT NumTranslationKeys,                        // Number of translation keys
+        D3DXKEY_VECTOR3 *pScaleKeys,              // Array of scale keys
+        D3DXKEY_QUATERNION *pRotationKeys,        // Array of rotation keys
+        D3DXKEY_VECTOR3 *pTranslationKeys,                // Array of translation keys
+        DWORD *pAnimationIndex);                                   // Returns the animation index
+    // Compression
+    HRESULT Compress(
+        DWORD Flags,                            // Compression flags (use D3DXCOMPRESS_STRONG for better results)
+        FLOAT Lossiness,                        // Compression loss ratio in the [0, 1] range
+        LPD3DXFRAME pHierarchy,                 // Frame hierarchy (optional)
+        [out,retval] D3DXBuffer **ppCompressedData);   // Returns the compressed animation set
+    HRESULT UnregisterAnimation( UINT Index);
+};
+[odl,uuid(6CC2480D-3808-4739-9F88-DE49FACD8D4C)]
+interface D3DXCompressedAnimationSet:D3DXAnimationSet{
+    // Playback
+    D3DXPLAYBACK_TYPE GetPlaybackType();
+    DOUBLE GetSourceTicksPerSecond();
+    // Scale keys
+    HRESULT GetCompressedData( [out,retval] D3DXBuffer **ppCompressedData);
+    // Callback keys
+    UINT GetNumCallbackKeys();
+    HRESULT GetCallbackKeys( LPD3DXKEY_CALLBACK pCallbackKeys);
+};
+[odl,uuid(AC8948EC-F86D-43e2-96DE-31FC35F96D9E)]
+interface D3DXAnimationController:IUnknown{
+    // Max sizes
+    UINT GetMaxNumAnimationOutputs();
+    UINT GetMaxNumAnimationSets();
+    UINT GetMaxNumTracks();
+    UINT GetMaxNumEvents();
+    // Animation output registration
+    HRESULT RegisterAnimationOutput(
+        void* lpstrName,
+        struct D3DXMATRIX *pMatrix,
+        struct D3DXVECTOR3 *pScale,
+        struct D3DXQUATERNION *pRotation,
+        struct D3DXVECTOR3 *pTranslation);
+    // Animation set registration
+    HRESULT RegisterAnimationSet( LPD3DXANIMATIONSET pAnimSet);
+    HRESULT UnregisterAnimationSet( LPD3DXANIMATIONSET pAnimSet);
+    UINT GetNumAnimationSets();
+    HRESULT GetAnimationSet( UINT Index, [out,retval]LPD3DXANIMATIONSET *ppAnimationSet);
+    HRESULT GetAnimationSetByName( void* lpstrName, [out,retval]LPD3DXANIMATIONSET *ppAnimationSet);
+    // Global time
+    HRESULT AdvanceTime( DOUBLE TimeDelta, LPD3DXANIMATIONCALLBACKHANDLER pCallbackHandler);
+    HRESULT ResetTime();
+    DOUBLE GetTime();
+    // Tracks
+    HRESULT SetTrackAnimationSet( UINT Track, LPD3DXANIMATIONSET pAnimSet);
+    HRESULT GetTrackAnimationSet( UINT Track, [out,retval]LPD3DXANIMATIONSET *ppAnimSet);
+    HRESULT SetTrackPriority( UINT Track, D3DXPRIORITY_TYPE Priority);
+    HRESULT SetTrackSpeed( UINT Track, FLOAT Speed);
+    HRESULT SetTrackWeight( UINT Track, FLOAT Weight);
+    HRESULT SetTrackPosition( UINT Track, DOUBLE Position);
+    HRESULT SetTrackEnable( UINT Track, BOOL Enable);
+    HRESULT SetTrackDesc( UINT Track, LPD3DXTRACK_DESC pDesc);
+    HRESULT GetTrackDesc( UINT Track, LPD3DXTRACK_DESC pDesc);
+    // Priority blending
+    HRESULT SetPriorityBlend( FLOAT BlendWeight);
+    FLOAT GetPriorityBlend();
+    // Event keying
+    D3DXEVENTHANDLE KeyTrackSpeed( UINT Track, FLOAT NewSpeed, DOUBLE StartTime, DOUBLE Duration, D3DXTRANSITION_TYPE Transition);
+    D3DXEVENTHANDLE KeyTrackWeight( UINT Track, FLOAT NewWeight, DOUBLE StartTime, DOUBLE Duration, D3DXTRANSITION_TYPE Transition);
+    D3DXEVENTHANDLE KeyTrackPosition( UINT Track, DOUBLE NewPosition, DOUBLE StartTime);
+    D3DXEVENTHANDLE KeyTrackEnable( UINT Track, BOOL NewEnable, DOUBLE StartTime);
+    D3DXEVENTHANDLE KeyPriorityBlend( FLOAT NewBlendWeight, DOUBLE StartTime, DOUBLE Duration, D3DXTRANSITION_TYPE Transition);
+    // Event unkeying
+    HRESULT UnkeyEvent( D3DXEVENTHANDLE hEvent);
+    HRESULT UnkeyAllTrackEvents( UINT Track);
+    HRESULT UnkeyAllPriorityBlends();
+    // Event enumeration
+    D3DXEVENTHANDLE GetCurrentTrackEvent( UINT Track, D3DXEVENT_TYPE EventType);
+    D3DXEVENTHANDLE GetCurrentPriorityBlend();
+    D3DXEVENTHANDLE GetUpcomingTrackEvent( UINT Track, D3DXEVENTHANDLE hEvent);
+    D3DXEVENTHANDLE GetUpcomingPriorityBlend( D3DXEVENTHANDLE hEvent);
+    HRESULT ValidateEvent( D3DXEVENTHANDLE hEvent);
+    HRESULT GetEventDesc( D3DXEVENTHANDLE hEvent, LPD3DXEVENT_DESC pDesc);
+    // Cloning
+    HRESULT CloneAnimationController(
+        UINT MaxNumAnimationOutputs,
+        UINT MaxNumAnimationSets,
+        UINT MaxNumTracks,
+        UINT MaxNumEvents,
+       [out,retval] LPD3DXANIMATIONCONTROLLER *ppAnimController);
+};
+[dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX mesh types and functions")]
+module D3DX9_Anim{
+	int const D3DXCOMPRESS_DEFAULT     = 0x00;
+	[entry("D3DXLoadMeshHierarchyFromXInMemory")] int D3DXLoadMeshHierarchyFromXInMemory(void* Memory, DWORD SizeOfMemory, DWORD MeshOptions, Direct3DDevice9* pD3DDevice, LPD3DXALLOCATEHIERARCHY pAlloc, LPD3DXLOADUSERDATA pUserDataLoader, LPD3DXFRAME* ppFrameHierarchy, LPD3DXANIMATIONCONTROLLER* ppAnimController);
+	[entry("D3DXFrameDestroy")] int D3DXFrameDestroy(LPD3DXFRAME pFrameRoot, LPD3DXALLOCATEHIERARCHY pAlloc);
+	[entry("D3DXFrameAppendChild")] int D3DXFrameAppendChild(LPD3DXFRAME pFrameParent, D3DXFRAME* pFrameChild);
+	[entry("D3DXFrameFind")] LPD3DXFRAME D3DXFrameFind(D3DXFRAME* pFrameRoot, void* lpstrName);
+	[entry("D3DXFrameRegisterNamedMatrices")] int D3DXFrameRegisterNamedMatrices(LPD3DXFRAME pFrameRoot, LPD3DXANIMATIONCONTROLLER pAnimController);
+	[entry("D3DXFrameNumNamedMatrices")] UINT D3DXFrameNumNamedMatrices(D3DXFRAME* pFrameRoot);
+	[entry("D3DXFrameCalculateBoundingSphere")] int D3DXFrameCalculateBoundingSphere(D3DXFRAME* pFrameRoot, struct D3DXVECTOR3* pObjectCenter, FLOAT* pObjectRadius);
+	[entry("D3DXCreateKeyframedAnimationSet")] int D3DXCreateKeyframedAnimationSet(void* lpstrName, DOUBLE TicksPerSecond, D3DXPLAYBACK_TYPE Playback, UINT NumAnimations, UINT NumCallbackKeys, D3DXKEY_CALLBACK* pCallbackKeys, LPD3DXKEYFRAMEDANIMATIONSET* ppAnimationSet);
+	[entry("D3DXCreateCompressedAnimationSet")] int D3DXCreateCompressedAnimationSet(void* lpstrName, DOUBLE TicksPerSecond, D3DXPLAYBACK_TYPE Playback, D3DXBuffer* pCompressedData, UINT NumCallbackKeys, D3DXKEY_CALLBACK* pCallbackKeys, LPD3DXCOMPRESSEDANIMATIONSET* ppAnimationSet);
+	[entry("D3DXCreateAnimationController")] int D3DXCreateAnimationController(UINT MaxNumMatrices, UINT MaxNumAnimationSets, UINT MaxNumTracks, UINT MaxNumEvents, LPD3DXANIMATIONCONTROLLER* ppAnimController);
+	[entry("D3DXLoadMeshHierarchyFromXW")] int D3DXLoadMeshHierarchyFromXW(BSTR Filename, DWORD MeshOptions, Direct3DDevice9* pD3DDevice, LPD3DXALLOCATEHIERARCHY pAlloc, LPD3DXLOADUSERDATA pUserDataLoader, LPD3DXFRAME* ppFrameHierarchy, LPD3DXANIMATIONCONTROLLER* ppAnimController);
+	[entry("D3DXSaveMeshHierarchyToFileW")] int D3DXSaveMeshHierarchyToFileW(BSTR Filename, DWORD XFormat, D3DXFRAME* pFrameRoot, LPD3DXANIMATIONCONTROLLER pAnimController, LPD3DXSAVEUSERDATA pUserDataSaver);
+};
