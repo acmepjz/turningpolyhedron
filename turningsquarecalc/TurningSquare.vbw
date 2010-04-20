@@ -1,0 +1,15 @@
+Form1 = 547, 0, 1094, 564, Z, 355, 41, 1044, 508, C
+cAlphaDibSection = 44, 58, 604, 435, C
+cDIBSection = 110, 145, 670, 522, C
+CLogFont = 0, 0, 560, 375, C
+mGradientFill = 44, 58, 665, 452, C
+clsBloxorz = 0, 0, 547, 564, C
+cScrollBar = 110, 145, 987, 566, C
+iSubclass = 132, 174, 1009, 595, C
+cSubclass = 0, 0, 877, 421, C
+cCommonDialog = 0, 0, 0, 0, C
+clsTheFile = 110, 145, 987, 566, C
+clsLZSS = 0, 0, 560, 377, C
+IBloxorzCallBack = 0, 0, 0, 0, C
+ISort = 0, 0, 0, 0, C
+clsSimpleRnd = 547, 281, 1094, 562, C
