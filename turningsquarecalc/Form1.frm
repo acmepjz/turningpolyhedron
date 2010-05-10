@@ -3432,24 +3432,52 @@ Else
   For i = 1 To w
    For j = 1 To h
     '///
-    x = Int(3 * objRnd.Rnd)
-    If x = 2 Then If nMode = 1 Then x = 1 Else x = 5
+    Select Case nMode
+    Case 4 'zigzag
+     x = 1
+     If j = (h + 1) \ 3 Then
+      If i <= (w + w) \ 3 Then x = 0
+     ElseIf j = (h + h + 2) \ 3 Then
+      If i > w \ 3 Then x = 0
+     End If
+     If x Then
+      x = 1 + Int(1.6 * objRnd.Rnd)
+      If x = 2 Then x = 5
+     End If
+    Case 5 'icemode
+     x = Int(5 * objRnd.Rnd)
+     If x >= 2 Then x = 9
+    Case Else
+     x = Int(3 * objRnd.Rnd)
+     If x = 2 Then If nMode = 1 Then x = 1 Else x = 5
+    End Select
     '///
     .Data(i, j) = x
    Next j
   Next i
   'determine start
-  sx = 1 + Int(w * objRnd.Rnd / 4)
-  sy = 1 + Int(h * objRnd.Rnd)
+  Select Case nMode
+  Case 4 'zigzag
+   sx = 1 + Int(w * objRnd.Rnd / 4)
+   sy = 1 + Int(h * objRnd.Rnd / 4)
+  Case Else
+   sx = 1 + Int(w * objRnd.Rnd / 4)
+   sy = 1 + Int(h * objRnd.Rnd)
+  End Select
   .Data(sx, sy) = 1
   .StartX = sx
   .StartY = sy
   'determine end point
-  x = w - Int(w * objRnd.Rnd / 4)
-  y = 1 + Int(h * objRnd.Rnd)
+  Select Case nMode
+  Case 4 'zigzag
+   x = w - Int(w * objRnd.Rnd / 4)
+   y = h - Int(h * objRnd.Rnd / 4)
+  Case Else
+   x = w - Int(w * objRnd.Rnd / 4)
+   y = 1 + Int(h * objRnd.Rnd)
+  End Select
   .Data(x, y) = 8
-  'just add some button
-  If nMode = 3 Then
+  If nMode = 3 Then 'just add some button
    i = 0
    Do Until objRnd.Rnd < 0.5
     x = 1 + Int(w * objRnd.Rnd)
@@ -3554,7 +3582,11 @@ Do
       Case 2
        i = Int(2 * objRnd.Rnd)
        If i = 1 Then i = 5
-      Case 3
+      Case 5 'icemode
+       i = Int(4 * objRnd.Rnd)
+       If i > 0 Then i = i - 1
+       i = i + 9
+      Case Else
        i = Int(4 * objRnd.Rnd)
        If i = 1 Then i = 5 Else If i >= 2 Then i = i + 7
       End Select
@@ -3715,6 +3747,8 @@ With cmbMode
  .AddItem "初级"
  .AddItem "中级"
  .AddItem "高级"
+ .AddItem "Z字形"
+ .AddItem "滑冰"
  .ListIndex = 2
 End With
 pEditSelect
