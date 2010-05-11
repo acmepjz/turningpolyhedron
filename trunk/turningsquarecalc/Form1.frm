@@ -3444,9 +3444,12 @@ Else
       x = 1 + Int(1.6 * objRnd.Rnd)
       If x = 2 Then x = 5
      End If
-    Case 5 'icemode
+    Case 5 'ice mode
      x = Int(5 * objRnd.Rnd)
      If x >= 2 Then x = 9
+    Case 6 'fragile mode
+     x = Int(5 * objRnd.Rnd)
+     If x >= 2 Then x = 5
     Case Else
      x = Int(3 * objRnd.Rnd)
      If x = 2 Then If nMode = 1 Then x = 1 Else x = 5
@@ -3582,10 +3585,13 @@ Do
       Case 2
        i = Int(2 * objRnd.Rnd)
        If i = 1 Then i = 5
-      Case 5 'icemode
+      Case 5 'ice mode
        i = Int(4 * objRnd.Rnd)
        If i > 0 Then i = i - 1
        i = i + 9
+      Case 6 'fragile mode
+       i = Int(3 * objRnd.Rnd)
+       If i = 1 Then i = 5 Else If i = 2 Then i = 10
       Case Else
        i = Int(4 * objRnd.Rnd)
        If i = 1 Then i = 5 Else If i >= 2 Then i = i + 7
@@ -3749,6 +3755,7 @@ With cmbMode
  .AddItem "高级"
  .AddItem "Z字形"
  .AddItem "滑冰"
+ .AddItem "易碎模式"
  .ListIndex = 2
 End With
 pEditSelect
