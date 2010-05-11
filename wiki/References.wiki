@@ -1,13 +1,7 @@
 #summary References, external information about Bloxorz
 
-= Introduction =
+= References =
 
-Add your content here.
-
-
-= Details =
-
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+  * Official Flash version http://www.miniclip.com/games/bloxorz/en/
+  * Rolling-Block Mazes http://www.logicmazes.com/rb/column.html
+  * 
