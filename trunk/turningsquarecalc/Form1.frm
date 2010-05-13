@@ -24,12 +24,12 @@ Begin VB.Form Form1
    Begin VB.PictureBox p0 
       Height          =   2535
       Index           =   6
-      Left            =   4080
+      Left            =   6360
       ScaleHeight     =   165
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   181
       TabIndex        =   68
-      Top             =   960
+      Top             =   1560
       Width           =   2775
       Begin VB.TextBox txtGame 
          Enabled         =   0   'False
@@ -79,10 +79,10 @@ Begin VB.Form Form1
       Begin VB.CheckBox chk1 
          Caption         =   "使用当前关卡作为模板"
          Height          =   255
-         Left            =   240
+         Left            =   180
          TabIndex        =   70
          Top             =   1320
-         Width           =   2175
+         Width           =   2415
       End
       Begin VB.ComboBox cmbMode 
          Height          =   315
@@ -104,7 +104,7 @@ Begin VB.Form Form1
             Caption         =   "迭代次数"
             Height          =   255
             Index           =   18
-            Left            =   120
+            Left            =   60
             TabIndex        =   78
             Top             =   960
             Width           =   855
@@ -113,7 +113,7 @@ Begin VB.Form Form1
             Caption         =   "模式"
             Height          =   255
             Index           =   16
-            Left            =   120
+            Left            =   60
             TabIndex        =   75
             Top             =   240
             Width           =   495
@@ -122,7 +122,7 @@ Begin VB.Form Form1
             Caption         =   "种子"
             Height          =   255
             Index           =   17
-            Left            =   120
+            Left            =   60
             TabIndex        =   74
             Top             =   600
             Width           =   495
@@ -153,14 +153,14 @@ Begin VB.Form Form1
       BorderStyle     =   0  'None
       Height          =   3495
       Index           =   0
-      Left            =   120
+      Left            =   840
       ScaleHeight     =   233
       ScaleMode       =   3  'Pixel
-      ScaleWidth      =   257
+      ScaleWidth      =   345
       TabIndex        =   0
-      Top             =   120
+      Top             =   1800
       Visible         =   0   'False
-      Width           =   3855
+      Width           =   5175
       Begin VB.CommandButton cmd0 
          Caption         =   "游戏说明"
          BeginProperty Font 
@@ -178,7 +178,7 @@ Begin VB.Form Form1
          TabIndex        =   65
          Tag             =   "1"
          Top             =   2400
-         Width           =   3855
+         Width           =   5175
       End
       Begin VB.CommandButton cmd0 
          Caption         =   "地图编辑/求解"
@@ -197,7 +197,7 @@ Begin VB.Form Form1
          TabIndex        =   2
          Tag             =   "2"
          Top             =   1200
-         Width           =   3855
+         Width           =   5175
       End
       Begin VB.CommandButton cmd0 
          Caption         =   "进入游戏"
@@ -216,7 +216,7 @@ Begin VB.Form Form1
          TabIndex        =   1
          Tag             =   "1"
          Top             =   0
-         Width           =   3855
+         Width           =   5175
       End
    End
    Begin VB.PictureBox p0 
@@ -264,7 +264,7 @@ Begin VB.Form Form1
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   629
       TabIndex        =   5
-      Top             =   480
+      Top             =   840
       Visible         =   0   'False
       Width           =   9495
       Begin VB.CommandButton cmdEdit 
@@ -381,7 +381,7 @@ Begin VB.Form Form1
          Left            =   6360
          TabIndex        =   67
          Top             =   360
-         Width           =   1455
+         Width           =   1815
       End
       Begin VB.OptionButton optMode 
          Caption         =   "????"
@@ -433,11 +433,11 @@ Begin VB.Form Form1
       End
       Begin VB.ComboBox cmbBehavior 
          Height          =   315
-         Left            =   6960
+         Left            =   7440
          Style           =   2  'Dropdown List
          TabIndex        =   42
          Top             =   5400
-         Width           =   2055
+         Width           =   1815
       End
       Begin VB.CommandButton cmdEdit 
          Caption         =   "X"
@@ -604,20 +604,21 @@ Begin VB.Form Form1
          Width           =   2655
          Begin VB.ComboBox cmbSwitch 
             Height          =   315
-            Left            =   840
+            Left            =   1320
             Style           =   2  'Dropdown List
             TabIndex        =   28
             Top             =   0
             Width           =   1335
          End
          Begin VB.Label Label1 
+            Alignment       =   1  'Right Justify
             Caption         =   "按钮编号"
             Height          =   255
             Index           =   0
             Left            =   0
             TabIndex        =   21
             Top             =   0
-            Width           =   855
+            Width           =   1215
          End
       End
       Begin VB.Frame Frame1 
@@ -743,7 +744,7 @@ Begin VB.Form Form1
             Left            =   120
             TabIndex        =   41
             Top             =   3240
-            Width           =   615
+            Width           =   855
          End
          Begin VB.Label Label1 
             Caption         =   "99,99"
@@ -986,6 +987,7 @@ Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef D
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 Private Declare Function GetAsyncKeyState Lib "user32.dll" (ByVal vKey As Long) As Integer
 Private Declare Function GetActiveWindow Lib "user32.dll" () As Long
+Private Declare Sub InitCommonControls Lib "comctl32.dll" ()
 
 Private Declare Function CreateSolidBrush Lib "gdi32.dll" (ByVal crColor As Long) As Long
 Private Declare Function FillRect Lib "user32.dll" (ByVal hdc As Long, ByRef lpRect As RECT, ByVal hBrush As Long) As Long
@@ -1103,7 +1105,9 @@ Private GameIsRndMap As Boolean
 Private LevTemp As New clsBloxorz 'extremely stupid!!!
 Private objRnd As New clsSimpleRnd
 Private nFitness() As Long
-'////////
+
+'////////new!!! international support
+Private objText As New clsGNUGetText
 
 Private Sub Instruction_Init()
 Dim i As Long, j As Long, k As Long, m As Long
@@ -1135,7 +1139,9 @@ Game_LoadLevel CStr(App.Path) + "\Default.box"
 '///init data
 GameStatus = 0
 'GameClick = False
-Game_InitMenu "返回游戏", "重玩本关", "选择关卡", "打开文件", "随机关卡", "输入解答", "求解本关", "游戏说明", "回主界面", "退出程序"
+Game_InitMenu objText.GetText("Return to game"), objText.GetText("Restart"), objText.GetText("Pick a level"), _
+objText.GetText("Open level file"), objText.GetText("Random level"), objText.GetText("Input solution"), _
+objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
 '///enter loop
 Game_Loop
 '///clear up
@@ -1182,9 +1188,9 @@ Do
   'level name animation
   bmG_Lv.Cls
   If GameIsRndMap Then
-   DrawTextB bmG_Lv.hdc, "随机关卡", Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+   DrawTextB bmG_Lv.hdc, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
   Else
-   DrawTextB bmG_Lv.hdc, "第" + CStr(GameLev) + "关", Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+   DrawTextB bmG_Lv.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
   End If
   For i = 0 To 255 Step 17
    bmG.Cls
@@ -1559,7 +1565,7 @@ Do
    Case 2 'thin
     GameStatus = 3
    Case Else 'unknown
-    MsgBox "Unknown error!"
+    MsgBox objText.GetText("Unknown error!")
     GameStatus = -1
    End Select
    bEnsureReDraw = True
@@ -1771,7 +1777,7 @@ Do
         GameY = GameY2
         GameS = 2
        ElseIf GameY = GameY2 Then 'err!!
-        MsgBox "Map error!"
+        MsgBox objText.GetText("Map error!")
         GameStatus = -1
        End If
       ElseIf GameY = GameY2 Then
@@ -1792,7 +1798,7 @@ Do
    Case 2 'thin
     GameStatus = 3
    Case Else 'unknown
-    MsgBox "Unknown error!"
+    MsgBox objText.GetText("Unknown error!")
     GameStatus = -1
    End Select
    bEnsureReDraw = True
@@ -1945,8 +1951,11 @@ Do
     'over
     GameStatus = 1
    Case 3 'select level
-    s = InputBox("Level: (Max=" + CStr(LevCount) + ")", , GameLev)
+    On Error Resume Next
+    s = InputBox(Replace(objText.GetText("Level: (Max=%d)"), "%d", CStr(LevCount)), , GameLev)
     i = Val(s)
+    If Err.Number Then i = 0
+    On Error GoTo 0
     If i > 0 And i <= LevCount And (i <> GameLev Or GameIsRndMap) Then 'valid
      'exit random mode
      If GameIsRndMap Then
@@ -1970,7 +1979,7 @@ Do
     End If
    Case 4 'open file
     s = ""
-    If cd.VBGetOpenFileName(s, , , , , True, "Bloxorz|*.box", , CStr(App.Path), , , Me.hwnd) Then
+    If cd.VBGetOpenFileName(s, , , , , True, objText.GetText("Turning Square level pack|*.box"), , CStr(App.Path), , , Me.hwnd) Then
      'exit random mode
      GameIsRndMap = False
      Game_LoadLevel s
@@ -2037,7 +2046,7 @@ Do
       s = Replace(s, "l", "←")
       s = Replace(s, "r", "→")
       s = Replace(s, "s", "◇")
-      txtGame(0).Text = s + vbCrLf + "Moves:" + CStr(Lev(GameLev).SolveItGetDistance(m))
+      txtGame(0).Text = s + vbCrLf + objText.GetText("Moves:") + CStr(Lev(GameLev).SolveItGetDistance(m))
       txtGame(0).Locked = True
       i = Game_TextBox_Loop
       Select Case i
@@ -2057,10 +2066,10 @@ Do
       End Select
       Game_InitBack
      Else
-      MsgBox "无解!", vbExclamation
+      MsgBox objText.GetText("No solution!"), vbExclamation
      End If
     Else
-     MsgBox "Error!", vbCritical
+     MsgBox objText.GetText("Error!"), vbCritical
     End If
     Lev(GameLev).SolveItClear 'the missing code!
     Game_InitBack
@@ -2287,8 +2296,8 @@ hbr2 = CreateSolidBrush(&H80FF&)
 bmG_Back.PaintPicture bmG.hdc
 FillRect bmG.hdc, r, hbr
 FrameRect bmG.hdc, r, hbr2
-DrawTextB bmG.hdc, "自动演示", Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG.hdc, "取消", Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hdc, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 Game_Paint
 txtGame(0).Move r.Left + 8, r.Top + 8, w - 16, h - 40
 txtGame(0).Visible = True
@@ -2372,10 +2381,10 @@ r2.Top = r.Top + 32
 r2.Right = r.Left + 240
 r2.Bottom = r.Top + 48
 FrameRect bmG.hdc, r2, hbr2
-DrawTextB bmG.hdc, "生成", Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG.hdc, "取消", Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG.hdc, "随机地图模式:", Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG.hdc, "种子:", Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hdc, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hdc, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hdc, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 Game_Paint
 With txtGame(4)
  .Move r.Left + 145, r.Top + 33, 94, 14
@@ -2567,33 +2576,36 @@ Next j
 pTheBitmapDraw3 bmG_Back.hdc, 4, 7, 523, 345
 '////////////////////////////////////////////
 s1 = String(2, Chr(&HA1A1&))
-s = s1 + "“摇方块”是一款益智游戏，游戏的目标是控制方块落入每关最后的小洞。在默认关卡中共有33关。"
-s = s + "要移动方块，只需按下方向键。小心不要掉到边界以外——如果掉出去了，当前关卡就会重新开始。"
-s = s + vbCr + vbCr + s1 + "桥梁和开关在很多关卡中出现。当开关被方块按下时就会被激活；你并不需要一直呆在开关上面以保持开关被按下。"
-s = s + vbCr + vbCr + s1 + "有两种类型的开关：“硬”的X型的开关和“软”的圆形的开关。当方块的任何部分按下“软”的开关时开关都会被激活；"
-s = s + "激活“硬”的开关需要更大的压力，所以方块必须“站”在上面。"
-s = s + vbCr + vbCr + s1 + "当开关被激活后，每个开关的行为可能不一样。有些开关每次按下时会切换特定桥梁的状态，另一些开关按下后会打开特定的桥梁，再次按下后不会关闭桥梁。"
-s = s + "当桥梁状态改变时，红色或绿色的方块会在桥梁上闪动，以提示桥梁的打开或关闭。"
-s = s + vbCr + vbCr + s1 + "橙色的砖块比其他的更易碎，不能承受太大的压力。如果方块“站”在上面，那么方块就会掉落。"
-s = s + vbCr + vbCr + s1 + "还有一种砖块上面有一个圆形的符号。当方块“站”在上面时方块将会被分成两小块，并被传送到不同的位置。"
-s = s + "两个小块可以独立控制，用空格键来切换。当两个小块靠到一起后就可以还原成原来的方块。"
-s = s + "小方块仍然可以按下“软”的开关，但是不能按下“硬”的开关。另外，小方块也不能落入终点，只有完整的方块才能落入终点。"
-s = s + vbCr + vbCr + s1 + "新版本中增加了几种砖块：突起的砖块、冰以及墙。方块“站”在突起的砖块上不太稳定，所以它会马上“摇”下来，除非有墙挡着。"
-s = s + "当方块完全处在冰上时就会滑动，一直到有部分离开冰或者撞墙。而墙作为一种障碍物，方块不能通过，但是可以斜着靠在上面，靠上去后仍可移动。"
+'s = s1 + "“摇方块”是一款益智游戏，游戏的目标是控制方块落入每关最后的小洞。在默认关卡中共有33关。"
+'s = s + "要移动方块，只需按下方向键。小心不要掉到边界以外——如果掉出去了，当前关卡就会重新开始。"
+'s = s + vbCr + vbCr + s1 + "桥梁和开关在很多关卡中出现。当开关被方块按下时就会被激活；你并不需要一直呆在开关上面以保持开关被按下。"
+'s = s + vbCr + vbCr + s1 + "有两种类型的开关：“硬”的X型的开关和“软”的圆形的开关。当方块的任何部分按下“软”的开关时开关都会被激活；"
+'s = s + "激活“硬”的开关需要更大的压力，所以方块必须“站”在上面。"
+'s = s + vbCr + vbCr + s1 + "当开关被激活后，每个开关的行为可能不一样。有些开关每次按下时会切换特定桥梁的状态，另一些开关按下后会打开特定的桥梁，再次按下后不会关闭桥梁。"
+'s = s + "当桥梁状态改变时，红色或绿色的方块会在桥梁上闪动，以提示桥梁的打开或关闭。"
+'s = s + vbCr + vbCr + s1 + "橙色的砖块比其他的更易碎，不能承受太大的压力。如果方块“站”在上面，那么方块就会掉落。"
+'s = s + vbCr + vbCr + s1 + "还有一种砖块上面有一个圆形的符号。当方块“站”在上面时方块将会被分成两小块，并被传送到不同的位置。"
+'s = s + "两个小块可以独立控制，用空格键来切换。当两个小块靠到一起后就可以还原成原来的方块。"
+'s = s + "小方块仍然可以按下“软”的开关，但是不能按下“硬”的开关。另外，小方块也不能落入终点，只有完整的方块才能落入终点。"
+'s = s + vbCr + vbCr + s1 + "新版本中增加了几种砖块：突起的砖块、冰以及墙。方块“站”在突起的砖块上不太稳定，所以它会马上“摇”下来，除非有墙挡着。"
+'s = s + "当方块完全处在冰上时就会滑动，一直到有部分离开冰或者撞墙。而墙作为一种障碍物，方块不能通过，但是可以斜着靠在上面，靠上去后仍可移动。"
+'////////
+'s = Replace(Replace(objText.GetText("#INSTRUCTIONS#"), "\n", vbLf), "\t", s1)
+s = Replace(objText.GetText("#INSTRUCTIONS#"), vbTab, s1)
 's = s + vbCr + vbCr + s1 + ""
 's = s + vbCr + vbCr + s1 + ""
 DrawTextB bmG_Back.hdc, s, Me.Font, 8, 8, 400, 400, DT_EXPANDTABS Or DT_WORDBREAK, vbWhite, , True
 '////////////////////////////////////////////
-s = "这是VB6编写的版本，作者：acme_pjz"
+s = objText.GetText("VB6 version, author: acme_pjz")
 DrawTextB bmG_Back.hdc, s, Me.Font, 8, 408, 320, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-s = "源代码下载地址:"
+s = objText.GetText("Source code:")
 DrawTextB bmG_Back.hdc, s, Me.Font, 8, 424, 256, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 DrawTextB bmG_Back.hdc, sSource1, Label1(15).Font, 100, 424, 230, 16, DT_VCENTER Or DT_SINGLELINE, &HFF8000, , True, False
 DrawTextB bmG_Back.hdc, sSource2, Label1(15).Font, 100, 440, 240, 16, DT_VCENTER Or DT_SINGLELINE, &HFF8000, , True, False
-s = "要玩原版请登陆:"
+s = objText.GetText("Original version:")
 DrawTextB bmG_Back.hdc, s, Me.Font, 8, 456, 96, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 DrawTextB bmG_Back.hdc, Label1(15).Caption, Label1(15).Font, 100, 456, 220, 16, DT_VCENTER Or DT_SINGLELINE, &HFF8000, , True, False
-DrawTextB bmG_Back.hdc, "确定", Me.Font, 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG_Back.hdc, objText.GetText("OK"), Me.Font, 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 'animation
 For i = 0 To 255 Step 51
  bmG.Cls
@@ -2692,18 +2704,18 @@ Private Sub Game_InitBack()
   bmG_Back.CreateFromPicture i0(7).Picture
   'draw text
   If GameIsRndMap Then
-   DrawTextB bmG_Back.hdc, "随机关卡" + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-   DrawTextB bmG_Back.hdc, "种子:" + txtGame(0).Tag, Me.Font, 128, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG_Back.hdc, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 128, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
    'button
    bmImg(3).AlphaPaintPicture bmG_Back.hdc, 256, 9, 16, 16, 96, 32, , True
-   DrawTextB bmG_Back.hdc, "复制", Me.Font, 272, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 272, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
   Else
-   DrawTextB bmG_Back.hdc, "第" + CStr(GameLev) + "关" + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG_Back.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
   End If
-  DrawTextB bmG_Back.hdc, "本关移动", Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-  DrawTextB bmG_Back.hdc, "本关用时", Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-  DrawTextB bmG_Back.hdc, "本关重试", Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-  DrawTextB bmG_Back.hdc, "菜单", Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+  DrawTextB bmG_Back.hdc, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+  DrawTextB bmG_Back.hdc, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+  DrawTextB bmG_Back.hdc, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+  DrawTextB bmG_Back.hdc, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 End Sub
 
 Private Sub Game_Paint()
@@ -2744,10 +2756,10 @@ If f.LoadFile(fn, TheSignature) Then
  End If
 End If
 If b Then
- Me.Tag = ",共" + CStr(LevCount) + "关(" + Mid(fn, InStrRev(fn, "\") + 1) + ")"
+ Me.Tag = Replace(objText.GetText(" of %d ("), "%d", CStr(LevCount)) + Mid(fn, InStrRev(fn, "\") + 1) + ")"
 Else
  Me.Tag = ""
- MsgBox "关卡错误", vbCritical
+ MsgBox objText.GetText("Wrong level!"), vbCritical
  ReDim Lev(1 To 1)
  LevCount = 1
  Set Lev(1) = New clsBloxorz
@@ -3073,7 +3085,7 @@ Case 0 'new
  cmbLv.AddItem "1"
  cmbLv.ListIndex = 0
 Case 1 'open
- If cd.VBGetOpenFileName(s, , , , , True, "Bloxorz|*.box", , CStr(App.Path), , , Me.hwnd) Then
+ If cd.VBGetOpenFileName(s, , , , , True, objText.GetText("Turning Square level pack|*.box"), , CStr(App.Path), , , Me.hwnd) Then
   If f.LoadFile(s, TheSignature) Then
    k = f.FindNodeArray("LEV")
    If k <> 0 Then
@@ -3093,11 +3105,11 @@ Case 1 'open
     End If
    End If
   Else
-   MsgBox "Error"
+   MsgBox objText.GetText("Error")
   End If
  End If
 Case 2 'save
- If cd.VBGetSaveFileName(s, , , "Bloxorz|*.box", , CStr(App.Path), , "box", Me.hwnd) Then
+ If cd.VBGetSaveFileName(s, , , objText.GetText("Turning Square level pack|*.box"), , CStr(App.Path), , "box", Me.hwnd) Then
   '??
   f.Clear
   f.Signature = TheSignature
@@ -3128,7 +3140,7 @@ Case 4 'add
 Case 5 'delete
  lv = 1 + cmbLv.ListIndex
  If lv > 0 And LevCount > 1 Then
-  If MsgBox("你确定吗？", vbExclamation + vbYesNo) = vbYes Then
+  If MsgBox(objText.GetText("Are you sure?"), vbExclamation + vbYesNo) = vbYes Then
    LevCount = LevCount - 1
    Set Lev(lv) = Nothing
    For i = lv To LevCount
@@ -3147,14 +3159,19 @@ Case 6 'resize
  lv = 1 + cmbLv.ListIndex
  If lv > 0 Then
   With Lev(lv)
-   i = Val(InputBox("Width:", , CStr(.Width)))
-   j = Val(InputBox("Height:", , CStr(.Height)))
-   If i > 0 And j > 0 And i <= 255 And j <= 255 Then
-    .Create i, j
-    eSX = 0
-    eSY = 0
-    pEditRefresh
-    pEditSwitch
+   On Error Resume Next
+   s = InputBox(objText.GetText("Input map size:"), , CStr(.Width) + " x " + CStr(.Height))
+   i = InStr(1, s, "x", vbTextCompare)
+   If i > 0 Then
+    j = Val(Mid(s, i + 1))
+    i = Val(Left(s, i - 1))
+    If i > 0 And j > 0 And i <= 255 And j <= 255 And Err.Number = 0 Then
+     .Create i, j
+     eSX = 0
+     eSY = 0
+     pEditRefresh
+     pEditSwitch
+    End If
    End If
   End With
  End If
@@ -3252,12 +3269,12 @@ Case 12 'solve
     optSt(3).Enabled = .SolveItIsTrans
     i = .SolveItGetTimeUsed
     j = .SolveItGetNodeUsed
-    s = "Time=" + CStr(i) + "ms, Nodes=" + CStr(j) + "/" + CStr(.SolveItGetNodeMax)
-    If i > 0 Then s = s + vbCr + CStr(Round(j / i * 1000)) + "Nodes/s"
+    s = objText.GetText("Time=") + CStr(i) + objText.GetText("ms, Nodes=") + CStr(j) + "/" + CStr(.SolveItGetNodeMax)
+    If i > 0 Then s = s + vbCr + CStr(Round(j / i * 1000)) + objText.GetText("Nodes/s")
     Label1(14).Caption = s
     pSolution.Move 0, 24, bmEdit.Width + 4, bmEdit.Height + 4
    Else
-    MsgBox "Error!!!", vbCritical
+    MsgBox objText.GetText("Error!!!"), vbCritical
     Lev(lv).SolveItClear
     pShowPanel 2
    End If
@@ -3276,7 +3293,7 @@ Case 14 'show solution
   With Lev(lv)
    m = .SolveItGetSolutionNodeIndex(x2, y2, k)
    If m = 0 Then
-    txtGame(3).Text = "No solution."
+    txtGame(3).Text = objText.GetText("No solution.")
    Else
     optSt(0).Value = True
     sSX = x2
@@ -3288,10 +3305,10 @@ Case 14 'show solution
  End If
 Case 16 'generateRnd
  If cmdEdit(17).Enabled Then
-  cmdEdit(16).Caption = "终止(&A)"
+  cmdEdit(16).Caption = objText.GetText("&Abort")
   cmdEdit(17).Enabled = False
   pEditRandomMap
-  cmdEdit(16).Caption = "生成(&G)"
+  cmdEdit(16).Caption = objText.GetText("&Generate")
   cmdEdit(17).Enabled = True
  Else 'abort
   GameStatus = -1
@@ -3342,11 +3359,11 @@ With Lev(lv)
   i = pRandomMap(xx, .Width, .Height, , 200, 30, i) 'TODO:time?
  End If
  If GameStatus < 0 Then
-  MsgBox "用户终止!"
+  MsgBox objText.GetText("Aborted!")
  ElseIf i = 0 Then
-  MsgBox "生成失败!"
+  MsgBox objText.GetText("Failed!")
  Else
-  If MsgBox("步数=" + CStr(i) + "。是否应用?", vbYesNo + vbQuestion) = vbYes Then
+  If MsgBox(Replace(objText.GetText("Moves=%d. Apply?"), "%d", CStr(i)), vbYesNo + vbQuestion) = vbYes Then
    .Clone xx
    eSX = 0
    eSY = 0
@@ -3375,6 +3392,10 @@ Loop
 Lev(GameLev).Clone xx
 txtGame(0).Tag = CStr(i) + objRnd.ValidateRndSeed(s)
 txtGame(4).Tag = "(" + cmbMode.Text + ")"
+End Sub
+
+Private Sub Form_Initialize()
+InitCommonControls
 End Sub
 
 Private Function ISort_Compare(ByVal Index1 As Long, ByVal Index2 As Long, ByVal nUserData As Long) As Boolean
@@ -3728,7 +3749,12 @@ End If
 End Function
 
 Private Sub Form_Load()
+'///
+If Not objText.LoadFileWithLocale(CStr(App.Path) + "\locale\*.mo") Then _
+objText.LoadFile CStr(App.Path) + "\locale\default.mo"
+'///
 Me.Show
+Me.Caption = objText.GetText("Turning Square")
 Randomize Timer
 pShowPanel 0
 p0(1).Move 0, 0, 640, 480
@@ -3745,20 +3771,67 @@ With sEdit
 End With
 pInitBitmap
 With cmbBehavior
- .AddItem "关闭"
- .AddItem "开启"
- .AddItem "切换"
+ .AddItem objText.GetText("Close")
+ .AddItem objText.GetText("Open")
+ .AddItem objText.GetText("Toggle")
 End With
 With cmbMode
- .AddItem "初级"
- .AddItem "中级"
- .AddItem "高级"
- .AddItem "Z字形"
- .AddItem "滑冰"
- .AddItem "易碎模式"
+ .AddItem objText.GetText("Beginner")
+ .AddItem objText.GetText("Intermediate")
+ .AddItem objText.GetText("Advanced")
+ .AddItem objText.GetText("Zigzag")
+ .AddItem objText.GetText("Ice mode")
+ .AddItem objText.GetText("Fragile mode")
  .ListIndex = 2
 End With
 pEditSelect
+'///
+cmdEdit(17).Caption = objText.GetText("&Close")
+cmdEdit(16).Caption = objText.GetText("&Generate")
+chk1.Caption = objText.GetText("Use current level as template")
+Frame1(2).Caption = objText.GetText("Random map")
+Label1(16).Caption = objText.GetText("Mode")
+Label1(17).Caption = objText.GetText("Seed")
+Label1(18).Caption = objText.GetText("Iterations")
+cmd0(2).Caption = objText.GetText("Game instructions")
+cmd0(1).Caption = objText.GetText("Editor/Solver")
+cmd0(0).Caption = objText.GetText("Start game")
+cmdEdit(14).Caption = objText.GetText("&Solution")
+optSt(3).Caption = objText.GetText("Single")
+optSt(2).Caption = objText.GetText("Vertical")
+optSt(1).Caption = objText.GetText("Horizontal")
+optSt(0).Caption = objText.GetText("Up")
+cmdEdit(13).Caption = objText.GetText("&Close")
+cmdEdit(18).Caption = objText.GetText("Random Map(Beta)")
+chkPos(3).Caption = objText.GetText("Set")
+chkPos(2).Caption = objText.GetText("Set")
+chkPos(1).Caption = objText.GetText("Set")
+chkPos(0).Caption = objText.GetText("Set")
+cmdEdit(15).Caption = objText.GetText("&Clear")
+cmdEdit(12).Caption = objText.GetText("Solve...")
+cmdEdit(11).Caption = objText.GetText("Clear")
+optMode(1).Caption = objText.GetText("Select")
+optMode(0).Caption = objText.GetText("Edit")
+Label1(2).Caption = objText.GetText("Pos2")
+Label1(1).Caption = objText.GetText("Pos1")
+Label1(0).Caption = objText.GetText("Button number")
+Frame1(0).Caption = objText.GetText("Properties")
+Label1(5).Caption = objText.GetText("No properties.")
+cmdEdit(6).Caption = objText.GetText("&Resize")
+cmdEdit(5).Caption = objText.GetText("&Delete")
+cmdEdit(4).Caption = objText.GetText("&Add")
+cmdEdit(3).Caption = objText.GetText("&Quit")
+cmdEdit(2).Caption = objText.GetText("&Save")
+cmdEdit(1).Caption = objText.GetText("&Open")
+cmdEdit(0).Caption = objText.GetText("&New")
+Frame1(1).Caption = objText.GetText("Buttons")
+Label1(9).Caption = objText.GetText("Behavior")
+Label1(7).Caption = objText.GetText("Pos")
+Label1(6).Caption = objText.GetText("No.")
+Label1(12).Caption = objText.GetText("Start pos")
+Label1(11).Caption = objText.GetText("Solving...")
+Label1(10).Caption = objText.GetText("Solving...")
+'///
 End Sub
 
 Private Sub pInitBitmap()
@@ -4118,7 +4191,7 @@ FillRect bmG.hdc, r, hbr
 FrameRect bmG.hdc, r, hbr2
 r.Right = r.Left + (nNodeNow * w) \ nNodeCount
 FillRect bmG.hdc, r, hbr2
-DrawTextB bmG.hdc, "正在生成……", Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hdc, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 Game_Paint
 DeleteObject hbr
 DeleteObject hbr2
@@ -4398,7 +4471,7 @@ Private Sub pEditSwitch()
 Dim i As Long, j As Long, lv As Long
 cmbS.Clear
 cmbSwitch.Clear
-cmbSwitch.AddItem "(无)"
+cmbSwitch.AddItem objText.GetText("(None)")
 lstSwitch.Clear
 lv = 1 + cmbLv.ListIndex
 If lv <= 0 Then Exit Sub
@@ -4474,10 +4547,10 @@ With Lev(lv)
   Case 4  'trans??
    .GetTransportPosition eSX, eSY, i, j, x, y
    If i > 0 And j > 0 Then
-    DrawTextB bmEdit.hdc, "Pos1", Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+    DrawTextB bmEdit.hdc, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
    End If
    If x > 0 And y > 0 Then
-    DrawTextB bmEdit.hdc, "Pos2", Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+    DrawTextB bmEdit.hdc, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
    End If
   End Select
  End If
@@ -4498,7 +4571,7 @@ With Lev(lv)
  j = .StartY
  If i > 0 And j > 0 Then
   Label1(13).Caption = CStr(i) + "," + CStr(j)
-  DrawTextB bmEdit.hdc, "Start", Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+  DrawTextB bmEdit.hdc, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
  End If
 End With
 pEdit_Paint
@@ -4591,7 +4664,7 @@ With Lev(lv)
    s = Replace(s, "l", "←")
    s = Replace(s, "r", "→")
    s = Replace(s, "s", "◇")
-   s = s + vbCrLf + "Moves:" + CStr(y)
+   s = s + vbCrLf + objText.GetText("Moves:") + CStr(y)
    txtGame(3).Text = s
    For i = 1 To .Width
     For j = 1 To .Height

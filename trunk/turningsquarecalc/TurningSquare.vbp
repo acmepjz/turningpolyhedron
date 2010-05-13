@@ -15,6 +15,7 @@ Class=clsLZSS; clsLZSS_ASM.cls
 Class=IBloxorzCallBack; IBloxorzCallBack.cls
 Class=ISort; ISort.cls
 Class=clsSimpleRnd; clsSimpleRnd.cls
+Class=clsGNUGetText; clsGNUGetText.cls
 ResFile32="TurningSquare.res"
 IconForm="Form1"
 Startup="Form1"
