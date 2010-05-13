@@ -713,10 +713,9 @@ Begin VB.Form Form1
       Begin VB.CommandButton Command1 
          Caption         =   "Load Flash"
          Height          =   255
-         Left            =   7200
+         Left            =   8280
          TabIndex        =   7
-         Top             =   0
-         Visible         =   0   'False
+         Top             =   360
          Width           =   1095
       End
       Begin VB.PictureBox pEdit 
@@ -1719,7 +1718,7 @@ Do
      bmG_Back.PaintPicture bmG_Lv.hdc
      pGameDrawLayer0 bmG_Lv.hdc, GameD, GameW, GameH, GameLayer0SX, GameLayer0SY
     End If
-    'trans
+    'trans (teleport)
     If GameS = 0 And GameD(GameX, GameY) = 4 Then
      'TODO:more animation
      'animation
@@ -1734,16 +1733,49 @@ Do
      x = GameX
      y = GameY
      Lev(GameLev).GetTransportPosition x, y, GameX, GameY, GameX2, GameY2
+     '///add check code
+     If GameX < 1 Or GameX2 < 1 Or GameY < 1 Or GameY2 < 1 _
+     Or GameX > GameW Or GameX2 > GameW Or GameY > GameH Or GameY2 > GameH Then
+      MsgBox objText.GetText("Map error!")
+      GameStatus = -1
+      Exit Sub
+     End If
+     '///new mode:check two box get together?
      GameS = 3
-     idx = 13 'update index
+     If GameX = GameX2 Then
+      If GameY + 1 = GameY2 Then
+       GameS = 2
+      ElseIf GameY - 1 = GameY2 Then
+       GameY = GameY2
+       GameS = 2
+      ElseIf GameY = GameY2 Then 'new mode
+       GameS = 0 '???
+      End If
+     ElseIf GameY = GameY2 Then
+      If GameX + 1 = GameX2 Then
+       GameS = 1
+      ElseIf GameX - 1 = GameX2 Then
+       GameX = GameX2
+       GameS = 1
+      End If
+     End If
+     '///
+     idx = 13 'update index '???
      GameFS = 0 'clear last move to prevent ice
      'animation
      kx = GameLayer0SX + (GameX - 1) * 32 + (GameY - 1) * 10 + 21
      ky = GameLayer0SY - (GameX - 1) * 5 + (GameY - 1) * 16 - 10
      kt = 24
+     If GameS = 1 Then 'h
+      kx = kx + 16
+      ky = ky - 2
+     ElseIf GameS = 2 Then 'v
+      kx = kx + 5
+      ky = ky + 8
+     End If
      For i = 0 To 15
       bmG_Lv.PaintPicture bmG.hdc
-      Game_DrawLayer1 bmG.hdc, , True, 13, 1, , i * 17
+      Game_DrawLayer1 bmG.hdc, , True, GameS * 4& + 1, 1, , i * 17
       pTheBitmapDraw3 bmG.hdc, Ani_Misc, 3, kx - 40 + i, ky, i * 17
       pTheBitmapDraw3 bmG.hdc, Ani_Misc, 4, kx + 40 - i, ky, i * 17
       Game_Paint
@@ -3325,17 +3357,10 @@ End Sub
 
 Private Sub Command1_Click()
 Dim xx As New clsBloxorz
-xx.fLoadText
-MsgBox "ok"
-'With f
-' .Clear
-' .AddNodeArray
-' .AddNode 1
-' .AddNode 1
-' .LoadNodeDataFromFile 1, 1, CStr(App.Path) + "\block.dat"
-' .LoadNodeDataFromFile 1, 2, CStr(App.Path) + "\shadow.dat"
-' .SaveFile CStr(App.Path) + "\comp.dat"
-'End With
+Dim f As New clsTheFile
+f.Signature = TheSignature
+'TODO:import landfill levels
+'//////
 End Sub
 
 'random map test
