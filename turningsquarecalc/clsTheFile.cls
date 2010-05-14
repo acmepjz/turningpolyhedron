@@ -32,6 +32,12 @@ Private sig As String
 
 Private cmp As New clsLZSS
 
+Private m_sFileName As String
+
+Public Property Get FileName() As String
+FileName = m_sFileName
+End Property
+
 Public Property Get NodeCount(ByVal Index As Long) As Long
 NodeCount = nds(Index).Count
 End Property
@@ -290,6 +296,7 @@ Else
  Get #1, 9, b
  pLoadData b
 End If
+m_sFileName = fn
 LoadFile = True
 a:
 Close
@@ -359,10 +366,12 @@ If ndc > 0 Then
 End If
 End Sub
 
-Public Sub SaveFile(ByVal fn As String, Optional ByVal IsCompress As Boolean = True)
+Public Function SaveFile(Optional ByVal fn As String, Optional ByVal IsCompress As Boolean = True) As Boolean
 On Error GoTo a
 Dim i As Long, j As Long, m As Long
 Dim b() As Byte, b2() As Byte, s As String
+If fn = "" Then fn = m_sFileName
+If fn = "" Then Exit Function
 Open fn For Output As #1
 Close
 Open fn For Binary As #1
@@ -381,9 +390,11 @@ If IsCompress Then
 Else
  Put #1, 9, b
 End If
+m_sFileName = fn
+SaveFile = True
 a:
 Close
-End Sub
+End Function
 
 Public Function SaveData(d() As Byte, Optional ByVal IsCompress As Boolean = True) As Long
 Dim i As Long, j As Long, m As Long
@@ -448,6 +459,7 @@ Public Sub Clear()
 Erase nds
 ndc = 0
 sig = ""
+m_sFileName = ""
 End Sub
 
 Private Sub Class_Terminate()
