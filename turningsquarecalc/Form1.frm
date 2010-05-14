@@ -716,6 +716,7 @@ Begin VB.Form Form1
          Left            =   8280
          TabIndex        =   7
          Top             =   360
+         Visible         =   0   'False
          Width           =   1095
       End
       Begin VB.PictureBox pEdit 
@@ -1596,7 +1597,28 @@ Do
     End If
    End If
    If GetActiveWindow = Me.hwnd Or y > 0 Then
-    If (GetAsyncKeyState(vbKeySpace) = &H8001 And GameDemoPos = 0) Or y = 5 Then
+    If GetAsyncKeyState(vbKeyR) = &H8001 Then 'restart?
+     GameStatus = 1
+    ElseIf GetAsyncKeyState(vbKeyPageUp) = &H8001 And GameLev < LevCount Then 'next level (prev?)
+     GameIsRndMap = False
+     GameLev = GameLev + 1
+     GameStatus = 0
+    ElseIf GetAsyncKeyState(vbKeyPageDown) = &H8001 And GameLev > 1 Then 'prev level (next?)
+     GameIsRndMap = False
+     GameLev = GameLev - 1
+     GameStatus = 0
+    End If
+    If GameStatus <= 1 Then
+     'animation
+     For i = 255 To 0 Step -51
+      bmG.Cls
+      AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+      Game_Paint
+      Sleep 10
+      DoEvents
+      If GameStatus < 0 Then Exit Sub
+     Next i
+    ElseIf (GetAsyncKeyState(vbKeySpace) = &H8001 And GameDemoPos = 0) Or y = 5 Then
      If GameS = 3 Then
       'record step
       sSolution = sSolution + "¡ó"
@@ -1864,7 +1886,7 @@ Do
    bEnsureReDraw = True
   End If
   'redraw?
-  If bEnsureReDraw Then
+  If bEnsureReDraw And GameStatus > 1 Then '???
    bmG_Lv.PaintPicture bmG.hdc
    'draw text (ZDepth????)
    s = Format(t Mod 60, "00")
@@ -1962,7 +1984,7 @@ Do
    End If
   End If
   'menu
-  If IsMouseIn And (GetAsyncKeyState(1) And &H8000) Then
+  If (IsMouseIn And (GetAsyncKeyState(1) And &H8000&) <> 0) Or GetAsyncKeyState(vbKeyEscape) = &H8001 Then
    j = GetTickCount
    'GameClick = False
    bmG.PaintPicture bmG_Back.hdc
@@ -3356,11 +3378,7 @@ End Select
 End Sub
 
 Private Sub Command1_Click()
-Dim xx As New clsBloxorz
-Dim f As New clsTheFile
-f.Signature = TheSignature
-'TODO:import landfill levels
-'//////
+'currently do nothing
 End Sub
 
 'random map test
