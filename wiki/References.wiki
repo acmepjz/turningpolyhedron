@@ -3,5 +3,6 @@
 = References =
 
   * Official Flash version http://www.miniclip.com/games/bloxorz/en/
+  ** Author's site http://www.dxinteractive.com/
   * Rolling-Block Mazes http://www.logicmazes.com/rb/column.html
   * Maybe a PS3 game Cuboid like this?
