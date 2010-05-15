@@ -154,6 +154,7 @@ On Error Resume Next
 Err.Clear
 GetText = objString.Item(s)
 If Err.Number Then GetText = s
+Err.Clear 'add to fix some bugs
 End Function
 
 Friend Property Get StringCount() As Long
