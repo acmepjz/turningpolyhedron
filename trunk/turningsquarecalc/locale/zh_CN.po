@@ -64,6 +64,7 @@ msgstr "第%d关"
 msgid "Unknown error!"
 msgstr "未知错误!"
 
+#.       MsgBox objText.GetText("Map error!")
 #.         MsgBox objText.GetText("Map error!")
 msgid "Map error!"
 msgstr "地图有误!"
@@ -109,7 +110,7 @@ msgid "Random map mode:"
 msgstr "随机地图模式:"
 
 #. DrawTextB bmG.hdc, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 128, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Seed:"
 msgstr "种子:"
 
@@ -147,7 +148,7 @@ msgstr "要玩原版请登陆:"
 msgid "OK"
 msgstr "确定"
 
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 272, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Copy"
 msgstr "复制"
 
@@ -175,6 +176,15 @@ msgstr ",共%d关("
 msgid "Wrong level!"
 msgstr "关卡错误"
 
+#.  Me.Caption = objText.GetText("Turning Square")
+#.    Me.Caption = objText.GetText("Turning Square") + " - " + s
+#.    Me.Caption = objText.GetText("Turning Square") + " - " + s
+#.  Me.Caption = objText.GetText("Turning Square")
+#. Me.Caption = objText.GetText("Turning Square")
+msgid "Turning Square"
+msgstr "摇方块"
+
+#.    MsgBox objText.GetText("Error")
 #.    MsgBox objText.GetText("Error")
 msgid "Error"
 msgstr "错误"
@@ -216,21 +226,17 @@ msgstr "终止(&A)"
 msgid "&Generate"
 msgstr "生成(&G)"
 
-#.   MsgBox objText.GetText("Aborted!")
+#.    MsgBox objText.GetText("Aborted!")
 msgid "Aborted!"
 msgstr "用户终止!"
 
-#.   MsgBox objText.GetText("Failed!")
-msgid "Failed!"
+#.     MsgBox objText.GetText("Failed to generate!")
+msgid "Failed to generate!"
 msgstr "生成失败!"
 
-#.   If MsgBox(Replace(objText.GetText("Moves=%d. Apply?"), "%d", CStr(i)), vbYesNo + vbQuestion) = vbYes Then
+#.    b = MsgBox(Replace(objText.GetText("Moves=%d. Apply?"), "%d", CStr(i)), vbYesNo Or vbQuestion) = vbYes
 msgid "Moves=%d. Apply?"
 msgstr "步数=%d。是否应用?"
-
-#. Me.Caption = objText.GetText("Turning Square")
-msgid "Turning Square"
-msgstr "摇方块"
 
 #.  .AddItem objText.GetText("Close")
 msgid "Close"
@@ -258,7 +264,7 @@ msgstr "高级"
 
 #.  .AddItem objText.GetText("Zigzag")
 msgid "Zigzag"
-msgstr "Z字形"
+msgstr "之字形"
 
 #.  .AddItem objText.GetText("Ice mode")
 msgid "Ice mode"
@@ -268,14 +274,22 @@ msgstr "滑冰"
 msgid "Fragile mode"
 msgstr "易碎模式"
 
+#.  .AddItem objText.GetText("Zigzag with button")
+msgid "Zigzag with button"
+msgstr "之字形+按钮"
+
 #. cmdEdit(17).Caption = objText.GetText("&Close")
 #. cmdEdit(13).Caption = objText.GetText("&Close")
 msgid "&Close"
 msgstr "关闭(&C)"
 
-#. chk1.Caption = objText.GetText("Use current level as template")
+#. chk1(0).Caption = objText.GetText("Use current level as template")
 msgid "Use current level as template"
 msgstr "使用当前关卡作为模板"
+
+#. chk1(1).Caption = objText.GetText("Sort random levels by moves")
+msgid "Sort random levels by moves"
+msgstr "按步数排序随机关卡"
 
 #. Frame1(2).Caption = objText.GetText("Random map")
 msgid "Random map"
@@ -292,6 +306,10 @@ msgstr "种子"
 #. Label1(18).Caption = objText.GetText("Iterations")
 msgid "Iterations"
 msgstr "迭代次数"
+
+#. Label1(21).Caption = objText.GetText("Level count")
+msgid "Level count"
+msgstr "随机关数"
 
 #. cmd0(1).Caption = objText.GetText("Editor/Solver")
 msgid "Editor/Solver"
@@ -427,6 +445,34 @@ msgstr "起点位置"
 msgid "Solving..."
 msgstr "正在求解……"
 
+#. mnuLv(0).Caption = objText.GetText("&Copy Level") + vbTab + "Ctrl+C"
+msgid "&Copy Level"
+msgstr "复制关卡(&C)"
+
+#. mnuLv(1).Caption = objText.GetText("&Paste Level") + vbTab + "Ctrl+V"
+msgid "&Paste Level"
+msgstr "粘贴关卡(&V)"
+
+#. mnuLv(3).Caption = objText.GetText("Rotate 90 C&W")
+msgid "Rotate 90 C&W"
+msgstr "顺时针旋转90度(&W)"
+
+#. mnuLv(4).Caption = objText.GetText("Rotate 90 &CCW")
+msgid "Rotate 90 &CCW"
+msgstr "逆时针旋转90度(&C)"
+
+#. mnuLv(5).Caption = objText.GetText("&Rotate 180")
+msgid "&Rotate 180"
+msgstr "旋转180度(&R)"
+
+#. mnuLv(7).Caption = objText.GetText("Flip &Horizontally")
+msgid "Flip &Horizontally"
+msgstr "水平翻转(&H)"
+
+#. mnuLv(8).Caption = objText.GetText("Flip &Vertically")
+msgid "Flip &Vertically"
+msgstr "竖直翻转(&H)"
+
 #. DrawTextB bmG.hdc, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Generating..."
 msgstr "正在生成……"
@@ -439,6 +485,8 @@ msgstr "(无)"
 msgid "Start"
 msgstr "起点"
 
+#~ msgid "Failed!"
+#~ msgstr "生成失败!"
 #~ msgid "Width:"
 #~ msgstr "地图宽度:"
 #~ msgid "Height:"

@@ -23,20 +23,37 @@ Begin VB.Form Form1
    ScaleWidth      =   640
    StartUpPosition =   2  '屏幕中心
    Begin VB.PictureBox p0 
-      Height          =   2535
+      Height          =   3015
       Index           =   6
       Left            =   3960
-      ScaleHeight     =   165
+      ScaleHeight     =   197
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   181
       TabIndex        =   68
-      Top             =   4560
+      Top             =   1440
       Width           =   2775
+      Begin VB.CheckBox chk1 
+         Caption         =   "Sort"
+         Height          =   255
+         Index           =   1
+         Left            =   180
+         TabIndex        =   85
+         Top             =   1860
+         Width           =   2415
+      End
       Begin VB.TextBox txtGame 
-         Enabled         =   0   'False
+         Height          =   285
+         Index           =   5
+         Left            =   1080
+         TabIndex        =   84
+         Text            =   "1"
+         Top             =   1560
+         Width           =   1455
+      End
+      Begin VB.TextBox txtGame 
          Height          =   285
          Index           =   2
-         Left            =   960
+         Left            =   1080
          TabIndex        =   79
          Text            =   "30"
          Top             =   960
@@ -46,7 +63,7 @@ Begin VB.Form Form1
          Caption         =   "…"
          Height          =   270
          Index           =   19
-         Left            =   2190
+         Left            =   2280
          TabIndex        =   77
          Top             =   600
          Width           =   270
@@ -57,7 +74,7 @@ Begin VB.Form Form1
          Left            =   600
          TabIndex        =   76
          Top             =   600
-         Width           =   1575
+         Width           =   1650
       End
       Begin VB.CommandButton cmdEdit 
          Caption         =   "关闭(&C)"
@@ -65,7 +82,7 @@ Begin VB.Form Form1
          Index           =   17
          Left            =   1560
          TabIndex        =   72
-         Top             =   1680
+         Top             =   2130
          Width           =   900
       End
       Begin VB.CommandButton cmdEdit 
@@ -74,15 +91,16 @@ Begin VB.Form Form1
          Index           =   16
          Left            =   600
          TabIndex        =   71
-         Top             =   1680
+         Top             =   2130
          Width           =   900
       End
       Begin VB.CheckBox chk1 
          Caption         =   "使用当前关卡作为模板"
          Height          =   255
+         Index           =   0
          Left            =   180
          TabIndex        =   70
-         Top             =   1320
+         Top             =   1260
          Width           =   2415
       End
       Begin VB.ComboBox cmbMode 
@@ -91,16 +109,25 @@ Begin VB.Form Form1
          Style           =   2  'Dropdown List
          TabIndex        =   69
          Top             =   240
-         Width           =   1815
+         Width           =   1935
       End
       Begin VB.Frame Frame1 
          Caption         =   "随机地图"
-         Height          =   2055
+         Height          =   2460
          Index           =   2
          Left            =   120
          TabIndex        =   73
          Top             =   0
          Width           =   2535
+         Begin VB.Label Label1 
+            Caption         =   "Level Count"
+            Height          =   255
+            Index           =   21
+            Left            =   60
+            TabIndex        =   83
+            Top             =   1560
+            Width           =   975
+         End
          Begin VB.Label Label1 
             Caption         =   "迭代次数"
             Height          =   255
@@ -130,36 +157,38 @@ Begin VB.Form Form1
          End
       End
       Begin VB.Label Label1 
-         BackColor       =   &H00800000&
-         Height          =   255
-         Index           =   20
-         Left            =   120
-         TabIndex        =   81
-         Top             =   2160
-         Width           =   15
-      End
-      Begin VB.Label Label1 
+         Alignment       =   2  'Center
          Appearance      =   0  'Flat
+         BackStyle       =   0  'Transparent
          BorderStyle     =   1  'Fixed Single
          ForeColor       =   &H80000008&
          Height          =   255
          Index           =   19
          Left            =   120
          TabIndex        =   80
-         Top             =   2160
+         Top             =   2520
          Width           =   2535
+      End
+      Begin VB.Label Label1 
+         BackColor       =   &H00800000&
+         Height          =   255
+         Index           =   20
+         Left            =   120
+         TabIndex        =   81
+         Top             =   2520
+         Width           =   15
       End
    End
    Begin VB.PictureBox p0 
       BorderStyle     =   0  'None
       Height          =   3495
       Index           =   0
-      Left            =   6840
+      Left            =   720
       ScaleHeight     =   233
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   345
       TabIndex        =   0
-      Top             =   4320
+      Top             =   5640
       Visible         =   0   'False
       Width           =   5175
       Begin VB.CommandButton cmd0 
@@ -265,7 +294,7 @@ Begin VB.Form Form1
       ScaleMode       =   3  'Pixel
       ScaleWidth      =   629
       TabIndex        =   5
-      Top             =   840
+      Top             =   1080
       Visible         =   0   'False
       Width           =   9495
       Begin VB.CommandButton cmdEdit 
@@ -712,7 +741,7 @@ Begin VB.Form Form1
          Width           =   900
       End
       Begin VB.CommandButton Command1 
-         Caption         =   "Load Flash"
+         Caption         =   "Load"
          Height          =   255
          Left            =   8280
          TabIndex        =   7
@@ -928,7 +957,7 @@ Begin VB.Form Form1
       Height          =   24645
       Index           =   3
       Left            =   5400
-      Picture         =   "Form1.frx":31E4
+      Picture         =   "Form1.frx":38EE
       Top             =   6960
       Visible         =   0   'False
       Width           =   5985
@@ -938,7 +967,7 @@ Begin VB.Form Form1
       Height          =   24645
       Index           =   2
       Left            =   5160
-      Picture         =   "Form1.frx":12A84
+      Picture         =   "Form1.frx":1318E
       Top             =   6840
       Visible         =   0   'False
       Width           =   5985
@@ -948,7 +977,7 @@ Begin VB.Form Form1
       Height          =   54255
       Index           =   1
       Left            =   360
-      Picture         =   "Form1.frx":1EC41
+      Picture         =   "Form1.frx":1F34B
       Top             =   6960
       Visible         =   0   'False
       Width           =   4830
@@ -958,7 +987,7 @@ Begin VB.Form Form1
       Height          =   54255
       Index           =   0
       Left            =   120
-      Picture         =   "Form1.frx":32F2E
+      Picture         =   "Form1.frx":33638
       Top             =   6840
       Visible         =   0   'False
       Width           =   4830
@@ -968,10 +997,50 @@ Begin VB.Form Form1
       Height          =   7260
       Index           =   7
       Left            =   6000
-      Picture         =   "Form1.frx":66091
+      Picture         =   "Form1.frx":6679B
       Top             =   6480
       Visible         =   0   'False
       Width           =   9660
+   End
+   Begin VB.Menu mnuP1 
+      Caption         =   "[]"
+      Visible         =   0   'False
+      Begin VB.Menu mnuLv 
+         Caption         =   ""
+         Index           =   0
+      End
+      Begin VB.Menu mnuLv 
+         Caption         =   ""
+         Index           =   1
+      End
+      Begin VB.Menu mnuLv 
+         Caption         =   "-"
+         Index           =   2
+      End
+      Begin VB.Menu mnuLv 
+         Caption         =   ""
+         Index           =   3
+      End
+      Begin VB.Menu mnuLv 
+         Caption         =   ""
+         Index           =   4
+      End
+      Begin VB.Menu mnuLv 
+         Caption         =   ""
+         Index           =   5
+      End
+      Begin VB.Menu mnuLv 
+         Caption         =   "-"
+         Index           =   6
+      End
+      Begin VB.Menu mnuLv 
+         Caption         =   ""
+         Index           =   7
+      End
+      Begin VB.Menu mnuLv 
+         Caption         =   ""
+         Index           =   8
+      End
    End
 End
 Attribute VB_Name = "Form1"
@@ -1010,6 +1079,9 @@ End Type
 Private Declare Function PtInRect Lib "user32.dll" (ByRef lpRect As RECT, ByVal x As Long, ByVal y As Long) As Long
 Private Declare Function GetTickCount Lib "kernel32.dll" () As Long
 Private Declare Function ShellExecute Lib "shell32.dll" Alias "ShellExecuteA" (ByVal hwnd As Long, ByVal lpOperation As String, ByVal lpFile As String, ByVal lpParameters As String, ByVal lpDirectory As String, ByVal nShowCmd As Long) As Long
+
+Private Declare Sub keybd_event Lib "user32.dll" (ByVal bVk As Byte, ByVal bScan As Byte, ByVal dwFlags As Long, ByVal dwExtraInfo As Long)
+Private Const KEYEVENTF_KEYUP As Long = &H2
 
 Private bmG As New cDIBSection, bmG_Back As New cDIBSection
 Private bmG_Lv As New cDIBSection
@@ -1145,6 +1217,7 @@ objText.GetText("Open level file"), objText.GetText("Random level"), objText.Get
 objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
 '///enter loop
 Game_Loop
+keybd_event 1, 0, KEYEVENTF_KEYUP, 0 '?
 '///clear up
 bmG.ClearUp
 bmG_Lv.ClearUp
@@ -1873,8 +1946,8 @@ Do
   End If
   'copyBtn?
   If GameIsRndMap Then
-   r.Left = 252
-   r.Right = 300
+   r.Left = 380
+   r.Right = r.Left + 48
    If CBool(PtInRect(r, p.x, p.y)) Xor IsMouseIn2 Then
     IsMouseIn2 = Not IsMouseIn2
     bEnsureReDraw = True
@@ -1964,8 +2037,8 @@ Do
      r.Left = 600
      r.Right = 632
     Else
-     r.Left = 252
-     r.Right = 300
+     r.Left = 380
+     r.Right = r.Left + 48
     End If
     FrameRect bmG.hdc, r, x
     DeleteObject x
@@ -2761,10 +2834,10 @@ Private Sub Game_InitBack()
   'draw text
   If GameIsRndMap Then
    DrawTextB bmG_Back.hdc, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-   DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 128, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
    'button
-   bmImg(3).AlphaPaintPicture bmG_Back.hdc, 256, 9, 16, 16, 96, 32, , True
-   DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 272, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   bmImg(3).AlphaPaintPicture bmG_Back.hdc, 384, 9, 16, 16, 96, 32, , True
+   DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
   Else
    DrawTextB bmG_Back.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
   End If
@@ -3380,6 +3453,7 @@ Case 16 'generateRnd
 Case 17 'cancelRnd
  pShowPanel 2
 Case 18 'showRnd
+ txtGame(5).Text = "1"
  cmdEdit_Click 19
  pShowPanel 6
 Case 19 'newRndSeed
@@ -3387,46 +3461,133 @@ Case 19 'newRndSeed
 End Select
 End Sub
 
-Private Sub Command1_Click()
-'currently do nothing
+Private Sub cmdEdit_MouseDown(Index As Integer, Button As Integer, Shift As Integer, x As Single, y As Single)
+If p0(2).Visible And Button = 2 Then Me.PopupMenu mnuP1
 End Sub
 
-'random map test
+Private Sub Command1_Click()
+'convert "cubesgame" level ... done.
+End Sub
+
+'random map test 'new:multi-level generate
 Private Sub pEditRandomMap()
 Dim s As String
 Dim xx As New clsBloxorz
 Dim lv As Long, i As Long
+Dim ii As Long, m As Long
+Dim j As Long, jj As Long
+Dim w As Long, h As Long
+Dim b As Boolean
+Dim nMode As Long, nMoves() As Long
 lv = 1 + cmbLv.ListIndex
 If lv <= 0 Then Exit Sub
 s = txtGame(1).Text
-i = Val(s)
-If i > 0 And i <= cmbMode.ListCount Then cmbMode.ListIndex = i - 1 Else i = cmbMode.ListIndex + 1
+nMode = Val(s)
+If nMode > 0 And nMode <= cmbMode.ListCount Then cmbMode.ListIndex = nMode - 1 _
+Else nMode = cmbMode.ListIndex + 1
+m = txtGame(5).Text
+If m <= 0 Then m = 1
+ReDim nMoves(1 To m)
 GameStatus = 0
-DoEvents
-'start
-objRnd.Randomize s
-With Lev(lv)
- If chk1.Value Then
-  i = pRandomMap(xx, , , Lev(lv), 200, 30, i) 'TODO:time?
- Else
-  i = pRandomMap(xx, .Width, .Height, , 200, 30, i) 'TODO:time?
- End If
- If GameStatus < 0 Then
-  MsgBox objText.GetText("Aborted!")
- ElseIf i = 0 Then
-  MsgBox objText.GetText("Failed!")
- Else
-  If MsgBox(Replace(objText.GetText("Moves=%d. Apply?"), "%d", CStr(i)), vbYesNo + vbQuestion) = vbYes Then
-   .Clone xx
-   eSX = 0
-   eSY = 0
-   pEditRefresh
-   pEditSwitch
+'///
+cmbMode.Enabled = False
+txtGame(1).Enabled = False
+txtGame(2).Enabled = False
+txtGame(5).Enabled = False
+chk1(0).Enabled = False
+chk1(1).Enabled = False
+cmdEdit(19).Enabled = False
+'///
+For ii = 1 To m
+ If m > 1 Then Label1(19).Caption = CStr(ii) + "/" + CStr(m)
+ DoEvents
+ 'start
+ objRnd.Randomize s
+  '///genetate TODO:time?
+  If chk1(0).Value Then 'use template
+   i = pRandomMap(xx, , , Lev(lv), 200, 30, nMode)
+  Else
+   If ii = 1 Then
+    w = Lev(lv).Width
+    h = Lev(lv).Height
+   End If
+   i = pRandomMap(xx, w, h, , 200, 30, nMode)
   End If
- End If
-End With
-cmdEdit_Click 19
-Label1(20).Width = 1
+  '///
+  If GameStatus < 0 Then
+   MsgBox objText.GetText("Aborted!")
+   ii = m + 1
+  ElseIf i = 0 Then 'fail
+   If m > 1 Then
+    If chk1(0).Value = 0 Then
+     ii = ii - 1
+    Else
+     lv = lv + 1
+     If lv > LevCount Then ii = m + 1
+    End If
+   Else
+    MsgBox objText.GetText("Failed to generate!")
+   End If
+  Else 'ok!
+   If m > 1 Then b = True Else _
+   b = MsgBox(Replace(objText.GetText("Moves=%d. Apply?"), "%d", CStr(i)), vbYesNo Or vbQuestion) = vbYes
+   If b Then
+    If chk1(0).Value = 0 And chk1(1).Value = 1 And ii > 1 Then
+     '///sort
+     For j = 1 To ii - 1
+      If nMoves(ii - j) <= i Then Exit For
+     Next j
+     j = j - 1
+     For jj = 1 To j
+      nMoves(ii - jj + 1) = nMoves(ii - jj)
+      Set Lev(lv - jj + 1) = Lev(lv - jj)
+     Next jj
+     'Lev(lv - j).Clone xx
+     Set Lev(lv - j) = xx '?
+     Set xx = Nothing '?
+     nMoves(ii - j) = i
+    Else
+     'Lev(lv).Clone xx
+     Set Lev(lv) = xx '?
+     Set xx = Nothing '?
+     nMoves(ii) = i
+    End If
+    '///
+    lv = lv + 1
+    If lv > LevCount And ii < m Then
+     If chk1(0).Value Then
+      ii = m + 1
+     Else
+      LevCount = lv
+      ReDim Preserve Lev(1 To LevCount)
+      Set Lev(lv) = New clsBloxorz
+     End If
+    End If
+   End If
+  End If
+ Label1(20).Width = 1
+ '///
+ cmdEdit_Click 19
+ s = txtGame(1).Text
+Next ii
+'///
+For i = cmbLv.ListCount + 1 To LevCount
+ cmbLv.AddItem CStr(i)
+Next i
+'///
+cmbMode.Enabled = True
+txtGame(1).Enabled = True
+txtGame(2).Enabled = True
+txtGame(5).Enabled = True
+chk1(0).Enabled = True
+chk1(1).Enabled = True
+cmdEdit(19).Enabled = True
+'///
+Label1(19).Caption = ""
+eSX = 0
+eSY = 0
+pEditRefresh
+pEditSwitch
 End Sub
 
 'random map
@@ -3452,26 +3613,14 @@ InitCommonControls
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
-Dim lv As Long
-Dim obj As New clsBloxorz
 If p0(2).Visible Then
  If Shift = vbCtrlMask Then
   Select Case KeyCode
   Case vbKeyX
   Case vbKeyC
-   lv = 1 + cmbLv.ListIndex
-   If lv <= 0 Then Exit Sub
-   Lev(lv).CopyToClipboard
+   mnuLv_Click 0
   Case vbKeyV
-   lv = 1 + cmbLv.ListIndex
-   If lv <= 0 Then Exit Sub
-   If obj.PasteFromClipboard Then
-    Lev(lv).Clone obj
-    eSX = 0
-    eSY = 0
-    pEditRefresh
-    pEditSwitch
-   End If
+   mnuLv_Click 1
   End Select
  End If
 End If
@@ -3533,7 +3682,7 @@ Else
    For j = 1 To h
     '///
     Select Case nMode
-    Case 4 'zigzag
+    Case 4, 7 'zigzag
      x = 1
      If j = (h + 1) \ 3 Then
       If i <= (w + w) \ 3 Then x = 0
@@ -3558,10 +3707,13 @@ Else
     .Data(i, j) = x
    Next j
   Next i
-  'determine start
+  '///determine start
   Select Case nMode
   Case 4 'zigzag
    sx = 1 + Int(w * objRnd.Rnd / 4)
+   sy = 1 + Int(h * objRnd.Rnd / 4)
+  Case 7 'zigzag+button
+   sx = w \ 2 + Int(w * objRnd.Rnd / 4)
    sy = 1 + Int(h * objRnd.Rnd / 4)
   Case Else
    sx = 1 + Int(w * objRnd.Rnd / 4)
@@ -3570,17 +3722,45 @@ Else
   .Data(sx, sy) = 1
   .StartX = sx
   .StartY = sy
-  'determine end point
+  '///determine end point
   Select Case nMode
   Case 4 'zigzag
    x = w - Int(w * objRnd.Rnd / 4)
    y = h - Int(h * objRnd.Rnd / 4)
+  Case 7 'zigzag+button
+   x = 1 + Int(w * objRnd.Rnd / 4)
+   y = 1 + Int(h * objRnd.Rnd / 4)
+   If x >= sx - 1 And x > 1 Then x = x - 1
+   .AddSwitch
+   If x > 1 Then
+    .Data(x - 1, y) = 6
+    .AddSwitchBridge 1, x - 1, y, 2
+   End If
+   If y > 1 Then
+    .Data(x, y - 1) = 6
+    .AddSwitchBridge 1, x, y - 1, 2
+   End If
+   If x < w Then
+    .Data(x + 1, y) = 6
+    .AddSwitchBridge 1, x + 1, y, 2
+   End If
+   If y < h Then
+    .Data(x, y + 1) = 6
+    .AddSwitchBridge 1, x, y + 1, 2
+   End If
   Case Else
    x = w - Int(w * objRnd.Rnd / 4)
    y = 1 + Int(h * objRnd.Rnd)
   End Select
   .Data(x, y) = 8
-  If nMode = 3 Then 'just add some button
+  '///just add some button
+  Select Case nMode
+  Case 7 'zigzag+button
+   x = w - Int(w * objRnd.Rnd / 4)
+   y = h - Int(h * objRnd.Rnd / 4)
+   .Data(x, y) = 2 + Int(2 * objRnd.Rnd)
+   .Data2(x, y) = 1
+  Case 3 'difficult
    i = 0
    Do Until objRnd.Rnd < 0.5
     x = 1 + Int(w * objRnd.Rnd)
@@ -3609,7 +3789,7 @@ Else
      End Select
     End If
    Loop
-  End If
+  End Select
  End With
 End If
 ReDim d(1 To w, 1 To h)
@@ -3861,17 +4041,20 @@ With cmbMode
  .AddItem objText.GetText("Zigzag")
  .AddItem objText.GetText("Ice mode")
  .AddItem objText.GetText("Fragile mode")
+ .AddItem objText.GetText("Zigzag with button")
  .ListIndex = 2
 End With
 pEditSelect
 '///
 cmdEdit(17).Caption = objText.GetText("&Close")
 cmdEdit(16).Caption = objText.GetText("&Generate")
-chk1.Caption = objText.GetText("Use current level as template")
+chk1(0).Caption = objText.GetText("Use current level as template")
+chk1(1).Caption = objText.GetText("Sort random levels by moves")
 Frame1(2).Caption = objText.GetText("Random map")
 Label1(16).Caption = objText.GetText("Mode")
 Label1(17).Caption = objText.GetText("Seed")
 Label1(18).Caption = objText.GetText("Iterations")
+Label1(21).Caption = objText.GetText("Level count")
 cmd0(2).Caption = objText.GetText("Game instructions")
 cmd0(1).Caption = objText.GetText("Editor/Solver")
 cmd0(0).Caption = objText.GetText("Start game")
@@ -3910,6 +4093,13 @@ Label1(6).Caption = objText.GetText("No.")
 Label1(12).Caption = objText.GetText("Start pos")
 Label1(11).Caption = objText.GetText("Solving...")
 Label1(10).Caption = objText.GetText("Solving...")
+mnuLv(0).Caption = objText.GetText("&Copy Level") + vbTab + "Ctrl+C"
+mnuLv(1).Caption = objText.GetText("&Paste Level") + vbTab + "Ctrl+V"
+mnuLv(3).Caption = objText.GetText("Rotate 90 C&W")
+mnuLv(4).Caption = objText.GetText("Rotate 90 &CCW")
+mnuLv(5).Caption = objText.GetText("&Rotate 180")
+mnuLv(7).Caption = objText.GetText("Flip &Horizontally")
+mnuLv(8).Caption = objText.GetText("Flip &Vertically")
 '///
 End Sub
 
@@ -4213,10 +4403,14 @@ End Sub
 
 Private Sub i0_MouseDown(Index As Integer, Button As Integer, Shift As Integer, x As Single, y As Single)
 Dim i As Long
-i = x \ 360
-If i <> eSelect And i >= 0 And i <= 11 Then
- eSelect = i
- pEditSelect
+If Button = 2 Then
+ Me.PopupMenu mnuP1
+Else
+ i = x \ 360
+ If i <> eSelect And i >= 0 And i <= 11 Then
+  eSelect = i
+  pEditSelect
+ End If
 End If
 End Sub
 
@@ -4296,6 +4490,31 @@ If lv > 0 Then
 End If
 End Sub
 
+Private Sub mnuLv_Click(Index As Integer)
+Dim lv As Long
+Dim obj As New clsBloxorz
+lv = 1 + cmbLv.ListIndex
+If lv <= 0 Then Exit Sub
+Select Case Index
+Case 0
+ Lev(lv).CopyToClipboard
+Case 1
+ If obj.PasteFromClipboard Then
+  Lev(lv).Clone obj
+  eSX = 0
+  eSY = 0
+  pEditRefresh
+  pEditSwitch
+ End If
+Case Else
+ Lev(lv).TransformLevel Index
+ eSX = 0
+ eSY = 0
+ pEditRefresh
+ pEditSwitch
+End Select
+End Sub
+
 Private Sub optMode_Click(Index As Integer)
 eSX = 0
 eSY = 0
@@ -4310,13 +4529,9 @@ sSY2 = 0
 pSolveRedraw
 End Sub
 
-'Private Sub p0_MouseDown(Index As Integer, Button As Integer, Shift As Integer, x As Single, y As Single)
-'GameClick = True
-'End Sub
-'
-'Private Sub p0_MouseUp(Index As Integer, Button As Integer, Shift As Integer, x As Single, y As Single)
-'GameClick = False
-'End Sub
+Private Sub p0_MouseDown(Index As Integer, Button As Integer, Shift As Integer, x As Single, y As Single)
+If Index = 2 And Button = 2 Then Me.PopupMenu mnuP1
+End Sub
 
 Private Sub p0_Paint(Index As Integer)
 Select Case Index
@@ -4330,6 +4545,7 @@ End Sub
 Private Sub pEdit_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 Dim i As Long, j As Long, k As Long, lv As Long
 Dim xo As Long, yo As Long, xo2 As Long, yo2 As Long, s As String
+Dim b As Boolean
 i = (x + sEdit.Value(efsHorizontal) + 24) \ 24
 j = (y + sEdit.Value(efsVertical) + 24) \ 24
 lv = 1 + cmbLv.ListIndex
@@ -4413,8 +4629,11 @@ With Lev(lv)
     pEditMapSelect lv
    End If
   End If
+ ElseIf Button = 2 Then
+  b = True
  End If
 End With
+If b Then Me.PopupMenu mnuP1
 End Sub
 
 Private Sub pEdit_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)

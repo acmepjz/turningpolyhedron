@@ -21,8 +21,8 @@ Private Declare Function GetTickCount Lib "kernel32.dll" () As Long
 Private Const TheSignature = "Ò¡·½¿éXP"
 
 Private Type typeBridge
- x As Long
- y As Long
+ X As Long
+ Y As Long
  Behavior As Long
  '0=Off
  '1=0n
@@ -60,8 +60,8 @@ Public StartX As Long, StartY As Long
 'Public NowX2 As Long, NowY2 As Long
 
 Private Type typeSolveItPos
- x As Integer
- y As Integer
+ X As Integer
+ Y As Integer
 End Type
 
 Private Type typeSolveItSwitchIdPos
@@ -105,10 +105,118 @@ Private GTheoryNodeMax As Long, GTheoryNodeUsed As Long, SolveItTime As Long
 Private SolveItMovedArea() As Byte
 #End If
 
+'3 = rotate 90 CW
+'4 = rotate 90 CCW
+'5 = rotate 180
+'7 = flip horizontally
+'8 = flip vertically
+Public Sub TransformLevel(ByVal nOperateIndex As Long)
+Dim d() As Byte, d2() As Long
+Dim i As Long, j As Long
+Dim ii As Long, jj As Long
+Dim i1 As Long, j1 As Long
+Dim i2 As Long, j2 As Long
+If datw <= 0 Or dath <= 0 Then Exit Sub
+Select Case nOperateIndex
+Case 3, 4
+ ReDim d(1 To dath, 1 To datw)
+ ReDim d2(1 To dath, 1 To datw)
+ For i = 1 To datw
+  For j = 1 To dath
+   If dat(i, j) = 4 Then 'trans
+    GetTransportPosition i, j, i1, j1, i2, j2
+    If nOperateIndex = 3 Then ii = dath + 1 - j1: jj = i1 _
+    Else ii = j1: jj = datw + 1 - i1
+    i1 = ii
+    j1 = jj
+    If nOperateIndex = 3 Then ii = dath + 1 - j2: jj = i2 _
+    Else ii = j2: jj = datw + 1 - i2
+    SetTransportPosition i, j, i1, j1, ii, jj
+   End If
+   If nOperateIndex = 3 Then ii = dath + 1 - j: jj = i _
+   Else ii = j: jj = datw + 1 - i
+   d(ii, jj) = dat(i, j)
+   d2(ii, jj) = dat2(i, j)
+  Next j
+ Next i
+ '///
+ If nOperateIndex = 3 Then ii = dath + 1 - StartY: jj = StartX _
+ Else ii = StartY: jj = datw + 1 - StartX
+ StartX = ii
+ StartY = jj
+ For i = 1 To swc
+  For j = 1 To sws(i).bc
+   With sws(i).bs(j)
+    If nOperateIndex = 3 Then ii = dath + 1 - .Y: jj = .X _
+    Else ii = .Y: jj = datw + 1 - .X
+    .X = ii
+    .Y = jj
+   End With
+  Next j
+ Next i
+ '///
+ dat = d
+ dat2 = d2
+ i = datw
+ datw = dath
+ dath = i
+Case 5, 7, 8
+ ReDim d(1 To datw, 1 To dath)
+ ReDim d2(1 To datw, 1 To dath)
+ If nOperateIndex <> 8 Then 'flip horizontally
+  For i = 1 To datw
+   For j = 1 To dath
+    If dat(i, j) = 4 Then 'trans
+     GetTransportPosition i, j, i1, j1, i2, j2
+     SetTransportPosition i, j, datw + 1 - i1, j1, datw + 1 - i2, j2
+    End If
+    ii = datw + 1 - i
+    d(ii, j) = dat(i, j)
+    d2(ii, j) = dat2(i, j)
+   Next j
+  Next i
+  StartX = datw + 1 - StartX
+  For i = 1 To swc
+   For j = 1 To sws(i).bc
+    With sws(i).bs(j)
+     .X = datw + 1 - .X
+    End With
+   Next j
+  Next i
+  dat = d
+  dat2 = d2
+ End If
+ If nOperateIndex <> 7 Then 'flip vertically
+  For i = 1 To datw
+   For j = 1 To dath
+    If dat(i, j) = 4 Then 'trans
+     GetTransportPosition i, j, i1, j1, i2, j2
+     SetTransportPosition i, j, i1, dath + 1 - j1, i2, dath + 1 - j2
+    End If
+    jj = dath + 1 - j
+    d(i, jj) = dat(i, j)
+    d2(i, jj) = dat2(i, j)
+   Next j
+  Next i
+  StartY = dath + 1 - StartY
+  For i = 1 To swc
+   For j = 1 To sws(i).bc
+    With sws(i).bs(j)
+     .Y = dath + 1 - .Y
+    End With
+   Next j
+  Next i
+  dat = d
+  dat2 = d2
+ End If
+End Select
+End Sub
+
 'stupid
 Public Function ToString() As String
 Dim s As String, s1 As String
 Dim i As Long, j As Long
+If datw <= 0 Or dath <= 0 Then Exit Function
 s = CStr(datw) + "," + CStr(dath) + vbCrLf _
 + CStr(swc) + vbCrLf + CStr(StartX) + "," + CStr(StartY) + vbCrLf
 '///
@@ -131,7 +239,7 @@ Next j
 For i = 1 To swc
  s = s + CStr(sws(i).bc) + vbCrLf
  For j = 1 To sws(i).bc
-  s = s + CStr(sws(i).bs(j).x) + "," + CStr(sws(i).bs(j).y) + "," + CStr(sws(i).bs(j).Behavior) + vbCrLf
+  s = s + CStr(sws(i).bs(j).X) + "," + CStr(sws(i).bs(j).Y) + "," + CStr(sws(i).bs(j).Behavior) + vbCrLf
  Next j
 Next i
 '///
@@ -202,8 +310,8 @@ For i = 0 To m
      i3 = i3 + 1
     Else
      Select Case i2
-     Case 1: sws(k).bs(i3).x = j
-     Case 2: sws(k).bs(i3).y = j
+     Case 1: sws(k).bs(i3).X = j
+     Case 2: sws(k).bs(i3).Y = j
      Case 3: sws(k).bs(i3).Behavior = j
      End Select
      i2 = i2 + 1
@@ -293,38 +401,38 @@ ClearSwitch
 SolveItClear
 End Sub
 
-Public Property Get Data(ByVal x As Long, ByVal y As Long) As Long
-Data = dat(x, y)
+Public Property Get Data(ByVal X As Long, ByVal Y As Long) As Long
+Data = dat(X, Y)
 End Property
 
-Public Property Let Data(ByVal x As Long, ByVal y As Long, ByVal n As Long)
-dat(x, y) = n
+Public Property Let Data(ByVal X As Long, ByVal Y As Long, ByVal n As Long)
+dat(X, Y) = n
 End Property
 
-Public Property Get Data2(ByVal x As Long, ByVal y As Long) As Long
-Data2 = dat2(x, y)
+Public Property Get Data2(ByVal X As Long, ByVal Y As Long) As Long
+Data2 = dat2(X, Y)
 End Property
 
-Public Property Let Data2(ByVal x As Long, ByVal y As Long, ByVal n As Long)
-dat2(x, y) = n
+Public Property Let Data2(ByVal X As Long, ByVal Y As Long, ByVal n As Long)
+dat2(X, Y) = n
 End Property
 
-Public Sub GetTransportPosition(ByVal x As Long, ByVal y As Long, ByRef x1 As Long, ByRef y1 As Long, ByRef x2 As Long, ByRef y2 As Long)
+Public Sub GetTransportPosition(ByVal X As Long, ByVal Y As Long, ByRef x1 As Long, ByRef y1 As Long, ByRef x2 As Long, ByRef y2 As Long)
 Dim n As Long
 x1 = 0
 y1 = 0
 x2 = 0
 y2 = 0
-n = VarPtr(dat2(x, y))
+n = VarPtr(dat2(X, Y))
 CopyMemory x1, ByVal n, 1&
 CopyMemory y1, ByVal (n + 1), 1&
 CopyMemory x2, ByVal (n + 2), 1&
 CopyMemory y2, ByVal (n + 3), 1&
 End Sub
 
-Public Sub SetTransportPosition(ByVal x As Long, ByVal y As Long, ByVal x1 As Long, ByVal y1 As Long, ByVal x2 As Long, ByVal y2 As Long)
+Public Sub SetTransportPosition(ByVal X As Long, ByVal Y As Long, ByVal x1 As Long, ByVal y1 As Long, ByVal x2 As Long, ByVal y2 As Long)
 Dim n As Long
-n = VarPtr(dat2(x, y))
+n = VarPtr(dat2(X, Y))
 CopyMemory ByVal n, x1, 1&
 CopyMemory ByVal (n + 1), y1, 1&
 CopyMemory ByVal (n + 2), x2, 1&
@@ -406,13 +514,13 @@ With sws(Index)
 End With
 End Property
 
-Public Sub AddSwitchBridge(ByVal Index As Long, Optional ByVal x As Long, Optional ByVal y As Long, Optional ByVal Behavior As Long)
+Public Sub AddSwitchBridge(ByVal Index As Long, Optional ByVal X As Long, Optional ByVal Y As Long, Optional ByVal Behavior As Long)
 With sws(Index)
  .bc = .bc + 1
  ReDim Preserve .bs(1 To .bc)
  With .bs(.bc)
-  .x = x
-  .y = y
+  .X = X
+  .Y = Y
   .Behavior = Behavior
  End With
 End With
@@ -439,19 +547,19 @@ End With
 End Sub
 
 Public Property Get SwitchBridgeX(ByVal Index As Long, ByVal i As Long) As Long
-SwitchBridgeX = sws(Index).bs(i).x
+SwitchBridgeX = sws(Index).bs(i).X
 End Property
 
 Public Property Let SwitchBridgeX(ByVal Index As Long, ByVal i As Long, ByVal n As Long)
-sws(Index).bs(i).x = n
+sws(Index).bs(i).X = n
 End Property
 
 Public Property Get SwitchBridgeY(ByVal Index As Long, ByVal i As Long) As Long
-SwitchBridgeY = sws(Index).bs(i).y
+SwitchBridgeY = sws(Index).bs(i).Y
 End Property
 
 Public Property Let SwitchBridgeY(ByVal Index As Long, ByVal i As Long, ByVal n As Long)
-sws(Index).bs(i).y = n
+sws(Index).bs(i).Y = n
 End Property
 
 Public Property Get SwitchBridgeBehavior(ByVal Index As Long, ByVal i As Long) As Long
@@ -483,8 +591,8 @@ Do Until i > swc
     For k = 1 To .bc
      For l = 1 To .bc
       If d(l) = 0 Then
-       If .bs(k).x = sws(j).bs(l).x Then
-        If .bs(k).y = sws(j).bs(l).y Then
+       If .bs(k).X = sws(j).bs(l).X Then
+        If .bs(k).Y = sws(j).bs(l).Y Then
          If .bs(k).Behavior = sws(j).bs(l).Behavior Then
           d(l) = d(l) + 1
           Exit For
@@ -636,7 +744,7 @@ Public Function SolveIt(Optional objProgress As IBloxorzCallBack) As Boolean
 Dim SwitchTransTable() As Long, d() As Byte
 Dim nd As typeSolveItNode
 Dim i As Long, j As Long, jj As Long, k As Long, m As Long
-Dim x As Long, y As Long, t As Long, bAbort As Boolean
+Dim X As Long, Y As Long, t As Long, bAbort As Boolean
 If StartX <= 0 Or StartY <= 0 Or StartX > datw Or StartY > dath Then Exit Function
 t = GetTickCount
 '///////////////////////////////////////////////////Step 1:determine switch
@@ -663,14 +771,14 @@ If swc > 0 Then 'calc
    With sws(j)
     For k = 1 To .bc
      With .bs(k)
-      If .x > 0 And .y > 0 And .x <= datw And .y <= dath Then
+      If .X > 0 And .Y > 0 And .X <= datw And .Y <= dath Then
        Select Case .Behavior
        Case 0 'off
-        d(.x, .y) = 6
+        d(.X, .Y) = 6
        Case 1 'on
-        d(.x, .y) = 7
+        d(.X, .Y) = 7
        Case 2 'toggle
-        d(.x, .y) = 13 - d(.x, .y) 'err?
+        d(.X, .Y) = 13 - d(.X, .Y) 'err?
        End Select
       End If
      End With
@@ -752,15 +860,15 @@ lpe = 1
 If IsTrans Then
  Do Until lps > lpe
   With GTheoryNode(lps)
-   x = .Distance + 1
+   X = .Distance + 1
    jj = pSolveItCheckNodeState(.m, .k, 3, .k2)
    #If SolveItRecordMovedArea Then
    With SwitchMapIdPos(.m).p(.k)
-    SolveItMovedArea(.x, .y) = 1
+    SolveItMovedArea(.X, .Y) = 1
    End With
    If .k2 <> .k Then
     With SwitchMapIdPos(.m).p(.k2)
-     SolveItMovedArea(.x, .y) = 1
+     SolveItMovedArea(.X, .Y) = 1
     End With
    End If
    #End If
@@ -768,9 +876,9 @@ If IsTrans Then
    Case 0, 1, 2 'up,h,v
     k = .k
     If jj = 1 Then
-     If SwitchMapIdPos(.m).p(.k).x > SwitchMapIdPos(.m).p(.k2).x Then k = .k2
+     If SwitchMapIdPos(.m).p(.k).X > SwitchMapIdPos(.m).p(.k2).X Then k = .k2
     ElseIf jj = 2 Then
-     If SwitchMapIdPos(.m).p(.k).y > SwitchMapIdPos(.m).p(.k2).y Then k = .k2
+     If SwitchMapIdPos(.m).p(.k).Y > SwitchMapIdPos(.m).p(.k2).Y Then k = .k2
     End If
     For i = 1 To 4
      j = pSolveItCalcNext(SwitchTransTable, .m, k, jj, i, ret)
@@ -785,7 +893,7 @@ If IsTrans Then
         .k2 = ret.k2
         .PathPrevEdge = i
         .PathPrevNode = lps
-        .Distance = x
+        .Distance = X
        End With
       End If
      End If
@@ -804,7 +912,7 @@ If IsTrans Then
         .k2 = ret.k2
         .PathPrevEdge = i
         .PathPrevNode = lps
-        .Distance = x
+        .Distance = X
        End With
       End If
      End If
@@ -820,7 +928,7 @@ If IsTrans Then
         .k2 = ret.k2
         .PathPrevEdge = i + 4
         .PathPrevNode = lps
-        .Distance = x
+        .Distance = X
        End With
       End If
      End If
@@ -840,15 +948,15 @@ If IsTrans Then
 Else
  Do Until lps > lpe
   With GTheoryNode(lps)
-   x = .Distance + 1
+   X = .Distance + 1
    jj = pSolveItCheckNodeState(.m, .k, .k2)
    #If SolveItRecordMovedArea Then
    With SwitchMapIdPos(.m).p(.k)
-    SolveItMovedArea(.x, .y) = 1
+    SolveItMovedArea(.X, .Y) = 1
     If jj = 1 Then 'h
-     SolveItMovedArea(.x + 1, .y) = 1
+     SolveItMovedArea(.X + 1, .Y) = 1
     ElseIf jj = 2 Then 'v
-     SolveItMovedArea(.x, .y + 1) = 1
+     SolveItMovedArea(.X, .Y + 1) = 1
     End If
    End With
    #End If
@@ -867,7 +975,7 @@ Else
         .k2 = ret.k2
         .PathPrevEdge = i
         .PathPrevNode = lps
-        .Distance = x
+        .Distance = X
        End With
       End If
      End If
@@ -956,7 +1064,7 @@ Loop
 End Function
 
 Private Function pSolveItCheckNodeState(ByVal m As Long, ByVal k As Long, ByVal State As Long, Optional ByVal k2 As Long) As Long
-Dim x As Long, y As Long, x2 As Long, y2 As Long
+Dim X As Long, Y As Long, x2 As Long, y2 As Long
 pSolveItCheckNodeState = -1 'invalid
 With SwitchMapIdPos(m)
  If k > 0 And k <= .Count Then
@@ -964,54 +1072,54 @@ With SwitchMapIdPos(m)
   Case 3 'single?
    If k2 > 0 And k2 <= .Count Then
     If k = k2 Then 'up
-     Select Case SwitchMap(.p(k).x, .p(k).y, m)
+     Select Case SwitchMap(.p(k).X, .p(k).Y, m)
      Case 1, 2, 3, 7, 9, 10  '?
       pSolveItCheckNodeState = 0
      End Select
     Else
-     x = .p(k).x
-     y = .p(k).y
-     x2 = .p(k2).x
-     y2 = .p(k2).y
-     If y = y2 And (x - x2 = 1 Or x2 - x = 1) Then 'h
-      If x > x2 Then x = x2
-      If x <= datw - 1 Then
-       If Not (SwitchMap(x, y, m) = 11 And SwitchMap(x + 1, y, m) = 11) Then
+     X = .p(k).X
+     Y = .p(k).Y
+     x2 = .p(k2).X
+     y2 = .p(k2).Y
+     If Y = y2 And (X - x2 = 1 Or x2 - X = 1) Then 'h
+      If X > x2 Then X = x2
+      If X <= datw - 1 Then
+       If Not (SwitchMap(X, Y, m) = 11 And SwitchMap(X + 1, Y, m) = 11) Then
         pSolveItCheckNodeState = 1
        End If
       End If
-     ElseIf x = x2 And (y - y2 = 1 Or y2 - y = 1) Then 'v
-      If y > y2 Then y = y2
-      If y <= dath - 1 Then
-       If Not (SwitchMap(x, y, m) = 11 And SwitchMap(x, y + 1, m) = 11) Then
+     ElseIf X = x2 And (Y - y2 = 1 Or y2 - Y = 1) Then 'v
+      If Y > y2 Then Y = y2
+      If Y <= dath - 1 Then
+       If Not (SwitchMap(X, Y, m) = 11 And SwitchMap(X, Y + 1, m) = 11) Then
         pSolveItCheckNodeState = 2
        End If
       End If
      Else 'single
-      If Not (SwitchMap(x, y, m) = 11 Or SwitchMap(x2, y2, m) = 11) Then
+      If Not (SwitchMap(X, Y, m) = 11 Or SwitchMap(x2, y2, m) = 11) Then
        pSolveItCheckNodeState = 3
       End If
      End If
     End If
    End If
   Case 0 'up
-   Select Case SwitchMap(.p(k).x, .p(k).y, m)
+   Select Case SwitchMap(.p(k).X, .p(k).Y, m)
    Case 1, 2, 3, 7, 9, 10  '?
     pSolveItCheckNodeState = 0
    End Select
   Case 1 'h
-   x = .p(k).x
-   y = .p(k).y
-   If x <= datw - 1 Then
-    If SwitchMapPosId(x + 1, y, m) > 0 And Not (SwitchMap(x, y, m) = 11 And SwitchMap(x + 1, y, m) = 11) Then
+   X = .p(k).X
+   Y = .p(k).Y
+   If X <= datw - 1 Then
+    If SwitchMapPosId(X + 1, Y, m) > 0 And Not (SwitchMap(X, Y, m) = 11 And SwitchMap(X + 1, Y, m) = 11) Then
      pSolveItCheckNodeState = 1
     End If
    End If
   Case 2 'v
-   x = .p(k).x
-   y = .p(k).y
-   If y <= dath - 1 Then
-    If SwitchMapPosId(x, y + 1, m) > 0 And Not (SwitchMap(x, y, m) = 11 And SwitchMap(x, y + 1, m) = 11) Then
+   X = .p(k).X
+   Y = .p(k).Y
+   If Y <= dath - 1 Then
+    If SwitchMapPosId(X, Y + 1, m) > 0 And Not (SwitchMap(X, Y, m) = 11 And SwitchMap(X, Y + 1, m) = 11) Then
      pSolveItCheckNodeState = 2
     End If
    End If
@@ -1022,7 +1130,7 @@ End Function
 
 Private Function pSolveItCalcNext(SwitchTransTable() As Long, ByVal m As Long, ByVal k As Long, ByVal State As Long, ByVal FS As Long, ret As typeNextPos) As Long
 Dim i As Long, j As Long, jj As Long, PJJ As Long
-Dim x As Long, y As Long
+Dim X As Long, Y As Long
 With SwitchMapIdPos(m).p(k)
  Select Case State
  Case 0 '/////////////up
@@ -1030,51 +1138,51 @@ With SwitchMapIdPos(m).p(k)
   'X -> X
   '     X
   Case 1, 2 'up/down
-   x = .x
-   y = 0
+   X = .X
+   Y = 0
    If FS = 1 Then 'up
-     If .y > 2 Then
-      If SwitchMap(.x, .y - 1, m) = 9 And SwitchMap(.x, .y - 2, m) = 9 Then 'ice
-       For y = .y - 2 To 1 Step -1
-        Select Case SwitchMap(.x, y, m)
+     If .Y > 2 Then
+      If SwitchMap(.X, .Y - 1, m) = 9 And SwitchMap(.X, .Y - 2, m) = 9 Then 'ice
+       For Y = .Y - 2 To 1 Step -1
+        Select Case SwitchMap(.X, Y, m)
         Case 9 'ice
         Case 11
-         y = y + 1
+         Y = Y + 1
          Exit For
         Case Else
          Exit For
         End Select
-       Next y
+       Next Y
       Else
-       y = .y - 2
+       Y = .Y - 2
       End If
      End If
    Else 'down
-     If .y <= dath - 2 Then
-      If SwitchMap(.x, .y + 1, m) = 9 And SwitchMap(.x, .y + 2, m) = 9 Then 'ice
-       For y = .y + 2 To dath
-        Select Case SwitchMap(.x, y, m)
+     If .Y <= dath - 2 Then
+      If SwitchMap(.X, .Y + 1, m) = 9 And SwitchMap(.X, .Y + 2, m) = 9 Then 'ice
+       For Y = .Y + 2 To dath
+        Select Case SwitchMap(.X, Y, m)
         Case 9 'ice
         Case 11
-         y = y - 2
+         Y = Y - 2
          Exit For
         Case Else
-         y = y - 1
+         Y = Y - 1
          Exit For
         End Select
-       Next y
+       Next Y
       Else
-       y = .y + 1
+       Y = .Y + 1
       End If
      End If
    End If
-      If y > 0 And y <= dath - 1 Then
+      If Y > 0 And Y <= dath - 1 Then
        If FS = 1 Then 'ERR!
-        i = SwitchMap(x, y + 1, m)
-        j = SwitchMap(x, y, m)
+        i = SwitchMap(X, Y + 1, m)
+        j = SwitchMap(X, Y, m)
        Else
-        i = SwitchMap(x, y, m)
-        j = SwitchMap(x, y + 1, m)
+        i = SwitchMap(X, Y, m)
+        j = SwitchMap(X, Y + 1, m)
        End If
        Select Case i
        Case 1, 2, 3, 4, 5, 7, 8, 9, 10
@@ -1082,20 +1190,20 @@ With SwitchMapIdPos(m).p(k)
         Case 1, 2, 3, 4, 5, 7, 8, 9, 10, 11
          'press button
          i = m
-         If SwitchMap(x, y, m) = 2 Then
-          j = dat2(x, y)
+         If SwitchMap(X, Y, m) = 2 Then
+          j = dat2(X, Y)
           If j > 0 And j <= swc Then
            i = SwitchTransTable(j, i)
           End If
          End If
-         If SwitchMap(x, y + 1, m) = 2 Then
-          j = dat2(x, y + 1)
+         If SwitchMap(X, Y + 1, m) = 2 Then
+          j = dat2(X, Y + 1)
           If j > 0 And j <= swc Then
            i = SwitchTransTable(j, i)
           End If
          End If
-         j = SwitchMapPosId(x, y, i)
-         jj = SwitchMapPosId(x, y + 1, i)
+         j = SwitchMapPosId(X, Y, i)
+         jj = SwitchMapPosId(X, Y + 1, i)
          If j > 0 And jj > 0 Then
           ret.m = i
           If IsTrans Then
@@ -1114,51 +1222,51 @@ With SwitchMapIdPos(m).p(k)
       End If
   'X -> XX
   Case 3, 4    'left/right
-   x = 0
-   y = .y
+   X = 0
+   Y = .Y
    If FS = 3 Then 'left
-     If .x > 2 Then
-      If SwitchMap(.x - 1, .y, m) = 9 And SwitchMap(.x - 2, .y, m) = 9 Then 'ice
-       For x = .x - 2 To 1 Step -1
-        Select Case SwitchMap(x, .y, m)
+     If .X > 2 Then
+      If SwitchMap(.X - 1, .Y, m) = 9 And SwitchMap(.X - 2, .Y, m) = 9 Then 'ice
+       For X = .X - 2 To 1 Step -1
+        Select Case SwitchMap(X, .Y, m)
         Case 9 'ice
         Case 11
-         x = x + 1
+         X = X + 1
          Exit For
         Case Else
          Exit For
         End Select
-       Next x
+       Next X
       Else
-       x = .x - 2
+       X = .X - 2
       End If
      End If
    Else 'right
-     If .x <= datw - 2 Then
-      If SwitchMap(.x + 1, .y, m) = 9 And SwitchMap(.x + 2, .y, m) = 9 Then 'ice
-       For x = .x + 2 To datw
-        Select Case SwitchMap(x, .y, m)
+     If .X <= datw - 2 Then
+      If SwitchMap(.X + 1, .Y, m) = 9 And SwitchMap(.X + 2, .Y, m) = 9 Then 'ice
+       For X = .X + 2 To datw
+        Select Case SwitchMap(X, .Y, m)
         Case 9 'ice
         Case 11
-         x = x - 2
+         X = X - 2
          Exit For
         Case Else
-         x = x - 1
+         X = X - 1
          Exit For
         End Select
-       Next x
+       Next X
       Else
-       x = .x + 1
+       X = .X + 1
       End If
      End If
    End If
-      If x > 0 And x <= datw - 1 Then
+      If X > 0 And X <= datw - 1 Then
        If FS = 3 Then 'ERR!
-        i = SwitchMap(x + 1, y, m)
-        j = SwitchMap(x, y, m)
+        i = SwitchMap(X + 1, Y, m)
+        j = SwitchMap(X, Y, m)
        Else
-        i = SwitchMap(x, y, m)
-        j = SwitchMap(x + 1, y, m)
+        i = SwitchMap(X, Y, m)
+        j = SwitchMap(X + 1, Y, m)
        End If
        Select Case i
        Case 1, 2, 3, 4, 5, 7, 8, 9, 10
@@ -1166,20 +1274,20 @@ With SwitchMapIdPos(m).p(k)
         Case 1, 2, 3, 4, 5, 7, 8, 9, 10, 11
          'press button
          i = m
-         If SwitchMap(x, y, m) = 2 Then
-          j = dat2(x, y)
+         If SwitchMap(X, Y, m) = 2 Then
+          j = dat2(X, Y)
           If j > 0 And j <= swc Then
            i = SwitchTransTable(j, i)
           End If
          End If
-         If SwitchMap(x + 1, y, m) = 2 Then
-          j = dat2(x + 1, y)
+         If SwitchMap(X + 1, Y, m) = 2 Then
+          j = dat2(X + 1, Y)
           If j > 0 And j <= swc Then
            i = SwitchTransTable(j, i)
           End If
          End If
-         j = SwitchMapPosId(x, y, i)
-         jj = SwitchMapPosId(x + 1, y, i)
+         j = SwitchMapPosId(X, Y, i)
+         jj = SwitchMapPosId(X + 1, Y, i)
          If j > 0 And jj > 0 Then
           ret.m = i
           If IsTrans Then
@@ -1201,62 +1309,62 @@ With SwitchMapIdPos(m).p(k)
   Select Case FS
   'XX -> XX
   Case 1, 2   'up/down
-   x = .x
-   y = 0
+   X = .X
+   Y = 0
    If FS = 1 Then 'up
-      If .y > 1 Then
-       If SwitchMap(.x, .y - 1, m) = 9 And SwitchMap(.x + 1, .y - 1, m) = 9 Then 'ice
-        For y = .y - 1 To 1 Step -1
-         If SwitchMap(.x, y, m) = 9 And SwitchMap(.x + 1, y, m) = 9 Then
-         ElseIf SwitchMap(.x, y, m) = 11 Or SwitchMap(.x + 1, y, m) = 11 Then
-          y = y + 1
+      If .Y > 1 Then
+       If SwitchMap(.X, .Y - 1, m) = 9 And SwitchMap(.X + 1, .Y - 1, m) = 9 Then 'ice
+        For Y = .Y - 1 To 1 Step -1
+         If SwitchMap(.X, Y, m) = 9 And SwitchMap(.X + 1, Y, m) = 9 Then
+         ElseIf SwitchMap(.X, Y, m) = 11 Or SwitchMap(.X + 1, Y, m) = 11 Then
+          Y = Y + 1
           Exit For
          Else
           Exit For
          End If
-        Next y
+        Next Y
        Else
-        y = .y - 1
+        Y = .Y - 1
        End If
       End If
    Else 'down
-      If .y < dath Then
-       If SwitchMap(.x, .y + 1, m) = 9 And SwitchMap(.x + 1, .y + 1, m) = 9 Then 'ice
-        For y = .y + 1 To dath
-         If SwitchMap(.x, y, m) = 9 And SwitchMap(.x + 1, y, m) = 9 Then
-         ElseIf SwitchMap(.x, y, m) = 11 Or SwitchMap(.x + 1, y, m) = 11 Then
-          y = y - 1
+      If .Y < dath Then
+       If SwitchMap(.X, .Y + 1, m) = 9 And SwitchMap(.X + 1, .Y + 1, m) = 9 Then 'ice
+        For Y = .Y + 1 To dath
+         If SwitchMap(.X, Y, m) = 9 And SwitchMap(.X + 1, Y, m) = 9 Then
+         ElseIf SwitchMap(.X, Y, m) = 11 Or SwitchMap(.X + 1, Y, m) = 11 Then
+          Y = Y - 1
           Exit For
          Else
           Exit For
          End If
-        Next y
+        Next Y
        Else
-        y = .y + 1
+        Y = .Y + 1
        End If
       End If
    End If
-       If y > 0 And y <= dath Then
-        j = SwitchMap(x + 1, y, m)
-        If j <> 0 And j <> 6 And (j <> 11 Or SwitchMap(.x + 1, .y, m) = 11) Then
-         j = SwitchMap(x, y, m)
-         If j <> 0 And j <> 6 And (j <> 11 Or SwitchMap(.x, .y, m) = 11) Then
+       If Y > 0 And Y <= dath Then
+        j = SwitchMap(X + 1, Y, m)
+        If j <> 0 And j <> 6 And (j <> 11 Or SwitchMap(.X + 1, .Y, m) = 11) Then
+         j = SwitchMap(X, Y, m)
+         If j <> 0 And j <> 6 And (j <> 11 Or SwitchMap(.X, .Y, m) = 11) Then
           'press button
           i = m
           If j = 2 Then
-           j = dat2(x, y)
+           j = dat2(X, Y)
            If j > 0 And j <= swc Then
             i = SwitchTransTable(j, i)
            End If
           End If
-          If SwitchMap(x + 1, y, m) = 2 Then
-           j = dat2(x + 1, y)
+          If SwitchMap(X + 1, Y, m) = 2 Then
+           j = dat2(X + 1, Y)
            If j > 0 And j <= swc Then
             i = SwitchTransTable(j, i)
            End If
           End If
-          j = SwitchMapPosId(x, y, i)
-          jj = SwitchMapPosId(x + 1, y, i)
+          j = SwitchMapPosId(X, Y, i)
+          jj = SwitchMapPosId(X + 1, Y, i)
           If j > 0 And jj > 0 Then
            ret.m = i
            If IsTrans Then
@@ -1275,58 +1383,58 @@ With SwitchMapIdPos(m).p(k)
        End If
   'XX -> X
   Case 3, 4     'left/right
-   x = 0
-   y = .y
+   X = 0
+   Y = .Y
    If FS = 3 Then 'left
-      If .x > 1 Then
-       If SwitchMap(.x, .y, m) = 11 Then 'block
-       ElseIf SwitchMap(.x - 1, .y, m) = 9 Then 'ice
-        For x = .x - 1 To 1 Step -1
-         Select Case SwitchMap(x, .y, m)
+      If .X > 1 Then
+       If SwitchMap(.X, .Y, m) = 11 Then 'block
+       ElseIf SwitchMap(.X - 1, .Y, m) = 9 Then 'ice
+        For X = .X - 1 To 1 Step -1
+         Select Case SwitchMap(X, .Y, m)
          Case 9
          Case 11
-          x = x + 1
+          X = X + 1
           Exit For
          Case Else
           Exit For
          End Select
-        Next x
+        Next X
        Else
-        x = .x - 1
+        X = .X - 1
        End If
       End If
    Else 'right
-      If .x <= datw - 2 Then
-       If SwitchMap(.x + 1, .y, m) = 11 Then 'block
-       ElseIf SwitchMap(.x + 2, .y, m) = 9 Then 'ice
-        For x = .x + 2 To datw
-         Select Case SwitchMap(x, .y, m)
+      If .X <= datw - 2 Then
+       If SwitchMap(.X + 1, .Y, m) = 11 Then 'block
+       ElseIf SwitchMap(.X + 2, .Y, m) = 9 Then 'ice
+        For X = .X + 2 To datw
+         Select Case SwitchMap(X, .Y, m)
          Case 9
          Case 11
-          x = x - 1
+          X = X - 1
           Exit For
          Case Else
           Exit For
          End Select
-        Next x
+        Next X
        Else
-        x = .x + 2
+        X = .X + 2
        End If
       End If
    End If
-       If x > 0 And x <= datw Then
-        j = SwitchMap(x, y, m)
+       If X > 0 And X <= datw Then
+        j = SwitchMap(X, Y, m)
         Select Case j
         Case 1, 2, 3, 7, 8, 9
          'press button
          i = m
          If j = 2 Or j = 3 Then
-          j = dat2(x, y)
+          j = dat2(X, Y)
           If j > 0 And j <= swc Then
            i = SwitchTransTable(j, i)
           End If
          End If
-         j = SwitchMapPosId(x, y, i)
+         j = SwitchMapPosId(X, Y, i)
          If j > 0 Then
           ret.m = i
           If IsTrans Then
@@ -1341,7 +1449,7 @@ With SwitchMapIdPos(m).p(k)
           pSolveItCalcNext = j
          End If
         Case 4 'trans
-         GetTransportPosition x, y, i, j, jj, PJJ
+         GetTransportPosition X, Y, i, j, jj, PJJ
          j = SwitchMapPosId(i, j, m)
          jj = SwitchMapPosId(jj, PJJ, m)
          If j > 0 And jj > 0 Then
@@ -1356,11 +1464,11 @@ With SwitchMapIdPos(m).p(k)
           pSolveItCalcNext = j
          End If
         Case 10 'pyramid
-         j = SwitchMapPosId(x, y, m)
+         j = SwitchMapPosId(X, Y, m)
          'hit block?
          If FS = 3 Then 'left
-          If x > 2 Then
-           If SwitchMap(x - 1, y, m) = 11 Then
+          If X > 2 Then
+           If SwitchMap(X - 1, Y, m) = 11 Then
             ret.m = m
             If IsTrans Then
              ret.k = j
@@ -1377,8 +1485,8 @@ With SwitchMapIdPos(m).p(k)
            End If
           End If
          Else 'right
-          If x <= datw - 2 Then
-           If SwitchMap(x + 1, y, m) = 11 Then
+          If X <= datw - 2 Then
+           If SwitchMap(X + 1, Y, m) = 11 Then
             ret.m = m
             If IsTrans Then
              ret.k = j
@@ -1403,58 +1511,58 @@ With SwitchMapIdPos(m).p(k)
   'X -> X
   'X
   Case 1, 2   'up/down
-   x = .x
-   y = 0
+   X = .X
+   Y = 0
    If FS = 1 Then 'up
-      If .y > 1 Then
-       If SwitchMap(.x, .y, m) = 11 Then 'block
-       ElseIf SwitchMap(.x, .y - 1, m) = 9 Then 'ice
-        For y = .y - 1 To 1 Step -1
-         Select Case SwitchMap(.x, y, m)
+      If .Y > 1 Then
+       If SwitchMap(.X, .Y, m) = 11 Then 'block
+       ElseIf SwitchMap(.X, .Y - 1, m) = 9 Then 'ice
+        For Y = .Y - 1 To 1 Step -1
+         Select Case SwitchMap(.X, Y, m)
          Case 9
          Case 11
-          y = y + 1
+          Y = Y + 1
           Exit For
          Case Else
           Exit For
          End Select
-        Next y
+        Next Y
        Else
-        y = .y - 1
+        Y = .Y - 1
        End If
       End If
    Else 'down
-      If .y <= dath - 2 Then
-       If SwitchMap(.x, .y + 1, m) = 11 Then 'block
-       ElseIf SwitchMap(.x, .y + 2, m) = 9 Then 'ice
-        For y = .y + 2 To dath
-         Select Case SwitchMap(.x, y, m)
+      If .Y <= dath - 2 Then
+       If SwitchMap(.X, .Y + 1, m) = 11 Then 'block
+       ElseIf SwitchMap(.X, .Y + 2, m) = 9 Then 'ice
+        For Y = .Y + 2 To dath
+         Select Case SwitchMap(.X, Y, m)
          Case 9
          Case 11
-          y = y - 1
+          Y = Y - 1
           Exit For
          Case Else
           Exit For
          End Select
-        Next y
+        Next Y
        Else
-        y = .y + 2
+        Y = .Y + 2
        End If
       End If
    End If
-       If y > 0 And y <= dath Then
-        j = SwitchMap(x, y, m)
+       If Y > 0 And Y <= dath Then
+        j = SwitchMap(X, Y, m)
         Select Case j
         Case 1, 2, 3, 7, 8, 9
          'press button
          i = m
          If j = 2 Or j = 3 Then
-          j = dat2(x, y)
+          j = dat2(X, Y)
           If j > 0 And j <= swc Then
            i = SwitchTransTable(j, i)
           End If
          End If
-         j = SwitchMapPosId(x, y, i)
+         j = SwitchMapPosId(X, Y, i)
          If j > 0 Then
           ret.m = i
           If IsTrans Then
@@ -1469,7 +1577,7 @@ With SwitchMapIdPos(m).p(k)
           pSolveItCalcNext = j
          End If
         Case 4 'trans
-         GetTransportPosition x, y, i, j, jj, PJJ
+         GetTransportPosition X, Y, i, j, jj, PJJ
          j = SwitchMapPosId(i, j, m)
          jj = SwitchMapPosId(jj, PJJ, m)
          If j > 0 And jj > 0 Then
@@ -1484,11 +1592,11 @@ With SwitchMapIdPos(m).p(k)
           pSolveItCalcNext = j
          End If
         Case 10 'pyramid
-         j = SwitchMapPosId(x, y, m)
+         j = SwitchMapPosId(X, Y, m)
          'hit block?
          If FS = 1 Then 'up
-          If y > 2 Then
-           If SwitchMap(x, y - 1, m) = 11 Then
+          If Y > 2 Then
+           If SwitchMap(X, Y - 1, m) = 11 Then
             ret.m = m
             If IsTrans Then
              ret.k = j
@@ -1505,8 +1613,8 @@ With SwitchMapIdPos(m).p(k)
            End If
           End If
          Else 'down
-          If y <= dath - 2 Then
-           If SwitchMap(x, y + 1, m) = 11 Then
+          If Y <= dath - 2 Then
+           If SwitchMap(X, Y + 1, m) = 11 Then
             ret.m = m
             If IsTrans Then
              ret.k = j
@@ -1528,62 +1636,62 @@ With SwitchMapIdPos(m).p(k)
   'X -> X
   'X    X
   Case 3, 4   'left/right
-   x = 0
-   y = .y
+   X = 0
+   Y = .Y
    If FS = 3 Then 'left
-      If .x > 1 Then
-       If SwitchMap(.x - 1, .y, m) = 9 And SwitchMap(.x - 1, .y + 1, m) = 9 Then 'ice
-        For x = .x - 1 To 1 Step -1
-         If SwitchMap(x, .y, m) = 9 And SwitchMap(x, .y + 1, m) = 9 Then
-         ElseIf SwitchMap(x, .y, m) = 11 Or SwitchMap(x, .y + 1, m) = 11 Then
-          x = x + 1
+      If .X > 1 Then
+       If SwitchMap(.X - 1, .Y, m) = 9 And SwitchMap(.X - 1, .Y + 1, m) = 9 Then 'ice
+        For X = .X - 1 To 1 Step -1
+         If SwitchMap(X, .Y, m) = 9 And SwitchMap(X, .Y + 1, m) = 9 Then
+         ElseIf SwitchMap(X, .Y, m) = 11 Or SwitchMap(X, .Y + 1, m) = 11 Then
+          X = X + 1
           Exit For
          Else
           Exit For
          End If
-        Next x
+        Next X
        Else
-        x = .x - 1
+        X = .X - 1
        End If
       End If
    Else 'right
-      If .x < datw Then
-       If SwitchMap(.x + 1, .y, m) = 9 And SwitchMap(.x + 1, .y + 1, m) = 9 Then 'ice
-        For x = .x + 1 To datw
-         If SwitchMap(x, .y, m) = 9 And SwitchMap(x, .y + 1, m) = 9 Then
-         ElseIf SwitchMap(x, .y, m) = 11 Or SwitchMap(x, .y + 1, m) = 11 Then
-          x = x - 1
+      If .X < datw Then
+       If SwitchMap(.X + 1, .Y, m) = 9 And SwitchMap(.X + 1, .Y + 1, m) = 9 Then 'ice
+        For X = .X + 1 To datw
+         If SwitchMap(X, .Y, m) = 9 And SwitchMap(X, .Y + 1, m) = 9 Then
+         ElseIf SwitchMap(X, .Y, m) = 11 Or SwitchMap(X, .Y + 1, m) = 11 Then
+          X = X - 1
           Exit For
          Else
           Exit For
          End If
-        Next x
+        Next X
        Else
-        x = .x + 1
+        X = .X + 1
        End If
       End If
    End If
-       If x > 0 And x <= datw Then
-        j = SwitchMap(x, y + 1, m)
-        If j <> 0 And j <> 6 And (j <> 11 Or SwitchMap(.x, .y + 1, m) = 11) Then
-         j = SwitchMap(x, y, m)
-         If j <> 0 And j <> 6 And (j <> 11 Or SwitchMap(.x, .y, m) = 11) Then
+       If X > 0 And X <= datw Then
+        j = SwitchMap(X, Y + 1, m)
+        If j <> 0 And j <> 6 And (j <> 11 Or SwitchMap(.X, .Y + 1, m) = 11) Then
+         j = SwitchMap(X, Y, m)
+         If j <> 0 And j <> 6 And (j <> 11 Or SwitchMap(.X, .Y, m) = 11) Then
           'press button
           i = m
           If j = 2 Then
-           j = dat2(x, y)
+           j = dat2(X, Y)
            If j > 0 And j <= swc Then
             i = SwitchTransTable(j, i)
            End If
           End If
-          If SwitchMap(x, y + 1, m) = 2 Then
-           j = dat2(x, y + 1)
+          If SwitchMap(X, Y + 1, m) = 2 Then
+           j = dat2(X, Y + 1)
            If j > 0 And j <= swc Then
             i = SwitchTransTable(j, i)
            End If
           End If
-          j = SwitchMapPosId(x, y, i)
-          jj = SwitchMapPosId(x, y + 1, i)
+          j = SwitchMapPosId(X, Y, i)
+          jj = SwitchMapPosId(X, Y + 1, i)
           If j > 0 And jj > 0 Then
            ret.m = i
            If IsTrans Then
@@ -1607,114 +1715,114 @@ End Function
 
 Private Function pSolveItCalcNextSingle(SwitchTransTable() As Long, ByVal m As Long, ByVal k As Long, ByVal k2 As Long, ByVal FS As Long, ret As typeNextPos) As Long
 Dim i As Long, j As Long, jj As Long
-Dim x As Long, y As Long, x2 As Long, y2 As Long
+Dim X As Long, Y As Long, x2 As Long, y2 As Long
 'IsTrans must be true!
 With SwitchMapIdPos(m)
- x2 = .p(k2).x
- y2 = .p(k2).y
+ x2 = .p(k2).X
+ y2 = .p(k2).Y
  With .p(k)
   Select Case FS
   Case 1 'up
-      If .y > 1 Then
-       x = .x
-       If SwitchMap(.x, .y - 1, m) = 9 Then 'ice
-        For y = .y - 1 To 1 Step -1
-         If x2 = x And y2 = y Then 'hit another block
-          y = y + 1
+      If .Y > 1 Then
+       X = .X
+       If SwitchMap(.X, .Y - 1, m) = 9 Then 'ice
+        For Y = .Y - 1 To 1 Step -1
+         If x2 = X And y2 = Y Then 'hit another block
+          Y = Y + 1
           Exit For
          End If
-         Select Case SwitchMap(x, y, m)
+         Select Case SwitchMap(X, Y, m)
          Case 9
          Case 11
-          y = y + 1
+          Y = Y + 1
           Exit For
          Case Else
           Exit For
          End Select
-        Next y
+        Next Y
        Else
-        y = .y - 1
+        Y = .Y - 1
        End If
       End If
   Case 2 'down
-      If .y < dath Then
-       x = .x
-       If SwitchMap(.x, .y + 1, m) = 9 Then 'ice
-        For y = .y + 1 To dath
-         If x2 = x And y2 = y Then 'hit another block
-          y = y - 1
+      If .Y < dath Then
+       X = .X
+       If SwitchMap(.X, .Y + 1, m) = 9 Then 'ice
+        For Y = .Y + 1 To dath
+         If x2 = X And y2 = Y Then 'hit another block
+          Y = Y - 1
           Exit For
          End If
-         Select Case SwitchMap(x, y, m)
+         Select Case SwitchMap(X, Y, m)
          Case 9
          Case 11
-          y = y - 1
+          Y = Y - 1
           Exit For
          Case Else
           Exit For
          End Select
-        Next y
+        Next Y
        Else
-        y = .y + 1
+        Y = .Y + 1
        End If
       End If
   Case 3 'left
-      If .x > 1 Then
-       y = .y
-       If SwitchMap(.x - 1, .y, m) = 9 Then 'ice
-        For x = .x - 1 To 1 Step -1
-         If x2 = x And y2 = y Then 'hit another block
-          x = x + 1
+      If .X > 1 Then
+       Y = .Y
+       If SwitchMap(.X - 1, .Y, m) = 9 Then 'ice
+        For X = .X - 1 To 1 Step -1
+         If x2 = X And y2 = Y Then 'hit another block
+          X = X + 1
           Exit For
          End If
-         Select Case SwitchMap(x, y, m)
+         Select Case SwitchMap(X, Y, m)
          Case 9
          Case 11
-          x = x + 1
+          X = X + 1
           Exit For
          Case Else
           Exit For
          End Select
-        Next x
+        Next X
        Else
-        x = .x - 1
+        X = .X - 1
        End If
       End If
   Case 4 'right
-      If .x < datw Then
-       y = .y
-       If SwitchMap(.x + 1, .y, m) = 9 Then 'ice
-        For x = .x + 1 To datw
-         If x2 = x And y2 = y Then 'hit another block
-          x = x - 1
+      If .X < datw Then
+       Y = .Y
+       If SwitchMap(.X + 1, .Y, m) = 9 Then 'ice
+        For X = .X + 1 To datw
+         If x2 = X And y2 = Y Then 'hit another block
+          X = X - 1
           Exit For
          End If
-         Select Case SwitchMap(x, y, m)
+         Select Case SwitchMap(X, Y, m)
          Case 9
          Case 11
-          x = x - 1
+          X = X - 1
           Exit For
          Case Else
           Exit For
          End Select
-        Next x
+        Next X
        Else
-        x = .x + 1
+        X = .X + 1
        End If
       End If
   End Select
-       If x > 0 And y > 0 And x <= datw And y <= dath Then
-        Select Case SwitchMap(x, y, m)
+       If X > 0 And Y > 0 And X <= datw And Y <= dath Then
+        Select Case SwitchMap(X, Y, m)
         Case 1, 2, 3, 4, 5, 7, 8, 9, 10
          'press button
          i = m
-         If SwitchMap(x, y, m) = 2 Then
-          j = dat2(x, y)
+         If SwitchMap(X, Y, m) = 2 Then
+          j = dat2(X, Y)
           If j > 0 And j <= swc Then
            i = SwitchTransTable(j, i)
           End If
          End If
-         j = SwitchMapPosId(x, y, i)
+         j = SwitchMapPosId(X, Y, i)
          jj = SwitchMapPosId(x2, y2, i)
          If j > 0 And jj > 0 Then
           With ret
@@ -1768,8 +1876,8 @@ With SwitchMapIdPos(n)
     SwitchMapPosId(i, j, n) = .Count
     ReDim Preserve .p(1 To .Count)
     With .p(.Count)
-     .x = i
-     .y = j
+     .X = i
+     .Y = j
     End With
    End Select
   Next j
@@ -1825,7 +1933,7 @@ End Function
 Public Function SolveItGetSolution(ByVal Index As Long, Optional ByVal lpMovedArea As Long) As String
 Dim s As String, ss As String
 Dim i As Long, j As Long, k As Long, m As Long
-Dim x As Long, y As Long, x2 As Long, y2 As Long
+Dim X As Long, Y As Long, x2 As Long, y2 As Long
 Dim xo As Long, yo As Long, xo2 As Long, yo2 As Long
 Dim jj As Long
 Dim IsL As Boolean, IsLo As Boolean
@@ -1859,101 +1967,101 @@ If IsTrans Then '??????????????????????????????
    'determine status index
    jj = .m
    'get pos
-   y = .k
+   Y = .k
    y2 = .k2
   End With
   With SwitchMapIdPos(jj)
-   x = .p(y).x
-   y = .p(y).y
-   x2 = .p(y2).x
-   y2 = .p(y2).y
+   X = .p(Y).X
+   Y = .p(Y).Y
+   x2 = .p(y2).X
+   y2 = .p(y2).Y
   End With
   'which is moved?
   j = 1 + (j - 1) Mod 4
-  IsL = (x - x2) * (x - x2) + (y - y2) * (y - y2) <= 1
+  IsL = (X - x2) * (X - x2) + (Y - y2) * (Y - y2) <= 1
   If IsLo Then
    If IsL Then 'ice??
     MOV = 0
     If j <= 2 Then
-     If xo = x Then
-      pSolveItCalcMovedArea d, xo, yo, x, y, j
+     If xo = X Then
+      pSolveItCalcMovedArea d, xo, yo, X, Y, j
       pSolveItCalcMovedArea d, xo2, yo2, x2, y2, j
      ElseIf xo = x2 Then
       pSolveItCalcMovedArea d, xo, yo, x2, y2, j
-      pSolveItCalcMovedArea d, xo2, yo2, x, y, j
+      pSolveItCalcMovedArea d, xo2, yo2, X, Y, j
      Else
       Debug.Assert False
      End If
     Else
-     If yo = y Then
-      pSolveItCalcMovedArea d, xo, yo, x, y, j
+     If yo = Y Then
+      pSolveItCalcMovedArea d, xo, yo, X, Y, j
       pSolveItCalcMovedArea d, xo2, yo2, x2, y2, j
      ElseIf yo = y2 Then
       pSolveItCalcMovedArea d, xo, yo, x2, y2, j
-      pSolveItCalcMovedArea d, xo2, yo2, x, y, j
+      pSolveItCalcMovedArea d, xo2, yo2, X, Y, j
      Else
       Debug.Assert False
      End If
     End If
-    xo = x
-    yo = y
+    xo = X
+    yo = Y
     xo2 = x2
     yo2 = y2
    Else 'enter trans
     MOV = 1
     Select Case j 'ice??
     Case 1 'up
-     x = xo
-     For y = IIf(yo < yo2, yo, yo2) - 1 To 1 Step -1
-      d(x, y) = 1
-      If dat(x, y) = 4 Then Exit For
-     Next y
+     X = xo
+     For Y = IIf(yo < yo2, yo, yo2) - 1 To 1 Step -1
+      d(X, Y) = 1
+      If dat(X, Y) = 4 Then Exit For
+     Next Y
     Case 2 'down
-     x = xo
-     For y = IIf(yo < yo2, yo, yo2) + 2 To dath
-      d(x, y) = 1
-      If dat(x, y) = 4 Then Exit For
-     Next y
+     X = xo
+     For Y = IIf(yo < yo2, yo, yo2) + 2 To dath
+      d(X, Y) = 1
+      If dat(X, Y) = 4 Then Exit For
+     Next Y
     Case 3 'left
-     y = yo
-     For x = IIf(xo < xo2, xo, xo2) - 1 To 1 Step -1
-      d(x, y) = 1
-      If dat(x, y) = 4 Then Exit For
-     Next x
+     Y = yo
+     For X = IIf(xo < xo2, xo, xo2) - 1 To 1 Step -1
+      d(X, Y) = 1
+      If dat(X, Y) = 4 Then Exit For
+     Next X
     Case 4 'right
-     y = yo
-     For x = IIf(xo < xo2, xo, xo2) + 2 To datw
-      d(x, y) = 1
-      If dat(x, y) = 4 Then Exit For
-     Next x
+     Y = yo
+     For X = IIf(xo < xo2, xo, xo2) + 2 To datw
+      d(X, Y) = 1
+      If dat(X, Y) = 4 Then Exit For
+     Next X
     End Select
-    GetTransportPosition x, y, x, y, x2, y2
-    xo = x
-    yo = y
+    GetTransportPosition X, Y, X, Y, x2, y2
+    xo = X
+    yo = Y
     xo2 = x2
     yo2 = y2
    End If
   Else
-   If xo = x And yo = y Then
+   If xo = X And yo = Y Then
     MOV = 2
     pSolveItCalcMovedArea d, xo2, yo2, x2, y2, j
     xo2 = x2
     yo2 = y2
    ElseIf xo = x2 And yo = y2 Then
     MOV = 2
-    pSolveItCalcMovedArea d, xo2, yo2, x, y, j
-    xo2 = x
-    yo2 = y
-   ElseIf xo2 = x And yo2 = y Then
+    pSolveItCalcMovedArea d, xo2, yo2, X, Y, j
+    xo2 = X
+    yo2 = Y
+   ElseIf xo2 = X And yo2 = Y Then
     MOV = 1
     pSolveItCalcMovedArea d, xo, yo, x2, y2, j
     xo = x2
     yo = y2
    ElseIf xo2 = x2 And yo2 = y2 Then
     MOV = 1
-    pSolveItCalcMovedArea d, xo, yo, x, y, j
-    xo = x
-    yo = y
+    pSolveItCalcMovedArea d, xo, yo, X, Y, j
+    xo = X
+    yo = Y
    Else
     Debug.Assert False
    End If
@@ -1964,7 +2072,7 @@ If IsTrans Then '??????????????????????????????
   End If
   ss = ss + CStr(j)
   'moved area
-  d(x, y) = 1
+  d(X, Y) = 1
   d(x2, y2) = 1
   'next
   MOVo = MOV
@@ -1986,34 +2094,34 @@ ElseIf lpMovedArea <> 0 Then
    y2 = .k2
   End With
   With SwitchMapIdPos(jj).p(x2)
-   x = .x
-   y = .y
+   X = .X
+   Y = .Y
   End With
   'moved area
-  d(x, y) = 1
+  d(X, Y) = 1
   Select Case y2
   Case 0 'up
-   pSolveItCalcMovedArea d, xo, yo, x, y, j
+   pSolveItCalcMovedArea d, xo, yo, X, Y, j
   Case 1 'h
-   pSolveItCalcMovedArea d, xo, yo, x, y, j
+   pSolveItCalcMovedArea d, xo, yo, X, Y, j
    If j = 3 Then
-    pSolveItCalcMovedArea d, xo, yo, x + 1, y, j
+    pSolveItCalcMovedArea d, xo, yo, X + 1, Y, j
    Else
-    pSolveItCalcMovedArea d, xo + 1, yo, x + 1, y, j
+    pSolveItCalcMovedArea d, xo + 1, yo, X + 1, Y, j
    End If
   Case 2 'v
-   pSolveItCalcMovedArea d, xo, yo, x, y, j
+   pSolveItCalcMovedArea d, xo, yo, X, Y, j
    If j = 1 Then
-    pSolveItCalcMovedArea d, xo, yo, x, y + 1, j
+    pSolveItCalcMovedArea d, xo, yo, X, Y + 1, j
    Else
-    pSolveItCalcMovedArea d, xo, yo + 1, x, y + 1, j
+    pSolveItCalcMovedArea d, xo, yo + 1, X, Y + 1, j
    End If
   Case 3 'ERR!
    Debug.Assert False
   End Select
   'next
-  xo = x
-  yo = y
+  xo = X
+  yo = Y
  Next k
 End If
 If lpMovedArea <> 0 Then CopyMemory ByVal lpMovedArea, d(1, 1), datw * dath
@@ -2024,83 +2132,83 @@ s = Replace(s, "4", "r")
 SolveItGetSolution = s
 End Function
 
-Private Sub pSolveItCalcMovedArea(d() As Byte, ByVal xo As Long, ByVal yo As Long, ByVal x As Long, ByVal y As Long, ByVal FS As Long)
+Private Sub pSolveItCalcMovedArea(d() As Byte, ByVal xo As Long, ByVal yo As Long, ByVal X As Long, ByVal Y As Long, ByVal FS As Long)
 Dim k As Long
    Select Case FS
    Case 1 'up
-    For k = yo To y Step -1
-     d(x, k) = 1
+    For k = yo To Y Step -1
+     d(X, k) = 1
     Next k
    Case 2 'down
-    For k = yo To y
-     d(x, k) = 1
+    For k = yo To Y
+     d(X, k) = 1
     Next k
    Case 3 'left
-    For k = xo To x Step -1
-     d(k, y) = 1
+    For k = xo To X Step -1
+     d(k, Y) = 1
     Next k
    Case 4 'right
-    For k = xo To x
-     d(k, y) = 1
+    For k = xo To X
+     d(k, Y) = 1
     Next k
    End Select
 End Sub
 
 Public Function SolveItGetSolutionNodeIndex(Optional SolX As Long, Optional SolY As Long, Optional SolSwitchStatus As Long) As Long
 Dim i As Long, j As Long, k As Long, n As Long, m As Long
-Dim x As Long, y As Long
+Dim X As Long, Y As Long
    m = &H7FFFFFFF
-   For x = 1 To datw
-    For y = 1 To dath
-     If dat(x, y) = 8 Then
+   For X = 1 To datw
+    For Y = 1 To dath
+     If dat(X, Y) = 8 Then
       For i = 1 To SwitchStatusCount
-       j = SolveItGetNodeIndex(i, 0, x, y)
+       j = SolveItGetNodeIndex(i, 0, X, Y)
        k = pSolveItBinarySearchTreeFindNode(j)
        If k > 0 Then
         k = GTheoryNode(k).Distance
         If k < m Then
          m = k
          n = j
-         SolX = x
-         SolY = y
+         SolX = X
+         SolY = Y
          SolSwitchStatus = i
         End If
        End If
       Next i
      End If
-    Next y
-   Next x
+    Next Y
+   Next X
    SolveItGetSolutionNodeIndex = n
 End Function
 
-Public Function SolveItGetNodeIndex(ByVal m As Long, ByVal State As Long, ByVal x As Long, ByVal y As Long, Optional ByVal x2 As Long, Optional ByVal y2 As Long) As Long
+Public Function SolveItGetNodeIndex(ByVal m As Long, ByVal State As Long, ByVal X As Long, ByVal Y As Long, Optional ByVal x2 As Long, Optional ByVal y2 As Long) As Long
 Dim j As Long, jj As Long
 With SwitchMapIdPos(m)
  If IsTrans Then
   Select Case State
   Case 0
-   j = SwitchMapPosId(x, y, m)
+   j = SwitchMapPosId(X, Y, m)
    If j > 0 Then
     SolveItGetNodeIndex = .AllPosDelta + (j * (j + 1)) \ 2
    End If
   Case 1
-   If x < datw Then
-    j = SwitchMapPosId(x, y, m)
-    jj = SwitchMapPosId(x + 1, y, m)
+   If X < datw Then
+    j = SwitchMapPosId(X, Y, m)
+    jj = SwitchMapPosId(X + 1, Y, m)
     If j > 0 And jj > 0 Then
      SolveItGetNodeIndex = .AllPosDelta + pSolveItPosToInt(j, jj)
     End If
    End If
   Case 2
-   If y < dath Then
-    j = SwitchMapPosId(x, y, m)
-    jj = SwitchMapPosId(x, y + 1, m)
+   If Y < dath Then
+    j = SwitchMapPosId(X, Y, m)
+    jj = SwitchMapPosId(X, Y + 1, m)
     If j > 0 And jj > 0 Then
      SolveItGetNodeIndex = .AllPosDelta + pSolveItPosToInt(j, jj)
     End If
    End If
   Case 3
-   j = SwitchMapPosId(x, y, m)
+   j = SwitchMapPosId(X, Y, m)
    jj = SwitchMapPosId(x2, y2, m)
    If j > 0 And jj > 0 Then
     SolveItGetNodeIndex = .AllPosDelta + pSolveItPosToInt(j, jj)
@@ -2109,17 +2217,17 @@ With SwitchMapIdPos(m)
  Else
   Select Case State
   Case 0
-   j = SwitchMapPosId(x, y, m)
+   j = SwitchMapPosId(X, Y, m)
    If j > 0 Then
     SolveItGetNodeIndex = .AllPosDelta + j
    End If
   Case 1
-   j = SwitchMapPosId(x, y, m)
+   j = SwitchMapPosId(X, Y, m)
    If j > 0 Then
     SolveItGetNodeIndex = .AllPosDelta + .Count + j
    End If
   Case 2
-   j = SwitchMapPosId(x, y, m)
+   j = SwitchMapPosId(X, Y, m)
    If j > 0 Then
     SolveItGetNodeIndex = .AllPosDelta + .Count * 2 + j
    End If
@@ -2128,11 +2236,11 @@ With SwitchMapIdPos(m)
 End With
 End Function
 
-Public Function BloxorzCheckIsValidState(d() As Byte, ByVal x As Long, ByVal y As Long, ByVal GameS As Long, Optional ByVal x2 As Long, Optional ByVal y2 As Long) As enumBloxorzStateValid
+Public Function BloxorzCheckIsValidState(d() As Byte, ByVal X As Long, ByVal Y As Long, ByVal GameS As Long, Optional ByVal x2 As Long, Optional ByVal y2 As Long) As enumBloxorzStateValid
 Select Case GameS
 Case 0 'up
- If x > 0 And y > 0 And x <= datw And y <= dath Then
-  Select Case d(x, y)
+ If X > 0 And Y > 0 And X <= datw And Y <= dath Then
+  Select Case d(X, Y)
   Case 11 'block
    'ERR!!
    BloxorzCheckIsValidState = 99
@@ -2145,34 +2253,34 @@ Case 0 'up
   End Select
  End If
 Case 1 'h
- If x > 0 And y > 0 And x < datw And y <= dath Then
-  If d(x, y) = 11 And d(x + 1, y) = 11 Then
+ If X > 0 And Y > 0 And X < datw And Y <= dath Then
+  If d(X, Y) = 11 And d(X + 1, Y) = 11 Then
    'ERR!
    BloxorzCheckIsValidState = 99
-  ElseIf d(x, y) = 0 Or d(x, y) = 6 Or d(x + 1, y) = 0 Or d(x + 1, y) = 6 Then
+  ElseIf d(X, Y) = 0 Or d(X, Y) = 6 Or d(X + 1, Y) = 0 Or d(X + 1, Y) = 6 Then
    BloxorzCheckIsValidState = 0
   Else
    BloxorzCheckIsValidState = 1
   End If
  End If
 Case 2 'v
- If x > 0 And y > 0 And x <= datw And y < dath Then
-  If d(x, y) = 11 And d(x, y + 1) = 11 Then
+ If X > 0 And Y > 0 And X <= datw And Y < dath Then
+  If d(X, Y) = 11 And d(X, Y + 1) = 11 Then
    'ERR!
    BloxorzCheckIsValidState = 99
-  ElseIf d(x, y) = 0 Or d(x, y) = 6 Or d(x, y + 1) = 0 Or d(x, y + 1) = 6 Then
+  ElseIf d(X, Y) = 0 Or d(X, Y) = 6 Or d(X, Y + 1) = 0 Or d(X, Y + 1) = 6 Then
    BloxorzCheckIsValidState = 0
   Else
    BloxorzCheckIsValidState = 1
   End If
  End If
 Case 3 'single
- If x > 0 And y > 0 And x <= datw And y <= dath Then
+ If X > 0 And Y > 0 And X <= datw And Y <= dath Then
   If x2 > 0 And y2 > 0 And x2 <= datw And y2 <= dath Then
-   If d(x, y) = 11 Or d(x2, y2) = 11 Then
+   If d(X, Y) = 11 Or d(x2, y2) = 11 Then
     'ERR!
     BloxorzCheckIsValidState = 99
-   ElseIf d(x, y) = 0 Or d(x, y) = 6 Or d(x2, y2) = 0 Or d(x2, y2) = 6 Then
+   ElseIf d(X, Y) = 0 Or d(X, Y) = 6 Or d(x2, y2) = 0 Or d(x2, y2) = 6 Then
     BloxorzCheckIsValidState = 0
    Else
     BloxorzCheckIsValidState = 1
@@ -2183,102 +2291,102 @@ Case 3 'single
 End Select
 End Function
 
-Public Function BloxorzCheckIsMovable(d() As Byte, ByVal x As Long, ByVal y As Long, ByVal GameS As Long, ByVal FS As Long, Optional QIE As Long) As Boolean
+Public Function BloxorzCheckIsMovable(d() As Byte, ByVal X As Long, ByVal Y As Long, ByVal GameS As Long, ByVal FS As Long, Optional QIE As Long) As Boolean
 BloxorzCheckIsMovable = True
 QIE = 0
 Select Case GameS
 Case 0, 3 'up/single
  Select Case FS
  Case 1 'up
-  If y > 1 Then
-   If d(x, y - 1) = 11 Then BloxorzCheckIsMovable = False
-   If GameS = 0 And y > 2 Then If d(x, y - 2) = 11 Then QIE = 1
+  If Y > 1 Then
+   If d(X, Y - 1) = 11 Then BloxorzCheckIsMovable = False
+   If GameS = 0 And Y > 2 Then If d(X, Y - 2) = 11 Then QIE = 1
   End If
  Case 2 'down
-  If y < dath Then
-   If d(x, y + 1) = 11 Then BloxorzCheckIsMovable = False
-   If GameS = 0 And y < dath - 1 Then If d(x, y + 2) = 11 Then QIE = 2
+  If Y < dath Then
+   If d(X, Y + 1) = 11 Then BloxorzCheckIsMovable = False
+   If GameS = 0 And Y < dath - 1 Then If d(X, Y + 2) = 11 Then QIE = 2
   End If
  Case 3 'left
-  If x > 1 Then
-   If d(x - 1, y) = 11 Then BloxorzCheckIsMovable = False
-   If GameS = 0 And x > 2 Then If d(x - 2, y) = 11 Then QIE = 3
+  If X > 1 Then
+   If d(X - 1, Y) = 11 Then BloxorzCheckIsMovable = False
+   If GameS = 0 And X > 2 Then If d(X - 2, Y) = 11 Then QIE = 3
   End If
  Case 4 'right
-  If x < datw Then
-   If d(x + 1, y) = 11 Then BloxorzCheckIsMovable = False
-   If GameS = 0 And x < datw - 1 Then If d(x + 2, y) = 11 Then QIE = 4
+  If X < datw Then
+   If d(X + 1, Y) = 11 Then BloxorzCheckIsMovable = False
+   If GameS = 0 And X < datw - 1 Then If d(X + 2, Y) = 11 Then QIE = 4
   End If
  End Select
 Case 1 'h
  Select Case FS
  Case 1 'up
-  If y > 1 Then
-   If d(x, y - 1) = 11 Then If d(x, y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 3 'left block?
-   If d(x + 1, y - 1) = 11 Then If d(x + 1, y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 4 'right block?
+  If Y > 1 Then
+   If d(X, Y - 1) = 11 Then If d(X, Y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 3 'left block?
+   If d(X + 1, Y - 1) = 11 Then If d(X + 1, Y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 4 'right block?
   End If
  Case 2 'down
-  If y < dath Then
-   If d(x, y + 1) = 11 Then If d(x, y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 3 'left block?
-   If d(x + 1, y + 1) = 11 Then If d(x + 1, y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 4 'right block?
+  If Y < dath Then
+   If d(X, Y + 1) = 11 Then If d(X, Y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 3 'left block?
+   If d(X + 1, Y + 1) = 11 Then If d(X + 1, Y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 4 'right block?
   End If
  Case 3 'left
-  If x > 1 Then If d(x - 1, y) = 11 Then BloxorzCheckIsMovable = False
-  If d(x, y) = 11 Then BloxorzCheckIsMovable = False
+  If X > 1 Then If d(X - 1, Y) = 11 Then BloxorzCheckIsMovable = False
+  If d(X, Y) = 11 Then BloxorzCheckIsMovable = False
  Case 4 'right
-  If x < datw - 1 Then If d(x + 2, y) = 11 Then BloxorzCheckIsMovable = False
-  If d(x + 1, y) = 11 Then BloxorzCheckIsMovable = False
+  If X < datw - 1 Then If d(X + 2, Y) = 11 Then BloxorzCheckIsMovable = False
+  If d(X + 1, Y) = 11 Then BloxorzCheckIsMovable = False
  End Select
 Case 2 'v
  Select Case FS
  Case 1 'up
-  If y > 1 Then If d(x, y - 1) = 11 Then BloxorzCheckIsMovable = False
-  If d(x, y) = 11 Then BloxorzCheckIsMovable = False
+  If Y > 1 Then If d(X, Y - 1) = 11 Then BloxorzCheckIsMovable = False
+  If d(X, Y) = 11 Then BloxorzCheckIsMovable = False
  Case 2 'down
-  If y < dath - 1 Then If d(x, y + 2) = 11 Then BloxorzCheckIsMovable = False
-  If d(x, y + 1) = 11 Then BloxorzCheckIsMovable = False
+  If Y < dath - 1 Then If d(X, Y + 2) = 11 Then BloxorzCheckIsMovable = False
+  If d(X, Y + 1) = 11 Then BloxorzCheckIsMovable = False
  Case 3 'left
-  If x > 1 Then
-   If d(x - 1, y) = 11 Then If d(x, y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 1 'up block?
-   If d(x - 1, y + 1) = 11 Then If d(x, y + 1) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 2 'down block?
+  If X > 1 Then
+   If d(X - 1, Y) = 11 Then If d(X, Y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 1 'up block?
+   If d(X - 1, Y + 1) = 11 Then If d(X, Y + 1) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 2 'down block?
   End If
  Case 4 'right
-  If x < datw Then
-   If d(x + 1, y) = 11 Then If d(x, y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 1 'up block?
-   If d(x + 1, y + 1) = 11 Then If d(x, y + 1) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 2 'down block?
+  If X < datw Then
+   If d(X + 1, Y) = 11 Then If d(X, Y) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 1 'up block?
+   If d(X + 1, Y + 1) = 11 Then If d(X, Y + 1) <> 11 Then BloxorzCheckIsMovable = False Else QIE = 2 'down block?
   End If
  End Select
 End Select
 End Function
 
-Public Function BloxorzCheckBlockSlip(d() As Byte, ByVal x As Long, ByVal y As Long, ByVal GameS As Long, ByVal FS As Long, Optional ByVal x2 As Long, Optional ByVal y2 As Long) As Long
+Public Function BloxorzCheckBlockSlip(d() As Byte, ByVal X As Long, ByVal Y As Long, ByVal GameS As Long, ByVal FS As Long, Optional ByVal x2 As Long, Optional ByVal y2 As Long) As Long
 'TODO:new block?
 Select Case GameS
 Case 0, 3 'up/single
  'hit block?
  Select Case FS
  Case 1 'up
-  If y > 1 Then
-   If dat(x, y - 1) = 11 Then Exit Function
-   If GameS = 3 And x = x2 And y - 1 = y2 Then Exit Function
+  If Y > 1 Then
+   If dat(X, Y - 1) = 11 Then Exit Function
+   If GameS = 3 And X = x2 And Y - 1 = y2 Then Exit Function
   End If
  Case 2 'down
-  If y < dath Then
-   If dat(x, y + 1) = 11 Then Exit Function
-   If GameS = 3 And x = x2 And y + 1 = y2 Then Exit Function
+  If Y < dath Then
+   If dat(X, Y + 1) = 11 Then Exit Function
+   If GameS = 3 And X = x2 And Y + 1 = y2 Then Exit Function
   End If
  Case 3 'left
-  If x > 1 Then
-   If dat(x - 1, y) = 11 Then Exit Function
-   If GameS = 3 And y = y2 And x - 1 = x2 Then Exit Function
+  If X > 1 Then
+   If dat(X - 1, Y) = 11 Then Exit Function
+   If GameS = 3 And Y = y2 And X - 1 = x2 Then Exit Function
   End If
  Case 4 'right
-  If x < datw Then
-   If dat(x + 1, y) = 11 Then Exit Function
-   If GameS = 3 And y = y2 And x + 1 = x2 Then Exit Function
+  If X < datw Then
+   If dat(X + 1, Y) = 11 Then Exit Function
+   If GameS = 3 And Y = y2 And X + 1 = x2 Then Exit Function
   End If
  End Select
- Select Case d(x, y)
+ Select Case d(X, Y)
  Case 9 'ice
   BloxorzCheckBlockSlip = FS
  End Select
@@ -2286,52 +2394,52 @@ Case 1 'h
  'hit block?
  Select Case FS
  Case 1 'up
-  If y > 1 Then
-   If dat(x, y - 1) = 11 Or dat(x + 1, y - 1) = 11 Then Exit Function
+  If Y > 1 Then
+   If dat(X, Y - 1) = 11 Or dat(X + 1, Y - 1) = 11 Then Exit Function
   End If
  Case 2 'down
-  If y < dath Then
-   If dat(x, y + 1) = 11 Or dat(x + 1, y + 1) = 11 Then Exit Function
+  If Y < dath Then
+   If dat(X, Y + 1) = 11 Or dat(X + 1, Y + 1) = 11 Then Exit Function
   End If
  Case 3 'left
-  If x > 1 Then
-   If dat(x - 1, y) = 11 Then Exit Function
+  If X > 1 Then
+   If dat(X - 1, Y) = 11 Then Exit Function
   End If
  Case 4 'right
-  If x < datw - 1 Then
-   If dat(x + 2, y) = 11 Then Exit Function
+  If X < datw - 1 Then
+   If dat(X + 2, Y) = 11 Then Exit Function
   End If
  End Select
- If d(x, y) = 9 And d(x + 1, y) = 9 Then 'ice
+ If d(X, Y) = 9 And d(X + 1, Y) = 9 Then 'ice
   BloxorzCheckBlockSlip = FS
  End If
 Case 2 'v
  'hit block?
  Select Case FS
  Case 1 'up
-  If y > 1 Then
-   If dat(x, y - 1) = 11 Then Exit Function
+  If Y > 1 Then
+   If dat(X, Y - 1) = 11 Then Exit Function
   End If
  Case 2 'down
-  If y < dath - 1 Then
-   If dat(x, y + 2) = 11 Then Exit Function
+  If Y < dath - 1 Then
+   If dat(X, Y + 2) = 11 Then Exit Function
   End If
  Case 3 'left
-  If x > 1 Then
-   If dat(x - 1, y) = 11 Or dat(x - 1, y + 1) = 11 Then Exit Function
+  If X > 1 Then
+   If dat(X - 1, Y) = 11 Or dat(X - 1, Y + 1) = 11 Then Exit Function
   End If
  Case 4 'right
-  If x < datw Then
-   If dat(x + 1, y) = 11 Or dat(x + 1, y + 1) = 11 Then Exit Function
+  If X < datw Then
+   If dat(X + 1, Y) = 11 Or dat(X + 1, Y + 1) = 11 Then Exit Function
   End If
  End Select
- If d(x, y) = 9 And d(x, y + 1) = 9 Then 'ice
+ If d(X, Y) = 9 And d(X, Y + 1) = 9 Then 'ice
   BloxorzCheckBlockSlip = FS
  End If
 End Select
 End Function
 
-Public Function BloxorzCheckPressButton(d() As Byte, ByVal x As Long, ByVal y As Long, ByVal GameS As Long, Optional ByVal lpBridgeChangeArray As Long, Optional ByVal BridgeOff As Long, Optional ByVal BridgeOn As Long) As Long
+Public Function BloxorzCheckPressButton(d() As Byte, ByVal X As Long, ByVal Y As Long, ByVal GameS As Long, Optional ByVal lpBridgeChangeArray As Long, Optional ByVal BridgeOff As Long, Optional ByVal BridgeOn As Long) As Long
 Dim i As Long, j As Long, k As Long
 Dim btns(1 To 2) As Long
 Dim d2() As Long
@@ -2340,14 +2448,14 @@ If lpBridgeChangeArray <> 0 Then
 End If
 Select Case GameS
 Case 0, 3 'up/single
- i = d(x, y)
- If i = 2 Or (i = 3 And GameS = 0) Then btns(1) = dat2(x, y)
+ i = d(X, Y)
+ If i = 2 Or (i = 3 And GameS = 0) Then btns(1) = dat2(X, Y)
 Case 1 'h
- If d(x, y) = 2 Then btns(1) = dat2(x, y)
- If d(x + 1, y) = 2 Then btns(2) = dat2(x + 1, y)
+ If d(X, Y) = 2 Then btns(1) = dat2(X, Y)
+ If d(X + 1, Y) = 2 Then btns(2) = dat2(X + 1, Y)
 Case 2 'v
- If d(x, y) = 2 Then btns(1) = dat2(x, y)
- If d(x, y + 1) = 2 Then btns(2) = dat2(x, y + 1)
+ If d(X, Y) = 2 Then btns(1) = dat2(X, Y)
+ If d(X, Y + 1) = 2 Then btns(2) = dat2(X, Y + 1)
 End Select
 For i = 1 To 2
  k = btns(i)
@@ -2355,18 +2463,18 @@ For i = 1 To 2
   With sws(k)
    For j = 1 To .bc
     With .bs(j)
-     If .x > 0 And .y > 0 And .x <= datw And .y <= dath Then
-      Select Case d(.x, .y)
+     If .X > 0 And .Y > 0 And .X <= datw And .Y <= dath Then
+      Select Case d(.X, .Y)
       Case 6, 7
        Select Case .Behavior
        Case 0 'off
-        d(.x, .y) = 6
+        d(.X, .Y) = 6
        Case 1 'on
-        d(.x, .y) = 7
+        d(.X, .Y) = 7
        Case 2 'toggle
-        d(.x, .y) = 13 - d(.x, .y)
+        d(.X, .Y) = 13 - d(.X, .Y)
        End Select
-       If lpBridgeChangeArray <> 0 Then If d(.x, .y) = 6 Then d2(.x, .y) = BridgeOff Else d2(.x, .y) = BridgeOn
+       If lpBridgeChangeArray <> 0 Then If d(.X, .Y) = 6 Then d2(.X, .Y) = BridgeOff Else d2(.X, .Y) = BridgeOn
        BloxorzCheckPressButton = BloxorzCheckPressButton + 1
       End Select
      End If
