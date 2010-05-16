@@ -55,6 +55,7 @@ msgstr ""
 msgid "Unknown error!"
 msgstr ""
 
+#.       MsgBox objText.GetText("Map error!")
 #.         MsgBox objText.GetText("Map error!")
 msgid "Map error!"
 msgstr ""
@@ -100,7 +101,7 @@ msgid "Random map mode:"
 msgstr ""
 
 #. DrawTextB bmG.hdc, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 128, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Seed:"
 msgstr ""
 
@@ -125,7 +126,7 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 272, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Copy"
 msgstr ""
 
@@ -153,6 +154,15 @@ msgstr ""
 msgid "Wrong level!"
 msgstr ""
 
+#.  Me.Caption = objText.GetText("Turning Square")
+#.    Me.Caption = objText.GetText("Turning Square") + " - " + s
+#.    Me.Caption = objText.GetText("Turning Square") + " - " + s
+#.  Me.Caption = objText.GetText("Turning Square")
+#. Me.Caption = objText.GetText("Turning Square")
+msgid "Turning Square"
+msgstr ""
+
+#.    MsgBox objText.GetText("Error")
 #.    MsgBox objText.GetText("Error")
 msgid "Error"
 msgstr ""
@@ -194,20 +204,16 @@ msgstr ""
 msgid "&Generate"
 msgstr ""
 
-#.   MsgBox objText.GetText("Aborted!")
+#.    MsgBox objText.GetText("Aborted!")
 msgid "Aborted!"
 msgstr ""
 
-#.   MsgBox objText.GetText("Failed!")
-msgid "Failed!"
+#.     MsgBox objText.GetText("Failed to generate!")
+msgid "Failed to generate!"
 msgstr ""
 
-#.   If MsgBox(Replace(objText.GetText("Moves=%d. Apply?"), "%d", CStr(i)), vbYesNo + vbQuestion) = vbYes Then
+#.    b = MsgBox(Replace(objText.GetText("Moves=%d. Apply?"), "%d", CStr(i)), vbYesNo Or vbQuestion) = vbYes
 msgid "Moves=%d. Apply?"
-msgstr ""
-
-#. Me.Caption = objText.GetText("Turning Square")
-msgid "Turning Square"
 msgstr ""
 
 #.  .AddItem objText.GetText("Close")
@@ -246,13 +252,21 @@ msgstr ""
 msgid "Fragile mode"
 msgstr ""
 
+#.  .AddItem objText.GetText("Zigzag with button")
+msgid "Zigzag with button"
+msgstr ""
+
 #. cmdEdit(17).Caption = objText.GetText("&Close")
 #. cmdEdit(13).Caption = objText.GetText("&Close")
 msgid "&Close"
 msgstr ""
 
-#. chk1.Caption = objText.GetText("Use current level as template")
+#. chk1(0).Caption = objText.GetText("Use current level as template")
 msgid "Use current level as template"
+msgstr ""
+
+#. chk1(1).Caption = objText.GetText("Sort random levels by moves")
+msgid "Sort random levels by moves"
 msgstr ""
 
 #. Frame1(2).Caption = objText.GetText("Random map")
@@ -269,6 +283,10 @@ msgstr ""
 
 #. Label1(18).Caption = objText.GetText("Iterations")
 msgid "Iterations"
+msgstr ""
+
+#. Label1(21).Caption = objText.GetText("Level count")
+msgid "Level count"
 msgstr ""
 
 #. cmd0(1).Caption = objText.GetText("Editor/Solver")
@@ -403,6 +421,34 @@ msgstr ""
 #. Label1(11).Caption = objText.GetText("Solving...")
 #. Label1(10).Caption = objText.GetText("Solving...")
 msgid "Solving..."
+msgstr ""
+
+#. mnuLv(0).Caption = objText.GetText("&Copy Level") + vbTab + "Ctrl+C"
+msgid "&Copy Level"
+msgstr ""
+
+#. mnuLv(1).Caption = objText.GetText("&Paste Level") + vbTab + "Ctrl+V"
+msgid "&Paste Level"
+msgstr ""
+
+#. mnuLv(3).Caption = objText.GetText("Rotate 90 C&W")
+msgid "Rotate 90 C&W"
+msgstr ""
+
+#. mnuLv(4).Caption = objText.GetText("Rotate 90 &CCW")
+msgid "Rotate 90 &CCW"
+msgstr ""
+
+#. mnuLv(5).Caption = objText.GetText("&Rotate 180")
+msgid "&Rotate 180"
+msgstr ""
+
+#. mnuLv(7).Caption = objText.GetText("Flip &Horizontally")
+msgid "Flip &Horizontally"
+msgstr ""
+
+#. mnuLv(8).Caption = objText.GetText("Flip &Vertically")
+msgid "Flip &Vertically"
 msgstr ""
 
 #. DrawTextB bmG.hdc, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
