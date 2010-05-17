@@ -1100,7 +1100,7 @@ With SwitchMapIdPos(m)
    If k2 > 0 And k2 <= .Count Then
     If k = k2 Then 'up
      Select Case SwitchMap(.p(k).x, .p(k).y, m)
-     Case 1, 2, 3, 7, 9, 10  '?
+     Case 1, 2, 3, 7, 9, 10, 4 '4?
       pSolveItCheckNodeState = 0
      End Select
     Else
@@ -1131,7 +1131,7 @@ With SwitchMapIdPos(m)
    End If
   Case 0 'up
    Select Case SwitchMap(.p(k).x, .p(k).y, m)
-   Case 1, 2, 3, 7, 9, 10  '?
+   Case 1, 2, 3, 7, 9, 10, 4 '4?
     pSolveItCheckNodeState = 0
    End Select
   Case 1 'h
@@ -1477,18 +1477,21 @@ With SwitchMapIdPos(m).p(k)
          End If
         Case 4 'trans
          GetTransportPosition x, y, i, j, jj, PJJ
-         j = SwitchMapPosId(i, j, m)
-         jj = SwitchMapPosId(jj, PJJ, m)
-         If j > 0 And jj > 0 Then
-          ret.m = m
-          If IsTrans Then
-           ret.k = j
-           ret.k2 = jj
-           j = SwitchMapIdPos(m).AllPosDelta + pSolveItPosToInt(j, jj)
-          Else
-           Debug.Assert False 'err!!
+         If i > 0 And i <= datw And j > 0 And j <= dath And _
+         jj > 0 And jj <= datw And PJJ > 0 And PJJ <= dath Then
+          j = SwitchMapPosId(i, j, m)
+          jj = SwitchMapPosId(jj, PJJ, m)
+          If j > 0 And jj > 0 Then
+           ret.m = m
+           If IsTrans Then
+            ret.k = j
+            ret.k2 = jj
+            j = SwitchMapIdPos(m).AllPosDelta + pSolveItPosToInt(j, jj)
+           Else
+            Debug.Assert False 'err!!
+           End If
+           pSolveItCalcNext = j
           End If
-          pSolveItCalcNext = j
          End If
         Case 10 'pyramid
          j = SwitchMapPosId(x, y, m)
@@ -1605,18 +1608,21 @@ With SwitchMapIdPos(m).p(k)
          End If
         Case 4 'trans
          GetTransportPosition x, y, i, j, jj, PJJ
-         j = SwitchMapPosId(i, j, m)
-         jj = SwitchMapPosId(jj, PJJ, m)
-         If j > 0 And jj > 0 Then
-          ret.m = m
-          If IsTrans Then
-           ret.k = j
-           ret.k2 = jj
-           j = SwitchMapIdPos(m).AllPosDelta + pSolveItPosToInt(j, jj)
-          Else
-           Debug.Assert False 'err!!
+         If i > 0 And i <= datw And j > 0 And j <= dath And _
+         jj > 0 And jj <= datw And PJJ > 0 And PJJ <= dath Then
+          j = SwitchMapPosId(i, j, m)
+          jj = SwitchMapPosId(jj, PJJ, m)
+          If j > 0 And jj > 0 Then
+           ret.m = m
+           If IsTrans Then
+            ret.k = j
+            ret.k2 = jj
+            j = SwitchMapIdPos(m).AllPosDelta + pSolveItPosToInt(j, jj)
+           Else
+            Debug.Assert False 'err!!
+           End If
+           pSolveItCalcNext = j
           End If
-          pSolveItCalcNext = j
          End If
         Case 10 'pyramid
          j = SwitchMapPosId(x, y, m)
@@ -2016,8 +2022,8 @@ If IsTrans Then '??????????????????????????????
      ElseIf xo = x2 Then
       pSolveItCalcMovedArea d, xo, yo, x2, y2, j
       pSolveItCalcMovedArea d, xo2, yo2, x, y, j
-     Else
-      Debug.Assert False
+'     Else
+'      Debug.Assert False
      End If
     Else
      If yo = y Then
@@ -2026,8 +2032,8 @@ If IsTrans Then '??????????????????????????????
      ElseIf yo = y2 Then
       pSolveItCalcMovedArea d, xo, yo, x2, y2, j
       pSolveItCalcMovedArea d, xo2, yo2, x, y, j
-     Else
-      Debug.Assert False
+'     Else
+'      Debug.Assert False
      End If
     End If
     xo = x
