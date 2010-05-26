@@ -3088,7 +3088,7 @@ End Sub
 
 Private Sub pShowPanel(ByVal n As Long)
 Dim i As Long
-For i = 0 To p0.UBound
+For i = 0 To p0.ubound
  p0(i).BorderStyle = 0
  p0(i).Visible = i = n
 Next i
@@ -3102,7 +3102,7 @@ End Sub
 Private Sub chkPos_Click(Index As Integer)
 Dim i As Long
 If chkPos(Index).Value = 1 Then
- For i = 0 To chkPos.UBound
+ For i = 0 To chkPos.ubound
   If i <> Index Then chkPos(i).Value = 0
  Next i
 End If
@@ -3466,7 +3466,79 @@ If p0(2).Visible And Button = 2 Then Me.PopupMenu mnuP1
 End Sub
 
 Private Sub Command1_Click()
-'convert "cubesgame" level ... done.
+'Dim f As New clsTheFile
+'Dim obj As New clsBloxorz
+'Dim s As String, s1 As String
+'Dim b() As Byte, m As Long
+'Dim v As Variant
+'Dim w As Long, h As Long
+'Dim ww As Long, hh As Long
+'Dim i As Long, j As Long, k As Long, lp As Long
+'Dim lv As Long
+''///
+'f.Signature = TheSignature
+''///
+'For lv = 0 To 33
+' Open "F:\turningpolyhedron\doc\cuboidclone\levels\level_" + CStr(lv) For Binary As #1
+' m = LOF(1)
+' ReDim b(m - 1)
+' Get #1, 1, b
+' Close
+' v = Split(StrConv(b, vbUnicode), "<Type=", , vbTextCompare)
+' ReDim b(31, 31)
+' w = 0
+' h = 0
+' m = UBound(v)
+' For k = 0 To m
+'  s = v(k)
+'  lp = InStr(1, s, ",")
+'  If lp > 0 Then
+'   s1 = LCase(Left(s, lp - 1))
+'   lp = InStr(lp, s, "=")
+'   If lp > 0 Then
+'    j = Val(Mid(s, lp + 1))
+'    lp = InStr(lp, s, "_")
+'    If lp > 0 Then
+'     i = Val(Mid(s, lp + 1))
+'     Select Case s1
+'     Case "tile"
+'      b(i, j) = 1
+'      If i > w Then w = i
+'      If j > h Then h = j
+'     Case "start"
+'      b(i, j) = 1
+'      If i > w Then w = i
+'      If j > h Then h = j
+'      ww = i
+'      hh = j
+'     Case "goal"
+'      b(i, j) = 8
+'      If i > w Then w = i
+'      If j > h Then h = j
+'     Case "weaktile"
+'      b(i, j) = 5
+'      If i > w Then w = i
+'      If j > h Then h = j
+'     Case Else
+'      Debug.Assert False
+'     End Select
+'    End If
+'   End If
+'  End If
+' Next k
+' '///
+' obj.Create w + 1, h + 1
+' obj.StartX = ww + 1
+' obj.StartY = hh + 1
+' For i = 0 To w
+'  For j = 0 To h
+'   obj.Data(i + 1, j + 1) = b(i, j)
+'  Next j
+' Next i
+' '///
+' obj.SaveLevel lv + 1, f
+'Next lv
+'f.SaveFile CStr(App.Path) + "\cuboidclone.box"
 End Sub
 
 'random map test 'new:multi-level generate
@@ -4746,7 +4818,7 @@ With Lev(lv)
    End Select
   End If
  End If
- For i = 0 To p2.UBound
+ For i = 0 To p2.ubound
   p2(i).Visible = i = k - 1
  Next i
  chkPos(0).Value = 0
