@@ -1,0 +1,133 @@
+//test procedural texture generate
+
+struct VS_OUTPUT{
+float4 p:POSITION,p0:TEXCOORD0;
+};
+
+float4x4 mat;
+
+texture texNoise;
+sampler sampNoise=sampler_state{
+Texture=<texNoise>;
+MipFilter=NONE;
+MinFilter=POINT;
+MagFilter=POINT;
+AddressU=WRAP;
+AddressV=WRAP;};
+
+VS_OUTPUT vs_func(float4 p:POSITION){
+VS_OUTPUT d;
+d.p=mul(p,mat);
+d.p0=p;
+return d;
+}
+
+//out: (-1,-1)->(1,1) depth:near=0 far=1 (?)
+
+//render to texture
+//TODO:
+VS_OUTPUT vs_func_rtt(float4 p:POSITION,float2 t0:TEXCOORD0){
+VS_OUTPUT d;
+d.p=float4(t0.x*2-1,1-t0.y*2,0.5,1);
+//d.p=float4(t0.x,t0.y,0.5,1);
+d.p0=p;
+return d;
+}
+
+//IT WORKS!!!
+
+float simplexnoise(float3 p){
+float n=0.0f;
+float3 i=floor(p+(p.x+p.y+p.z)/3.0f);
+float3 x0=p-(i-(i.x+i.y+i.z)/6.0f);
+float3 i1,i2;
+//TODO:change
+    if(x0.x>=x0.y) {
+      if(x0.y>=x0.z)
+        { i1=float3(1,0,0); i2=float3(1,1,0); } // X Y Z order
+        else if(x0.x>=x0.z) { i1=float3(1,0,0); i2=float3(1,0,1); } // X Z Y order
+        else { i1=float3(0,0,1); i2=float3(1,0,1); } // Z X Y order
+      }
+    else { // x0<y0
+      if(x0.y<x0.z) { i1=float3(0,0,1); i2=float3(0,1,1); } // Z Y X order
+      else if(x0.x<x0.z) { i1=float3(0,1,0); i2=float3(0,1,1); } // Y Z X order
+      else { i1=float3(0,1,0); i2=float3(1,1,0); } // Y X Z order
+    }
+float3 x1=x0-i1+1/6.0f;
+float3 x2=x0-i2+1/3.0f;
+float3 x3=x0-0.5f;
+//i=64.0f*frac(i/64.0f);
+i/=64.0f;
+//
+float t=0.6f-dot(x0,x0);
+if(t>0){
+ t*=t;
+ n+=t*t*dot(tex2D(sampNoise,float2(tex2D(sampNoise,i.xy).x,i.z)).xyz-0.5f,x0);
+}
+t=0.6f-dot(x1,x1);
+if(t>0){
+ t*=t;
+ i1/=64.0f;
+ n+=t*t*dot(tex2D(sampNoise,float2(tex2D(sampNoise,i.xy+i1.xy).x,i.z+i1.z)).xyz-0.5f,x1);
+}
+t=0.6f-dot(x2,x2);
+if(t>0){
+ t*=t;
+ i2/=64.0f;
+ n+=t*t*dot(tex2D(sampNoise,float2(tex2D(sampNoise,i.xy+i2.xy).x,i.z+i2.z)).xyz-0.5f,x2);
+}
+t=0.6f-dot(x3,x3);
+if(t>0){
+ i+=1/64.0f;
+ t*=t;
+ n+=t*t*dot(tex2D(sampNoise,float2(tex2D(sampNoise,i.xy).x,i.z)).xyz-0.5f,x3);
+}
+//xxx
+return n*64.0f;
+}
+
+float4 ps_func(VS_OUTPUT d):COLOR0{
+
+float a=0,b=1,c=1;
+int i;
+
+
+//normal --> rock
+for(i=0;i<6;i++){
+ a+=simplexnoise(d.p0.xyz*c+i)*b;
+ b*=0.86;c*=1.85;
+}
+a=smoothstep(-1.0,1.0,a);
+return lerp(float4(44,36,35,0)/255.0f,float4(211,120,93,0)/255.0f,a);
+
+
+
+/*
+//abs --> marble
+for(i=0;i<4;i++){
+ a+=abs(simplexnoise(d.p0.xyz*c+i))*b;
+ b*=0.6;c*=2.5;
+}
+a=pow(a/1.5,0.3);
+
+//add some noise
+float3 n=tex2D(sampNoise,float2(tex2D(sampNoise,d.p0.xy*16.18033).x,d.p0.z*16.18033)).xyz-0.5f;
+//return float4(a+n,1);
+return a+n.x/8.0f;
+*/
+}
+
+technique test{
+pass{
+VertexShader=compile vs_2_0 vs_func();
+PixelShader=compile ps_3_0 ps_func();
+}
+}
+
+
+technique test_rtt{
+pass{
+VertexShader=compile vs_2_0 vs_func_rtt();
+PixelShader=compile ps_3_0 ps_func();
+}
+}
