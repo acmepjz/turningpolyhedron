@@ -15,6 +15,7 @@ Begin VB.Form frmMain
       Italic          =   0   'False
       Strikethrough   =   0   'False
    EndProperty
+   KeyPreview      =   -1  'True
    LinkTopic       =   "Form1"
    MaxButton       =   0   'False
    ScaleHeight     =   480
@@ -53,7 +54,9 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private objTest As D3DXMesh
-Private objDrawTest As New clsSimplex
+Private objDrawTest As New clsSimplex, objRenderTest As New clsRenderPipeline
+
+Private objTexture As Direct3DTexture9
 
 Private Sub Command1_Click()
 Unload Me
@@ -66,6 +69,14 @@ d3dpp.Windowed = 1
 'd3dpp.BackBufferHeight = 600 'then change the window's size manually
 d3dd9.Reset d3dpp
 Me.Refresh
+End Sub
+
+Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
+If KeyCode = vbKeyS And Shift = vbCtrlMask Then
+   '///test
+   SaveRenderTargetToFile objTexture, CStr(App.Path) + "\test.bmp", D3DXIFF_BMP
+   '///
+End If
 End Sub
 
 Private Sub Form_Load()
@@ -111,36 +122,60 @@ With d3dd9
  .SetSamplerState 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR
  D3DXMatrixPerspectiveFovLH mat, Atn(1), Me.ScaleWidth / Me.ScaleHeight, 0.1, 100
  .SetTransform D3DTS_PROJECTION, mat
- v0.X = 2
- v0.Y = 6
+ v0.x = 0 '2
+ v0.y = 6
  v0.z = 3
  v2.z = 10
  D3DXMatrixLookAtLH mat, v0, v1, v2
  .SetTransform D3DTS_VIEW, mat
  '///
  .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1
- .SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE
+ .SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_TEXTURE
+ .SetSamplerState 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP
+ .SetSamplerState 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP
  '///
  .SetRenderState D3DRS_CULLMODE, D3DCULL_CCW
  '.SetRenderState D3DRS_NORMALIZENORMALS, 1
 End With
-D3DXCreateBox d3dd9, 2, 2, 4, objTest, Nothing
-'D3DXCreateTeapot d3dd9, objTest, Nothing
+'//////test
+'D3DXCreateBox d3dd9, 2, 2, 4, objTest, Nothing 'no texcoord
+'D3DXCreateTeapot d3dd9, objTest, Nothing 'no texcoord
 objDrawTest.Create
+Set objTest = pTest
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
+'///
+objRenderTest.Create
+'objRenderTest.SetLightDirectionByVal 0, 1, 1, True
+objRenderTest.SetLightPositionByVal 0, 2, 1.5
+objRenderTest.SetLightType D3DLIGHT_POINT
+'///
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
 Set objDrawTest = Nothing
 Set objTest = Nothing
+Set objTexture = Nothing
 Set d3dd9 = Nothing
 Set d3d9 = Nothing
 End Sub
+
+Private Function pTest() As D3DXMesh
+Dim obj As D3DXMesh
+'bug in x file loader: you must write "1.000" instead of "1" or it'll buggy :-3
+D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_1.x", 0, d3dd9, Nothing, Nothing, Nothing, 0, obj
+'D3DXLoadMeshFromXW CStr(App.Path) + "\media\poly20.x", 0, d3dd9, Nothing, Nothing, Nothing, 0, obj
+'Set obj = obj.CloneMeshFVF(0, m_nDefaultFVF, d3dd9)
+'///recalculate normal
+D3DXComputeNormals obj, ByVal 0
+'///
+Set pTest = obj
+End Function
 
 Private Sub Timer1_Timer()
 On Error Resume Next
 Dim i As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
-'Static j As Long
+Static j As Long
 With d3dd9
  i = .TestCooperativeLevel
  If i = D3DERR_DEVICENOTRESET Then
@@ -150,18 +185,30 @@ With d3dd9
   Debug.Print "Reset"
  End If
  If i = 0 Then
-'  If j = 0 Then
-   D3DXMatrixRotationZ mat1, 0.02
+  If j = 0 Then
+   'render texture
+   objDrawTest.BeginRenderToTexture objTexture
+   .Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
+   .BeginScene
+   objTest.DrawSubset 0
+   objTest.DrawSubset 1 '???? draw seal
+   .EndScene
+   objDrawTest.EndRenderToTexture
+   j = 1
+  End If
+   D3DXMatrixRotationZ mat1, 0.03
    .GetTransform D3DTS_WORLD, mat
    D3DXMatrixMultiply mat, mat1, mat
    .SetTransform D3DTS_WORLD, mat
    '///
+   objRenderTest.SetTexture objTexture
+   objRenderTest.BeginRender
    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
    .BeginScene
-   objDrawTest.BeginRender
+'   .SetTexture 0, objTexture
    objTest.DrawSubset 0
-   objDrawTest.EndRender
    .EndScene
+   objRenderTest.EndRender
 '   j = 1
 '  End If
   .Present ByVal 0, ByVal 0, 0, ByVal 0

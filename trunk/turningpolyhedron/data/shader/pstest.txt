@@ -1,0 +1,71 @@
+//test custom render pipeline
+
+struct VS_OUTPUT{
+float4 _p:POSITION;
+float4 c:COLOR0;
+float4 t:TEXCOORD0;
+float4 p:TEXCOORD1;
+float4 n:TEXCOORD2;
+};
+
+//world matrix
+float4x4 matWorld;
+
+//world-view-proj matrix
+float4x4 mat;
+
+//directional light:direction
+float4 lightDir;
+
+//point light:pos
+float4 lightPos;
+
+//light type 0-directional 1-point
+int lightType;
+
+//texture
+texture tex;
+sampler samp=sampler_state{
+Texture=<tex>;
+MipFilter=LINEAR;
+MinFilter=LINEAR;
+MagFilter=LINEAR;
+AddressU=CLAMP;
+AddressV=CLAMP;
+};
+
+VS_OUTPUT vs_func(float4 p:POSITION,float4 n:NORMAL,float4 t:TEXCOORD){
+VS_OUTPUT d;
+d._p=mul(p,mat);
+d.c=1;//TODO:diffuse color
+d.t=t;
+d.n=mul(n,matWorld);
+d.p=mul(p,matWorld);
+return d;
+}
+
+//test
+float4 ps_func(VS_OUTPUT d):COLOR0{
+//get texture color
+float4 clr_tex=tex2D(samp,d.t);
+//normal TODO:normal map
+float4 n=d.n;
+//light vector
+float4 lightVec;
+if(lightType==1){
+ lightVec=normalize(lightPos-d.p);
+}else{
+ lightVec=lightDir;
+}
+//TEST
+float4 l=lit(dot(n.xyz,lightVec.xyz),0,1);
+//over
+return d.c*clr_tex*min(0.2+l.y,1);
+}
+
+technique test{
+pass{
+VertexShader=compile vs_2_0 vs_func();
+PixelShader=compile ps_3_0 ps_func();
+}
+}

@@ -586,22 +586,6 @@ enum D3DXCLEANTYPE {
         D3DXCLEAN_SIMPLIFICATION= D3DXCLEAN_BACKFACING | D3DXCLEAN_BOWTIES,
 };
 
-enum D3DXTANGENT
-{
-    D3DXTANGENT_WRAP_U =                    0x01,
-    D3DXTANGENT_WRAP_V =                    0x02,
-    D3DXTANGENT_WRAP_UV =                   0x03,
-    D3DXTANGENT_DONT_NORMALIZE_PARTIALS =   0x04,
-    D3DXTANGENT_DONT_ORTHOGONALIZE =        0x08,
-    D3DXTANGENT_ORTHOGONALIZE_FROM_V =      0x010,
-    D3DXTANGENT_ORTHOGONALIZE_FROM_U =      0x020,
-    D3DXTANGENT_WEIGHT_BY_AREA =            0x040,
-    D3DXTANGENT_WEIGHT_EQUAL =              0x080,
-    D3DXTANGENT_WIND_CW =                   0x0100,
-    D3DXTANGENT_CALCULATE_NORMALS =         0x0200,
-    D3DXTANGENT_GENERATE_IN_PLACE =         0x0400,
-};
-
 struct D3DXATTRIBUTERANGE
 {
     DWORD AttribId;
@@ -728,9 +712,9 @@ interface D3DXBaseMesh:IUnknown{
     HRESULT LockIndexBuffer(DWORD Flags, int *ppData);
     HRESULT UnlockIndexBuffer();
     HRESULT GetAttributeTable(struct D3DXATTRIBUTERANGE *pAttribTable, DWORD* pAttribTableSize);
-    HRESULT ConvertPointRepsToAdjacency(DWORD* pPRep, DWORD* pAdjacency);
-    HRESULT ConvertAdjacencyToPointReps(DWORD* pAdjacency, DWORD* pPRep);
-    HRESULT GenerateAdjacency(FLOAT Epsilon, DWORD* pAdjacency);
+    HRESULT ConvertPointRepsToAdjacency(void* pPRep, void* pAdjacency);
+    HRESULT ConvertAdjacencyToPointReps(void* pAdjacency, void* pPRep);
+    HRESULT GenerateAdjacency(FLOAT Epsilon, void* pAdjacency);
 	[helpstring("Declaration(0 To 64)")]
     HRESULT UpdateSemantics(struct D3DVERTEXELEMENT9* Declaration);
 };
@@ -1200,6 +1184,22 @@ typedef HRESULT (WINAPI* LPD3DXIMTSIGNALCALLBACK)
 
 typedef int LPD3DXIMTSIGNALCALLBACK;
 
+typedef enum D3DXTANGENT
+{
+    D3DXTANGENT_WRAP_U = 0x01,
+    D3DXTANGENT_WRAP_V = 0x02,
+    D3DXTANGENT_WRAP_UV = 0x03,
+    D3DXTANGENT_DONT_NORMALIZE_PARTIALS = 0x04,
+    D3DXTANGENT_DONT_ORTHOGONALIZE = 0x08,
+    D3DXTANGENT_ORTHOGONALIZE_FROM_V = 0x010,
+    D3DXTANGENT_ORTHOGONALIZE_FROM_U = 0x020,
+    D3DXTANGENT_WEIGHT_BY_AREA = 0x040,
+    D3DXTANGENT_WEIGHT_EQUAL = 0x080,
+    D3DXTANGENT_WIND_CW = 0x0100,
+    D3DXTANGENT_CALCULATE_NORMALS = 0x0200,
+    D3DXTANGENT_GENERATE_IN_PLACE = 0x0400,
+} D3DXTANGENT;
+
 [dllname("d3dx9_39.dll"),helpstring("APIs from d3dx9_39.dll (???) D3DX mesh types and functions")]
 module D3DX9_Mesh{
     int const D3DXPATCHMESH_DEFAULT = 000;
@@ -1213,7 +1213,38 @@ module D3DX9_Mesh{
 	[entry("D3DXSimplifyMesh")] void D3DXSimplifyMesh(D3DXMesh* pMesh, DWORD* pAdjacency, struct D3DXATTRIBUTEWEIGHTS* pVertexAttributeWeights, FLOAT* pVertexWeights, DWORD MinValue, DWORD Options, D3DXMesh** ppMesh);
 	[entry("D3DXComputeBoundingSphere")] void D3DXComputeBoundingSphere(struct D3DXVECTOR3* pFirstPosition, DWORD NumVertices, DWORD dwStride, struct D3DXVECTOR3* pCenter, FLOAT* pRadius);
 	[entry("D3DXComputeBoundingBox")] void D3DXComputeBoundingBox(struct D3DXVECTOR3* pFirstPosition, DWORD NumVertices, DWORD dwStride, struct D3DXVECTOR3* pMin, struct D3DXVECTOR3* pMax);
-	[entry("D3DXComputeNormals")] void D3DXComputeNormals(D3DXBaseMesh* pMesh, DWORD* pAdjacency);
+	[entry("D3DXComputeNormals")] void D3DXComputeNormals(D3DXBaseMesh* pMesh, void* pAdjacency);
+	[entry("D3DXComputeTangent")] void D3DXComputeTangent(
+  D3DXMesh* Mesh,
+  int TexStageIndex,
+  int TangentIndex,
+  int BinormIndex,
+  int Wrap,
+  void* pAdjacency
+);
+[entry("D3DXComputeTangentFrame")] void D3DXComputeTangentFrame(
+  D3DXMesh * pMesh,
+  D3DXTANGENT dwOptions
+);
+[entry("D3DXComputeTangentFrameEx")] void D3DXComputeTangentFrameEx(
+  D3DXMesh * pMesh,
+  int dwTextureInSemantic,
+  int dwTextureInIndex,
+  int dwUPartialOutSemantic,
+  int dwUPartialOutIndex,
+  enum D3DDECLUSAGE dwVPartialOutSemantic,
+  int dwVPartialOutIndex,
+  int dwNormalOutSemantic,
+  int dwNormalOutIndex,
+  D3DXTANGENT dwOptions,
+  void *pdwAdjacency,
+  float fPartialEdgeThreshold,
+  float fSingularPointThreshold,
+  float fNormalEdgeThreshold,
+  D3DXMesh ** ppMeshOut,
+  D3DXBuffer ** ppVertexMapping
+);
+
 	[entry("D3DXCreateBuffer")] void D3DXCreateBuffer(DWORD NumBytes, D3DXBuffer** ppBuffer);
 	[entry("D3DXLoadMeshFromXInMemory")] void D3DXLoadMeshFromXInMemory(void* Memory, DWORD SizeOfMemory, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
 	[entry("D3DXLoadMeshFromXResource")] void D3DXLoadMeshFromXResource(HMODULE Module, void* lpstrName, void* lpstrType, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
@@ -1248,7 +1279,7 @@ module D3DX9_Mesh{
 	[entry("D3DXIntersectTri")] int D3DXIntersectTri(struct D3DXVECTOR3* p0, struct D3DXVECTOR3* p1, struct D3DXVECTOR3* p2, struct D3DXVECTOR3* pRayPos, struct D3DXVECTOR3* pRayDir, FLOAT* pU, FLOAT* pV, FLOAT* pDist);
 	[entry("D3DXSphereBoundProbe")] int D3DXSphereBoundProbe(struct D3DXVECTOR3* pCenter, FLOAT Radius, struct D3DXVECTOR3* pRayPosition, struct D3DXVECTOR3* pRayDirection);
 	[entry("D3DXBoxBoundProbe")] int D3DXBoxBoundProbe(struct D3DXVECTOR3* pMin, struct D3DXVECTOR3* pMax, struct D3DXVECTOR3* pRayPosition, struct D3DXVECTOR3* pRayDirection);
-	[entry("D3DXComputeTangent")] void D3DXComputeTangent(D3DXMesh* Mesh, DWORD TexStage, DWORD TangentIndex, DWORD BinormIndex, DWORD Wrap, DWORD* pAdjacency);
+//	[entry("D3DXComputeTangent")] void D3DXComputeTangent(D3DXMesh* Mesh, DWORD TexStage, DWORD TangentIndex, DWORD BinormIndex, DWORD Wrap, DWORD* pAdjacency);
 	[entry("D3DXConvertMeshSubsetToSingleStrip")] void D3DXConvertMeshSubsetToSingleStrip(D3DXBaseMesh* MeshIn, DWORD AttribId, DWORD IBOptions, Direct3DIndexBuffer9** ppIndexBuffer, DWORD* pNumIndices);
 	[entry("D3DXConvertMeshSubsetToStrips")] void D3DXConvertMeshSubsetToStrips(D3DXBaseMesh* MeshIn, DWORD AttribId, DWORD IBOptions, Direct3DIndexBuffer9** ppIndexBuffer, DWORD* pNumIndices, D3DXBuffer** ppStripLengths, DWORD* pNumStrips);
 	[entry("D3DXOptimizeFaces")] void D3DXOptimizeFaces(void* pbIndices, UINT cFaces, UINT cVertices, int b32BitIndices, DWORD* pFaceRemap);
