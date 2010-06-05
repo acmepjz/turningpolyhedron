@@ -1,15 +1,31 @@
 //test custom render pipeline
 
+struct VS_INPUT{
+float4 p:POSITION;
+float4 c:COLOR0;
+float4 c1:COLOR1;
+float4 t:TEXCOORD0;
+float4 n:NORMAL;
+float4 b:BINORMAL;
+float4 ta:TANGENT;
+};
+
 struct VS_OUTPUT{
 float4 _p:POSITION;
 float4 c:COLOR0;
+float4 c1:COLOR1;
 float4 t:TEXCOORD0;
-float4 p:TEXCOORD1;
-float4 n:TEXCOORD2;
+float4 p:TEXCOORD1;//pos
+float4 n:TEXCOORD2;//normal
+float4 b:TEXCOORD3;//binormal
+float4 ta:TEXCOORD4;//tangent
 };
 
 //world matrix
 float4x4 matWorld;
+
+//Transpose[Inverse[world]] (?)
+float4x4 matWorld1;
 
 //world-view-proj matrix
 float4x4 mat;
@@ -23,6 +39,9 @@ float4 lightPos;
 //light type 0-directional 1-point
 int lightType;
 
+//view pos
+float4 viewPos;
+
 //texture
 texture tex;
 sampler samp=sampler_state{
@@ -34,22 +53,41 @@ AddressU=CLAMP;
 AddressV=CLAMP;
 };
 
-VS_OUTPUT vs_func(float4 p:POSITION,float4 n:NORMAL,float4 t:TEXCOORD){
+//normal texture (?)
+texture texNormal;
+sampler sampNormal=sampler_state{
+Texture=<texNormal>;
+MipFilter=LINEAR;
+MinFilter=LINEAR;
+MagFilter=LINEAR;
+AddressU=CLAMP;
+AddressV=CLAMP;
+};
+
+VS_OUTPUT vs_func(VS_INPUT d0){
 VS_OUTPUT d;
-d._p=mul(p,mat);
-d.c=1;//TODO:diffuse color
-d.t=t;
-d.n=mul(n,matWorld);
-d.p=mul(p,matWorld);
+d._p=mul(d0.p,mat);
+d.c=1;//d0.c;
+d.c1=1;//d0.c1;
+d.t=d0.t;
+d.p=mul(d0.p,matWorld);
+d.n=mul(d0.n,matWorld1);
+d.b=mul(d0.b,matWorld1);
+d.ta=mul(d0.ta,matWorld1);
 return d;
 }
 
 //test
 float4 ps_func(VS_OUTPUT d):COLOR0{
+
 //get texture color
 float4 clr_tex=tex2D(samp,d.t);
-//normal TODO:normal map
-float4 n=d.n;
+
+//normal (normal map)
+//float4 n=d.n;
+float4 n=tex2D(sampNormal,d.t)*2.0f-254.0f/255.0f;
+n=n.x*d.b+n.y*d.ta+n.z*d.n; //???????? right?
+
 //light vector
 float4 lightVec;
 if(lightType==1){
@@ -57,15 +95,21 @@ if(lightType==1){
 }else{
  lightVec=lightDir;
 }
+
+//halfway vector
+float4 h=normalize(lightVec+normalize(viewPos-d.p)); //TODO:can we use "reflect"?
+
 //TEST
-float4 l=lit(dot(n.xyz,lightVec.xyz),0,1);
-//over
-return d.c*clr_tex*min(0.2+l.y,1);
+float4 l=lit(dot(n.xyz,lightVec.xyz),dot(n.xyz,h.xyz),20); //TODO:hardness
+//
+float4 diffuse=d.c*clr_tex*min(0.5+l.y,1); //TODO:ambient?
+float4 specular=d.c1*l.z;
+return diffuse+specular;
 }
 
 technique test{
 pass{
-VertexShader=compile vs_2_0 vs_func();
+VertexShader=compile vs_3_0 vs_func();
 PixelShader=compile ps_3_0 ps_func();
 }
 }

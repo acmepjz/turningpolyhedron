@@ -13,7 +13,19 @@ MipFilter=NONE;
 MinFilter=POINT;
 MagFilter=POINT;
 AddressU=WRAP;
-AddressV=WRAP;};
+AddressV=WRAP;
+};
+
+texture tex;
+sampler samp=sampler_state{
+Texture=<tex>;
+MipFilter=NONE;
+MinFilter=POINT;
+MagFilter=POINT;
+AddressU=WRAP;
+AddressV=WRAP;
+};
+float4 pixelSize;
 
 VS_OUTPUT vs_func(float4 p:POSITION){
 VS_OUTPUT d;
@@ -124,10 +136,11 @@ PixelShader=compile ps_3_0 ps_func();
 }
 }
 
-
 technique test_rtt{
 pass{
 VertexShader=compile vs_2_0 vs_func_rtt();
 PixelShader=compile ps_3_0 ps_func();
 }
 }
+
+////////process texture

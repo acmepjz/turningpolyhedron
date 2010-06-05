@@ -56,7 +56,7 @@ Option Explicit
 Private objTest As D3DXMesh
 Private objDrawTest As New clsSimplex, objRenderTest As New clsRenderPipeline
 
-Private objTexture As Direct3DTexture9
+Private objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
 
 Private Sub Command1_Click()
 Unload Me
@@ -108,13 +108,29 @@ If d3dd9 Is Nothing Then
  Form_Unload 0
  End
 End If
+'///vertex declaration test
+CreateVertexDeclaration
+'///
 pSetRenderState
+'//////test
+'D3DXCreateBox d3dd9, 2, 2, 4, objTest, Nothing 'no texcoord
+'D3DXCreateTeapot d3dd9, objTest, Nothing 'no texcoord
+objDrawTest.Create
+Set objTest = pTest
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
+D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\testnormal.png", objNormalTexture
+'///
+objRenderTest.Create
+'objRenderTest.SetLightDirectionByVal 0, 1, 1, True
+objRenderTest.SetLightPositionByVal 0, 2, -2.5
+objRenderTest.SetLightType D3DLIGHT_POINT
+pLookAtLH Vec3(2, 6, 3), Vec3, Vec3(, , 1)
+'///
 End Sub
 
 Private Sub pSetRenderState()
 'test only
 Dim mat As D3DMATRIX
-Dim v0 As D3DVECTOR, v1 As D3DVECTOR, v2 As D3DVECTOR
 With d3dd9
  .SetRenderState D3DRS_LIGHTING, 0
  .SetSamplerState 0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
@@ -122,12 +138,6 @@ With d3dd9
  .SetSamplerState 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR
  D3DXMatrixPerspectiveFovLH mat, Atn(1), Me.ScaleWidth / Me.ScaleHeight, 0.1, 100
  .SetTransform D3DTS_PROJECTION, mat
- v0.x = 0 '2
- v0.y = 6
- v0.z = 3
- v2.z = 10
- D3DXMatrixLookAtLH mat, v0, v1, v2
- .SetTransform D3DTS_VIEW, mat
  '///
  .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1
  .SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_TEXTURE
@@ -137,24 +147,20 @@ With d3dd9
  .SetRenderState D3DRS_CULLMODE, D3DCULL_CCW
  '.SetRenderState D3DRS_NORMALIZENORMALS, 1
 End With
-'//////test
-'D3DXCreateBox d3dd9, 2, 2, 4, objTest, Nothing 'no texcoord
-'D3DXCreateTeapot d3dd9, objTest, Nothing 'no texcoord
-objDrawTest.Create
-Set objTest = pTest
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
-'///
-objRenderTest.Create
-'objRenderTest.SetLightDirectionByVal 0, 1, 1, True
-objRenderTest.SetLightPositionByVal 0, 2, 1.5
-objRenderTest.SetLightType D3DLIGHT_POINT
-'///
+End Sub
+
+Private Sub pLookAtLH(pEye As D3DVECTOR, pAt As D3DVECTOR, pUp As D3DVECTOR)
+Dim mat As D3DMATRIX
+D3DXMatrixLookAtLH mat, pEye, pAt, pUp
+d3dd9.SetTransform D3DTS_VIEW, mat
+objRenderTest.SetViewPositionByVal pEye.x, pEye.y, pEye.z
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
 Set objDrawTest = Nothing
 Set objTest = Nothing
 Set objTexture = Nothing
+Set objNormalTexture = Nothing
 Set d3dd9 = Nothing
 Set d3d9 = Nothing
 End Sub
@@ -164,9 +170,9 @@ Dim obj As D3DXMesh
 'bug in x file loader: you must write "1.000" instead of "1" or it'll buggy :-3
 D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_1.x", 0, d3dd9, Nothing, Nothing, Nothing, 0, obj
 'D3DXLoadMeshFromXW CStr(App.Path) + "\media\poly20.x", 0, d3dd9, Nothing, Nothing, Nothing, 0, obj
-'Set obj = obj.CloneMeshFVF(0, m_nDefaultFVF, d3dd9)
+Set obj = obj.CloneMesh(0, m_tVertexDecl(0), d3dd9)
 '///recalculate normal
-D3DXComputeNormals obj, ByVal 0
+D3DXComputeTangentFrame obj, 0
 '///
 Set pTest = obj
 End Function
@@ -196,12 +202,13 @@ With d3dd9
    objDrawTest.EndRenderToTexture
    j = 1
   End If
-   D3DXMatrixRotationZ mat1, 0.03
+   D3DXMatrixRotationZ mat1, 0.01
    .GetTransform D3DTS_WORLD, mat
    D3DXMatrixMultiply mat, mat1, mat
    .SetTransform D3DTS_WORLD, mat
    '///
    objRenderTest.SetTexture objTexture
+   objRenderTest.SetNormalTexture objNormalTexture
    objRenderTest.BeginRender
    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
    .BeginScene
