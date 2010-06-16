@@ -75,6 +75,7 @@ Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
 If KeyCode = vbKeyS And Shift = vbCtrlMask Then
    '///test
    SaveRenderTargetToFile objTexture, CStr(App.Path) + "\test.bmp", D3DXIFF_BMP
+   SaveRenderTargetToFile objNormalTexture, CStr(App.Path) + "\testnormal.bmp", D3DXIFF_BMP
    '///
 End If
 End Sub
@@ -117,14 +118,20 @@ pSetRenderState
 'D3DXCreateTeapot d3dd9, objTest, Nothing 'no texcoord
 objDrawTest.Create
 Set objTest = pTest
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
-D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\testnormal.png", objNormalTexture
+'new:mipmap
+D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
+D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objNormalTexture
+'D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\testnormal.png", objNormalTexture
 '///
 objRenderTest.Create
-'objRenderTest.SetLightDirectionByVal 0, 1, 1, True
-objRenderTest.SetLightPositionByVal 0, 2, -2.5
-objRenderTest.SetLightType D3DLIGHT_POINT
-pLookAtLH Vec3(2, 6, 3), Vec3, Vec3(, , 1)
+objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
+objRenderTest.SetLightPositionByVal 0, 8, 5
+objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL 'can't show shadow in point light mode ???
+pLookAtLH Vec3(6, 2, 3), Vec3, Vec3(, , 1)
+'pLookAtLH Vec3(1, 0, 8), Vec3, Vec3(, , 1)
+objRenderTest.CreateShadowMap 1024 'new
+'objRenderTest.SetShadowState True, 1, 0.1, 50  'new
+objRenderTest.SetShadowState True, 8, -100, 100
 '///
 End Sub
 
@@ -167,12 +174,16 @@ End Sub
 
 Private Function pTest() As D3DXMesh
 Dim obj As D3DXMesh
+Dim objAdjacency As D3DXBuffer
 'bug in x file loader: you must write "1.000" instead of "1" or it'll buggy :-3
-D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_1.x", 0, d3dd9, Nothing, Nothing, Nothing, 0, obj
-'D3DXLoadMeshFromXW CStr(App.Path) + "\media\poly20.x", 0, d3dd9, Nothing, Nothing, Nothing, 0, obj
+'D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_1.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
+D3DXLoadMeshFromXW CStr(App.Path) + "\media\test.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
 Set obj = obj.CloneMesh(0, m_tVertexDecl(0), d3dd9)
 '///recalculate normal
-D3DXComputeTangentFrame obj, 0
+D3DXComputeTangentFrame obj, D3DXTANGENT_CALCULATE_NORMALS
+'//poly20-can smooth, monkey can't :-3 cube1-1 can't either ---why?
+'D3DXComputeTangentFrameEx obj, D3DDECLUSAGE_TEXCOORD, 0, D3DDECLUSAGE_BINORMAL, 0, D3DDECLUSAGE_TANGENT, 0, D3DDECLUSAGE_NORMAL, 0, _
+'D3DXTANGENT_GENERATE_IN_PLACE Or D3DXTANGENT_CALCULATE_NORMALS, ByVal objAdjacency.GetBufferPointer, 0.01, 0.25, 0.01, Nothing, Nothing
 '///
 Set pTest = obj
 End Function
@@ -192,14 +203,28 @@ With d3dd9
  End If
  If i = 0 Then
   If j = 0 Then
-   'render texture
+   '////////render texture
+   Dim obj As Direct3DTexture9
+   '///
    objDrawTest.BeginRenderToTexture objTexture
    .Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
    .BeginScene
    objTest.DrawSubset 0
-   objTest.DrawSubset 1 '???? draw seal
    .EndScene
    objDrawTest.EndRenderToTexture
+   '///expand texture to eliminate seal
+   D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, obj
+   objDrawTest.ProcessTexture objTexture, obj, "expand8"
+   objDrawTest.ProcessTexture obj, objTexture, "expand8"
+   Set obj = Nothing
+   objDrawTest.GenerateMipSubLevels objTexture
+   '///
+   D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
+   objDrawTest.ProcessTexture objTexture, obj, "grayscale"
+   objDrawTest.ProcessTexture obj, objNormalTexture, "normal_map"
+   Set obj = Nothing
+   objDrawTest.GenerateMipSubLevels objNormalTexture
+   '////////
    j = 1
   End If
    D3DXMatrixRotationZ mat1, 0.01
@@ -207,12 +232,18 @@ With d3dd9
    D3DXMatrixMultiply mat, mat1, mat
    .SetTransform D3DTS_WORLD, mat
    '///
+   objRenderTest.BeginRenderShadowMap
+   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
+   .BeginScene
+   objTest.DrawSubset 0
+   .EndScene
+   objRenderTest.EndRenderShadowMap
+   '///
    objRenderTest.SetTexture objTexture
    objRenderTest.SetNormalTexture objNormalTexture
    objRenderTest.BeginRender
    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
    .BeginScene
-'   .SetTexture 0, objTexture
    objTest.DrawSubset 0
    .EndScene
    objRenderTest.EndRender

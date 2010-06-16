@@ -30,8 +30,17 @@ Option Explicit
 
 Private objEffect As D3DXEffect
 
-'Private objOldTarget As Direct3DSurface9
-'Private objOldStencil As Direct3DSurface9
+Private m_tLightDir As D3DXVECTOR4, m_tLightPos As D3DXVECTOR4, m_tViewPos As D3DXVECTOR4
+Private m_nLightType As Long
+
+Private objOldTarget As Direct3DSurface9
+Private objOldStencil As Direct3DSurface9
+
+Private texNoise As Direct3DTexture9
+Private objShadowMap As Direct3DTexture9, objShadowStencil As Direct3DSurface9
+Private m_bShadowEnabled As Boolean
+Private m_tLightViewProj As D3DMATRIX
+Private m_nShadowMapSize As Long
 
 Friend Property Get Effect() As D3DXEffect
 Set Effect = objEffect
@@ -46,76 +55,137 @@ s = Input$(LOF(1), 1)
 Close
 '///
 CreateEffect s, objEffect
-'///
+'///???
+D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\data\gfx\noise.bmp", texNoise
 End Sub
 
 Friend Sub SetLightDirection(d As D3DXVECTOR4, Optional ByVal bNormalize As Boolean)
-Dim v As D3DXVECTOR4
 If bNormalize Then
- D3DXVec4Normalize v, d
- objEffect.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), v
+ D3DXVec4Normalize m_tLightDir, d
 Else
- objEffect.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), d
+ m_tLightDir = d
 End If
+objEffect.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), m_tLightDir
 End Sub
 
 Friend Sub SetLightDirectionByVal(ByVal x As Single, ByVal y As Single, ByVal z As Single, Optional ByVal bNormalize As Boolean)
-Dim v As D3DXVECTOR4
-v.x = x
-v.y = y
-v.z = z
-If bNormalize Then D3DXVec4Normalize v, v
-objEffect.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), v
+m_tLightDir.x = x
+m_tLightDir.y = y
+m_tLightDir.z = z
+m_tLightDir.w = 0
+If bNormalize Then D3DXVec4Normalize m_tLightDir, m_tLightDir
+objEffect.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), m_tLightDir
 End Sub
 
 Friend Sub SetLightPosition(d As D3DXVECTOR4)
 objEffect.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), d
+m_tLightPos = d
 End Sub
 
 Friend Sub SetLightPositionByVal(ByVal x As Single, ByVal y As Single, ByVal z As Single)
-Dim v As D3DXVECTOR4
-v.x = x
-v.y = y
-v.z = z
-objEffect.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), v
+m_tLightPos.x = x
+m_tLightPos.y = y
+m_tLightPos.z = z
+m_tLightPos.w = 0
+objEffect.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), m_tLightPos
 End Sub
 
 Friend Sub SetViewPosition(d As D3DXVECTOR4)
 objEffect.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), d
+m_tViewPos = d
 End Sub
 
 Friend Sub SetViewPositionByVal(ByVal x As Single, ByVal y As Single, ByVal z As Single)
-Dim v As D3DXVECTOR4
-v.x = x
-v.y = y
-v.z = z
-objEffect.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), v
+m_tViewPos.x = x
+m_tViewPos.y = y
+m_tViewPos.z = z
+m_tViewPos.w = 0
+objEffect.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), m_tViewPos
 End Sub
 
 Friend Sub SetLightType(ByVal n As D3DLIGHTTYPE)
-Dim i As Long
-If n = D3DLIGHT_POINT Then i = 1 Else i = 0
-objEffect.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), i
+If n = D3DLIGHT_POINT Then
+ m_nLightType = 1
+Else
+ m_nLightType = 0
+End If
+objEffect.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_nLightType
 End Sub
 
-Friend Sub SetTexture(ByVal obj As Direct3DBaseTexture9)
+Friend Sub SetTexture(ByVal obj As Direct3DTexture9)
 objEffect.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), obj
 End Sub
 
-Friend Sub SetNormalTexture(ByVal obj As Direct3DBaseTexture9)
+Friend Sub SetNormalTexture(ByVal obj As Direct3DTexture9)
 objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
+End Sub
+
+Friend Sub CreateShadowMap(ByVal nSize As Long)
+Set objShadowMap = Nothing
+Set objShadowStencil = Nothing
+D3DXCreateTexture d3dd9, nSize, nSize, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, objShadowMap
+d3dd9.CreateDepthStencilSurface nSize, nSize, D3DFMT_D24S8, 0, 0, 1, objShadowStencil, ByVal 0
+m_nShadowMapSize = nSize
+End Sub
+
+Friend Sub SetShadowState(ByVal bEnabled As Boolean, Optional ByVal FOVOrViewSize As Single, Optional ByVal zn As Single, Optional ByVal zf As Single)
+Dim mat As D3DMATRIX
+m_bShadowEnabled = bEnabled
+If bEnabled Then
+ D3DXMatrixLookAtLH m_tLightViewProj, Vec3(m_tLightPos.x, m_tLightPos.y, m_tLightPos.z), _
+ Vec3(m_tLightPos.x - m_tLightDir.x, m_tLightPos.y - m_tLightDir.y, m_tLightPos.z - m_tLightDir.z), _
+ Vec3(0, 1, 0) '??
+ If m_nLightType = 1 Then 'point
+  D3DXMatrixPerspectiveFovLH mat, FOVOrViewSize, 1, zn, zf
+ Else 'directional
+  D3DXMatrixOrthoLH mat, FOVOrViewSize, FOVOrViewSize, zn, zf
+ End If
+ D3DXMatrixMultiply m_tLightViewProj, m_tLightViewProj, mat
+End If
+End Sub
+
+Friend Sub BeginRenderShadowMap()
+Dim mat As D3DMATRIX
+If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Then Exit Sub
+'///
+Set objOldTarget = d3dd9.GetRenderTarget(0)
+Set objOldStencil = d3dd9.GetDepthStencilSurface
+d3dd9.SetRenderTarget 0, objShadowMap.GetSurfaceLevel(0)
+d3dd9.SetDepthStencilSurface objShadowStencil
+'///
+d3dd9.GetTransform D3DTS_WORLD, mat
+D3DXMatrixMultiply mat, mat, m_tLightViewProj
+objEffect.SetMatrix StrPtr(StrConv("matShadow", vbFromUnicode)), mat
+objEffect.SetTechnique StrPtr(StrConv("test_shadow", vbFromUnicode))
+objEffect.Begin 0, 0
+objEffect.BeginPass 0
+End Sub
+
+Friend Sub EndRenderShadowMap()
+If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Then Exit Sub
+objEffect.EndPass
+objEffect.End
+d3dd9.SetRenderTarget 0, objOldTarget
+d3dd9.SetDepthStencilSurface objOldStencil
+Set objOldTarget = Nothing
+Set objOldStencil = Nothing
 End Sub
 
 Friend Sub BeginRender()
 Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
+Dim obj As Direct3DTexture9
 d3dd9.GetTransform D3DTS_WORLD, mat1
 objEffect.SetMatrix StrPtr(StrConv("matWorld", vbFromUnicode)), mat1
 d3dd9.GetTransform D3DTS_VIEW, mat2
 d3dd9.GetTransform D3DTS_PROJECTION, mat3
 D3DXMatrixMultiply mat, mat1, mat2
 D3DXMatrixMultiply mat, mat, mat3
-D3DXMatrixInverse mat2, D3DXMatrixDeterminant(mat1), mat1
+D3DXMatrixInverse mat2, 0, mat1 '[out] pDeterminant
 objEffect.SetMatrixTranspose StrPtr(StrConv("matWorld1", vbFromUnicode)), mat2
+'///
+If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
+objEffect.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
+objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
 '///
 objEffect.SetMatrix StrPtr(StrConv("mat", vbFromUnicode)), mat
 objEffect.SetTechnique StrPtr(StrConv("test", vbFromUnicode))
@@ -129,6 +199,9 @@ objEffect.End
 End Sub
 
 Private Sub Class_Terminate()
+Set objShadowMap = Nothing
+Set objShadowStencil = Nothing
+Set texNoise = Nothing
 Set objEffect = Nothing
 End Sub
 

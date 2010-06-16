@@ -97,19 +97,17 @@ s.UnlockRect
 s2.UnlockRect
 End Sub
 
-Public Sub SaveRenderTargetToFile(objSrc As Direct3DTexture9, ByVal fn As String, ByVal nFormat As D3DXIMAGE_FILEFORMAT)
+Public Sub SaveRenderTargetToFile(ByVal objSrc As Direct3DTexture9, ByVal fn As String, ByVal nFormat As D3DXIMAGE_FILEFORMAT, Optional ByVal nLevel As Long)
 Dim tDesc As D3DSURFACE_DESC
 Dim tDesc2 As D3DSURFACE_DESC
 Dim tLR As D3DLOCKED_RECT
-Dim s As Direct3DSurface9
 Dim d3dtex_sys As Direct3DTexture9
-objSrc.GetLevelDesc 0, tDesc
+objSrc.GetLevelDesc nLevel, tDesc
 If d3dtex_sys Is Nothing Then
  D3DXCreateTexture d3dd9, tDesc.Width, tDesc.Height, 1, 0, tDesc.Format, D3DPOOL_SYSTEMMEM, d3dtex_sys
  Debug.Assert Not d3dtex_sys Is Nothing
 End If
-Set s = d3dtex_sys.GetSurfaceLevel(0)
-d3dd9.GetRenderTargetData objSrc.GetSurfaceLevel(0), s
+d3dd9.GetRenderTargetData objSrc.GetSurfaceLevel(nLevel), d3dtex_sys.GetSurfaceLevel(0)
 'save file
 D3DXSaveTextureToFileW fn, nFormat, d3dtex_sys, ByVal 0
 End Sub
