@@ -14,11 +14,17 @@ struct VS_OUTPUT{
 float4 _p:POSITION;
 float4 c:COLOR0;
 float4 c1:COLOR1;
-float4 t:TEXCOORD0;
+float4 t:TEXCOORD0;//TEXCOORD0_centroid;
 float4 p:TEXCOORD1;//pos
 float4 n:TEXCOORD2;//normal
 float4 b:TEXCOORD3;//binormal
 float4 ta:TEXCOORD4;//tangent
+float4 pShadow:TEXCOORD5;
+};
+
+struct VS_OUTPUT2{
+float4 _p:POSITION;
+float4 c:COLOR0;
 };
 
 //world matrix
@@ -28,7 +34,7 @@ float4x4 matWorld;
 float4x4 matWorld1;
 
 //world-view-proj matrix
-float4x4 mat;
+float4x4 mat,matShadow;
 
 //directional light:direction
 float4 lightDir;
@@ -53,7 +59,7 @@ AddressU=CLAMP;
 AddressV=CLAMP;
 };
 
-//normal texture (?)
+//normal map
 texture texNormal;
 sampler sampNormal=sampler_state{
 Texture=<texNormal>;
@@ -62,6 +68,28 @@ MinFilter=LINEAR;
 MagFilter=LINEAR;
 AddressU=CLAMP;
 AddressV=CLAMP;
+};
+
+//shadow map
+texture texShadow;
+sampler sampShadow=sampler_state{
+Texture=<texShadow>;
+MipFilter=NONE;
+MinFilter=LINEAR;
+MagFilter=LINEAR;
+AddressU=CLAMP;
+AddressV=CLAMP;
+};
+
+//noise map
+texture texNoise;
+sampler sampNoise=sampler_state{
+Texture=<texNoise>;
+MipFilter=NONE;
+MinFilter=POINT;
+MagFilter=POINT;
+AddressU=WRAP;
+AddressV=WRAP;
 };
 
 VS_OUTPUT vs_func(VS_INPUT d0){
@@ -74,6 +102,12 @@ d.p=mul(d0.p,matWorld);
 d.n=mul(d0.n,matWorld1);
 d.b=mul(d0.b,matWorld1);
 d.ta=mul(d0.ta,matWorld1);
+d.pShadow=mul(d0.p,matShadow);
+////??
+//d.pShadow.xyz/=d.pShadow.w;
+//d.pShadow.xy*=float2(0.5f,-0.5f);
+//d.pShadow.xy+=0.5f;
+////
 return d;
 }
 
@@ -82,6 +116,50 @@ float4 ps_func(VS_OUTPUT d):COLOR0{
 
 //get texture color
 float4 clr_tex=tex2D(samp,d.t);
+
+//shadow map test
+float4 l=1.0f;
+
+d.pShadow.xyz/=d.pShadow.w;
+d.pShadow.xy*=float2(0.5f,-0.5f);
+d.pShadow.xy+=0.5f;
+
+//if(d.pShadow.z/d.pShadow.w>
+//tex2D(sampShadow,(d.pShadow.xy/d.pShadow.w)*float2(0.5f,-0.5f)+0.5f).x)
+//return d.c*clr_tex*0.3f; //TODO:ambient
+
+float2 dist=d.pShadow.z-tex2D(sampShadow,d.pShadow.xy).x;
+
+if(dist.x>0) //return d.c*clr_tex*0.3f;
+{
+ //test "soft" shadow TODO:dithering and distance factor
+ dist*=tex2D(sampNoise,d.pShadow.xy*(1.6180339*8.0f)).xy;
+ l=1.0f
+ -((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy+dist).x)?0.25f:0)
+ -((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy-dist).x)?0.25f:0)
+ -((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy+float2(dist.y,-dist.x)).x)?0.25f:0)
+ -((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy+float2(-dist.y,dist.x)).x)?0.25f:0)
+ ;
+/*
+dist*=4.0f;
+for(int i=0;i<4;i++){
+float2 dist1=dist*tex2D(sampNoise,d.p.xy*(1.6180339+i)).xy;
+l-=((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy+dist1).x)?0.25f:0);
+}
+*/
+}
+
+/*
+//fixed distance test
+const float dist=0.01f;
+ l=1.0f
+ -((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy).x)?0.2f:0)
+ -((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy+float2(dist,0)).x)?0.2f:0)
+ -((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy+float2(-dist,0)).x)?0.2f:0)
+ -((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy+float2(0,dist)).x)?0.2f:0)
+ -((d.pShadow.z>tex2D(sampShadow,d.pShadow.xy+float2(0,-dist)).x)?0.2f:0)
+ ;
+*/
 
 //normal (normal map)
 //float4 n=d.n;
@@ -100,9 +178,9 @@ if(lightType==1){
 float4 h=normalize(lightVec+normalize(viewPos-d.p)); //TODO:can we use "reflect"?
 
 //TEST
-float4 l=lit(dot(n.xyz,lightVec.xyz),dot(n.xyz,h.xyz),20); //TODO:hardness
+l*=lit(dot(n.xyz,lightVec.xyz),dot(n.xyz,h.xyz),20); //TODO:hardness
 //
-float4 diffuse=d.c*clr_tex*min(0.5+l.y,1); //TODO:ambient?
+float4 diffuse=d.c*clr_tex*min(0.5+l.y,1); //TODO:ambient
 float4 specular=d.c1*l.z;
 return diffuse+specular;
 }
@@ -111,5 +189,27 @@ technique test{
 pass{
 VertexShader=compile vs_3_0 vs_func();
 PixelShader=compile ps_3_0 ps_func();
+}
+}
+
+////////test creating shadow map
+
+VS_OUTPUT2 vs_func_shadow(VS_INPUT d0){
+VS_OUTPUT2 d;
+d._p=mul(d0.p,matShadow);
+d.c=d._p; //????
+//d.c=d._p.z/d._p.w+0.0001f; //eps=?
+return d;
+}
+
+float4 ps_func_shadow(float4 c:COLOR0):COLOR0{
+return c.z/c.w+0.0001f; //????
+//return c; //????
+}
+
+technique test_shadow{
+pass{
+VertexShader=compile vs_2_0 vs_func_shadow();
+PixelShader=compile ps_2_0 ps_func_shadow();
 }
 }

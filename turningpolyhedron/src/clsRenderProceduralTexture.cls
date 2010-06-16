@@ -95,9 +95,83 @@ End Sub
 Friend Sub ProcessTexture(ByVal objSrc As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String)
 Dim t As D3DSURFACE_DESC
 Dim v As D3DXVECTOR4
+Dim p(23) As Single
 objDest.GetLevelDesc 0, t
-v.x = t.Width
+v.x = 1 / t.Width
+v.y = 1 / t.Height
+objEffect.SetVector StrPtr(StrConv("pixelSize", vbFromUnicode)), v
 '////////
+p(3) = 1: p(4) = v.x / 2: p(5) = v.y / 2
+p(6) = t.Width: p(9) = 1: p(10) = p(4) + 1: p(11) = p(5)
+p(13) = t.Height: p(15) = 1: p(16) = p(4): p(17) = p(5) + 1
+p(18) = p(6): p(19) = p(13): p(21) = 1: p(22) = p(10): p(23) = p(17)
+'////////
+Set objOldTarget = d3dd9.GetRenderTarget(0)
+Set objOldStencil = d3dd9.GetDepthStencilSurface
+d3dd9.SetRenderTarget 0, objDest.GetSurfaceLevel(0)
+d3dd9.SetDepthStencilSurface Nothing
+objEffect.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), objSrc
+objEffect.SetTechnique StrPtr(StrConv(sEffect, vbFromUnicode))
+objEffect.Begin 0, 0
+objEffect.BeginPass 0
+'////////
+d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
+d3dd9.BeginScene
+d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_TEX1
+d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, p(0), 24&
+d3dd9.EndScene
+'////////
+objEffect.EndPass
+objEffect.End
+d3dd9.SetRenderTarget 0, objOldTarget
+d3dd9.SetDepthStencilSurface objOldStencil
+Set objOldTarget = Nothing
+Set objOldStencil = Nothing
+End Sub
+
+Friend Sub GenerateMipSubLevels(ByVal obj As Direct3DTexture9)
+Dim t As D3DSURFACE_DESC
+Dim v As D3DXVECTOR4
+Dim p(23) As Single
+Dim i As Long, m As Long
+m = obj.GetLevelCount
+If m <= 1 Then Exit Sub
+'////////
+Set objOldTarget = d3dd9.GetRenderTarget(0)
+Set objOldStencil = d3dd9.GetDepthStencilSurface
+d3dd9.SetDepthStencilSurface Nothing
+'??? maybe wrong ???
+objEffect.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), obj
+objEffect.SetTechnique StrPtr(StrConv("mipmap4", vbFromUnicode))
+objEffect.Begin 0, 0
+objEffect.BeginPass 0
+'////////
+obj.GetLevelDesc 0, t
+For i = 1 To m - 1
+ v.x = 1 / t.Width
+ v.y = 1 / t.Height
+ objEffect.SetVector StrPtr(StrConv("pixelSize", vbFromUnicode)), v
+ '////////
+ obj.GetLevelDesc i, t
+ p(3) = 1: p(4) = v.x / 2: p(5) = v.y / 2
+ p(6) = t.Width: p(9) = 1: p(10) = p(4) + 1: p(11) = p(5)
+ p(13) = t.Height: p(15) = 1: p(16) = p(4): p(17) = p(5) + 1
+ p(18) = p(6): p(19) = p(13): p(21) = 1: p(22) = p(10): p(23) = p(17)
+ '////////
+ d3dd9.SetRenderTarget 0, obj.GetSurfaceLevel(i) '??? maybe wrong ???
+ d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
+ d3dd9.BeginScene
+ d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_TEX1
+ d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, p(0), 24&
+ d3dd9.EndScene
+Next i
+'////////
+objEffect.EndPass
+objEffect.End
+d3dd9.SetRenderTarget 0, objOldTarget
+d3dd9.SetDepthStencilSurface objOldStencil
+Set objOldTarget = Nothing
+Set objOldStencil = Nothing
 End Sub
 
 Private Sub Class_Terminate()
