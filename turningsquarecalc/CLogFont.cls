@@ -113,14 +113,16 @@ Private Declare Function GetDeviceCaps Lib "gdi32" (ByVal hdc As Long, ByVal nIn
 Private Const LOGPIXELSY = 90        '  Logical pixels/inch in Y
 
 Private Declare Function GetDesktopWindow Lib "user32" () As Long
-Private Declare Function GetDC Lib "user32" (ByVal hWnd As Long) As Long
-Private Declare Function ReleaseDC Lib "user32" (ByVal hWnd As Long, ByVal hdc As Long) As Long
+Private Declare Function GetDC Lib "user32" (ByVal hwnd As Long) As Long
+Private Declare Function ReleaseDC Lib "user32" (ByVal hwnd As Long, ByVal hdc As Long) As Long
 
 Private Declare Function SetBkMode Lib "gdi32.dll" (ByVal hdc As Long, ByVal nBkMode As Long) As Long
 Private Declare Function SetBkColor Lib "gdi32.dll" (ByVal hdc As Long, ByVal crColor As Long) As Long
 Private Declare Function SetTextColor Lib "gdi32.dll" (ByVal hdc As Long, ByVal crColor As Long) As Long
 Private Declare Function DrawText Lib "user32.dll" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, ByRef lpRect As RECT, ByVal wFormat As Long) As Long
+Private Declare Function DrawTextW Lib "user32.dll" (ByVal hdc As Long, ByRef lpStr As Any, ByVal nCount As Long, ByRef lpRect As RECT, ByVal wFormat As Long) As Long
 Private Declare Function TextOut Lib "gdi32.dll" Alias "TextOutA" (ByVal hdc As Long, ByVal x As Long, ByVal y As Long, ByVal lpString As String, ByVal nCount As Long) As Long
+Private Declare Function TextOutW Lib "gdi32.dll" (ByVal hdc As Long, ByVal x As Long, ByVal y As Long, ByRef lpString As Any, ByVal nCount As Long) As Long
 Private Declare Function SelectObject Lib "gdi32.dll" (ByVal hdc As Long, ByVal hObject As Long) As Long
 
 '??
@@ -263,14 +265,14 @@ Public Property Get Handle() As Long
 End Property
 
 Private Function CreateLogFont(ByVal HighQuality As Boolean) As Long
-   Dim lf As LogFont
-   Dim hWnd As Long
+   Dim lF As LogFont
+   Dim hwnd As Long
    Dim hdc As Long
    
-   hWnd = GetDesktopWindow
-   hdc = GetDC(hWnd)
+   hwnd = GetDesktopWindow
+   hdc = GetDC(hwnd)
    
-   With lf
+   With lF
       '
       ' All but two properties are very straight-forward,
       ' even with rotation, and map directly.
@@ -314,10 +316,13 @@ Private Function CreateLogFont(ByVal HighQuality As Boolean) As Long
       Else
          .lfOutPrecision = OUT_DEFAULT_PRECIS
       End If
+      '///new:fix the bug in wine (don't need)
+      '.lfCharSet = DEFAULT_CHARSET
+      '///
    End With
    
-   CreateLogFont = CreateFontIndirect(lf)
-   Call ReleaseDC(hWnd, hdc)
+   CreateLogFont = CreateFontIndirect(lF)
+   Call ReleaseDC(hwnd, hdc)
 End Function
 
 Public Function DrawTextXP(ByVal hdc As Long, ByVal s As String, ByVal Left As Long, ByVal Top As Long, Optional Width As Long, Optional Height As Long, Optional ByVal Style As DrawTextConstants, Optional ByVal ForeColor As Long, Optional ByVal BackColor As Long, Optional ByVal IsTrans As Boolean) As Long
@@ -337,7 +342,8 @@ If (Style And DT_CALCRECT) = 0 Then
  r.Bottom = Height + Top
 End If
 h = SelectObject(hdc, m_hFont)
-DrawTextXP = DrawText(hdc, s, LenA(s), r, Style)
+'DrawTextXP = DrawText(hdc, s, LenA(s), r, Style)
+DrawTextXP = DrawTextW(hdc, ByVal StrPtr(s), -1, r, Style)
 SelectObject hdc, h
 If Style And DT_CALCRECT Then
  Width = r.Right - r.Left
@@ -355,6 +361,7 @@ Else
 End If
 h = SelectObject(hdc, m_hFont)
 SetTextColor hdc, ForeColor
-TextOut hdc, x, y, s, LenA(s)
+'TextOut hdc, x, y, s, LenA(s)
+TextOutW hdc, x, y, ByVal StrPtr(s), -1
 SelectObject hdc, h
 End Sub
