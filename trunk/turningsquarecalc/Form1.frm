@@ -1212,9 +1212,7 @@ Game_LoadLevel CStr(App.Path) + "\Default.box"
 '///init data
 GameStatus = 0
 'GameClick = False
-Game_InitMenu objText.GetText("Return to game"), objText.GetText("Restart"), objText.GetText("Pick a level"), _
-objText.GetText("Open level file"), objText.GetText("Random level"), objText.GetText("Input solution"), _
-objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
+Game_InitMenu
 '///enter loop
 Game_Loop
 keybd_event 1, 0, KEYEVENTF_KEYUP, 0 '?
@@ -2851,15 +2849,19 @@ Private Sub Game_Paint()
 bmG.PaintPicture p0(1).hdc
 End Sub
 
-Private Sub Game_InitMenu(ParamArray s())
-Dim i As Long, lps As Long, lpe As Long
-lps = LBound(s)
-lpe = UBound(s)
-GameMenuItemCount = lpe - lps + 1
+Private Sub Game_InitMenu()
+GameMenuItemCount = 10
 ReDim GameMenuCaption(1 To GameMenuItemCount)
-For i = lps To lpe
- GameMenuCaption(i - lps + 1) = s(i)
-Next i
+GameMenuCaption(1) = objText.GetText("Return to game")
+GameMenuCaption(2) = objText.GetText("Restart")
+GameMenuCaption(3) = objText.GetText("Pick a level")
+GameMenuCaption(4) = objText.GetText("Open level file")
+GameMenuCaption(5) = objText.GetText("Random level")
+GameMenuCaption(6) = objText.GetText("Input solution")
+GameMenuCaption(7) = objText.GetText("Auto solver")
+GameMenuCaption(8) = objText.GetText("Game instructions")
+GameMenuCaption(9) = objText.GetText("Main menu")
+GameMenuCaption(10) = objText.GetText("Exit game")
 End Sub
 
 Private Sub Game_LoadLevel(ByVal fn As String)
@@ -3088,7 +3090,7 @@ End Sub
 
 Private Sub pShowPanel(ByVal n As Long)
 Dim i As Long
-For i = 0 To p0.ubound
+For i = 0 To p0.UBound
  p0(i).BorderStyle = 0
  p0(i).Visible = i = n
 Next i
@@ -3102,7 +3104,7 @@ End Sub
 Private Sub chkPos_Click(Index As Integer)
 Dim i As Long
 If chkPos(Index).Value = 1 Then
- For i = 0 To chkPos.ubound
+ For i = 0 To chkPos.UBound
   If i <> Index Then chkPos(i).Value = 0
  Next i
 End If
@@ -4818,7 +4820,7 @@ With Lev(lv)
    End Select
   End If
  End If
- For i = 0 To p2.ubound
+ For i = 0 To p2.UBound
   p2(i).Visible = i = k - 1
  Next i
  chkPos(0).Value = 0
