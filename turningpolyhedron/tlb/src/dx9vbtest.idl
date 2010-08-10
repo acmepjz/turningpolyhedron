@@ -20,6 +20,8 @@ library Dx9VB6Test{
 	typedef float FLOAT;
 	#define USHORT short
 	#define LARGE_INTEGER CURRENCY
+	#define D3DLOCK D3DLOCKFLAGS
+	enum D3DLOCKFLAGS;
 
 	//types
 
@@ -1063,13 +1065,15 @@ typedef enum D3DDISPLAYROTATION
 		enum D3DORDERTYPE Order;
 	};
 
+	enum D3DFVFFLAGS;
+
 	struct D3DVERTEXBUFFER_DESC{
 		enum D3DFORMAT Format;
 		enum D3DRESOURCETYPE Type;
 		DWORD Usage;
 		enum D3DPOOL Pool;
 		UINT Size;
-		DWORD FVF;
+		enum D3DFVFFLAGS FVF;
 	};
 
 	struct D3DVERTEXELEMENT9{
@@ -1508,18 +1512,14 @@ D3DUSAGE_TEXTAPI           =(0x10000000L),
 		HRESULT CreateVertexBuffer(UINT LengthInBytes , DWORD Usage, enum D3DFVFFLAGS FVF, enum D3DPOOL Pool, Direct3DVertexBuffer9** objRet, void* SharedHandle );//???????? TODO:
 		HRESULT CreateIndexBuffer(UINT LengthInBytes , DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, Direct3DIndexBuffer9** objRet, void* SharedHandle );//???????? TODO:
 		HRESULT CreateRenderTarget(UINT Width, UINT Height, enum D3DFORMAT Format, enum D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality , int Lockable, Direct3DSurface9** objRet, void* SharedHandle );//???????? TODO:
-		HRESULT CreateDepthStencilSurface(UINT Width, UINT Height, enum D3DFORMAT Format, enum D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality , int Lockable, Direct3DSurface9** objRet, void* SharedHandle );//???????? TODO:
-		[helpstring("UpdateSurface as function(byval as IDirect3DDevice9 ptr, byval as IDirect3DSurface9_ ptr, byval as RECT ptr, byval as IDirect3DSurface9_ ptr, byval as POINT ptr) as HRESULT")]
-		HRESULT UpdateSurface([in]Direct3DSurface9* SourceSurface , void* SourceRect , [in]Direct3DSurface9* DestinationSurface , void* DestPoint );//???????? TODO:
+		HRESULT CreateDepthStencilSurface(UINT Width, UINT Height, enum D3DFORMAT Format, enum D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality , int Discard, Direct3DSurface9** objRet, void* SharedHandle );//???????? TODO:
+		HRESULT UpdateSurface([in]Direct3DSurface9* SourceSurface , void* SourceRect , [in]Direct3DSurface9* DestinationSurface , void* DestPoint );
 		HRESULT UpdateTexture([in]Direct3DBaseTexture9* SourceTexture, [in]Direct3DBaseTexture9* pDestinationTexture);
-		HRESULT GetRenderTargetData(Direct3DSurface9* RenderTarget , Direct3DSurface9* DestSurface );//???????? TODO:
-		HRESULT GetFrontBufferData(UINT SwapChain , Direct3DSurface9* pDestSurface);//???????? TODO:
-		[helpstring("StretchRect as function(byval as IDirect3DDevice9 ptr, byval as IDirect3DSurface9_ ptr, byval as RECT ptr, byval as IDirect3DSurface9_ ptr, byval as RECT ptr, byval as D3DTEXTUREFILTERTYPE) as HRESULT")]
-		HRESULT StretchRect(Direct3DSurface9* SourceSurface , void* SourceRect , Direct3DSurface9* DestSurface , void* DestRect , enum D3DTEXTUREFILTERTYPE Filter );//???????? TODO:
-		[helpstring("ColorFill as function(byval as IDirect3DDevice9 ptr, byval as IDirect3DSurface9_ ptr, byval as RECT ptr, byval as D3DCOLOR) as HRESULT")]
-		HRESULT ColorFill(Direct3DSurface9* Surface , void* pRect , int Color );//???????? TODO:
-		[helpstring("CreateOffscreenPlainSurface as function(byval as IDirect3DDevice9 ptr, byval as UINT, byval as UINT, byval as D3DFORMAT, byval as D3DPOOL, byval as IDirect3DSurface9_ ptr ptr, byval as HANDLE ptr) as HRESULT")]
-		HRESULT CreateOffscreenPlainSurface(UINT Width, UINT Height, enum D3DFORMAT Format, enum D3DPOOL Pool, Direct3DSurface9** objRet, void* SharedHandle );//???????? TODO:
+		HRESULT GetRenderTargetData(Direct3DSurface9* RenderTarget , Direct3DSurface9* DestSurface );
+		HRESULT GetFrontBufferData(UINT SwapChain , Direct3DSurface9* pDestSurface);
+		HRESULT StretchRect(Direct3DSurface9* SourceSurface , void* SourceRect , Direct3DSurface9* DestSurface , void* DestRect , enum D3DTEXTUREFILTERTYPE Filter );
+		HRESULT ColorFill(Direct3DSurface9* Surface , void* pRect , int Color );
+		HRESULT CreateOffscreenPlainSurface(UINT Width, UINT Height, enum D3DFORMAT Format, enum D3DPOOL Pool, Direct3DSurface9** objRet, void* SharedHandle );
 		HRESULT SetRenderTarget(DWORD RenderTargetIndex, Direct3DSurface9* RenderTarget);
 		HRESULT GetRenderTarget(DWORD RenderTargetIndex,[out,retval]Direct3DSurface9** ret);
 		HRESULT SetDepthStencilSurface(Direct3DSurface9* NewZStencil);
@@ -1575,8 +1575,8 @@ D3DUSAGE_TEXTAPI           =(0x10000000L),
 		HRESULT CreateVertexDeclaration(struct D3DVERTEXELEMENT9* VertexElement, [out,retval]Direct3DVertexDeclaration9** ret);
 		HRESULT SetVertexDeclaration(Direct3DVertexDeclaration9* VertexDeclaration);
 		HRESULT GetVertexDeclaration([out,retval]Direct3DVertexDeclaration9** ret);
-		HRESULT SetFVF(DWORD FVF);
-		HRESULT GetFVF([out,retval] DWORD* ret);
+		HRESULT SetFVF(enum D3DFVFFLAGS FVF);
+		HRESULT GetFVF([out,retval] enum D3DFVFFLAGS* ret);
 		HRESULT CreateVertexShader( DWORD* FunctionTokenArray , [out,retval] Direct3DVertexShader9** ret);
 		HRESULT SetVertexShader(Direct3DVertexShader9*  VertexShader);
 		HRESULT GetVertexShader([out,retval] Direct3DVertexShader9** ret);
@@ -1619,7 +1619,7 @@ D3DUSAGE_TEXTAPI           =(0x10000000L),
 		//actual functions
 		HRESULT GetContainer(void* riid, [out,retval]IUnknown** ret);
 		HRESULT GetDesc(struct D3DVOLUME_DESC* pDesc);
-		HRESULT LockBox(struct D3DLOCKED_BOX* pLockedVolume, void* pBox, DWORD Flags);
+		HRESULT LockBox(struct D3DLOCKED_BOX* pLockedVolume, void* pBox, enum D3DLOCK Flags);
 		HRESULT UnlockBox();
 	};
 
@@ -1667,7 +1667,7 @@ D3DUSAGE_TEXTAPI           =(0x10000000L),
 		//actual functions
 		HRESULT GetContainer(void* riid, [out,retval]IUnknown** ret);
 		HRESULT GetDesc(struct D3DSURFACE_DESC* pDesc);
-		HRESULT LockRect(struct D3DLOCKED_RECT* pLockedRect, void* pRect, DWORD Flags);
+		HRESULT LockRect(struct D3DLOCKED_RECT* pLockedRect, void* pRect, enum D3DLOCK Flags);
 		HRESULT UnlockRect();
 		HRESULT GetDC([out,retval]int* ret);
 		HRESULT ReleaseDC(int hDC);
@@ -1690,7 +1690,7 @@ D3DUSAGE_TEXTAPI           =(0x10000000L),
 		*/
 		//actual functions
 		[helpstring("ByRef pData As Long\n\nThis is a pointer!!!")]
-		HRESULT Lock(UINT ByteOffsetToLock,UINT ByteSizeToLock, int* pData , DWORD Flags);
+		HRESULT Lock(UINT ByteOffsetToLock,UINT ByteSizeToLock, int* pData , enum D3DLOCK Flags);
 		HRESULT Unlock();
 		HRESULT GetDesc(struct D3DVERTEXBUFFER_DESC* pDesc);
 	};
@@ -1712,7 +1712,7 @@ D3DUSAGE_TEXTAPI           =(0x10000000L),
 		*/
 		//actual functions
 		[helpstring("ByRef pData As Long\n\nThis is a pointer!!!")]
-		HRESULT Lock(UINT ByteOffsetToLock,UINT ByteSizeToLock, int* pData , DWORD Flags);
+		HRESULT Lock(UINT ByteOffsetToLock,UINT ByteSizeToLock, int* pData , enum D3DLOCK Flags);
 		HRESULT Unlock();
 		HRESULT GetDesc(struct D3DINDEXBUFFER_DESC* pDesc);
 	};
@@ -1745,7 +1745,7 @@ D3DUSAGE_TEXTAPI           =(0x10000000L),
 	interface Direct3DCubeTexture9:Direct3DBaseTexture9{
 		HRESULT GetLevelDesc(UINT Level, struct D3DSURFACE_DESC* pDesc);
 		HRESULT GetCubeMapSurface(enum D3DCUBEMAP_FACES FaceType, UINT Level, [out,retval]Direct3DSurface9** ret);
-		HRESULT LockRect(enum D3DCUBEMAP_FACES FaceType, UINT Level, struct D3DLOCKED_RECT* LockedRect, void* pRect, DWORD Flags);
+		HRESULT LockRect(enum D3DCUBEMAP_FACES FaceType, UINT Level, struct D3DLOCKED_RECT* LockedRect, void* pRect, enum D3DLOCK Flags);
 		HRESULT UnlockRect(enum D3DCUBEMAP_FACES FaceType, UINT Level);
 		HRESULT AddDirtyRect(enum D3DCUBEMAP_FACES FaceType, void* pDirtyRect);
 	};
@@ -1754,7 +1754,7 @@ D3DUSAGE_TEXTAPI           =(0x10000000L),
 	interface Direct3DTexture9:Direct3DBaseTexture9{
 		HRESULT GetLevelDesc(UINT Level, struct D3DSURFACE_DESC* pDesc);
 		HRESULT GetSurfaceLevel(UINT Level, [out,retval]Direct3DSurface9** ret);
-		HRESULT LockRect(UINT Level, struct D3DLOCKED_RECT* LockedRect, void* pRect, DWORD Flags);
+		HRESULT LockRect(UINT Level, struct D3DLOCKED_RECT* LockedRect, void* pRect, enum D3DLOCK Flags);
 		HRESULT UnlockRect(UINT Level);
 		HRESULT AddDirtyRect(void* pDirtyRect);
 	};
@@ -1763,7 +1763,7 @@ D3DUSAGE_TEXTAPI           =(0x10000000L),
 	interface Direct3DVolumeTexture9:Direct3DBaseTexture9{
 		HRESULT GetLevelDesc(UINT Level, struct D3DVOLUME_DESC* pDesc);
 		HRESULT GetVolumeLevel(UINT Level, [out,retval]Direct3DVolume9** ret);
-		HRESULT LockBox(UINT Level, struct D3DLOCKED_BOX* pLockedVolume, void* pBox, DWORD Flags);
+		HRESULT LockBox(UINT Level, struct D3DLOCKED_BOX* pLockedVolume, void* pBox, enum D3DLOCK Flags);
 		HRESULT UnlockBox(UINT Level);
 		HRESULT AddDirtyBox(void* pDirtyBox);
 	};

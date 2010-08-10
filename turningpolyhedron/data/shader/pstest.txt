@@ -24,7 +24,7 @@ float4 pShadow:TEXCOORD5;
 
 struct VS_OUTPUT2{
 float4 _p:POSITION;
-float4 c:COLOR0;
+float4 c:TEXCOORD0; //fix color out of range bug (old:COLOR0)
 };
 
 //world matrix
@@ -202,9 +202,9 @@ d.c=d._p; //????
 return d;
 }
 
-float4 ps_func_shadow(float4 c:COLOR0):COLOR0{
-return c.z/c.w+0.0001f; //????
-//return c; //????
+float4 ps_func_shadow(VS_OUTPUT2 d):COLOR0{
+return d.c.z/d.c.w+0.0001f; //????
+//return d.c; //????
 }
 
 technique test_shadow{

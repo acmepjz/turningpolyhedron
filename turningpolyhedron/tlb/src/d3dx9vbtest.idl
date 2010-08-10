@@ -7,6 +7,8 @@
 *
 *************************************************************************/
 
+#define D3DXMESH D3DXMESHOPTIONS
+
 //d3dx9.bi
 
 enum D3DXENUM{
@@ -338,6 +340,34 @@ struct D3DXFONT_DESCW{
     UBYTE PitchAndFamily;
     UBYTE wstrFaceName[64];
 };
+
+#undef DT_BOTTOM 
+#undef DT_CALCRECT 
+#undef DT_CENTER 
+#undef DT_EXPANDTABS 
+#undef DT_LEFT 
+#undef DT_NOCLIP 
+#undef DT_RIGHT 
+#undef DT_RTLREADING 
+#undef DT_SINGLELINE 
+#undef DT_TOP 
+#undef DT_VCENTER 
+#undef DT_WORDBREAK 
+
+typedef enum D3DXDRAWTEXTFORMAT{
+ DT_BOTTOM  = 0x8,
+ DT_CALCRECT  = 0x400,
+ DT_CENTER  = 0x1,
+ DT_EXPANDTABS  = 0x40,
+ DT_LEFT  = 0x0,
+ DT_NOCLIP  = 0x100,
+ DT_RIGHT  = 0x2,
+ DT_RTLREADING  = 0x20000,
+ DT_SINGLELINE  = 0x20,
+ DT_VCENTER  = 0x4,
+ DT_WORDBREAK  = 0x10,
+}D3DXDRAWTEXTFORMAT;
+
 [odl,uuid(D79DBB70-5F21-4d36-BBC2-FF525C213CDC)]
 interface D3DXFont:IUnknown{
 	HRESULT GetDevice([out,retval] Direct3DDevice9** ret);
@@ -354,8 +384,8 @@ interface D3DXFont:IUnknown{
 	HRESULT PreloadTextA(BSTR pString,int Count);
 	HRESULT PreloadTextW(BSTR pString,int Count);
 	[helpstring("String must be StrConv-vbFromUnicode")]
-	HRESULT DrawTextA(D3DXSprite* pSprite,BSTR pString, int Count, void* pRect, DWORD Format, int Color);
-	HRESULT DrawTextW(D3DXSprite* pSprite,BSTR pString, int Count, void* pRect, DWORD Format, int Color);
+	int DrawTextA(D3DXSprite* pSprite,BSTR pString, int Count, void* pRect, D3DXDRAWTEXTFORMAT Format, int Color);
+	int DrawTextW(D3DXSprite* pSprite,BSTR pString, int Count, void* pRect, D3DXDRAWTEXTFORMAT Format, int Color);
     HRESULT OnLostDevice();
     HRESULT OnResetDevice();
 };
@@ -703,13 +733,13 @@ interface D3DXBaseMesh:IUnknown{
     DWORD GetNumBytesPerVertex();
     DWORD GetOptions();
 	HRESULT GetDevice([out,retval]Direct3DDevice9** ppDevice);
-    HRESULT CloneMeshFVF(DWORD Options,DWORD FVF, Direct3DDevice9* pD3DDevice, [out,retval]D3DXMesh** ppCloneMesh);
-    HRESULT CloneMesh(DWORD Options,struct D3DVERTEXELEMENT9 *pDeclaration, Direct3DDevice9* pD3DDevice, [out,retval]D3DXMesh** ppCloneMesh);
+    HRESULT CloneMeshFVF(enum D3DXMESH Options,DWORD FVF, Direct3DDevice9* pD3DDevice, [out,retval]D3DXMesh** ppCloneMesh);
+    HRESULT CloneMesh(enum D3DXMESH Options,struct D3DVERTEXELEMENT9 *pDeclaration, Direct3DDevice9* pD3DDevice, [out,retval]D3DXMesh** ppCloneMesh);
 	HRESULT GetVertexBuffer([out,retval]Direct3DVertexBuffer9** ppVB);
     HRESULT GetIndexBuffer([out,retval]Direct3DIndexBuffer9** ppIB);
-    HRESULT LockVertexBuffer(DWORD Flags, int *ppData);
+    HRESULT LockVertexBuffer(enum D3DLOCK Flags, int *ppData);
     HRESULT UnlockVertexBuffer();
-    HRESULT LockIndexBuffer(DWORD Flags, int *ppData);
+    HRESULT LockIndexBuffer(enum D3DLOCK Flags, int *ppData);
     HRESULT UnlockIndexBuffer();
     HRESULT GetAttributeTable(struct D3DXATTRIBUTERANGE *pAttribTable, DWORD* pAttribTableSize);
     HRESULT ConvertPointRepsToAdjacency(void* pPRep, void* pAdjacency);
@@ -1228,13 +1258,13 @@ module D3DX9_Mesh{
 );
 [entry("D3DXComputeTangentFrameEx")] void D3DXComputeTangentFrameEx(
   D3DXMesh * pMesh,
-  int dwTextureInSemantic,
+  enum D3DDECLUSAGE dwTextureInSemantic,
   int dwTextureInIndex,
-  int dwUPartialOutSemantic,
+  enum D3DDECLUSAGE dwUPartialOutSemantic,
   int dwUPartialOutIndex,
   enum D3DDECLUSAGE dwVPartialOutSemantic,
   int dwVPartialOutIndex,
-  int dwNormalOutSemantic,
+  enum D3DDECLUSAGE dwNormalOutSemantic,
   int dwNormalOutIndex,
   D3DXTANGENT dwOptions,
   void *pdwAdjacency,
