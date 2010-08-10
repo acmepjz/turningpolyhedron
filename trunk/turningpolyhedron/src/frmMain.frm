@@ -32,7 +32,7 @@ Begin VB.Form frmMain
       Width           =   1095
    End
    Begin VB.Timer Timer1 
-      Interval        =   50
+      Interval        =   30
       Left            =   3480
       Top             =   1440
    End
@@ -57,6 +57,13 @@ Private objTest As D3DXMesh
 Private objDrawTest As New clsSimplex, objRenderTest As New clsRenderPipeline
 
 Private objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
+
+Private nOldX As Long, nOldY As Long
+
+'///test
+Private objTextSprite As D3DXSprite
+Private objText As D3DXFont
+'///
 
 Private Sub Command1_Click()
 Unload Me
@@ -109,6 +116,9 @@ If d3dd9 Is Nothing Then
  Form_Unload 0
  End
 End If
+'///font test
+D3DXCreateSprite d3dd9, objTextSprite
+D3DXCreateFontW d3dd9, 32, 0, 0, 0, 0, 0, 0, 0, 0, "Tahoma", objText
 '///vertex declaration test
 CreateVertexDeclaration
 '///
@@ -126,12 +136,13 @@ D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0
 objRenderTest.Create
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
 objRenderTest.SetLightPositionByVal 0, 8, 5
-objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL 'can't show shadow in point light mode ???
+objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
+'objRenderTest.SetLightType D3DLIGHT_POINT
 pLookAtLH Vec3(6, 2, 3), Vec3, Vec3(, , 1)
 'pLookAtLH Vec3(1, 0, 8), Vec3, Vec3(, , 1)
 objRenderTest.CreateShadowMap 1024 'new
-'objRenderTest.SetShadowState True, 1, 0.1, 50  'new
-objRenderTest.SetShadowState True, 8, -100, 100
+'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
+objRenderTest.SetShadowState True, 8, -100, 100 'directional
 '///
 End Sub
 
@@ -163,6 +174,27 @@ d3dd9.SetTransform D3DTS_VIEW, mat
 objRenderTest.SetViewPositionByVal pEye.x, pEye.y, pEye.z
 End Sub
 
+Private Sub Form_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+nOldX = x
+nOldY = y
+End Sub
+
+Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
+Dim xx As Long, yy As Long
+Dim m As D3DMATRIX
+Select Case Button
+Case 1
+ xx = x - nOldX
+ yy = y - nOldY
+ D3DXMatrixRotationZ m, -xx / 100
+ d3dd9.MultiplyTransform D3DTS_VIEW, m
+ D3DXMatrixRotationY m, yy / 100
+ d3dd9.MultiplyTransform D3DTS_VIEW, m
+End Select
+nOldX = x
+nOldY = y
+End Sub
+
 Private Sub Form_Unload(Cancel As Integer)
 Set objDrawTest = Nothing
 Set objTest = Nothing
@@ -192,6 +224,7 @@ Private Sub Timer1_Timer()
 On Error Resume Next
 Dim i As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
+Dim r(3) As Long
 Static j As Long
 With d3dd9
  i = .TestCooperativeLevel
@@ -249,6 +282,20 @@ With d3dd9
    objRenderTest.EndRender
 '   j = 1
 '  End If
+  '///
+  mat = D3DXMatrixIdentity
+  mat.m11 = Timer / 8
+  mat.m11 = mat.m11 - Int(mat.m11)
+  mat.m22 = mat.m11
+  r(2) = 640
+  r(3) = 128
+  .BeginScene
+  objTextSprite.SetTransform mat
+  objTextSprite.Begin D3DXSPRITE_ALPHABLEND
+  objText.DrawTextW objTextSprite, "&TEST ONLy °¡°¡ " + Format(mat.m11, "0.000"), -1, r(0), 0, -1
+  objTextSprite.End
+  .EndScene
+  '///
   .Present ByVal 0, ByVal 0, 0, ByVal 0
  End If
 End With
