@@ -264,7 +264,7 @@ Public Property Let Signature(ByVal s As String)
 sig = s
 End Property
 
-Public Function LoadFile(ByVal fn As String, Optional ByVal Signature As String) As Boolean
+Public Function LoadFile(ByVal fn As String, Optional ByVal Signature As String, Optional ByVal bSkipSignature As Boolean) As Boolean
 On Error GoTo a
 Dim i As Long, j As Long, m As Long, lp As Long
 Dim b() As Byte, b2() As Byte
@@ -275,7 +275,7 @@ Get #1, 1, b
 sig = StrConv(b, vbUnicode)
 i = InStr(1, sig, vbNullChar)
 If i > 0 Then sig = Left(sig, i - 1)
-If Signature <> "" Then
+If Signature <> "" And Not bSkipSignature Then
  If StrComp(Signature, sig) Then 'err!
   sig = ""
   Close

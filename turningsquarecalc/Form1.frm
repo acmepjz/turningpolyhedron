@@ -2869,7 +2869,7 @@ Dim i As Long, j As Long, k As Long, m As Long
 Dim b As Boolean
 fn = Replace(fn, vbNullChar, "")
 fn = Replace(fn, "/", "\")
-If f.LoadFile(fn, TheSignature) Then
+If f.LoadFile(fn, TheSignature, True) Then
  k = f.FindNodeArray("LEV")
  If k <> 0 Then
   Erase Lev
@@ -3218,7 +3218,7 @@ Case 0 'new
  Me.Caption = objText.GetText("Turning Square")
 Case 1 'open
  If cd.VBGetOpenFileName(s, , , , , True, objText.GetText("Turning Square level pack|*.box"), , CStr(App.Path), , , Me.hwnd) Then
-  If f.LoadFile(s, TheSignature) Then
+  If f.LoadFile(s, TheSignature, True) Then
    k = f.FindNodeArray("LEV")
    If k <> 0 Then
     Erase Lev
