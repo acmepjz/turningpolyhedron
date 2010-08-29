@@ -34,6 +34,37 @@ Private cmp As New clsLZSS
 
 Private m_sFileName As String
 
+Private Declare Function MultiByteToWideChar Lib "kernel32.dll" (ByVal CodePage As Long, ByVal dwFlags As Long, ByRef lpMultiByteStr As Any, ByVal cchMultiByte As Long, ByRef lpWideCharStr As Any, ByVal cchWideChar As Long) As Long
+Private Declare Function WideCharToMultiByte Lib "kernel32.dll" (ByVal CodePage As Long, ByVal dwFlags As Long, ByRef lpWideCharStr As Any, ByVal cchWideChar As Long, ByRef lpMultiByteStr As Any, ByVal cchMultiByte As Long, ByRef lpDefaultChar As Any, ByRef lpUsedDefaultChar As Any) As Long
+
+'fix GB2312/GB18030 bug
+Private Function MyStrConv(ByVal s As String, ByVal Conversion As VbStrConv) As String
+Dim s1 As String
+Dim i As Long, m As Long, n As Long
+If Conversion And vbFromUnicode Then
+ m = Len(s)
+ If m > 0 Then
+  n = m * 2& + 1&
+  s1 = Space$(n)
+  i = WideCharToMultiByte(54936, 0, ByVal StrPtr(s), m, ByVal StrPtr(s1), n * 2&, ByVal 0, ByVal 0)
+  If i = 0 Then i = WideCharToMultiByte(936, 0, ByVal StrPtr(s), m, ByVal StrPtr(s1), n * 2&, ByVal 0, ByVal 0)
+  s1 = LeftB$(s1, i)
+ End If
+ElseIf Conversion And vbUnicode Then
+ m = LenB(s)
+ If m > 0 Then
+  n = m + 1
+  s1 = Space$(n)
+  i = MultiByteToWideChar(54936, 0, ByVal StrPtr(s), m, ByVal StrPtr(s1), n)
+  If i = 0 Then i = MultiByteToWideChar(936, 0, ByVal StrPtr(s), m, ByVal StrPtr(s1), n)
+  s1 = Left$(s1, i)
+ End If
+Else
+ s1 = StrConv(s, Conversion)
+End If
+MyStrConv = s1
+End Function
+
 Public Property Get FileName() As String
 FileName = m_sFileName
 End Property
@@ -193,7 +224,7 @@ Public Property Get NodeArrayName(ByVal Index As Long) As String
 Dim s As String, b() As Byte, i As Long
 ReDim b(1 To 4)
 CopyMemory b(1), nds(Index).Name, 4&
-s = StrConv(b, vbUnicode)
+s = MyStrConv(b, vbUnicode)
 i = InStr(1, s, vbNullChar)
 If i > 0 Then s = Left(s, i - 1)
 NodeArrayName = s
@@ -246,7 +277,7 @@ Dim ret As Long, s As String
 If IsMissing(v) Then
  ret = 0
 ElseIf VarType(v) = vbString Then
- s = StrConv(v, vbFromUnicode) + vbNullChar + vbNullChar
+ s = MyStrConv(v, vbFromUnicode) + vbNullChar + vbNullChar
  CopyMemory ret, ByVal StrPtr(s), 4&
 ElseIf VarType(v) And vbArray Then
  CopyMemory ret, v(LBound(v)), 4&
@@ -272,7 +303,7 @@ Clear
 Open fn For Binary As #1
 ReDim b(7)
 Get #1, 1, b
-sig = StrConv(b, vbUnicode)
+sig = MyStrConv(b, vbUnicode)
 i = InStr(1, sig, vbNullChar)
 If i > 0 Then sig = Left(sig, i - 1)
 If Signature <> "" And Not bSkipSignature Then
@@ -309,7 +340,7 @@ Clear
 lp = LBound(d)
 ReDim b(7)
 CopyMemory b(0), d(lp), 8&
-sig = StrConv(b, vbUnicode)
+sig = MyStrConv(b, vbUnicode)
 i = InStr(1, sig, vbNullChar)
 If i > 0 Then sig = Left(sig, i - 1)
 If Signature <> "" Then
@@ -375,7 +406,7 @@ If fn = "" Then Exit Function
 Open fn For Output As #1
 Close
 Open fn For Binary As #1
-s = StrConv(sig, vbFromUnicode)
+s = MyStrConv(sig, vbFromUnicode)
 ReDim b(1 To 8)
 m = LenB(s)
 If m > 8 Then m = 8
@@ -412,7 +443,7 @@ Else
  ReDim d(1 To m + 8)
  CopyMemory d(9), b(1), m
 End If
-s = StrConv(sig, vbFromUnicode)
+s = MyStrConv(sig, vbFromUnicode)
 ReDim b(1 To 8)
 m = LenB(s)
 If m > 8 Then m = 8
