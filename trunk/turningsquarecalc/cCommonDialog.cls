@@ -37,31 +37,29 @@ Private Const MAX_FILE = 260
 
 Private Type OPENFILENAME
     lStructSize As Long          ' Filled with UDT size
-    hWndOwner As Long            ' Tied to Owner
+    hwndOwner As Long            ' Tied to Owner
     hInstance As Long            ' Ignored (used only by templates)
-    lpstrFilter As String        ' Tied to Filter
-    lpstrCustomFilter As String  ' Ignored (exercise for reader)
+    lpstrFilter As Long          ' Tied to Filter
+    lpstrCustomFilter As Long    ' Ignored (exercise for reader)
     nMaxCustFilter As Long       ' Ignored (exercise for reader)
     nFilterIndex As Long         ' Tied to FilterIndex
-    lpstrFile As String          ' Tied to FileName
+    lpstrFile As Long            ' Tied to FileName
     nMaxFile As Long             ' Handled internally
-    lpstrFileTitle As String     ' Tied to FileTitle
+    lpstrFileTitle As Long       ' Tied to FileTitle
     nMaxFileTitle As Long        ' Handled internally
-    lpstrInitialDir As String    ' Tied to InitDir
-    lpstrTitle As String         ' Tied to DlgTitle
+    lpstrInitialDir As Long      ' Tied to InitDir
+    lpstrTitle As Long           ' Tied to DlgTitle
     flags As Long                ' Tied to Flags
     nFileOffset As Integer       ' Ignored (exercise for reader)
     nFileExtension As Integer    ' Ignored (exercise for reader)
-    lpstrDefExt As String        ' Tied to DefaultExt
+    lpstrDefExt As Long          ' Tied to DefaultExt
     lCustData As Long            ' Ignored (needed for hooks)
     lpfnHook As Long             ' Ignored (good luck with hooks)
     lpTemplateName As Long       ' Ignored (good luck with templates)
 End Type
 
-Private Declare Function GetOpenFileName Lib "COMDLG32" _
-    Alias "GetOpenFileNameA" (file As OPENFILENAME) As Long
-Private Declare Function GetSaveFileName Lib "COMDLG32" _
-    Alias "GetSaveFileNameA" (file As OPENFILENAME) As Long
+Private Declare Function GetOpenFileNameW Lib "COMDLG32" (file As OPENFILENAME) As Long
+Private Declare Function GetSaveFileNameW Lib "COMDLG32" (file As OPENFILENAME) As Long
 Private Declare Function GetFileTitle Lib "COMDLG32" _
     Alias "GetFileTitleA" (ByVal szFile As String, _
     ByVal szTitle As String, ByVal cbBuf As Long) As Long
@@ -93,7 +91,7 @@ End Enum
 
 Private Type TCHOOSECOLOR
     lStructSize As Long
-    hWndOwner As Long
+    hwndOwner As Long
     hInstance As Long
     rgbResult As Long
     lpCustColors As Long
@@ -123,7 +121,7 @@ Private Declare Function GetSysColor Lib "user32" (ByVal nIndex As Long) As Long
 
 Private Type TCHOOSEFONT
     lStructSize As Long         ' Filled with UDT size
-    hWndOwner As Long           ' Caller's window handle
+    hwndOwner As Long           ' Caller's window handle
     hdc As Long                 ' Printer DC/IC or NULL
     lpLogFont As Long           ' Pointer to LOGFONT
     iPointSize As Long          ' 10 * size in points of font
@@ -207,7 +205,7 @@ End Enum
 
 Private Type TPRINTDLG
     lStructSize As Long
-    hWndOwner As Long
+    hwndOwner As Long
     hDevMode As Long
     hDevNames As Long
     hdc As Long
@@ -314,7 +312,7 @@ End Type
 
 Private Type TPAGESETUPDLG
     lStructSize                 As Long
-    hWndOwner                   As Long
+    hwndOwner                   As Long
     hDevMode                    As Long
     hDevNames                   As Long
     flags                       As Long
@@ -491,13 +489,14 @@ Private Sub Class_Initialize()
 End Sub
 #End If
 
+'fixed a serious bug when multiselect and path contains Unicode character
 Function VBGetOpenFileName(FileName As String, _
                            Optional FileTitle As String, _
                            Optional FileMustExist As Boolean = True, _
                            Optional MultiSelect As Boolean = False, _
                            Optional ReadOnly As Boolean = False, _
                            Optional HideReadOnly As Boolean = False, _
-                           Optional Filter As String = "All (*.*)| *.*", _
+                           Optional filter As String = "All (*.*)| *.*", _
                            Optional FilterIndex As Long = 1, _
                            Optional InitDir As String, _
                            Optional DlgTitle As String, _
@@ -522,50 +521,71 @@ With opfile
              (flags And CLng(Not (OFN_ENABLEHOOK Or _
                                   OFN_ENABLETEMPLATE)))
     ' Owner can take handle of owning window
-    If Owner <> -1 Then .hWndOwner = Owner
+    If Owner <> -1 Then .hwndOwner = Owner
     ' InitDir can take initial directory string
-    .lpstrInitialDir = InitDir
+    .lpstrInitialDir = StrPtr(InitDir)
     ' DefaultExt can take default extension
-    .lpstrDefExt = DefaultExt
+    .lpstrDefExt = StrPtr(DefaultExt)
     ' DlgTitle can take dialog box title
-    .lpstrTitle = DlgTitle
+    .lpstrTitle = StrPtr(DlgTitle)
     
     ' To make Windows-style filter, replace | and : with nulls
-    Dim ch As String, i As Integer
-    For i = 1 To Len(Filter)
-        ch = Mid$(Filter, i, 1)
+    Dim ch As String, i As Long
+    For i = 1 To Len(filter)
+        ch = Mid$(filter, i, 1)
         If ch = "|" Or ch = ":" Then
-            s = s & vbNullChar
-        Else
-            s = s & ch
+            Mid$(filter, i, 1) = vbNullChar
         End If
     Next
     ' Put double null at end
-    s = s & vbNullChar & vbNullChar
-    .lpstrFilter = s
+    filter = filter & vbNullChar & vbNullChar
+    .lpstrFilter = StrPtr(filter)
     .nFilterIndex = FilterIndex
 
     ' Pad file and file title buffers to maximum path
-    s = FileName & String$(MAX_PATH - Len(FileName), 0)
-    .lpstrFile = s
-    .nMaxFile = MAX_PATH
-    s = FileTitle & String$(MAX_FILE - Len(FileTitle), 0)
-    .lpstrFileTitle = s
-    .nMaxFileTitle = MAX_FILE
+    FileName = FileName + String(65536, vbNullChar)
+    .lpstrFile = StrPtr(FileName)
+    .nMaxFile = Len(FileName)
+    FileTitle = FileTitle + String(65536, vbNullChar)
+    .lpstrFileTitle = StrPtr(FileTitle)
+    .nMaxFileTitle = Len(FileTitle)
     ' All other fields set to zero
     
-    m_lApiReturn = GetOpenFileName(opfile)
+    m_lApiReturn = GetOpenFileNameW(opfile)
     Select Case m_lApiReturn
     Case 1
         ' Success
         VBGetOpenFileName = True
-        FileName = StrZToStr(.lpstrFile)
-        FileTitle = StrZToStr(.lpstrFileTitle)
+        If .flags And OFN_ALLOWMULTISELECT Then
+         i = InStr(1, FileName, vbNullChar)
+         If Mid(FileName, i + 1, 1) = vbNullChar Then
+          FileName = Left$(FileName, i - 1)
+         Else
+          FileTitle = Left$(FileName, i - 1)
+          If Right(FileTitle, 1) <> "/" Or Right(FileTitle, 1) <> "\" Then FileTitle = FileTitle + "\"
+          '///
+          s = ""
+          Do
+           afFlags = InStr(i + 1, FileName, vbNullChar)
+           If afFlags = i + 1 Or afFlags = 0 Then Exit Do
+           s = s + "|" + FileTitle + Mid(FileName, i + 1, afFlags - i - 1)
+           i = afFlags
+          Loop
+          FileName = Mid$(s, 2)
+          '///
+          FileTitle = vbNullString
+         End If
+        Else
+         i = InStr(1, FileName, vbNullChar)
+         If i > 0 Then FileName = Left$(FileName, i - 1)
+        End If
+        i = InStr(1, FileTitle, vbNullChar)
+        If i > 0 Then FileTitle = Left$(FileTitle, i - 1)
         flags = .flags
         ' Return the filter index
         FilterIndex = .nFilterIndex
         ' Look up the filter the user selected and return that
-        Filter = FilterLookup(.lpstrFilter, FilterIndex)
+        filter = FilterLookup(filter, FilterIndex)
         If (.flags And OFN_READONLY) Then ReadOnly = True
     Case 0
         ' Cancelled
@@ -574,7 +594,7 @@ With opfile
         FileTitle = ""
         flags = 0
         FilterIndex = -1
-        Filter = ""
+        filter = ""
     Case Else
         ' Extended error
         m_lExtendedError = CommDlgExtendedError()
@@ -583,18 +603,15 @@ With opfile
         FileTitle = ""
         flags = 0
         FilterIndex = -1
-        Filter = ""
+        filter = ""
     End Select
 End With
-End Function
-Private Function StrZToStr(s As String) As String
-    StrZToStr = Left$(s, lstrlen(s))
 End Function
 
 Function VBGetSaveFileName(FileName As String, _
                            Optional FileTitle As String, _
                            Optional OverWritePrompt As Boolean = True, _
-                           Optional Filter As String = "All (*.*)| *.*", _
+                           Optional filter As String = "All (*.*)| *.*", _
                            Optional FilterIndex As Long = 1, _
                            Optional InitDir As String, _
                            Optional DlgTitle As String, _
@@ -616,49 +633,49 @@ With opfile
              (flags And CLng(Not (OFN_ENABLEHOOK Or _
                                   OFN_ENABLETEMPLATE)))
     ' Owner can take handle of owning window
-    If Owner <> -1 Then .hWndOwner = Owner
+    If Owner <> -1 Then .hwndOwner = Owner
     ' InitDir can take initial directory string
-    .lpstrInitialDir = InitDir
+    .lpstrInitialDir = StrPtr(InitDir)
     ' DefaultExt can take default extension
-    .lpstrDefExt = DefaultExt
+    .lpstrDefExt = StrPtr(DefaultExt)
     ' DlgTitle can take dialog box title
-    .lpstrTitle = DlgTitle
+    .lpstrTitle = StrPtr(DlgTitle)
     
     ' Make new filter with bars (|) replacing nulls and double null at end
     Dim ch As String, i As Integer
-    For i = 1 To Len(Filter)
-        ch = Mid$(Filter, i, 1)
+    For i = 1 To Len(filter)
+        ch = Mid$(filter, i, 1)
         If ch = "|" Or ch = ":" Then
-            s = s & vbNullChar
-        Else
-            s = s & ch
+            Mid$(filter, i, 1) = vbNullChar
         End If
     Next
     ' Put double null at end
-    s = s & vbNullChar & vbNullChar
-    .lpstrFilter = s
+    filter = filter & vbNullChar & vbNullChar
+    .lpstrFilter = StrPtr(filter)
     .nFilterIndex = FilterIndex
 
     ' Pad file and file title buffers to maximum path
-    s = FileName & String$(MAX_PATH - Len(FileName), 0)
-    .lpstrFile = s
-    .nMaxFile = MAX_PATH
-    s = FileTitle & String$(MAX_FILE - Len(FileTitle), 0)
-    .lpstrFileTitle = s
-    .nMaxFileTitle = MAX_FILE
+    FileName = FileName + String$(65536, vbNullChar)
+    .lpstrFile = StrPtr(FileName)
+    .nMaxFile = Len(FileName)
+    FileTitle = FileTitle + String$(65536, vbNullChar)
+    .lpstrFileTitle = StrPtr(FileTitle)
+    .nMaxFileTitle = Len(FileTitle)
     ' All other fields zero
     
-    m_lApiReturn = GetSaveFileName(opfile)
+    m_lApiReturn = GetSaveFileNameW(opfile)
     Select Case m_lApiReturn
     Case 1
         VBGetSaveFileName = True
-        FileName = StrZToStr(.lpstrFile)
-        FileTitle = StrZToStr(.lpstrFileTitle)
+        i = InStr(1, FileName, vbNullChar)
+        If i > 0 Then FileName = Left$(FileName, i - 1)
+        i = InStr(1, FileTitle, vbNullChar)
+        If i > 0 Then FileTitle = Left$(FileTitle, i - 1)
         flags = .flags
         ' Return the filter index
         FilterIndex = .nFilterIndex
         ' Look up the filter the user selected and return that
-        Filter = FilterLookup(.lpstrFilter, FilterIndex)
+        filter = FilterLookup(filter, FilterIndex)
     Case 0
         ' Cancelled:
         VBGetSaveFileName = False
@@ -666,7 +683,7 @@ With opfile
         FileTitle = ""
         flags = 0
         FilterIndex = 0
-        Filter = ""
+        filter = ""
     Case Else
         ' Extended error:
         VBGetSaveFileName = False
@@ -675,7 +692,7 @@ With opfile
         FileTitle = ""
         flags = 0
         FilterIndex = 0
-        Filter = ""
+        filter = ""
     End Select
 End With
 End Function
@@ -731,7 +748,7 @@ Function VBChooseColor(Color As Long, _
     ' Color must get reference variable to receive result
     ' Flags can get reference variable or constant with bit flags
     ' Owner can take handle of owning window
-    If Owner <> -1 Then chclr.hWndOwner = Owner
+    If Owner <> -1 Then chclr.hwndOwner = Owner
 
     ' Assign color (default uninitialized value of zero is good default)
     chclr.rgbResult = Color
@@ -837,7 +854,7 @@ Function VBChooseFont(CurFont As Font, _
     ' Initialize LOGFONT variable
     Dim fnt As LogFont
     Const PointsPerTwip = 1440 / 72
-    fnt.lfHeight = -(CurFont.Size * (PointsPerTwip / Screen.TwipsPerPixelY))
+    fnt.lfHeight = -(CurFont.size * (PointsPerTwip / Screen.TwipsPerPixelY))
     fnt.lfWeight = CurFont.Weight
     fnt.lfItalic = CurFont.Italic
     fnt.lfUnderline = CurFont.Underline
@@ -848,10 +865,10 @@ Function VBChooseFont(CurFont As Font, _
     ' Initialize TCHOOSEFONT variable
     Dim cf As TCHOOSEFONT
     cf.lStructSize = Len(cf)
-    If Owner <> -1 Then cf.hWndOwner = Owner
+    If Owner <> -1 Then cf.hwndOwner = Owner
     cf.hdc = PrinterDC
     cf.lpLogFont = VarPtr(fnt)
-    cf.iPointSize = CurFont.Size * 10
+    cf.iPointSize = CurFont.size * 10
     cf.flags = flags
     cf.rgbColors = Color
     cf.nSizeMin = MinSize
@@ -871,7 +888,7 @@ Function VBChooseFont(CurFont As Font, _
         CurFont.Strikethrough = fnt.lfStrikeOut
         CurFont.Underline = fnt.lfUnderline
         CurFont.Weight = fnt.lfWeight
-        CurFont.Size = cf.iPointSize / 10
+        CurFont.size = cf.iPointSize / 10
         CurFont.Name = BytesToStr(fnt.lfFaceName)
     Case 0
         ' Cancelled
@@ -930,7 +947,7 @@ Function VBPrintDlg(hdc As Long, _
     ' Fill in PRINTDLG structure
     Dim pd As TPRINTDLG
     pd.lStructSize = Len(pd)
-    pd.hWndOwner = Owner
+    pd.hwndOwner = Owner
     pd.flags = afFlags And afMask
     pd.nFromPage = FromPage
     pd.nToPage = ToPage
@@ -1032,7 +1049,7 @@ Function VBPageSetupDlg(Optional Owner As Long, _
     Dim psd As TPAGESETUPDLG
     ' Fill in PRINTDLG structure
     psd.lStructSize = Len(psd)
-    psd.hWndOwner = Owner
+    psd.hwndOwner = Owner
     psd.rtMargin.Top = TopMargin * lUnits
     psd.rtMargin.Left = LeftMargin * lUnits
     psd.rtMargin.Bottom = BottomMargin * lUnits
