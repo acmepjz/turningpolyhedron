@@ -20,8 +20,6 @@ Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef D
 Private Declare Sub FillMemory Lib "kernel32.dll" Alias "RtlFillMemory" (ByRef Destination As Any, ByVal Length As Long, ByVal Fill As Byte)
 Private Declare Function GetTickCount Lib "kernel32.dll" () As Long
 
-Private Const TheSignature = "Ò¡·½¿éXP"
-
 Private Type typeBridge
  x As Long
  y As Long

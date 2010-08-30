@@ -11,51 +11,14 @@ msgstr ""
 "X-Poedit-Language: Chinese\n"
 "X-Poedit-Country: CHINA\n"
 
-#. Game_InitMenu objText.GetText("Return to game"), objText.GetText("Restart"), objText.GetText("Pick a level"), _
-msgid "Return to game"
-msgstr "返回游戏"
-
-#. Game_InitMenu objText.GetText("Return to game"), objText.GetText("Restart"), objText.GetText("Pick a level"), _
-msgid "Restart"
-msgstr "重玩本关"
-
-#. Game_InitMenu objText.GetText("Return to game"), objText.GetText("Restart"), objText.GetText("Pick a level"), _
-msgid "Pick a level"
-msgstr "选择关卡"
-
-#. objText.GetText("Open level file"), objText.GetText("Random level"), objText.GetText("Input solution"), _
-msgid "Open level file"
-msgstr "打开文件"
-
-#. objText.GetText("Open level file"), objText.GetText("Random level"), objText.GetText("Input solution"), _
-#.    DrawTextB bmG_Lv.hdc, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-msgid "Random level"
+#.    DrawTextB bmG_Lv.hDC, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hDC, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#. GameMenuCaption(5) = objText.GetText("Random level")
+msgid "Random Level"
 msgstr "随机关卡"
 
-#. objText.GetText("Open level file"), objText.GetText("Random level"), objText.GetText("Input solution"), _
-msgid "Input solution"
-msgstr "输入解答"
-
-#. objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
-msgid "Auto solver"
-msgstr "求解本关"
-
-#. objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
-#. cmd0(2).Caption = objText.GetText("Game instructions")
-msgid "Game instructions"
-msgstr "游戏说明"
-
-#. objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
-msgid "Main menu"
-msgstr "回主界面"
-
-#. objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
-msgid "Exit game"
-msgstr "退出程序"
-
-#.    DrawTextB bmG_Lv.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Lv.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Level %d"
 msgstr "第%d关"
 
@@ -63,6 +26,41 @@ msgstr "第%d关"
 #.     MsgBox objText.GetText("Unknown error!")
 msgid "Unknown error!"
 msgstr "未知错误!"
+
+#.      Case "u", ChrW(8593), LCase(objText.GetText("U"))
+#.        Case 1:      s = objText.GetText("U") '"↑"
+#.       s = Replace(GameDemoS, "u", objText.GetText("U")) '"↑"
+#.    s = Replace(s, "u", objText.GetText("U")) '"↑"
+msgid "U"
+msgstr "↑"
+
+#.      Case "d", ChrW(8595), LCase(objText.GetText("D"))
+#.        Case 2:      s = objText.GetText("D") '"↓"
+#.       s = Replace(s, "d", objText.GetText("D")) '"↓"
+#.    s = Replace(s, "d", objText.GetText("D")) '"↓"
+msgid "D"
+msgstr "↓"
+
+#.      Case "l", ChrW(8592), LCase(objText.GetText("L"))
+#.        Case 3:      s = objText.GetText("L") '"←"
+#.       s = Replace(s, "l", objText.GetText("L")) '"←"
+#.    s = Replace(s, "l", objText.GetText("L")) '"←"
+msgid "L"
+msgstr "←"
+
+#.      Case "r", ChrW(8594), LCase(objText.GetText("R"))
+#.        Case 4:      s = objText.GetText("R") '"→"
+#.       s = Replace(s, "r", objText.GetText("R")) '"→"
+#.    s = Replace(s, "r", objText.GetText("R")) '"→"
+msgid "R"
+msgstr "→"
+
+#.      Case " ", "s", ChrW(9671), ChrW(9633), "_", LCase(objText.GetText("S"))
+#.       sSolution = sSolution + objText.GetText("S") '"◇"
+#.       s = Replace(s, "s", objText.GetText("S")) '"◇"
+#.    s = Replace(s, "s", objText.GetText("S")) '"◇"
+msgid "S"
+msgstr "◇"
 
 #.       MsgBox objText.GetText("Map error!")
 #.         MsgBox objText.GetText("Map error!")
@@ -92,30 +90,30 @@ msgstr "无解!"
 msgid "Error!"
 msgstr "出错了!"
 
-#. DrawTextB bmG.hdc, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Demo"
 msgstr "自动演示"
 
-#. DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#. DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Cancel"
 msgstr "取消"
 
-#. DrawTextB bmG.hdc, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Generate"
 msgstr "生成"
 
-#. DrawTextB bmG.hdc, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Random map mode:"
 msgstr "随机地图模式:"
 
-#. DrawTextB bmG.hdc, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#. DrawTextB bmG.hDC, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hDC, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Seed:"
 msgstr "种子:"
 
 #. 's = Replace(Replace(objText.GetText("#INSTRUCTIONS#"), "\n", vbLf), "\t", s1)
-#. s = Replace(objText.GetText("#INSTRUCTIONS#"), vbTab, s1)
+#. s = Replace(objText.GetText("#INSTRUCTIONS#"), vbTab, Space(8))
 msgid "#INSTRUCTIONS#"
 msgstr ""
 "\t“摇方块”是一款益智游戏，游戏的目标是控制方块落入每关最后的小洞。在默认关卡包中共有33关，还有更多附加关卡包。你也可以自己编辑关卡或者探索随机关卡。要移动方块，只需按下方向键。小心不要掉到边界以外——如果掉出去了，当前关卡就会重新开始。\n"
@@ -130,43 +128,80 @@ msgstr ""
 "\n"
 "\t还有一种砖块上面有一个圆形的符号。当方块“站”在上面时方块将会被分成两小块，并被传送到不同的位置。两个小块可以独立控制，用空格键来切换。当两个小块靠到一起后就可以还原成原来的方块。小方块仍然可以按下“软”的开关，但是不能按下“硬”的开关。另外，小方块也不能落入终点，只有完整的方块才能落入终点。\n"
 "\n"
-"\t新版本中增加了几种砖块：突起的砖块、冰以及墙。方块“站”在突起的砖块上不太稳定，所以它会马上“摇”下来，除非有墙挡着。当方块完全处在冰上时就会滑动，一直到有部分离开冰或者撞墙。而墙作为一种障碍物，方块不能通过，但是可以斜着靠在上面，靠上去后仍可移动。"
+"\t新版本中增加了几种砖块：突起的砖块、冰以及墙。方块“站”在突起的砖块上不太稳定，所以它会马上“摇”下来，除非有墙挡着。当方块完全处在冰上时就会滑动，一直到有部分离开冰或者撞墙。而墙作为一种障碍物，方块不能通过，但是可以斜着靠在上面，靠上去后仍可移动。(动画很丑陋)"
 
-#. s = objText.GetText("VB6 version, author: acme_pjz")
-msgid "VB6 version, author: acme_pjz"
-msgstr "这是VB6编写的版本，作者：acme_pjz"
+#.  s = objText.GetText("VB6 version, author: ") + "acme_pjz"
+msgid "VB6 version, author: "
+msgstr "这是VB6编写的版本，作者："
 
-#. s = objText.GetText("Source code:")
+#.  s = objText.GetText("Source code:")
 msgid "Source code:"
 msgstr "源代码下载地址:"
 
-#. s = objText.GetText("Original version:")
+#.  s = objText.GetText("Original version:")
 msgid "Original version:"
 msgstr "要玩原版请登陆:"
 
-#. DrawTextB bmG_Back.hdc, objText.GetText("OK"), Me.Font, 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.  .DrawTextXP bmG_Back.hDC, objText.GetText("OK"), 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "OK"
 msgstr "确定"
 
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Back.hDC, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Copy"
 msgstr "复制"
 
-#.   DrawTextB bmG_Back.hdc, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hDC, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Moves"
 msgstr "本关移动"
 
-#.   DrawTextB bmG_Back.hdc, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hDC, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Time used"
 msgstr "本关用时"
 
-#.   DrawTextB bmG_Back.hdc, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hDC, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Retries"
 msgstr "本关重试"
 
-#.   DrawTextB bmG_Back.hdc, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hDC, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Menu"
 msgstr "菜单"
+
+#. GameMenuCaption(1) = objText.GetText("Return to game")
+msgid "Return to game"
+msgstr "返回游戏"
+
+#. GameMenuCaption(2) = objText.GetText("Restart")
+msgid "Restart"
+msgstr "重玩本关"
+
+#. GameMenuCaption(3) = objText.GetText("Pick a level")
+msgid "Pick a level"
+msgstr "选择关卡"
+
+#. GameMenuCaption(4) = objText.GetText("Open level file")
+msgid "Open level file"
+msgstr "打开文件"
+
+#. GameMenuCaption(6) = objText.GetText("Input solution")
+msgid "Input solution"
+msgstr "输入解答"
+
+#. GameMenuCaption(7) = objText.GetText("Auto solver")
+msgid "Auto solver"
+msgstr "求解本关"
+
+#. GameMenuCaption(8) = objText.GetText("Game instructions")
+#. cmd0(2).Caption = objText.GetText("Game instructions")
+msgid "Game instructions"
+msgstr "游戏说明"
+
+#. GameMenuCaption(9) = objText.GetText("Main menu")
+msgid "Main menu"
+msgstr "回主界面"
+
+#. GameMenuCaption(10) = objText.GetText("Exit game")
+msgid "Exit game"
+msgstr "退出程序"
 
 #.  Me.Tag = Replace(objText.GetText(" of %d ("), "%d", CStr(LevCount)) + Mid(fn, InStrRev(fn, "\") + 1) + ")"
 msgid " of %d ("
@@ -371,12 +406,12 @@ msgid "Edit"
 msgstr "编辑"
 
 #. Label1(2).Caption = objText.GetText("Pos2")
-#.     DrawTextB bmEdit.hdc, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.     DrawTextB bmEdit.hDC, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Pos2"
 msgstr "位置2"
 
 #. Label1(1).Caption = objText.GetText("Pos1")
-#.     DrawTextB bmEdit.hdc, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.     DrawTextB bmEdit.hDC, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Pos1"
 msgstr "位置1"
 
@@ -473,7 +508,7 @@ msgstr "水平翻转(&H)"
 msgid "Flip &Vertically"
 msgstr "竖直翻转(&H)"
 
-#. DrawTextB bmG.hdc, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Generating..."
 msgstr "正在生成……"
 
@@ -481,7 +516,7 @@ msgstr "正在生成……"
 msgid "(None)"
 msgstr "(无)"
 
-#.   DrawTextB bmEdit.hdc, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.   DrawTextB bmEdit.hDC, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Start"
 msgstr "起点"
 
