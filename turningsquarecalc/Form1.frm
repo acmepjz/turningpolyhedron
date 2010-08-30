@@ -1050,7 +1050,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-Private Const TheSignature = "摇方块XP"
+Private TheSignature As String
 
 Private Declare Sub ZeroMemory Lib "kernel32.dll" Alias "RtlZeroMemory" (ByRef Destination As Any, ByVal Length As Long)
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
@@ -1060,8 +1060,8 @@ Private Declare Function GetActiveWindow Lib "user32.dll" () As Long
 Private Declare Sub InitCommonControls Lib "comctl32.dll" ()
 
 Private Declare Function CreateSolidBrush Lib "gdi32.dll" (ByVal crColor As Long) As Long
-Private Declare Function FillRect Lib "user32.dll" (ByVal hdc As Long, ByRef lpRect As RECT, ByVal hBrush As Long) As Long
-Private Declare Function FrameRect Lib "user32.dll" (ByVal hdc As Long, ByRef lpRect As RECT, ByVal hBrush As Long) As Long
+Private Declare Function FillRect Lib "user32.dll" (ByVal hDC As Long, ByRef lpRect As RECT, ByVal hBrush As Long) As Long
+Private Declare Function FrameRect Lib "user32.dll" (ByVal hDC As Long, ByRef lpRect As RECT, ByVal hBrush As Long) As Long
 Private Declare Function DeleteObject Lib "gdi32.dll" (ByVal hObject As Long) As Long
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
 Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
@@ -1260,13 +1260,13 @@ Do
   'level name animation
   bmG_Lv.Cls
   If GameIsRndMap Then
-   DrawTextB bmG_Lv.hdc, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+   DrawTextB bmG_Lv.hDC, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
   Else
-   DrawTextB bmG_Lv.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+   DrawTextB bmG_Lv.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
   End If
   For i = 0 To 255 Step 17
    bmG.Cls
-   AlphaBlendA bmG.hdc, 0, 200, 640, 80, bmG_Lv.hdc, 0, 200, , , i, False
+   AlphaBlendA bmG.hDC, 0, 200, 640, 80, bmG_Lv.hDC, 0, 200, , , i, False
    Game_Paint
    Sleep 10
    DoEvents
@@ -1279,7 +1279,7 @@ Do
   Next i
   For i = 255 To 0 Step -17
    bmG.Cls
-   AlphaBlendA bmG.hdc, 0, 200, 640, 80, bmG_Lv.hdc, 0, 200, , , i, False
+   AlphaBlendA bmG.hDC, 0, 200, 640, 80, bmG_Lv.hDC, 0, 200, , , i, False
    Game_Paint
    Sleep 10
    DoEvents
@@ -1323,14 +1323,14 @@ Do
   Next i
   For i = 0 To 255 Step 51
    bmG.Cls
-   AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+   AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
    Game_Paint
    Sleep 10
    DoEvents
    If GameStatus < 0 Then Exit Sub
   Next i
   For k = 0 To 36
-   bmG_Back.PaintPicture bmG.hdc
+   bmG_Back.PaintPicture bmG.hDC
    x = GameLayer0SX + GameW * 32
    y = GameLayer0SY - GameW * 5
    For i = GameW To 1 Step -1
@@ -1344,9 +1344,9 @@ Do
       dL(i, j + GameH) = 400
      End If
      If dL(i, j + GameH) >= 0 Then
-      pTheBitmapDraw3 bmG.hdc, Ani_Layer0, GameD(i, j), x2, y2 + dL(i, j + GameH), -dL(i, j)
+      pTheBitmapDraw3 bmG.hDC, Ani_Layer0, GameD(i, j), x2, y2 + dL(i, j + GameH), -dL(i, j)
       If GameD(i, j) = 11 Then
-       pTheBitmapDraw3 bmG.hdc, Ani_Misc, 6, x2, y2 + dL(i, j + GameH), -dL(i, j)
+       pTheBitmapDraw3 bmG.hDC, Ani_Misc, 6, x2, y2 + dL(i, j + GameH), -dL(i, j)
       End If
       dL(i, j + GameH) = (dL(i, j + GameH) * 3) \ 4
       dL(i, j) = dL(i, j) - 16
@@ -1364,20 +1364,20 @@ Do
   'init array
   ReDim dL(1 To GameW, 1 To GameH)
   'draw layer0
-  bmG_Back.PaintPicture bmG_Lv.hdc
-  pGameDrawLayer0 bmG_Lv.hdc, GameD, GameW, GameH, GameLayer0SX, GameLayer0SY
+  bmG_Back.PaintPicture bmG_Lv.hDC
+  pGameDrawLayer0 bmG_Lv.hDC, GameD, GameW, GameH, GameLayer0SX, GameLayer0SY
   'box falls
   For j = -600 To 0 Step 50
-   bmG_Lv.PaintPicture bmG.hdc
-   Game_DrawLayer1 bmG.hdc, , , Ani_Misc, 5, j
+   bmG_Lv.PaintPicture bmG.hDC
+   Game_DrawLayer1 bmG.hDC, , , Ani_Misc, 5, j
    Game_Paint
    Sleep 10
    DoEvents
    If GameStatus < 0 Then Exit Sub
   Next j
   For i = 1 To Anis(29).Count
-   bmG_Lv.PaintPicture bmG.hdc
-   Game_DrawLayer1 bmG.hdc, , True, 29, i
+   bmG_Lv.PaintPicture bmG.hDC
+   Game_DrawLayer1 bmG.hDC, , True, 29, i
    Game_Paint
    Sleep 10
    DoEvents
@@ -1410,8 +1410,8 @@ Do
    h = h + 1
    x = x + x2
    idx2 = 1 + idx2 Mod 9
-   bmG_Back.PaintPicture bmG.hdc
-   Game_DrawLayer1 bmG.hdc, , False, idx, idx2, w, , True, x
+   bmG_Back.PaintPicture bmG.hDC
+   Game_DrawLayer1 bmG.hDC, , False, idx, idx2, w, , True, x
    Game_Paint
    Sleep 10
    DoEvents
@@ -1425,7 +1425,7 @@ Do
    Next j
   Next i
   For k = 0 To 30
-   bmG_Back.PaintPicture bmG.hdc
+   bmG_Back.PaintPicture bmG.hDC
    x = GameLayer0SX + GameW * 32
    y = GameLayer0SY - GameW * 5
    For i = GameW To 1 Step -1
@@ -1438,9 +1438,9 @@ Do
       dL(i, j) = -2
      End If
      If dL(i, j + GameH) < 510 Then
-      pTheBitmapDraw3 bmG.hdc, Ani_Layer0, GameD(i, j), x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) \ 2
+      pTheBitmapDraw3 bmG.hDC, Ani_Layer0, GameD(i, j), x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) \ 2
       If GameD(i, j) = 11 Then
-       pTheBitmapDraw3 bmG.hdc, Ani_Misc, 6, x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) \ 2
+       pTheBitmapDraw3 bmG.hDC, Ani_Misc, 6, x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) \ 2
       End If
       If dL(i, j) < 0 Then
        dL(i, j + GameH) = dL(i, j + GameH) - dL(i, j)
@@ -1458,7 +1458,7 @@ Do
   Next k
   For i = 255 To 0 Step -51
    bmG.Cls
-   AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+   AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
    Game_Paint
    Sleep 10
    DoEvents
@@ -1477,7 +1477,7 @@ Do
   w = 0
   h = 0
   For k = 0 To 50
-   bmG_Back.PaintPicture bmG.hdc
+   bmG_Back.PaintPicture bmG.hDC
    x = GameLayer0SX + GameW * 32
    y = GameLayer0SY - GameW * 5
    For i = GameW To 1 Step -1
@@ -1490,9 +1490,9 @@ Do
       dL(i, j) = -2
      End If
      If dL(i, j + GameH) < 510 Then
-      pTheBitmapDraw3 bmG.hdc, Ani_Layer0, GameD(i, j), x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) \ 2
+      pTheBitmapDraw3 bmG.hDC, Ani_Layer0, GameD(i, j), x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) \ 2
       If GameD(i, j) = 11 Then
-       pTheBitmapDraw3 bmG.hdc, Ani_Misc, 6, x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) \ 2
+       pTheBitmapDraw3 bmG.hDC, Ani_Misc, 6, x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) \ 2
       End If
       If dL(i, j) < 0 Then
        dL(i, j + GameH) = dL(i, j + GameH) - dL(i, j)
@@ -1502,7 +1502,7 @@ Do
      If w < 510 And i = GameX And j = GameY Then
       w = w + h
       h = h + 1
-      pTheBitmapDraw3 bmG.hdc, 1, 1, x2, y2 + w
+      pTheBitmapDraw3 bmG.hDC, 1, 1, x2, y2 + w
      End If
      x2 = x2 + 10
      y2 = y2 + 16
@@ -1515,7 +1515,7 @@ Do
   Next k
   For i = 255 To 0 Step -51
    bmG.Cls
-   AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+   AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
    Game_Paint
    Sleep 10
    DoEvents
@@ -1526,8 +1526,8 @@ Do
  Case 4 '///////////////////////////////////////////////////////win
   'block animation
   For i = 1 To Anis(30).Count
-   bmG_Lv.PaintPicture bmG.hdc
-   Game_DrawLayer1 bmG.hdc, , , 30, i
+   bmG_Lv.PaintPicture bmG.hDC
+   Game_DrawLayer1 bmG.hDC, , , 30, i
    Game_Paint
    Sleep 10
    DoEvents
@@ -1555,7 +1555,7 @@ Do
    Next j
   Next i
   For k = 0 To 51
-   bmG_Back.PaintPicture bmG.hdc
+   bmG_Back.PaintPicture bmG.hDC
    For i = GameW To 1 Step -1
     For j = 1 To GameH
      kx = dL(i, j)
@@ -1567,9 +1567,9 @@ Do
       dSng(i, j + GameH) = dSng(i, j + GameH) + (x - w) * dSng(i, j + GameH * 2) * k
       x2 = dSng(i, j)
       y2 = dSng(i, j + GameH)
-      pTheBitmapDraw3 bmG.hdc, Ani_Layer0, GameD(i, j), x2, y2, m
+      pTheBitmapDraw3 bmG.hDC, Ani_Layer0, GameD(i, j), x2, y2, m
       If GameD(i, j) = 11 Then
-       pTheBitmapDraw3 bmG.hdc, Ani_Misc, 6, x2, y2, m
+       pTheBitmapDraw3 bmG.hDC, Ani_Misc, 6, x2, y2, m
       End If
      End If
     Next j
@@ -1583,7 +1583,7 @@ Do
   Erase dSng, dL
   For i = 255 To 0 Step -51
    bmG.Cls
-   AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+   AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
    Game_Paint
    Sleep 10
    DoEvents
@@ -1648,15 +1648,15 @@ Do
      y = 99
     Else
      Select Case Mid(GameDemoS, GameDemoPos, 1)
-     Case "u", "↑"
+     Case "u", ChrW(8593), LCase(objText.GetText("U"))
       y = 1
-     Case "d", "↓"
+     Case "d", ChrW(8595), LCase(objText.GetText("D"))
       y = 2
-     Case "l", "←"
+     Case "l", ChrW(8592), LCase(objText.GetText("L"))
       y = 3
-     Case "r", "→"
+     Case "r", ChrW(8594), LCase(objText.GetText("R"))
       y = 4
-     Case " ", "s", "◇", "□", "_"
+     Case " ", "s", ChrW(9671), ChrW(9633), "_", LCase(objText.GetText("S"))
       y = 5
      Case vbCr, vbLf, ",", ";"
       y = 99
@@ -1684,7 +1684,7 @@ Do
      'animation
      For i = 255 To 0 Step -51
       bmG.Cls
-      AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+      AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
       Game_Paint
       Sleep 10
       DoEvents
@@ -1693,7 +1693,7 @@ Do
     ElseIf (GetAsyncKeyState(vbKeySpace) = &H8001 And GameDemoPos = 0) Or y = 5 Then
      If GameS = 3 Then
       'record step
-      sSolution = sSolution + "◇"
+      sSolution = sSolution + objText.GetText("S") '"◇"
       'swap block
       x = GameX
       y = GameY
@@ -1730,10 +1730,10 @@ Do
        GameLvStep = GameLvStep + 1
        'record step
        Select Case y
-       Case 1:      s = "↑"
-       Case 2:      s = "↓"
-       Case 3:      s = "←"
-       Case 4:      s = "→"
+       Case 1:      s = objText.GetText("U") '"↑"
+       Case 2:      s = objText.GetText("D") '"↓"
+       Case 3:      s = objText.GetText("L") '"←"
+       Case 4:      s = objText.GetText("R") '"→"
        End Select
        sSolution = sSolution + s
       End If
@@ -1809,16 +1809,16 @@ Do
     'press button
     nBridgeChangeCount = Lev(GameLev).BloxorzCheckPressButton(GameD, GameX, GameY, GameS, VarPtr(dL(1, 1)), 115, 215)
     If nBridgeChangeCount > 0 Then
-     bmG_Back.PaintPicture bmG_Lv.hdc
-     pGameDrawLayer0 bmG_Lv.hdc, GameD, GameW, GameH, GameLayer0SX, GameLayer0SY
+     bmG_Back.PaintPicture bmG_Lv.hDC
+     pGameDrawLayer0 bmG_Lv.hDC, GameD, GameW, GameH, GameLayer0SX, GameLayer0SY
     End If
     'trans (teleport)
     If GameS = 0 And GameD(GameX, GameY) = 4 Then
      'TODO:more animation
      'animation
      For i = 255 To 0 Step -17
-      bmG_Lv.PaintPicture bmG.hdc
-      Game_DrawLayer1 bmG.hdc, , True, 1, 1, , i
+      bmG_Lv.PaintPicture bmG.hDC
+      Game_DrawLayer1 bmG.hDC, , True, 1, 1, , i
       Game_Paint
       Sleep 10
       DoEvents
@@ -1868,10 +1868,10 @@ Do
       ky = ky + 8
      End If
      For i = 0 To 15
-      bmG_Lv.PaintPicture bmG.hdc
-      Game_DrawLayer1 bmG.hdc, , True, GameS * 4& + 1, 1, , i * 17
-      pTheBitmapDraw3 bmG.hdc, Ani_Misc, 3, kx - 40 + i, ky, i * 17
-      pTheBitmapDraw3 bmG.hdc, Ani_Misc, 4, kx + 40 - i, ky, i * 17
+      bmG_Lv.PaintPicture bmG.hDC
+      Game_DrawLayer1 bmG.hDC, , True, GameS * 4& + 1, 1, , i * 17
+      pTheBitmapDraw3 bmG.hDC, Ani_Misc, 3, kx - 40 + i, ky, i * 17
+      pTheBitmapDraw3 bmG.hDC, Ani_Misc, 4, kx + 40 - i, ky, i * 17
       Game_Paint
       Sleep 10
       DoEvents
@@ -1959,14 +1959,14 @@ Do
   End If
   'redraw?
   If bEnsureReDraw And GameStatus > 1 Then '???
-   bmG_Lv.PaintPicture bmG.hdc
+   bmG_Lv.PaintPicture bmG.hDC
    'draw text (ZDepth????)
    s = Format(t Mod 60, "00")
    i = t \ 60
    s = Format(i \ 60, "00:") + Format(i Mod 60, "00:") + s
-   DrawTextB bmG.hdc, CStr(GameLvStep), Me.Font, 64, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-   DrawTextB bmG.hdc, s, Me.Font, 64, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-   DrawTextB bmG.hdc, CStr(GameLvRetry), Me.Font, 64, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG.hDC, CStr(GameLvStep), Me.Font, 64, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG.hDC, s, Me.Font, 64, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG.hDC, CStr(GameLvRetry), Me.Font, 64, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
    'draw bridge status change
    nBridgeChangeCount = 0
    For i = 1 To GameW
@@ -1974,13 +1974,13 @@ Do
      m = dL(i, j)
      Select Case m
      Case 100 To 115 'off
-      pTheBitmapDraw3 bmG.hdc, Ani_Misc, 1, _
+      pTheBitmapDraw3 bmG.hDC, Ani_Misc, 1, _
       GameLayer0SX + (i - 1) * 32 + (j - 1) * 10, _
       GameLayer0SY - (i - 1) * 5 + (j - 1) * 16, (m - 100) * 17
       dL(i, j) = m - 1
       nBridgeChangeCount = nBridgeChangeCount + 1
      Case 200 To 215 'on
-      pTheBitmapDraw3 bmG.hdc, Ani_Misc, 2, _
+      pTheBitmapDraw3 bmG.hDC, Ani_Misc, 2, _
       GameLayer0SX + (i - 1) * 32 + (j - 1) * 10, _
       GameLayer0SY - (i - 1) * 5 + (j - 1) * 16, (m - 200) * 17
       dL(i, j) = m - 1
@@ -1992,40 +1992,40 @@ Do
    Next i
    'layer 1
    If IsSliping Then 'slip?
-    Game_DrawLayer1 bmG.hdc, , True, idx, idx2, y2, , , x2, True
+    Game_DrawLayer1 bmG.hDC, , True, idx, idx2, y2, , , x2, True
    ElseIf QIE_O > 0 And GameFS = 0 Then ':-/
-    Game_DrawLayer1 bmG.hdc, , True, QIE_O, 8, y2, , , x2, True
+    Game_DrawLayer1 bmG.hDC, , True, QIE_O, 8, y2, , , x2, True
    ElseIf QIE_O > 0 And (QIE_O > 2 Xor GameFS > 2) Then ':-/
     Select Case GameFS
     Case 1 'up
-     Game_DrawLayer1 bmG.hdc, , True, QIE_O, 8, y2 - (16 * nAnimationIndex) \ 8, _
+     Game_DrawLayer1 bmG.hDC, , True, QIE_O, 8, y2 - (16 * nAnimationIndex) \ 8, _
      , , x2 - (10 * nAnimationIndex) \ 8, True
     Case 2 'down
-     Game_DrawLayer1 bmG.hdc, , True, QIE_O, 8, y2 + (16 * nAnimationIndex) \ 8, _
+     Game_DrawLayer1 bmG.hDC, , True, QIE_O, 8, y2 + (16 * nAnimationIndex) \ 8, _
      , , x2 + (10 * nAnimationIndex) \ 8, True
     Case 3 'left
-     Game_DrawLayer1 bmG.hdc, , True, QIE_O, 8, y2 + (5 * nAnimationIndex) \ 8, _
+     Game_DrawLayer1 bmG.hDC, , True, QIE_O, 8, y2 + (5 * nAnimationIndex) \ 8, _
      , , x2 - (32 * nAnimationIndex) \ 8, True
     Case 4 'right
-     Game_DrawLayer1 bmG.hdc, , True, QIE_O, 8, y2 - (5 * nAnimationIndex) \ 8, _
+     Game_DrawLayer1 bmG.hDC, , True, QIE_O, 8, y2 - (5 * nAnimationIndex) \ 8, _
      , , x2 + (32 * nAnimationIndex) \ 8, True
     End Select
    Else
-    Game_DrawLayer1 bmG.hdc, , True, idx, idx2
+    Game_DrawLayer1 bmG.hDC, , True, idx, idx2
    End If
    'draw []
    Select Case kt
    Case 1 To 16
-    pTheBitmapDraw3 bmG.hdc, Ani_Misc, 3, kx - 24, ky, 17 * (kt - 1)
-    pTheBitmapDraw3 bmG.hdc, Ani_Misc, 4, kx + 24, ky, 17 * (kt - 1)
+    pTheBitmapDraw3 bmG.hDC, Ani_Misc, 3, kx - 24, ky, 17 * (kt - 1)
+    pTheBitmapDraw3 bmG.hDC, Ani_Misc, 4, kx + 24, ky, 17 * (kt - 1)
     kt = kt - 1
    Case 17 To 24
-    pTheBitmapDraw3 bmG.hdc, Ani_Misc, 3, kx - 24, ky
-    pTheBitmapDraw3 bmG.hdc, Ani_Misc, 4, kx + 24, ky
+    pTheBitmapDraw3 bmG.hDC, Ani_Misc, 3, kx - 24, ky
+    pTheBitmapDraw3 bmG.hDC, Ani_Misc, 4, kx + 24, ky
     kt = kt - 1
    Case 25 To 40
-    pTheBitmapDraw3 bmG.hdc, Ani_Misc, 3, kx - kt, ky, 17 * (40 - kt)
-    pTheBitmapDraw3 bmG.hdc, Ani_Misc, 4, kx + kt, ky, 17 * (40 - kt)
+    pTheBitmapDraw3 bmG.hDC, Ani_Misc, 3, kx - kt, ky, 17 * (40 - kt)
+    pTheBitmapDraw3 bmG.hDC, Ani_Misc, 4, kx + kt, ky, 17 * (40 - kt)
     kt = kt - 1
    End Select
    'draw menu
@@ -2038,7 +2038,7 @@ Do
      r.Left = 380
      r.Right = r.Left + 48
     End If
-    FrameRect bmG.hdc, r, x
+    FrameRect bmG.hDC, r, x
     DeleteObject x
    End If
    Game_Paint
@@ -2059,7 +2059,7 @@ Do
   If (IsMouseIn And (GetAsyncKeyState(1) And &H8000&) <> 0) Or GetAsyncKeyState(vbKeyEscape) = &H8001 Then
    j = GetTickCount
    'GameClick = False
-   bmG.PaintPicture bmG_Back.hdc
+   bmG.PaintPicture bmG_Back.hDC
    i = Game_Menu_Loop
    Select Case i
    Case 1 'return
@@ -2068,7 +2068,7 @@ Do
     'animation
     For i = 255 To 0 Step -51
      bmG.Cls
-     AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+     AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
      Game_Paint
      Sleep 10
      DoEvents
@@ -2093,7 +2093,7 @@ Do
      'animation
      For i = 255 To 0 Step -51
       bmG.Cls
-      AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+      AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
       Game_Paint
       Sleep 10
       DoEvents
@@ -2113,7 +2113,7 @@ Do
      'animation
      For i = 255 To 0 Step -51
       bmG.Cls
-      AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+      AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
       Game_Paint
       Sleep 10
       DoEvents
@@ -2132,7 +2132,7 @@ Do
      'animation
      For i = 255 To 0 Step -51
       bmG.Cls
-      AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+      AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
       Game_Paint
       Sleep 10
       DoEvents
@@ -2151,7 +2151,7 @@ Do
      'animation
      For i = 255 To 0 Step -51
       bmG.Cls
-      AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+      AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
       Game_Paint
       Sleep 10
       DoEvents
@@ -2168,11 +2168,11 @@ Do
      m = Lev(GameLev).SolveItGetSolutionNodeIndex
      If m > 0 Then
       GameDemoS = Lev(GameLev).SolveItGetSolution(m)
-      s = Replace(GameDemoS, "u", "↑")
-      s = Replace(s, "d", "↓")
-      s = Replace(s, "l", "←")
-      s = Replace(s, "r", "→")
-      s = Replace(s, "s", "◇")
+      s = Replace(GameDemoS, "u", objText.GetText("U")) '"↑"
+      s = Replace(s, "d", objText.GetText("D")) '"↓"
+      s = Replace(s, "l", objText.GetText("L")) '"←"
+      s = Replace(s, "r", objText.GetText("R")) '"→"
+      s = Replace(s, "s", objText.GetText("S")) '"◇"
       txtGame(0).Text = s + vbCrLf + objText.GetText("Moves:") + CStr(Lev(GameLev).SolveItGetDistance(m))
       txtGame(0).Locked = True
       i = Game_TextBox_Loop
@@ -2181,7 +2181,7 @@ Do
        'animation
        For i = 255 To 0 Step -51
         bmG.Cls
-        AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+        AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
         Game_Paint
         Sleep 10
         DoEvents
@@ -2204,7 +2204,7 @@ Do
     'animation
     For i = 255 To 0 Step -51
      bmG.Cls
-     AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+     AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
      Game_Paint
      Sleep 10
      DoEvents
@@ -2214,7 +2214,7 @@ Do
     'animation
     For i = 0 To 255 Step 51
      bmG.Cls
-     AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Lv.hdc, 0, 0, , , i, False
+     AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Lv.hDC, 0, 0, , , i, False
      Game_Paint
      Sleep 10
      DoEvents
@@ -2260,9 +2260,9 @@ y = 5
 For i = 1 To 16
  r.Top = 240 - y
  r.Bottom = 240 + y
- bmG_Back.PaintPicture bmG.hdc
- FillRect bmG.hdc, r, hbr
- FrameRect bmG.hdc, r, hbr2
+ bmG_Back.PaintPicture bmG.hDC
+ FillRect bmG.hDC, r, hbr
+ FrameRect bmG.hDC, r, hbr2
  Game_Paint
  Sleep 10
  DoEvents
@@ -2278,14 +2278,14 @@ r.Top = 240 - h \ 2
 r.Bottom = r.Top + h
 For i = 1 To 17 + (GameMenuItemCount - 1)
  y = r.Top + 8
- bmG_Back.PaintPicture bmG.hdc
- FillRect bmG.hdc, r, hbr
- FrameRect bmG.hdc, r, hbr2
+ bmG_Back.PaintPicture bmG.hDC
+ FillRect bmG.hDC, r, hbr
+ FrameRect bmG.hDC, r, hbr2
  For j = 1 To GameMenuItemCount
   x = &HF0F0F * (i - (j - 1))
   If x > 0 Then
    If x > &HFFFFFF Then x = &HFFFFFF
-   DrawTextB bmG.hdc, GameMenuCaption(j), Me.Font, r.Left, y, w, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, x, , True
+   DrawTextB bmG.hDC, GameMenuCaption(j), Me.Font, r.Left, y, w, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, x, , True
   End If
   y = y + 20
  Next j
@@ -2326,14 +2326,14 @@ Do
   If i > 0 Then
    r.Top = y + (i - 1) * 20
    r.Bottom = r.Top + 16
-   FrameRect bmG.hdc, r, hbr
+   FrameRect bmG.hDC, r, hbr
   End If
   i = j
   'draw new
   If i > 0 Then
    r.Top = y + (i - 1) * 20
    r.Bottom = r.Top + 16
-   FrameRect bmG.hdc, r, hbr2
+   FrameRect bmG.hDC, r, hbr2
   End If
   Game_Paint
  End If
@@ -2355,14 +2355,14 @@ Do
    r.Bottom = r.Top + h
    For i = 1 To 17 + (GameMenuItemCount - 1)
     y = r.Top + 8
-    bmG_Back.PaintPicture bmG.hdc
-    FillRect bmG.hdc, r, hbr
-    FrameRect bmG.hdc, r, hbr2
+    bmG_Back.PaintPicture bmG.hDC
+    FillRect bmG.hDC, r, hbr
+    FrameRect bmG.hDC, r, hbr2
     For j = 1 To GameMenuItemCount
      x = &HF0F0F * (j - i + 16)
      If x > 0 Then
       If x > &HFFFFFF Then x = &HFFFFFF
-      DrawTextB bmG.hdc, GameMenuCaption(j), Me.Font, r.Left, y, w, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, x, , True
+      DrawTextB bmG.hDC, GameMenuCaption(j), Me.Font, r.Left, y, w, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, x, , True
      End If
      y = y + 20
     Next j
@@ -2381,9 +2381,9 @@ Do
    For i = 1 To 16
     r.Top = 240 - y
     r.Bottom = 240 + y
-    bmG_Back.PaintPicture bmG.hdc
-    FillRect bmG.hdc, r, hbr
-    FrameRect bmG.hdc, r, hbr2
+    bmG_Back.PaintPicture bmG.hDC
+    FillRect bmG.hDC, r, hbr
+    FrameRect bmG.hDC, r, hbr2
     Game_Paint
     Sleep 10
     DoEvents
@@ -2420,11 +2420,11 @@ r.Bottom = r.Top + h
 hbr = CreateSolidBrush(vbBlack)
 hbr2 = CreateSolidBrush(&H80FF&)
 'show
-bmG_Back.PaintPicture bmG.hdc
-FillRect bmG.hdc, r, hbr
-FrameRect bmG.hdc, r, hbr2
-DrawTextB bmG.hdc, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+bmG_Back.PaintPicture bmG.hDC
+FillRect bmG.hDC, r, hbr
+FrameRect bmG.hDC, r, hbr2
+DrawTextB bmG.hDC, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 Game_Paint
 txtGame(0).Move r.Left + 8, r.Top + 8, w - 16, h - 40
 txtGame(0).Visible = True
@@ -2442,7 +2442,7 @@ Do
  b1 = PtInRect(r, p.x, p.y)
  If b1 Xor bo1 Then
   bo1 = b1
-  FrameRect bmG.hdc, r, IIf(b1, hbr2, hbr)
+  FrameRect bmG.hDC, r, IIf(b1, hbr2, hbr)
   Game_Paint
  End If
  'mouse in button2?
@@ -2451,7 +2451,7 @@ Do
  b2 = PtInRect(r, p.x, p.y)
  If b2 Xor bo2 Then
   bo2 = b2
-  FrameRect bmG.hdc, r, IIf(b2, hbr2, hbr)
+  FrameRect bmG.hDC, r, IIf(b2, hbr2, hbr)
   Game_Paint
  End If
  Sleep 20
@@ -2500,18 +2500,18 @@ hbr = CreateSolidBrush(vbBlack)
 hbr2 = CreateSolidBrush(&H80FF&)
 hbr3 = CreateSolidBrush(&H4080&)
 'show
-bmG_Back.PaintPicture bmG.hdc
-FillRect bmG.hdc, r, hbr
-FrameRect bmG.hdc, r, hbr2
+bmG_Back.PaintPicture bmG.hDC
+FillRect bmG.hDC, r, hbr
+FrameRect bmG.hDC, r, hbr2
 r2.Left = r.Left + 144
 r2.Top = r.Top + 32
 r2.Right = r.Left + 240
 r2.Bottom = r.Top + 48
-FrameRect bmG.hdc, r2, hbr2
-DrawTextB bmG.hdc, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG.hdc, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG.hdc, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+FrameRect bmG.hDC, r2, hbr2
+DrawTextB bmG.hDC, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hDC, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+DrawTextB bmG.hDC, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 Game_Paint
 With txtGame(4)
  .Move r.Left + 145, r.Top + 33, 94, 14
@@ -2528,36 +2528,36 @@ Do 'refresh continously :-3
  r2.Left = r.Left + 144
  r2.Right = r2.Left + 48
  b1 = PtInRect(r2, p.x, p.y)
- FrameRect bmG.hdc, r2, IIf(b1, hbr2, hbr)
+ FrameRect bmG.hDC, r2, IIf(b1, hbr2, hbr)
  'mouse in button2?
  r2.Left = r.Left + 200
  r2.Right = r2.Left + 48
  b2 = PtInRect(r2, p.x, p.y)
- FrameRect bmG.hdc, r2, IIf(b2, hbr2, hbr)
+ FrameRect bmG.hDC, r2, IIf(b2, hbr2, hbr)
  'listbox control :-3
  r2.Left = r.Left + 8
  r2.Top = r.Top + 24
  r2.Right = r2.Left + 128
  r2.Bottom = r2.Top + j * 16&
- FillRect bmG.hdc, r2, hbr
+ FillRect bmG.hDC, r2, hbr
  k = -1
  For i = 0 To j - 1
   r3.Left = r2.Left
   r3.Top = r2.Top + i * 16&
   r3.Right = r2.Right
   r3.Bottom = r3.Top + 16&
-  If i = cmbMode.ListIndex Then FillRect bmG.hdc, r3, hbr3
-  DrawTextB bmG.hdc, cmbMode.List(i), Me.Font, r2.Left, r3.Top, 128, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+  If i = cmbMode.ListIndex Then FillRect bmG.hDC, r3, hbr3
+  DrawTextB bmG.hDC, cmbMode.List(i), Me.Font, r2.Left, r3.Top, 128, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
   If PtInRect(r3, p.x, p.y) Then
    r3.Left = r3.Left + 2
    r3.Top = r3.Top + 1
    r3.Right = r3.Right - 2
    r3.Bottom = r3.Bottom - 1
-   FrameRect bmG.hdc, r3, hbr2
+   FrameRect bmG.hDC, r3, hbr2
    If GetAsyncKeyState(1) And &H8000 Then k = i
   End If
  Next i
- FrameRect bmG.hdc, r2, hbr2
+ FrameRect bmG.hDC, r2, hbr2
  If k >= 0 Then cmbMode.ListIndex = k
  'over
  Game_Paint
@@ -2622,9 +2622,9 @@ For j = 1 To 3
  y2 = y
  For i = 6 To 1 Step -1
   If i = 5 And j = 2 Then
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 8, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 8, x2, y2
   Else
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 1, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 1, x2, y2
   End If
   x2 = x2 - 32
   y2 = y2 + 5
@@ -2632,7 +2632,7 @@ For j = 1 To 3
  x = x + 10
  y = y + 16
 Next j
-pGameDrawBox bmG_Back.hdc, 1, 1, 454, 68
+pGameDrawBox bmG_Back.hDC, 1, 1, 454, 68
 '////////////////////////////////////////////'map 2
 x = 572
 y = 128
@@ -2641,13 +2641,13 @@ For j = 1 To 3
  y2 = y
  For i = 6 To 1 Step -1
   If i = 3 Or i = 4 Then
-   If j = 2 Then pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 7, x2, y2
+   If j = 2 Then pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 7, x2, y2
   ElseIf i = 1 And j = 1 Then
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 2, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 2, x2, y2
   ElseIf i = 6 And j = 1 Then
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 3, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 3, x2, y2
   Else
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 1, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 1, x2, y2
   End If
   x2 = x2 - 32
   y2 = y2 + 5
@@ -2663,11 +2663,11 @@ For j = 1 To 3
  y2 = y
  For i = 6 To 1 Step -1
   If i = 3 Or i = 4 Then
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 5, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 5, x2, y2
   ElseIf i = 5 And j = 2 Then
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 4, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 4, x2, y2
   Else
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 1, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 1, x2, y2
   End If
   x2 = x2 - 32
   y2 = y2 + 5
@@ -2675,8 +2675,8 @@ For j = 1 To 3
  x = x + 10
  y = y + 16
 Next j
-pGameDrawBox bmG_Back.hdc, 13, 1, 444, 244
-pGameDrawBox bmG_Back.hdc, 13, 1, 432, 281
+pGameDrawBox bmG_Back.hDC, 13, 1, 444, 244
+pGameDrawBox bmG_Back.hDC, 13, 1, 432, 281
 '////////////////////////////////////////////'map 4
 x = 572
 y = 320
@@ -2685,14 +2685,14 @@ For j = 1 To 3
  y2 = y
  For i = 6 To 1 Step -1
   If i = 4 And j = 3 Then
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 10, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 10, x2, y2
   ElseIf (i < 3 And j < 3) Or i > 4 Then
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 1, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 1, x2, y2
   Else
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Layer0, 9, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Layer0, 9, x2, y2
   End If
   If (i < 3 And j < 3) Or (i = 6 And j = 2) Then
-   pTheBitmapDraw3 bmG_Back.hdc, Ani_Misc, 6, x2, y2
+   pTheBitmapDraw3 bmG_Back.hDC, Ani_Misc, 6, x2, y2
   End If
   x2 = x2 - 32
   y2 = y2 + 5
@@ -2700,9 +2700,9 @@ For j = 1 To 3
  x = x + 10
  y = y + 16
 Next j
-pTheBitmapDraw3 bmG_Back.hdc, 4, 7, 523, 345
+pTheBitmapDraw3 bmG_Back.hDC, 4, 7, 523, 345
 '////////////////////////////////////////////
-s1 = String(2, Chr(&HA1A1&))
+'s1 = String(2, Chr(&HA1A1&))
 's = s1 + "“摇方块”是一款益智游戏，游戏的目标是控制方块落入每关最后的小洞。在默认关卡中共有33关。"
 's = s + "要移动方块，只需按下方向键。小心不要掉到边界以外——如果掉出去了，当前关卡就会重新开始。"
 's = s + vbCr + vbCr + s1 + "桥梁和开关在很多关卡中出现。当开关被方块按下时就会被激活；你并不需要一直呆在开关上面以保持开关被按下。"
@@ -2718,25 +2718,29 @@ s1 = String(2, Chr(&HA1A1&))
 's = s + "当方块完全处在冰上时就会滑动，一直到有部分离开冰或者撞墙。而墙作为一种障碍物，方块不能通过，但是可以斜着靠在上面，靠上去后仍可移动。"
 '////////
 's = Replace(Replace(objText.GetText("#INSTRUCTIONS#"), "\n", vbLf), "\t", s1)
-s = Replace(objText.GetText("#INSTRUCTIONS#"), vbTab, s1)
-'s = s + vbCr + vbCr + s1 + ""
-'s = s + vbCr + vbCr + s1 + ""
-DrawTextB bmG_Back.hdc, s, Me.Font, 8, 8, 400, 400, DT_EXPANDTABS Or DT_WORDBREAK, vbWhite, , True
-'////////////////////////////////////////////
-s = objText.GetText("VB6 version, author: acme_pjz")
-DrawTextB bmG_Back.hdc, s, Me.Font, 8, 408, 320, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-s = objText.GetText("Source code:")
-DrawTextB bmG_Back.hdc, s, Me.Font, 8, 424, 256, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG_Back.hdc, sSource1, Label1(15).Font, 100, 424, 230, 16, DT_VCENTER Or DT_SINGLELINE, &HFF8000, , True, False
-DrawTextB bmG_Back.hdc, sSource2, Label1(15).Font, 100, 440, 240, 16, DT_VCENTER Or DT_SINGLELINE, &HFF8000, , True, False
-s = objText.GetText("Original version:")
-DrawTextB bmG_Back.hdc, s, Me.Font, 8, 456, 96, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-DrawTextB bmG_Back.hdc, Label1(15).Caption, Label1(15).Font, 100, 456, 220, 16, DT_VCENTER Or DT_SINGLELINE, &HFF8000, , True, False
-DrawTextB bmG_Back.hdc, objText.GetText("OK"), Me.Font, 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+s = Replace(objText.GetText("#INSTRUCTIONS#"), vbTab, Space(8))
+With New CLogFont
+ .HighQuality = True
+ Set .LogFont = Me.Font
+ .DrawTextXP bmG_Back.hDC, s, 8, 8, 400, 400, DT_EXPANDTABS Or DT_WORDBREAK, vbWhite, , True
+ s = objText.GetText("VB6 version, author: ") + "acme_pjz"
+ .DrawTextXP bmG_Back.hDC, s, 8, 408, 320, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+ s = objText.GetText("Source code:")
+ .DrawTextXP bmG_Back.hDC, s, 8, 424, 256, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+ s = objText.GetText("Original version:")
+ .DrawTextXP bmG_Back.hDC, s, 8, 456, 96, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+ .DrawTextXP bmG_Back.hDC, objText.GetText("OK"), 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+ '///
+ .HighQuality = False
+ Set .LogFont = Label1(15).Font
+ .DrawTextXP bmG_Back.hDC, Label1(15).Caption, 100, 456, 220, 16, DT_VCENTER Or DT_SINGLELINE, &HFF8000, , True
+ .DrawTextXP bmG_Back.hDC, sSource1, 100, 424, 230, 16, DT_VCENTER Or DT_SINGLELINE, &HFF8000, , True
+ .DrawTextXP bmG_Back.hDC, sSource2, 100, 440, 240, 16, DT_VCENTER Or DT_SINGLELINE, &HFF8000, , True
+End With
 'animation
 For i = 0 To 255 Step 51
  bmG.Cls
- AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+ AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
  Game_Paint
  Sleep 10
  DoEvents
@@ -2744,7 +2748,7 @@ For i = 0 To 255 Step 51
 Next i
 'loop
 Do
- bmG_Back.PaintPicture bmG.hdc
+ bmG_Back.PaintPicture bmG.hDC
  'get cursor pos
  GetCursorPos p
  ScreenToClient Me.hwnd, p
@@ -2756,7 +2760,7 @@ Do
  r.Bottom = 440
  b1a = PtInRect(r, p.x, p.y)
  If b1a Then
-  DrawTextB bmG.hdc, sSource1, Label1(15).Font, 100, 424, 256, 16, DT_VCENTER Or DT_SINGLELINE, &H80FF&, , True, False
+  DrawTextB bmG.hDC, sSource1, Label1(15).Font, 100, 424, 256, 16, DT_VCENTER Or DT_SINGLELINE, &H80FF&, , True, False
  Else
   bc1a = False
  End If
@@ -2765,7 +2769,7 @@ Do
  r.Bottom = 456
  b1b = PtInRect(r, p.x, p.y)
  If b1b Then
-  DrawTextB bmG.hdc, sSource2, Label1(15).Font, 100, 440, 256, 16, DT_VCENTER Or DT_SINGLELINE, &H80FF&, , True, False
+  DrawTextB bmG.hDC, sSource2, Label1(15).Font, 100, 440, 256, 16, DT_VCENTER Or DT_SINGLELINE, &H80FF&, , True, False
  Else
   bc1b = False
  End If
@@ -2774,7 +2778,7 @@ Do
  r.Bottom = 472
  b1 = PtInRect(r, p.x, p.y)
  If b1 Then
-  DrawTextB bmG.hdc, Label1(15).Caption, Label1(15).Font, 100, 456, 256, 16, DT_VCENTER Or DT_SINGLELINE, &H80FF&, , True, False
+  DrawTextB bmG.hDC, Label1(15).Caption, Label1(15).Font, 100, 456, 256, 16, DT_VCENTER Or DT_SINGLELINE, &H80FF&, , True, False
  Else
   bc1 = False
  End If
@@ -2782,7 +2786,7 @@ Do
  r.Left = 568
  r.Right = 632
  b2 = PtInRect(r, p.x, p.y)
- If b2 Then FrameRect bmG.hdc, r, hbr
+ If b2 Then FrameRect bmG.hDC, r, hbr
  Game_Paint
  Sleep 20
  DoEvents
@@ -2817,7 +2821,7 @@ Loop
 'animation
 For i = 255 To 0 Step -51
  bmG.Cls
- AlphaBlendA bmG.hdc, 0, 0, 640, 480, bmG_Back.hdc, 0, 0, , , i, False
+ AlphaBlendA bmG.hDC, 0, 0, 640, 480, bmG_Back.hDC, 0, 0, , , i, False
  Game_Paint
  Sleep 10
  DoEvents
@@ -2831,22 +2835,22 @@ Private Sub Game_InitBack()
   bmG_Back.CreateFromPicture i0(7).Picture
   'draw text
   If GameIsRndMap Then
-   DrawTextB bmG_Back.hdc, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-   DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG_Back.hDC, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG_Back.hDC, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
    'button
-   bmImg(3).AlphaPaintPicture bmG_Back.hdc, 384, 9, 16, 16, 96, 32, , True
-   DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   bmImg(3).AlphaPaintPicture bmG_Back.hDC, 384, 9, 16, 16, 96, 32, , True
+   DrawTextB bmG_Back.hDC, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
   Else
-   DrawTextB bmG_Back.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+   DrawTextB bmG_Back.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
   End If
-  DrawTextB bmG_Back.hdc, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-  DrawTextB bmG_Back.hdc, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-  DrawTextB bmG_Back.hdc, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-  DrawTextB bmG_Back.hdc, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+  DrawTextB bmG_Back.hDC, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+  DrawTextB bmG_Back.hDC, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+  DrawTextB bmG_Back.hDC, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+  DrawTextB bmG_Back.hDC, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 End Sub
 
 Private Sub Game_Paint()
-bmG.PaintPicture p0(1).hdc
+bmG.PaintPicture p0(1).hDC
 End Sub
 
 Private Sub Game_InitMenu()
@@ -2906,7 +2910,7 @@ End If
 GameLev = 1
 End Sub
 
-Private Sub Game_DrawLayer1(ByVal hdc As Long, Optional ByVal DrawBox As Boolean = True, Optional ByVal DrawBoxShadow As Boolean, Optional ByVal Index As Long, Optional ByVal Index2 As Long, Optional ByVal BoxDeltaY As Long, Optional ByVal BoxAlpha As Long = 255, Optional ByVal WithLayer0 As Boolean, Optional ByVal BoxDeltaX As Long, Optional ByVal NoZDepth As Boolean)
+Private Sub Game_DrawLayer1(ByVal hDC As Long, Optional ByVal DrawBox As Boolean = True, Optional ByVal DrawBoxShadow As Boolean, Optional ByVal Index As Long, Optional ByVal Index2 As Long, Optional ByVal BoxDeltaY As Long, Optional ByVal BoxAlpha As Long = 255, Optional ByVal WithLayer0 As Boolean, Optional ByVal BoxDeltaX As Long, Optional ByVal NoZDepth As Boolean)
 Dim i As Long, j As Long
 Dim x As Long, y As Long, x2 As Long, y2 As Long, dy As Long
 Dim FS As Long '1=for j,i 2=for i,j
@@ -2933,9 +2937,9 @@ If DrawBox And (BoxDeltaY > 32 Or GameX > GameW Or GameY < 1) Then
  x = GameLayer0SX + (GameX - 1) * 32 + (GameY - 1) * 10 + BoxDeltaX
  y = GameLayer0SY - (GameX - 1) * 5 + (GameY - 1) * 16 + dy
  If DrawBoxShadow Then
-  pGameDrawBox hdc, Index, Index2, x, y, BoxAlpha
+  pGameDrawBox hDC, Index, Index2, x, y, BoxAlpha
  Else
-  pTheBitmapDraw3 hdc, Index, Index2, x, y, BoxAlpha
+  pTheBitmapDraw3 hDC, Index, Index2, x, y, BoxAlpha
  End If
 End If
 'draw
@@ -2949,25 +2953,25 @@ Case 1
   For i = GameW To 1 Step -1
    x2 = x2 - 32
    y2 = y2 + 5
-   If WithLayer0 Then pTheBitmapDraw3 hdc, Ani_Layer0, GameD(i, j), x2, y2
+   If WithLayer0 Then pTheBitmapDraw3 hDC, Ani_Layer0, GameD(i, j), x2, y2
    Select Case GameD(i, j)
    Case 11
-    pTheBitmapDraw3 hdc, Ani_Misc, 6, x2, y2
+    pTheBitmapDraw3 hDC, Ani_Misc, 6, x2, y2
    End Select
    'draw box?
    If DrawBox And GameX = i And GameY = j And bx Then
     If DrawBoxShadow Then
-     pGameDrawBox hdc, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha
+     pGameDrawBox hDC, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha
     Else
-     pTheBitmapDraw3 hdc, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha
+     pTheBitmapDraw3 hDC, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha
     End If
    End If
    'draw box 2?
    If DrawBox And GameX2 = i And GameY2 = j And GameS = 3 Then
     If DrawBoxShadow Then
-     pGameDrawBox hdc, 13, 1, x2, y2, BoxAlpha
+     pGameDrawBox hDC, 13, 1, x2, y2, BoxAlpha
     Else
-     pTheBitmapDraw3 hdc, 13, 1, x2, y2, BoxAlpha
+     pTheBitmapDraw3 hDC, 13, 1, x2, y2, BoxAlpha
     End If
    End If
   Next i
@@ -2983,25 +2987,25 @@ Case 2
   x2 = x
   y2 = y
   For j = 1 To GameH
-   If WithLayer0 Then pTheBitmapDraw3 hdc, Ani_Layer0, GameD(i, j), x2, y2
+   If WithLayer0 Then pTheBitmapDraw3 hDC, Ani_Layer0, GameD(i, j), x2, y2
    Select Case GameD(i, j)
    Case 11
-    pTheBitmapDraw3 hdc, Ani_Misc, 6, x2, y2
+    pTheBitmapDraw3 hDC, Ani_Misc, 6, x2, y2
    End Select
    'draw box?
    If DrawBox And GameX = i And GameY = j And bx Then
     If DrawBoxShadow Then
-     pGameDrawBox hdc, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha
+     pGameDrawBox hDC, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha
     Else
-     pTheBitmapDraw3 hdc, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha
+     pTheBitmapDraw3 hDC, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha
     End If
    End If
    'draw box 2?
    If DrawBox And GameX2 = i And GameY2 = j And GameS = 3 Then
     If DrawBoxShadow Then
-     pGameDrawBox hdc, 13, 1, x2, y2, BoxAlpha
+     pGameDrawBox hDC, 13, 1, x2, y2, BoxAlpha
     Else
-     pTheBitmapDraw3 hdc, 13, 1, x2, y2, BoxAlpha
+     pTheBitmapDraw3 hDC, 13, 1, x2, y2, BoxAlpha
     End If
    End If
    x2 = x2 + 10
@@ -3014,47 +3018,47 @@ If DrawBox And (BoxDeltaY < 0 Or GameX < 1 Or GameY > GameH) Then
  x = GameLayer0SX + (GameX - 1) * 32 + (GameY - 1) * 10 + BoxDeltaX
  y = GameLayer0SY - (GameX - 1) * 5 + (GameY - 1) * 16 + dy
  If DrawBoxShadow Then
-  pGameDrawBox hdc, Index, Index2, x, y, BoxAlpha
+  pGameDrawBox hDC, Index, Index2, x, y, BoxAlpha
  Else
-  pTheBitmapDraw3 hdc, Index, Index2, x, y, BoxAlpha
+  pTheBitmapDraw3 hDC, Index, Index2, x, y, BoxAlpha
  End If
 End If
 End Sub
 
-Private Sub pTheBitmapDraw2(ByVal hdc As Long, ByVal Index As Long, ByVal x As Long, ByVal y As Long, Optional ByVal Alpha As Byte = 255)
+Private Sub pTheBitmapDraw2(ByVal hDC As Long, ByVal Index As Long, ByVal x As Long, ByVal y As Long, Optional ByVal Alpha As Byte = 255)
 With bmps(Index)
  If .ImgIndex >= 0 Then
-  bmImg(.ImgIndex).AlphaPaintPicture hdc, x - .dX, y - .dy, .w, .h, .x, .y, Alpha, True
+  bmImg(.ImgIndex).AlphaPaintPicture hDC, x - .dX, y - .dy, .w, .h, .x, .y, Alpha, True
  End If
 End With
 End Sub
 
-Private Sub pTheBitmapDraw3(ByVal hdc As Long, ByVal Index As Long, ByVal Index2 As Long, ByVal x As Long, ByVal y As Long, Optional ByVal Alpha As Byte = 255)
+Private Sub pTheBitmapDraw3(ByVal hDC As Long, ByVal Index As Long, ByVal Index2 As Long, ByVal x As Long, ByVal y As Long, Optional ByVal Alpha As Byte = 255)
 With Anis(Index).bm(Index2)
  If .ImgIndex >= 0 Then
-  bmImg(.ImgIndex).AlphaPaintPicture hdc, x - .dX, y - .dy, .w, .h, .x, .y, Alpha, True
+  bmImg(.ImgIndex).AlphaPaintPicture hDC, x - .dX, y - .dy, .w, .h, .x, .y, Alpha, True
  End If
 End With
 End Sub
 
-Private Sub pGameDrawBox(ByVal hdc As Long, ByVal Index As Long, ByVal Index2 As Long, ByVal x As Long, ByVal y As Long, Optional ByVal Alpha As Byte = 255)
+Private Sub pGameDrawBox(ByVal hDC As Long, ByVal Index As Long, ByVal Index2 As Long, ByVal x As Long, ByVal y As Long, Optional ByVal Alpha As Byte = 255)
 With Anis(Index + 30)
  If Index2 <= .Count Then
   With .bm(Index2)
    If .ImgIndex >= 0 Then
-    bmImg(.ImgIndex).AlphaPaintPicture hdc, x - .dX, y - .dy, .w, .h, .x, .y, Alpha \ 2, True
+    bmImg(.ImgIndex).AlphaPaintPicture hDC, x - .dX, y - .dy, .w, .h, .x, .y, Alpha \ 2, True
    End If
   End With
  End If
 End With
 With Anis(Index).bm(Index2)
  If .ImgIndex >= 0 Then
-  bmImg(.ImgIndex).AlphaPaintPicture hdc, x - .dX, y - .dy, .w, .h, .x, .y, Alpha, True
+  bmImg(.ImgIndex).AlphaPaintPicture hDC, x - .dX, y - .dy, .w, .h, .x, .y, Alpha, True
  End If
 End With
 End Sub
 
-Private Sub pGameDrawLayer0(ByVal hdc As Long, d() As Byte, ByVal datw As Long, ByVal dath As Long, ByVal StartX As Long, ByVal StartY As Long)
+Private Sub pGameDrawLayer0(ByVal hDC As Long, d() As Byte, ByVal datw As Long, ByVal dath As Long, ByVal StartX As Long, ByVal StartY As Long)
 Dim i As Long, j As Long, x As Long, y As Long
 StartX = StartX + datw * 32
 StartY = StartY - datw * 5
@@ -3064,7 +3068,7 @@ For i = datw To 1 Step -1
  x = StartX
  y = StartY
  For j = 1 To dath
-  pTheBitmapDraw3 hdc, Ani_Layer0, d(i, j), x, y
+  pTheBitmapDraw3 hDC, Ani_Layer0, d(i, j), x, y
   x = x + 10
   y = y + 16
  Next j
@@ -3684,6 +3688,8 @@ End Sub
 
 Private Sub Form_Initialize()
 InitCommonControls
+'fix a bug that can't compile on non-CJK windows
+TheSignature = ChrW(25671) + ChrW(26041) + ChrW(22359) + "XP"
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
@@ -4502,12 +4508,12 @@ If p0(1).Visible Then 'game!
  r.Bottom = r.Top + h
  hbr = CreateSolidBrush(vbBlack)
  hbr2 = CreateSolidBrush(&H80FF&)
- bmG_Back.PaintPicture bmG.hdc
- FillRect bmG.hdc, r, hbr
- FrameRect bmG.hdc, r, hbr2
+ bmG_Back.PaintPicture bmG.hDC
+ FillRect bmG.hDC, r, hbr
+ FrameRect bmG.hDC, r, hbr2
  r.Right = r.Left + (nNodeNow * w) \ nNodeCount
- FillRect bmG.hdc, r, hbr2
- DrawTextB bmG.hdc, Label1(10).Caption, Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+ FillRect bmG.hDC, r, hbr2
+ DrawTextB bmG.hDC, Label1(10).Caption, Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
  Game_Paint
  DeleteObject hbr
  DeleteObject hbr2
@@ -4533,12 +4539,12 @@ r.Top = 240 - h \ 2
 r.Bottom = r.Top + h
 hbr = CreateSolidBrush(vbBlack)
 hbr2 = CreateSolidBrush(&H80FF&)
-bmG_Back.PaintPicture bmG.hdc
-FillRect bmG.hdc, r, hbr
-FrameRect bmG.hdc, r, hbr2
+bmG_Back.PaintPicture bmG.hDC
+FillRect bmG.hDC, r, hbr
+FrameRect bmG.hDC, r, hbr2
 r.Right = r.Left + (nNodeNow * w) \ nNodeCount
-FillRect bmG.hdc, r, hbr2
-DrawTextB bmG.hdc, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+FillRect bmG.hDC, r, hbr2
+DrawTextB bmG.hDC, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 Game_Paint
 DeleteObject hbr
 DeleteObject hbr2
@@ -4730,7 +4736,7 @@ End If
 End Sub
 
 Private Sub pEdit_Paint()
-bmEdit.PaintPicture pEdit.hdc, 0, 0, pEdit.ScaleWidth, pEdit.ScaleHeight, sEdit.Value(efsHorizontal), sEdit.Value(efsVertical)
+bmEdit.PaintPicture pEdit.hDC, 0, 0, pEdit.ScaleWidth, pEdit.ScaleHeight, sEdit.Value(efsHorizontal), sEdit.Value(efsVertical)
 End Sub
 
 Private Sub pSolution_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
@@ -4791,7 +4797,7 @@ End With
 End Sub
 
 Private Sub pSolution_Paint()
-bmEdit.PaintPicture pSolution.hdc
+bmEdit.PaintPicture pSolution.hDC
 End Sub
 
 Private Sub sEdit_Change(eBar As EFSScrollBarConstants)
@@ -4898,12 +4904,12 @@ With Lev(lv)
  'map
  For i = 1 To .Width
   For j = 1 To .Height
-   bmImg(2).PaintPicture bmEdit.hdc, i * 24 - 24, j * 24 - 24, 24, 24, .Data(i, j) * 24, 0
+   bmImg(2).PaintPicture bmEdit.hDC, i * 24 - 24, j * 24 - 24, 24, 24, .Data(i, j) * 24, 0
   Next j
  Next i
  'selected
  If eSX > 0 And eSY > 0 Then
-  bmImg(3).AlphaPaintPicture bmEdit.hdc, eSX * 24 - 24, eSY * 24 - 24, 24, 24, 132, 0, , True
+  bmImg(3).AlphaPaintPicture bmEdit.hDC, eSX * 24 - 24, eSY * 24 - 24, 24, 24, 132, 0, , True
   Select Case .Data(eSX, eSY)
   Case 2, 3
    j = .Data2(eSX, eSY)
@@ -4912,17 +4918,17 @@ With Lev(lv)
      x = .SwitchBridgeX(j, i)
      y = .SwitchBridgeY(j, i)
      If x > 0 And y > 0 Then
-      bmImg(3).AlphaPaintPicture bmEdit.hdc, x * 24 - 24, y * 24 - 24, 24, 24, 156 + .SwitchBridgeBehavior(j, i) * 24, 0, 64, False
+      bmImg(3).AlphaPaintPicture bmEdit.hDC, x * 24 - 24, y * 24 - 24, 24, 24, 156 + .SwitchBridgeBehavior(j, i) * 24, 0, 64, False
      End If
     Next i
    End If
   Case 4  'trans??
    .GetTransportPosition eSX, eSY, i, j, x, y
    If i > 0 And j > 0 Then
-    DrawTextB bmEdit.hdc, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+    DrawTextB bmEdit.hDC, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
    End If
    If x > 0 And y > 0 Then
-    DrawTextB bmEdit.hdc, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+    DrawTextB bmEdit.hDC, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
    End If
   End Select
  End If
@@ -4934,7 +4940,7 @@ With Lev(lv)
    x = .SwitchBridgeX(i, j)
    y = .SwitchBridgeY(i, j)
    If x > 0 And y > 0 Then
-    bmImg(3).AlphaPaintPicture bmEdit.hdc, x * 24 - 24, y * 24 - 24, 24, 24, 156 + .SwitchBridgeBehavior(i, j) * 24, 0, 64, False
+    bmImg(3).AlphaPaintPicture bmEdit.hDC, x * 24 - 24, y * 24 - 24, 24, 24, 156 + .SwitchBridgeBehavior(i, j) * 24, 0, 64, False
    End If
   End If
  End If
@@ -4943,7 +4949,7 @@ With Lev(lv)
  j = .StartY
  If i > 0 And j > 0 Then
   Label1(13).Caption = CStr(i) + "," + CStr(j)
-  DrawTextB bmEdit.hdc, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+  DrawTextB bmEdit.hDC, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
  End If
 End With
 pEdit_Paint
@@ -4963,7 +4969,7 @@ With Lev(lv)
  For i = 1 To .Width
   For j = 1 To .Height
    If d(i, j) = 6 Then d(i, j) = 0
-   bmImg(2).PaintPicture bmEdit.hdc, i * 24 - 24, j * 24 - 24, 24, 24, d(i, j) * 24, 0
+   bmImg(2).PaintPicture bmEdit.hDC, i * 24 - 24, j * 24 - 24, 24, 24, d(i, j) * 24, 0
   Next j
  Next i
  'distance
@@ -4974,7 +4980,7 @@ With Lev(lv)
     If x > 0 Then
      y = .SolveItGetDistance(x)
      If y < &H7FFFFFFF Then
-      DrawTextB bmEdit.hdc, CStr(y), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+      DrawTextB bmEdit.hDC, CStr(y), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
      End If
     End If
    ElseIf optSt(1).Value Then 'h
@@ -4982,7 +4988,7 @@ With Lev(lv)
     If x > 0 Then
      y = .SolveItGetDistance(x)
      If y < &H7FFFFFFF Then
-      DrawTextB bmEdit.hdc, CStr(y), Me.Font, i * 24 - 36, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+      DrawTextB bmEdit.hDC, CStr(y), Me.Font, i * 24 - 36, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
      End If
     End If
    ElseIf optSt(2).Value Then 'v
@@ -4990,7 +4996,7 @@ With Lev(lv)
     If x > 0 Then
      y = .SolveItGetDistance(x)
      If y < &H7FFFFFFF Then
-      DrawTextB bmEdit.hdc, CStr(y), Me.Font, i * 24 - 48, j * 24 - 12, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+      DrawTextB bmEdit.hDC, CStr(y), Me.Font, i * 24 - 48, j * 24 - 12, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
      End If
     End If
    ElseIf optSt(3).Value Then 'single
@@ -4999,7 +5005,7 @@ With Lev(lv)
      If x > 0 Then
       y = .SolveItGetDistance(x)
       If y < &H7FFFFFFF Then
-       DrawTextB bmEdit.hdc, CStr(y), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+       DrawTextB bmEdit.hDC, CStr(y), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
       End If
      End If
     End If
@@ -5010,20 +5016,20 @@ With Lev(lv)
  x = 0
  If sSX > 0 And sSY > 0 Then
   If optSt(1).Value Then
-   bmImg(3).AlphaPaintPicture bmEdit.hdc, sSX * 24 - 24, sSY * 24 - 24, 12, 24, 132, 0, , True
-   bmImg(3).AlphaPaintPicture bmEdit.hdc, sSX * 24 + 12, sSY * 24 - 24, 12, 24, 144, 0, , True
+   bmImg(3).AlphaPaintPicture bmEdit.hDC, sSX * 24 - 24, sSY * 24 - 24, 12, 24, 132, 0, , True
+   bmImg(3).AlphaPaintPicture bmEdit.hDC, sSX * 24 + 12, sSY * 24 - 24, 12, 24, 144, 0, , True
    x = .SolveItGetNodeIndex(lv2, 1, sSX, sSY)
   ElseIf optSt(2).Value Then
-   bmImg(3).AlphaPaintPicture bmEdit.hdc, sSX * 24 - 24, sSY * 24 - 24, 24, 12, 132, 0, , True
-   bmImg(3).AlphaPaintPicture bmEdit.hdc, sSX * 24 - 24, sSY * 24 + 12, 24, 12, 132, 12, , True
+   bmImg(3).AlphaPaintPicture bmEdit.hDC, sSX * 24 - 24, sSY * 24 - 24, 24, 12, 132, 0, , True
+   bmImg(3).AlphaPaintPicture bmEdit.hDC, sSX * 24 - 24, sSY * 24 + 12, 24, 12, 132, 12, , True
    x = .SolveItGetNodeIndex(lv2, 2, sSX, sSY)
   Else
-   bmImg(3).AlphaPaintPicture bmEdit.hdc, sSX * 24 - 24, sSY * 24 - 24, 24, 24, 132, 0, , True
+   bmImg(3).AlphaPaintPicture bmEdit.hDC, sSX * 24 - 24, sSY * 24 - 24, 24, 24, 132, 0, , True
    If optSt(0).Value Then x = .SolveItGetNodeIndex(lv2, 0, sSX, sSY)
   End If
  End If
  If sSX2 > 0 And sSY2 > 0 And optSt(3).Value Then
-  bmImg(3).AlphaPaintPicture bmEdit.hdc, sSX2 * 24 - 24, sSY2 * 24 - 24, 24, 24, 132, 0, , True
+  bmImg(3).AlphaPaintPicture bmEdit.hDC, sSX2 * 24 - 24, sSY2 * 24 - 24, 24, 24, 132, 0, , True
   If sSX > 0 And sSY > 0 Then x = .SolveItGetNodeIndex(lv2, 3, sSX, sSY, sSX2, sSY2)
  End If
  'show solution
@@ -5031,17 +5037,17 @@ With Lev(lv)
   y = .SolveItGetDistance(x)
   If y < &H7FFFFFFF Then
    s = .SolveItGetSolution(x, VarPtr(d(1, 1)))
-   s = Replace(s, "u", "↑")
-   s = Replace(s, "d", "↓")
-   s = Replace(s, "l", "←")
-   s = Replace(s, "r", "→")
-   s = Replace(s, "s", "◇")
+   s = Replace(s, "u", objText.GetText("U")) '"↑"
+   s = Replace(s, "d", objText.GetText("D")) '"↓"
+   s = Replace(s, "l", objText.GetText("L")) '"←"
+   s = Replace(s, "r", objText.GetText("R")) '"→"
+   s = Replace(s, "s", objText.GetText("S")) '"◇"
    s = s + vbCrLf + objText.GetText("Moves:") + CStr(y)
    txtGame(3).Text = s
    For i = 1 To .Width
     For j = 1 To .Height
      If d(i, j) Then
-      bmImg(3).AlphaPaintPicture bmEdit.hdc, i * 24 - 24, j * 24 - 24, 24, 24, 180, 0, 64, False
+      bmImg(3).AlphaPaintPicture bmEdit.hDC, i * 24 - 24, j * 24 - 24, 24, 24, 180, 0, 64, False
      End If
     Next j
    Next i

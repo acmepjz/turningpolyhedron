@@ -2,57 +2,55 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
-#. Game_InitMenu objText.GetText("Return to game"), objText.GetText("Restart"), objText.GetText("Pick a level"), _
-msgid "Return to game"
+#.    DrawTextB bmG_Lv.hDC, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hDC, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#. GameMenuCaption(5) = objText.GetText("Random level")
+msgid "Random Level"
 msgstr ""
 
-#. Game_InitMenu objText.GetText("Return to game"), objText.GetText("Restart"), objText.GetText("Pick a level"), _
-msgid "Restart"
-msgstr ""
-
-#. Game_InitMenu objText.GetText("Return to game"), objText.GetText("Restart"), objText.GetText("Pick a level"), _
-msgid "Pick a level"
-msgstr ""
-
-#. objText.GetText("Open level file"), objText.GetText("Random level"), objText.GetText("Input solution"), _
-msgid "Open level file"
-msgstr ""
-
-#. objText.GetText("Open level file"), objText.GetText("Random level"), objText.GetText("Input solution"), _
-#.    DrawTextB bmG_Lv.hdc, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
-msgid "Random level"
-msgstr ""
-
-#. objText.GetText("Open level file"), objText.GetText("Random level"), objText.GetText("Input solution"), _
-msgid "Input solution"
-msgstr ""
-
-#. objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
-msgid "Auto solver"
-msgstr ""
-
-#. objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
-#. cmd0(2).Caption = objText.GetText("Game instructions")
-msgid "Game instructions"
-msgstr ""
-
-#. objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
-msgid "Main menu"
-msgstr ""
-
-#. objText.GetText("Auto solver"), objText.GetText("Game instructions"), objText.GetText("Main menu"), objText.GetText("Exit game")
-msgid "Exit game"
-msgstr ""
-
-#.    DrawTextB bmG_Lv.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Lv.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Level %d"
 msgstr ""
 
 #.     MsgBox objText.GetText("Unknown error!")
 #.     MsgBox objText.GetText("Unknown error!")
 msgid "Unknown error!"
+msgstr ""
+
+#.      Case "u", ChrW(8593), LCase(objText.GetText("U"))
+#.        Case 1:      s = objText.GetText("U") '"↑"
+#.       s = Replace(GameDemoS, "u", objText.GetText("U")) '"↑"
+#.    s = Replace(s, "u", objText.GetText("U")) '"↑"
+msgid "U"
+msgstr ""
+
+#.      Case "d", ChrW(8595), LCase(objText.GetText("D"))
+#.        Case 2:      s = objText.GetText("D") '"↓"
+#.       s = Replace(s, "d", objText.GetText("D")) '"↓"
+#.    s = Replace(s, "d", objText.GetText("D")) '"↓"
+msgid "D"
+msgstr ""
+
+#.      Case "l", ChrW(8592), LCase(objText.GetText("L"))
+#.        Case 3:      s = objText.GetText("L") '"←"
+#.       s = Replace(s, "l", objText.GetText("L")) '"←"
+#.    s = Replace(s, "l", objText.GetText("L")) '"←"
+msgid "L"
+msgstr ""
+
+#.      Case "r", ChrW(8594), LCase(objText.GetText("R"))
+#.        Case 4:      s = objText.GetText("R") '"→"
+#.       s = Replace(s, "r", objText.GetText("R")) '"→"
+#.    s = Replace(s, "r", objText.GetText("R")) '"→"
+msgid "R"
+msgstr ""
+
+#.      Case " ", "s", ChrW(9671), ChrW(9633), "_", LCase(objText.GetText("S"))
+#.       sSolution = sSolution + objText.GetText("S") '"◇"
+#.       s = Replace(s, "s", objText.GetText("S")) '"◇"
+#.    s = Replace(s, "s", objText.GetText("S")) '"◇"
+msgid "S"
 msgstr ""
 
 #.       MsgBox objText.GetText("Map error!")
@@ -83,67 +81,104 @@ msgstr ""
 msgid "Error!"
 msgstr ""
 
-#. DrawTextB bmG.hdc, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Demo"
 msgstr ""
 
-#. DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#. DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Cancel"
 msgstr ""
 
-#. DrawTextB bmG.hdc, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Generate"
 msgstr ""
 
-#. DrawTextB bmG.hdc, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Random map mode:"
 msgstr ""
 
-#. DrawTextB bmG.hdc, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#. DrawTextB bmG.hDC, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hDC, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Seed:"
 msgstr ""
 
 #. 's = Replace(Replace(objText.GetText("#INSTRUCTIONS#"), "\n", vbLf), "\t", s1)
-#. s = Replace(objText.GetText("#INSTRUCTIONS#"), vbTab, s1)
+#. s = Replace(objText.GetText("#INSTRUCTIONS#"), vbTab, Space(8))
 msgid "#INSTRUCTIONS#"
 msgstr ""
 
-#. s = objText.GetText("VB6 version, author: acme_pjz")
-msgid "VB6 version, author: acme_pjz"
+#.  s = objText.GetText("VB6 version, author: ") + "acme_pjz"
+msgid "VB6 version, author: "
 msgstr ""
 
-#. s = objText.GetText("Source code:")
+#.  s = objText.GetText("Source code:")
 msgid "Source code:"
 msgstr ""
 
-#. s = objText.GetText("Original version:")
+#.  s = objText.GetText("Original version:")
 msgid "Original version:"
 msgstr ""
 
-#. DrawTextB bmG_Back.hdc, objText.GetText("OK"), Me.Font, 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.  .DrawTextXP bmG_Back.hDC, objText.GetText("OK"), 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "OK"
 msgstr ""
 
-#.    DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Back.hDC, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Copy"
 msgstr ""
 
-#.   DrawTextB bmG_Back.hdc, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hDC, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Moves"
 msgstr ""
 
-#.   DrawTextB bmG_Back.hdc, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hDC, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Time used"
 msgstr ""
 
-#.   DrawTextB bmG_Back.hdc, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hDC, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Retries"
 msgstr ""
 
-#.   DrawTextB bmG_Back.hdc, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hDC, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Menu"
+msgstr ""
+
+#. GameMenuCaption(1) = objText.GetText("Return to game")
+msgid "Return to game"
+msgstr ""
+
+#. GameMenuCaption(2) = objText.GetText("Restart")
+msgid "Restart"
+msgstr ""
+
+#. GameMenuCaption(3) = objText.GetText("Pick a level")
+msgid "Pick a level"
+msgstr ""
+
+#. GameMenuCaption(4) = objText.GetText("Open level file")
+msgid "Open level file"
+msgstr ""
+
+#. GameMenuCaption(6) = objText.GetText("Input solution")
+msgid "Input solution"
+msgstr ""
+
+#. GameMenuCaption(7) = objText.GetText("Auto solver")
+msgid "Auto solver"
+msgstr ""
+
+#. GameMenuCaption(8) = objText.GetText("Game instructions")
+#. cmd0(2).Caption = objText.GetText("Game instructions")
+msgid "Game instructions"
+msgstr ""
+
+#. GameMenuCaption(9) = objText.GetText("Main menu")
+msgid "Main menu"
+msgstr ""
+
+#. GameMenuCaption(10) = objText.GetText("Exit game")
+msgid "Exit game"
 msgstr ""
 
 #.  Me.Tag = Replace(objText.GetText(" of %d ("), "%d", CStr(LevCount)) + Mid(fn, InStrRev(fn, "\") + 1) + ")"
@@ -349,12 +384,12 @@ msgid "Edit"
 msgstr ""
 
 #. Label1(2).Caption = objText.GetText("Pos2")
-#.     DrawTextB bmEdit.hdc, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.     DrawTextB bmEdit.hDC, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Pos2"
 msgstr ""
 
 #. Label1(1).Caption = objText.GetText("Pos1")
-#.     DrawTextB bmEdit.hdc, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.     DrawTextB bmEdit.hDC, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Pos1"
 msgstr ""
 
@@ -451,7 +486,7 @@ msgstr ""
 msgid "Flip &Vertically"
 msgstr ""
 
-#. DrawTextB bmG.hdc, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hDC, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Generating..."
 msgstr ""
 
@@ -459,7 +494,7 @@ msgstr ""
 msgid "(None)"
 msgstr ""
 
-#.   DrawTextB bmEdit.hdc, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.   DrawTextB bmEdit.hDC, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Start"
 msgstr ""
 

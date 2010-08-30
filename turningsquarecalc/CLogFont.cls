@@ -108,22 +108,33 @@ Private Declare Function GetVersion Lib "kernel32.dll" () As Long
 
 Private Declare Function CreateFontIndirect Lib "gdi32" Alias "CreateFontIndirectA" (lpLogFont As LogFont) As Long
 Private Declare Function DeleteObject Lib "gdi32" (ByVal hObject As Long) As Long
-Private Declare Function GetDeviceCaps Lib "gdi32" (ByVal hdc As Long, ByVal nIndex As Long) As Long
+Private Declare Function GetDeviceCaps Lib "gdi32" (ByVal hDC As Long, ByVal nIndex As Long) As Long
 
 Private Const LOGPIXELSY = 90        '  Logical pixels/inch in Y
 
 Private Declare Function GetDesktopWindow Lib "user32" () As Long
 Private Declare Function GetDC Lib "user32" (ByVal hwnd As Long) As Long
-Private Declare Function ReleaseDC Lib "user32" (ByVal hwnd As Long, ByVal hdc As Long) As Long
+Private Declare Function ReleaseDC Lib "user32" (ByVal hwnd As Long, ByVal hDC As Long) As Long
 
-Private Declare Function SetBkMode Lib "gdi32.dll" (ByVal hdc As Long, ByVal nBkMode As Long) As Long
-Private Declare Function SetBkColor Lib "gdi32.dll" (ByVal hdc As Long, ByVal crColor As Long) As Long
-Private Declare Function SetTextColor Lib "gdi32.dll" (ByVal hdc As Long, ByVal crColor As Long) As Long
-Private Declare Function DrawText Lib "user32.dll" Alias "DrawTextA" (ByVal hdc As Long, ByVal lpStr As String, ByVal nCount As Long, ByRef lpRect As RECT, ByVal wFormat As Long) As Long
-Private Declare Function DrawTextW Lib "user32.dll" (ByVal hdc As Long, ByRef lpStr As Any, ByVal nCount As Long, ByRef lpRect As RECT, ByVal wFormat As Long) As Long
-Private Declare Function TextOut Lib "gdi32.dll" Alias "TextOutA" (ByVal hdc As Long, ByVal x As Long, ByVal y As Long, ByVal lpString As String, ByVal nCount As Long) As Long
-Private Declare Function TextOutW Lib "gdi32.dll" (ByVal hdc As Long, ByVal x As Long, ByVal y As Long, ByRef lpString As Any, ByVal nCount As Long) As Long
-Private Declare Function SelectObject Lib "gdi32.dll" (ByVal hdc As Long, ByVal hObject As Long) As Long
+Private Declare Function SetBkMode Lib "gdi32.dll" (ByVal hDC As Long, ByVal nBkMode As Long) As Long
+Private Declare Function SetBkColor Lib "gdi32.dll" (ByVal hDC As Long, ByVal crColor As Long) As Long
+Private Declare Function SetTextColor Lib "gdi32.dll" (ByVal hDC As Long, ByVal crColor As Long) As Long
+Private Declare Function DrawText Lib "user32.dll" Alias "DrawTextA" (ByVal hDC As Long, ByVal lpStr As String, ByVal nCount As Long, ByRef lpRect As RECT, ByVal wFormat As Long) As Long
+Private Declare Function DrawTextW Lib "user32.dll" (ByVal hDC As Long, ByRef lpStr As Any, ByVal nCount As Long, ByRef lpRect As RECT, ByVal wFormat As Long) As Long
+Private Declare Function TextOut Lib "gdi32.dll" Alias "TextOutA" (ByVal hDC As Long, ByVal x As Long, ByVal y As Long, ByVal lpString As String, ByVal nCount As Long) As Long
+Private Declare Function TextOutW Lib "gdi32.dll" (ByVal hDC As Long, ByVal x As Long, ByVal y As Long, ByRef lpString As Any, ByVal nCount As Long) As Long
+Private Declare Function SelectObject Lib "gdi32.dll" (ByVal hDC As Long, ByVal hObject As Long) As Long
+
+Private Declare Function DrawTextEx Lib "user32.dll" Alias "DrawTextExA" (ByVal hDC As Long, ByVal lpStr As String, ByVal nCount As Long, ByRef lpRect As RECT, ByVal wFormat As Long, ByRef lpDrawTextParams As DRAWTEXTPARAMS) As Long
+Private Declare Function DrawTextExW Lib "user32.dll" (ByVal hDC As Long, ByRef lpStr As Any, ByVal nCount As Long, ByRef lpRect As RECT, ByVal wFormat As Long, ByRef lpDrawTextParams As DRAWTEXTPARAMS) As Long
+
+Private Type DRAWTEXTPARAMS
+  cbSize As Long
+  iTabLength As Long
+  iLeftMargin As Long
+  iRightMargin As Long
+  uiLengthDrawn As Long
+End Type
 
 '??
 Private Declare Function LenA Lib "kernel32.dll" Alias "lstrlenA" (ByVal lpString As String) As Long
@@ -267,17 +278,17 @@ End Property
 Private Function CreateLogFont(ByVal HighQuality As Boolean) As Long
    Dim lF As LogFont
    Dim hwnd As Long
-   Dim hdc As Long
+   Dim hDC As Long
    
    hwnd = GetDesktopWindow
-   hdc = GetDC(hwnd)
+   hDC = GetDC(hwnd)
    
    With lF
       '
       ' All but two properties are very straight-forward,
       ' even with rotation, and map directly.
       '
-      .lfHeight = -(m_Font.Size * GetDeviceCaps(hdc, LOGPIXELSY)) / 72
+      .lfHeight = -(m_Font.Size * GetDeviceCaps(hDC, LOGPIXELSY)) / 72
       .lfWidth = 0
       .lfEscapement = m_Rotation * 10
       .lfOrientation = .lfEscapement
@@ -322,46 +333,79 @@ Private Function CreateLogFont(ByVal HighQuality As Boolean) As Long
    End With
    
    CreateLogFont = CreateFontIndirect(lF)
-   Call ReleaseDC(hwnd, hdc)
+   Call ReleaseDC(hwnd, hDC)
 End Function
 
-Public Function DrawTextXP(ByVal hdc As Long, ByVal s As String, ByVal Left As Long, ByVal Top As Long, Optional Width As Long, Optional Height As Long, Optional ByVal Style As DrawTextConstants, Optional ByVal ForeColor As Long, Optional ByVal BackColor As Long, Optional ByVal IsTrans As Boolean) As Long
+Public Function DrawTextXP(ByVal hDC As Long, ByVal s As String, ByVal Left As Long, ByVal Top As Long, Optional Width As Long, Optional Height As Long, Optional ByVal Style As DrawTextConstants, Optional ByVal ForeColor As Long, Optional ByVal BackColor As Long, Optional ByVal IsTrans As Boolean) As Long
 On Error Resume Next
 Dim r As RECT, h As Long
 If (Style And DT_CALCRECT) = 0 Then
  If IsTrans Then
-  SetBkMode hdc, TRANSPARENT
+  SetBkMode hDC, TRANSPARENT
  Else
-  SetBkMode hdc, OPAQUE '?
-  SetBkColor hdc, BackColor
+  SetBkMode hDC, OPAQUE '?
+  SetBkColor hDC, BackColor
  End If
- SetTextColor hdc, ForeColor
+ SetTextColor hDC, ForeColor
  r.Left = Left
  r.Top = Top
  r.Right = Width + Left
  r.Bottom = Height + Top
 End If
-h = SelectObject(hdc, m_hFont)
+h = SelectObject(hDC, m_hFont)
 'DrawTextXP = DrawText(hdc, s, LenA(s), r, Style)
-DrawTextXP = DrawTextW(hdc, ByVal StrPtr(s), -1, r, Style)
-SelectObject hdc, h
+DrawTextXP = DrawTextW(hDC, ByVal StrPtr(s), Len(s), r, Style)
+SelectObject hDC, h
 If Style And DT_CALCRECT Then
  Width = r.Right - r.Left
  Height = r.Bottom - r.Top
 End If
 End Function
 
-Public Sub TextOutXP(ByVal hdc As Long, ByVal x As Long, ByVal y As Long, ByVal s As String, Optional ByVal ForeColor As Long, Optional ByVal BackColor As Long, Optional ByVal IsTrans As Boolean)
+Public Function DrawTextVista(ByVal hDC As Long, ByVal s As String, ByVal Left As Long, ByVal Top As Long, Optional Width As Long, Optional Height As Long, Optional ByVal Style As DrawTextConstants, Optional ByVal ForeColor As Long, Optional ByVal BackColor As Long, Optional ByVal IsTrans As Boolean, Optional ByVal nTabLength As Long, Optional ByVal nLeftMargin As Long, Optional ByVal nRightMargin As Long, Optional ByRef nLengthDrawn As Long) As Long
+On Error Resume Next
+Dim r As RECT, h As Long
+Dim t As DRAWTEXTPARAMS
+If (Style And DT_CALCRECT) = 0 Then
+ If IsTrans Then
+  SetBkMode hDC, TRANSPARENT
+ Else
+  SetBkMode hDC, OPAQUE '?
+  SetBkColor hDC, BackColor
+ End If
+ SetTextColor hDC, ForeColor
+ r.Left = Left
+ r.Top = Top
+ r.Right = Width + Left
+ r.Bottom = Height + Top
+End If
+t.cbSize = 20&
+t.iTabLength = nTabLength
+t.iLeftMargin = nLeftMargin
+t.iRightMargin = nRightMargin
+'///
+h = SelectObject(hDC, m_hFont)
+DrawTextVista = DrawTextExW(hDC, ByVal StrPtr(s), Len(s), r, Style, t)
+SelectObject hDC, h
+'///
+nLengthDrawn = t.uiLengthDrawn
+If Style And DT_CALCRECT Then
+ Width = r.Right - r.Left
+ Height = r.Bottom - r.Top
+End If
+End Function
+
+Public Sub TextOutXP(ByVal hDC As Long, ByVal x As Long, ByVal y As Long, ByVal s As String, Optional ByVal ForeColor As Long, Optional ByVal BackColor As Long, Optional ByVal IsTrans As Boolean)
 Dim h As Long
 If IsTrans Then
- SetBkMode hdc, TRANSPARENT
+ SetBkMode hDC, TRANSPARENT
 Else
- SetBkMode hdc, OPAQUE '?
- SetBkColor hdc, BackColor
+ SetBkMode hDC, OPAQUE '?
+ SetBkColor hDC, BackColor
 End If
-h = SelectObject(hdc, m_hFont)
-SetTextColor hdc, ForeColor
+h = SelectObject(hDC, m_hFont)
+SetTextColor hDC, ForeColor
 'TextOut hdc, x, y, s, LenA(s)
-TextOutW hdc, x, y, ByVal StrPtr(s), -1
-SelectObject hdc, h
+TextOutW hDC, x, y, ByVal StrPtr(s), Len(s)
+SelectObject hDC, h
 End Sub
