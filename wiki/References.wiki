@@ -7,4 +7,4 @@
   * Rolling-Block Mazes http://www.logicmazes.com/rb/column.html
   * Cuboid (PS3 game)
    * and open source Cuboid-Close (Google search it)
-  * cubesgame http://code.google.com/p/cubesgame/
+  * cubesgame http://code.google.com/p/cubesgame/ (source code reference only)
