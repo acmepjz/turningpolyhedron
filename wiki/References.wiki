@@ -6,5 +6,5 @@
    * Author's site http://www.dxinteractive.com/
   * Rolling-Block Mazes http://www.logicmazes.com/rb/column.html
   * Cuboid (PS3 game)
-   * and open source Cuboid-Close (Google search it)
+   * and open source Cuboid-Close http://www.panda3d.org/forums/viewtopic.php?t=7506
   * cubesgame http://code.google.com/p/cubesgame/ (source code reference only)
