@@ -53,8 +53,10 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
+'TODO:mouseleave event
+
 Private objTest As D3DXMesh
-Private objDrawTest As New clsSimplex, objRenderTest As New clsRenderPipeline
+Private objDrawTest As New clsRenderTexture, objRenderTest As New clsRenderPipeline
 
 Private objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
 
@@ -63,6 +65,8 @@ Private nOldX As Long, nOldY As Long
 '///test
 Private objTextSprite As D3DXSprite
 Private objText As D3DXFont
+'Private objTextEffect As D3DXEffect
+Private bUseTextEffect As Boolean
 '///
 
 Private Sub Command1_Click()
@@ -79,16 +83,34 @@ Me.Refresh
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
+'///
+If FakeDXUIOnKeyEvent(KeyCode, Shift, 1) Then Exit Sub
+'///
 If KeyCode = vbKeyS And Shift = vbCtrlMask Then
    '///test
    SaveRenderTargetToFile objTexture, CStr(App.Path) + "\test.bmp", D3DXIFF_BMP
    SaveRenderTargetToFile objNormalTexture, CStr(App.Path) + "\testnormal.bmp", D3DXIFF_BMP
    '///
+ElseIf KeyCode = vbKeyT Then
+ bUseTextEffect = Not bUseTextEffect
 End If
+End Sub
+
+Private Sub Form_KeyPress(KeyAscii As Integer)
+'///
+If FakeDXUIOnKeyEvent(KeyAscii, 0, 0) Then Exit Sub
+'///
+End Sub
+
+Private Sub Form_KeyUp(KeyCode As Integer, Shift As Integer)
+'///
+If FakeDXUIOnKeyEvent(KeyCode, Shift, 2) Then Exit Sub
+'///
 End Sub
 
 Private Sub Form_Load()
 On Error Resume Next
+Dim i As Long
 Set d3d9 = Direct3DCreate9(D3D_SDK_VERSION)
 If d3d9 Is Nothing Then
  MsgBox "Can't create D3D9!!!", vbExclamation, "Fatal Error"
@@ -119,19 +141,34 @@ End If
 '///font test
 D3DXCreateSprite d3dd9, objTextSprite
 D3DXCreateFontW d3dd9, 32, 0, 0, 0, 0, 0, 0, 0, 0, "Tahoma", objText
+With FakeDXUIDefaultFont
+ Set .objFont = objText
+ Set .objSprite = objTextSprite
+End With
+'CreateEffect CStr(App.Path) + "\data\shader\texteffect.txt", objTextEffect, , True
 '///vertex declaration test
 CreateVertexDeclaration
 '///
 pSetRenderState
 '//////test
-'D3DXCreateBox d3dd9, 2, 2, 4, objTest, Nothing 'no texcoord
-'D3DXCreateTeapot d3dd9, objTest, Nothing 'no texcoord
 objDrawTest.Create
 Set objTest = pTest
 'new:mipmap
 D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
 D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objNormalTexture
-'D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\testnormal.png", objNormalTexture
+'///
+FakeDXUICreate 0, 0, 640, 480
+FakeDXUIControls(1).AddNewChildren FakeCtl_Form, 120, 240, 260, 400, &HFFFFFF, , , , "Form1234가각"
+i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 240, 200, 480, 360, &HFFFFFF, , , , "MDIForm1")
+i = FakeDXUIControls(i).AddNewChildren(FakeCtl_Form, 0, 0, 0, 0, FakeCtl_Form_Moveable Or FakeCtl_Form_TitleBar Or FakeCtl_Form_CloseButton Or FakeCtl_Form_MaxButton Or FakeCtl_Form_MinButton, , , , "Form2")
+With FakeDXUIControls(i)
+ .SetLeftEx 0, 0.25
+ .SetTopEx 0, 0.25
+ .SetRightEx 0, 0.75
+ .SetBottomEx 0, 0.75
+End With
+i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, FakeCtl_Form_Moveable Or FakeCtl_Style_TopMost)
+FakeDXUIControls(i).AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
 '///
 objRenderTest.Create
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
@@ -142,8 +179,7 @@ pLookAtLH Vec3(6, 2, 3), Vec3, Vec3(, , 1)
 'pLookAtLH Vec3(1, 0, 8), Vec3, Vec3(, , 1)
 objRenderTest.CreateShadowMap 1024 'new
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
-objRenderTest.SetShadowState True, 8, -100, 100 'directional
-'///
+objRenderTest.SetShadowState True, 16, -100, 100  'directional
 End Sub
 
 Private Sub pSetRenderState()
@@ -157,8 +193,14 @@ With d3dd9
  D3DXMatrixPerspectiveFovLH mat, Atn(1), Me.ScaleWidth / Me.ScaleHeight, 0.1, 100
  .SetTransform D3DTS_PROJECTION, mat
  '///
- .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1
+ .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
  .SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_TEXTURE
+ .SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
+ .SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+ .SetTextureStageState 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE
+ .SetTextureStageState 0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE
+ .SetRenderState D3DRS_SRCBLEND, D3DBLEND_SRCALPHA
+ .SetRenderState D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA
  .SetSamplerState 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP
  .SetSamplerState 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP
  '///
@@ -175,13 +217,20 @@ objRenderTest.SetViewPositionByVal pEye.x, pEye.y, pEye.z
 End Sub
 
 Private Sub Form_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
+'///
+If FakeDXUIOnMouseEvent(Button, Shift, x, y, 1) Then Exit Sub
+'///
 nOldX = x
 nOldY = y
+FakeDXUISetCapture = -1
 End Sub
 
 Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 Dim xx As Long, yy As Long
 Dim m As D3DMATRIX
+'///
+If FakeDXUIOnMouseEvent(Button, Shift, x, y, 0) Then Exit Sub
+'///
 Select Case Button
 Case 1
  xx = x - nOldX
@@ -195,7 +244,15 @@ nOldX = x
 nOldY = y
 End Sub
 
+Private Sub Form_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
+'///
+If FakeDXUIOnMouseEvent(Button, Shift, x, y, 2) Then Exit Sub
+'///
+FakeDXUISetCapture = 0
+End Sub
+
 Private Sub Form_Unload(Cancel As Integer)
+FakeDXUIDestroy
 Set objDrawTest = Nothing
 Set objTest = Nothing
 Set objTexture = Nothing
@@ -225,6 +282,8 @@ On Error Resume Next
 Dim i As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
 Dim r(3) As Long
+Dim f(23) As Single, f1 As Single
+Dim s As String
 Static j As Long
 With d3dd9
  i = .TestCooperativeLevel
@@ -282,20 +341,26 @@ With d3dd9
    objRenderTest.EndRender
 '   j = 1
 '  End If
-  '///
-  mat = D3DXMatrixIdentity
-  mat.m11 = Timer / 8
-  mat.m11 = mat.m11 - Int(mat.m11)
-  mat.m22 = mat.m11
-  r(2) = 640
-  r(3) = 128
+  '////////test
   .BeginScene
-  objTextSprite.SetTransform mat
-  objTextSprite.Begin D3DXSPRITE_ALPHABLEND
-  objText.DrawTextW objTextSprite, "&TEST ONLy 가가 " + Format(mat.m11, "0.000"), -1, r(0), 0, -1
-  objTextSprite.End
+  FakeDXGDIDrawText FakeDXUIDefaultFont, "TEST 2 !!! 가각", 32, 256, 128, 32, 1, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.79, True
   .EndScene
-  '///
+'  '////////draw window test
+'  .SetTexture 0, FakeDXUITexture
+'  .SetRenderState D3DRS_ALPHABLENDENABLE, 1
+'  .SetFVF D3DFVF_XYZRHW Or D3DFVF_TEX1
+'  f1 = 1 / 1024
+'  f(3) = 1: f(4) = f1: f(5) = f1
+'  f(6) = 512: f(9) = 1: f(10) = 1 + f1: f(11) = f1
+'  f(13) = 512: f(15) = 1: f(16) = f1: f(17) = 1 + f1
+'  f(18) = 512: f(19) = 512: f(21) = 1: f(22) = 1 + f1: f(23) = 1 + f1
+'  .DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, f(0), 24&
+'  .SetRenderState D3DRS_ALPHABLENDENABLE, 0
+  '////////
+  .BeginScene
+  FakeDXUIRender
+  .EndScene
+  '////////
   .Present ByVal 0, ByVal 0, 0, ByVal 0
  End If
 End With

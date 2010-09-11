@@ -106,6 +106,7 @@ float4 ps_func(VS_OUTPUT d):COLOR0{
 float a=0,b=1,c=1;
 int i;
 
+#if 1
 
 //normal --> rock
 for(i=0;i<6;i++){
@@ -115,8 +116,8 @@ for(i=0;i<6;i++){
 a=smoothstep(-1.0,1.0,a);
 return lerp(float4(44,36,35,255)/255.0f,float4(211,120,93,255)/255.0f,a);
 
+#else
 
-/*
 //abs --> marble
 for(i=0;i<4;i++){
  a+=abs(simplexnoise(d.p0.xyz*c+i))*b;
@@ -129,7 +130,9 @@ float3 n=tex2D(sampNoise,float2(tex2D(sampNoise,d.p0.xy*16.18033).x,d.p0.z*16.18
 //return float4(a+n,1);
 a=a+n.x/8.0f;
 return float4(a,a,a,1);
-*/
+
+#endif
+
 }
 
 technique test{

@@ -6,7 +6,7 @@ BEGIN
   DataSourceBehavior  = 0  'vbNone
   MTSTransactionMode  = 0  'NotAnMTSObject
 END
-Attribute VB_Name = "clsSimplex"
+Attribute VB_Name = "clsRenderTexture"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
@@ -26,20 +26,7 @@ End Property
 Friend Sub Create()
 '///
 'test:perlin noise
-Dim s As String, sErr As String
-Open CStr(App.Path) + "\data\shader\test.txt" For Binary As #1
-s = Input$(LOF(1), 1)
-Close
-'s = s + "struct VS_OUTPUT{float4 p:POSITION,p0:TEXCOORD0;};" + vbCrLf
-'s = s + "float4x4 mat;" + vbCrLf
-'s = s + "VS_OUTPUT vs_func(float4 p:POSITION){" + vbCrLf
-'s = s + "VS_OUTPUT d;d.p=mul(p,mat);d.p0=p;return d;}" + vbCrLf
-'s = s + "float4 ps_func(VS_OUTPUT d):COLOR0{" + vbCrLf
-'s = s + "return 2*abs(d.p0-round(d.p0));}" + vbCrLf
-'s = s + "technique test{pass{VertexShader=compile vs_2_0 vs_func();PixelShader=compile ps_3_0 ps_func();}}" + vbCrLf
-''s = s + "" + vbCrLf
-'///
-CreateEffect s, objEffect
+CreateEffect CStr(App.Path) + "\data\shader\test.txt", objEffect, , True
 '///
 D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\data\gfx\noise.bmp", texNoise
 End Sub

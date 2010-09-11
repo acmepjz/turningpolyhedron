@@ -49,12 +49,7 @@ End Property
 Friend Sub Create()
 '///
 'test
-Dim s As String, sErr As String
-Open CStr(App.Path) + "\data\shader\pstest.txt" For Binary As #1
-s = Input$(LOF(1), 1)
-Close
-'///
-CreateEffect s, objEffect
+CreateEffect CStr(App.Path) + "\data\shader\pstest.txt", objEffect, , True
 '///???
 D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\data\gfx\noise.bmp", texNoise
 End Sub
