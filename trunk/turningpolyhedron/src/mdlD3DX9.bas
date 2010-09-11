@@ -6,6 +6,8 @@ Attribute VB_Name = "mdlD3DX9"
 '
 '//////////////////////////////////////////
 
+Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+
 Option Explicit
 
 Public Function MAKEFOURCC(ByVal ch0 As Byte, ByVal ch1 As Byte, ByVal ch2 As Byte, ByVal ch3 As Byte) As Long
@@ -88,6 +90,12 @@ With D3DVertexElementCreate
  .Usage = nUsage
  .UsageIndex = nUsageIndex
 End With
+End Function
+
+Public Function SingleToLong(ByVal n As Single) As Long
+Dim i As Long
+CopyMemory i, n, 4&
+SingleToLong = i
 End Function
 
 '//===========================================================================

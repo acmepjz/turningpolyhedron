@@ -13,7 +13,10 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-'///a simple and buggy (case insensitive) implementation of GNU GetText
+'////////
+'A simple and buggy (case insensitive) implementation of GNU GetText
+'This file is public domain.
+'////////
 
 'The format of the generated MO files is best described by a picture, which appears below.
 '
@@ -173,37 +176,88 @@ Friend Sub Clear()
 Set objString = New Collection
 End Sub
 
-Friend Function LoadFileWithLocale(ByRef sFileName As String, Optional ByVal Locale As Long = LOCALE_USER_DEFAULT) As Boolean
+Friend Function LoadFileWithLocale(ByRef sFileName As String, Optional ByVal Locale As Long) As Boolean
 On Error Resume Next
+Dim v() As Variant
 Dim s1 As String, s2 As String
-s1 = String(1024, vbNullChar)
-GetLocaleInfo Locale, LOCALE_SISO639LANGNAME, s1, 1024&
-s1 = Left(s1, InStr(1, s1, vbNullChar) - 1)
-s2 = String(1024, vbNullChar)
-GetLocaleInfo Locale, LOCALE_SISO3166CTRYNAME, s2, 1024&
-s2 = Left(s2, InStr(1, s2, vbNullChar) - 1)
-'///
-s2 = Replace(sFileName, "*", s1 + "_" + s2)
-Err.Clear
-If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
- If Err.Number = 0 Then
-  If LoadFile(s2) Then
-   LoadFileWithLocale = True
-   Exit Function
+Dim i As Long, lps As Long
+If Locale = 0 Then Locale = LOCALE_USER_DEFAULT
+If Locale = LOCALE_USER_DEFAULT Or Locale = LOCALE_SYSTEM_DEFAULT Then
+ '///new:check enviroment vairable
+ s1 = Trim(Environ("LANG"))
+ If s1 = "" Then s1 = Trim(Environ("LANGUAGE"))
+End If
+If s1 = "" Then
+ s1 = String(1024, vbNullChar)
+ GetLocaleInfo Locale, LOCALE_SISO639LANGNAME, s1, 1024&
+ s1 = Left(s1, InStr(1, s1, vbNullChar) - 1)
+ s2 = String(1024, vbNullChar)
+ GetLocaleInfo Locale, LOCALE_SISO3166CTRYNAME, s2, 1024&
+ s2 = Left(s2, InStr(1, s2, vbNullChar) - 1)
+ If s2 <> "" Then s1 = s1 + "_" + s2
+End If
+v = Split(s1, ":")
+For i = 0 To UBound(v)
+ s1 = Trim(v(i))
+ If s1 <> "" Then
+  '///
+  s2 = Replace(sFileName, "*", s1)
+  Err.Clear
+  If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
+   If Err.Number = 0 Then
+    If LoadFile(s2) Then
+     LoadFileWithLocale = True
+     Exit Function
+    End If
+   End If
+  End If
+  '///
+  lps = InStr(1, s1, ".")
+  If lps > 0 Then
+   s2 = Left(s1, lps - 1)
+   s2 = Replace(sFileName, "*", s2)
+   Err.Clear
+   If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
+    If Err.Number = 0 Then
+     If LoadFile(s2) Then
+      LoadFileWithLocale = True
+      Exit Function
+     End If
+    End If
+   End If
+  End If
+  '///
+  lps = InStr(1, s1, "@")
+  If lps > 0 Then
+   s2 = Left(s1, lps - 1)
+   s2 = Replace(sFileName, "*", s2)
+   Err.Clear
+   If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
+    If Err.Number = 0 Then
+     If LoadFile(s2) Then
+      LoadFileWithLocale = True
+      Exit Function
+     End If
+    End If
+   End If
+  End If
+  '///
+  lps = InStr(1, s1, "_")
+  If lps > 0 Then
+   s2 = Left(s1, lps - 1)
+   s2 = Replace(sFileName, "*", s2)
+   Err.Clear
+   If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
+    If Err.Number = 0 Then
+     If LoadFile(s2) Then
+      LoadFileWithLocale = True
+      Exit Function
+     End If
+    End If
+   End If
   End If
  End If
-End If
-'///
-s2 = Replace(sFileName, "*", s1)
-Err.Clear
-If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
- If Err.Number = 0 Then
-  If LoadFile(s2) Then
-   LoadFileWithLocale = True
-   Exit Function
-  End If
- End If
-End If
+Next i
 End Function
 
 Friend Function LoadFile(ByRef sFileName As String) As Boolean
