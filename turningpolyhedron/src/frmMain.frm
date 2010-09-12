@@ -167,7 +167,7 @@ With FakeDXUIControls(i)
  .SetRightEx 0, 0.75
  .SetBottomEx 0, 0.75
 End With
-i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, FakeCtl_Form_Moveable Or FakeCtl_Style_TopMost)
+i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 3& Or FakeCtl_Style_TopMost)
 FakeDXUIControls(i).AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
 '///
 objRenderTest.Create
