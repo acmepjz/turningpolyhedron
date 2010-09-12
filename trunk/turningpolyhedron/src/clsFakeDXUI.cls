@@ -310,11 +310,11 @@ Dim j As Long, k As Long
     If j <= 0 Then
     ElseIf j <= 255 Then
      j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
-     FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 224, 16, 240, 32, 512, j Or &HFFFFFF
+     FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 240, 16, 256, 32, 512, j Or &HFFFFFF
     ElseIf j < 510 Then
-     FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 240, 16, 256, 32, 512, 224, 16, j - 255, -1
+     FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 16, 272, 32, 512, 240, 16, j - 255, -1
     Else
-     FakeDXGDIStretchBlt nLeft, nTop, nLeft + 16, nTop + 16, 240, 16, 256, 32, 512
+     FakeDXGDIStretchBlt nLeft, nTop, nLeft + 16, nTop + 16, 256, 16, 272, 32, 512
     End If
 End Sub
 
@@ -689,6 +689,7 @@ End Function
 Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long, Optional ByVal bChildrenProcessed As Boolean) As Boolean
 Dim i As Long
 Dim b As Boolean, b1 As Boolean
+Dim w As Single, h As Single, f As Single
 Dim bInControl As Boolean
 '///
 Dim bNoChild As Boolean
@@ -747,7 +748,7 @@ Case Else
  'TODO:
 End Select
 '////////
-If bInControl And Not bNoChild Then
+If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
  For i = m_nChildrenCount To 1 Step -1
   With FakeDXUIControls(m_idxChildren(i))
    If .Style And FakeCtl_Style_TopMost Then
@@ -859,26 +860,85 @@ If Button = 1 And Not bChildrenProcessed Then
    b1 = True
    '///
    If m_nAnimVal(15) < 0 Then
-    Select Case m_nAnimVal(15)
+    m_bSizeDirty = True
+    '///new:check moved control is in parent's client area ( ??? TODO:flags )
+    If m_idxParent > 0 Then
+     With FakeDXUIControls(m_idxParent)
+      w = .ScaleWidth
+      h = .ScaleHeight
+     End With
+    End If
+    '///
+    i = m_nAnimVal(15)
+    Select Case i
     Case -1, -2, -3, -5
      m_tRectEx.Left.a = m_tRectEx.Left.a + x - m_tDragLast.x
-     m_bSizeDirty = True
+     If i <> -5 Then
+      RefreshSize True
+      f = m_tRect.Left
+      If f < 0 Then
+       m_tRectEx.Left.a = m_tRectEx.Left.a - f
+       x = x - f
+       m_tRect.Left = 0
+      End If
+     End If
     End Select
-    Select Case m_nAnimVal(15)
+    Select Case i
     Case -1, -4, -5, -7
      m_tRectEx.Top.a = m_tRectEx.Top.a + y - m_tDragLast.y
-     m_bSizeDirty = True
+     If i <> -5 Then
+      RefreshSize True
+      f = m_tRect.Top
+      If f < 0 Then
+       m_tRectEx.Top.a = m_tRectEx.Top.a - f
+       y = y - f
+       m_tRect.Top = 0
+      End If
+     End If
     End Select
-    Select Case m_nAnimVal(15)
+    Select Case i
     Case -5, -7, -8, -9
      m_tRectEx.Right.a = m_tRectEx.Right.a + x - m_tDragLast.x
-     m_bSizeDirty = True
+     If i <> -5 Then
+      RefreshSize True
+      f = w - m_tRect.Right
+      If f < 0 Then
+       m_tRectEx.Right.a = m_tRectEx.Right.a + f
+       x = x + f
+       m_tRect.Right = w
+      End If
+     End If
     End Select
-    Select Case m_nAnimVal(15)
+    Select Case i
     Case -3, -5, -6, -9
      m_tRectEx.Bottom.a = m_tRectEx.Bottom.a + y - m_tDragLast.y
-     m_bSizeDirty = True
+     If i <> -5 Then
+      RefreshSize True
+      f = h - m_tRect.Bottom
+      If f < 0 Then
+       m_tRectEx.Bottom.a = m_tRectEx.Bottom.a + f
+       y = y + f
+       m_tRect.Bottom = h
+      End If
+     End If
     End Select
+    If i = -5 Then
+     RefreshSize True
+     If m_tRect.Left < 0 Then f = -m_tRect.Left _
+     Else If m_tRect.Right > w Then f = w - m_tRect.Right Else f = 0
+     m_tRectEx.Left.a = m_tRectEx.Left.a + f
+     m_tRectEx.Right.a = m_tRectEx.Right.a + f
+     m_tRect.Left = m_tRect.Left + f
+     m_tRect.Right = m_tRect.Right + f
+     x = x + f
+     If m_tRect.Top < 0 Then f = -m_tRect.Top _
+     Else If m_tRect.Bottom > h Then f = h - m_tRect.Bottom Else f = 0
+     m_tRectEx.Top.a = m_tRectEx.Top.a + f
+     m_tRectEx.Bottom.a = m_tRectEx.Bottom.a + f
+     m_tRect.Top = m_tRect.Top + f
+     m_tRect.Bottom = m_tRect.Bottom + f
+     y = y + f
+    End If
    End If
    '///
    With m_tDragLast

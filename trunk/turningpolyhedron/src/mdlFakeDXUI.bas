@@ -120,7 +120,8 @@ Case FakeCtl_Msg_Size
   FakeDXUIControls(t.nParam1).Minimize
  End Select
 Case FakeCtl_Msg_Close
- FakeDXUIControls(t.nParam1).Destroy '???
+ 'FakeDXUIControls(t.nParam1).Destroy '???
+ FakeDXUIControls(t.nParam1).Visible = False '??? :-3
 Case FakeCtl_Msg_ZOrder
  Select Case t.nParam2
  Case 0
