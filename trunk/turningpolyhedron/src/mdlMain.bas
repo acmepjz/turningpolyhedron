@@ -248,7 +248,7 @@ For i = 1 To 22 Step 7
  f(i + 84) = nBottom: f(i + 89) = f(119)
 Next i
 If f(7) < f(14) Then ii = 1 Else ii = 3
-If f(29) < f(59) Then jj = 1 Else jj = 3
+If f(29) < f(57) Then jj = 1 Else jj = 3
 For j = 0 To 2 Step jj
  For i = 0 To 2 Step ii
   l = j * 4& + i
