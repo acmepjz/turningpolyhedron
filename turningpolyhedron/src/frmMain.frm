@@ -53,6 +53,15 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
+Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Type POINTAPI
+    x As Long
+    y As Long
+End Type
+
+Implements IFakeDXUIEvent
+
 'TODO:mouseleave event
 
 Private objTest As D3DXMesh
@@ -69,6 +78,8 @@ Private objText As D3DXFont
 Private bUseTextEffect As Boolean
 '///
 
+Private objTiming As New clsTiming
+
 Private Sub Command1_Click()
 Unload Me
 End Sub
@@ -80,6 +91,13 @@ d3dpp.Windowed = 1
 'd3dpp.BackBufferHeight = 600 'then change the window's size manually
 d3dd9.Reset d3dpp
 Me.Refresh
+End Sub
+
+Private Sub Form_DblClick()
+Dim p As POINTAPI
+GetCursorPos p
+ScreenToClient Me.hwnd, p
+Call FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4)
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
@@ -118,21 +136,21 @@ If d3d9 Is Nothing Then
  End
 End If
 With d3dpp
- .hDeviceWindow = Me.hWnd
+ .hDeviceWindow = Me.hwnd
  .SwapEffect = D3DSWAPEFFECT_DISCARD
  .BackBufferCount = 1
  .BackBufferFormat = D3DFMT_X8R8G8B8
  .BackBufferWidth = 640
  .BackBufferHeight = 480
  .Windowed = 1
- .hDeviceWindow = Me.hWnd
+ .hDeviceWindow = Me.hwnd
  .EnableAutoDepthStencil = 1
  .AutoDepthStencilFormat = D3DFMT_D24S8
  '.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
  '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES
 End With
 'create device
-Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, Me.hWnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, d3dpp)
+Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, Me.hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, d3dpp)
 If d3dd9 Is Nothing Then
  MsgBox "Can't create device!!!", vbExclamation, "Fatal Error"
  Form_Unload 0
@@ -169,6 +187,7 @@ With FakeDXUIControls(i)
 End With
 i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 3& Or FakeCtl_Style_TopMost)
 FakeDXUIControls(i).AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
+Set FakeDXUIEvent = Me
 '///
 objRenderTest.Create
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
@@ -277,6 +296,14 @@ D3DXComputeTangentFrame obj, D3DXTANGENT_CALCULATE_NORMALS
 Set pTest = obj
 End Function
 
+Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
+'
+End Sub
+
+Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
+'Cancel = True
+End Sub
+
 Private Sub Timer1_Timer()
 On Error Resume Next
 Dim i As Long
@@ -285,6 +312,7 @@ Dim r(3) As Long
 Dim f(23) As Single, f1 As Single
 Dim s As String
 Static j As Long
+If Me.WindowState = vbMinimized Then Exit Sub
 With d3dd9
  i = .TestCooperativeLevel
  If i = D3DERR_DEVICENOTRESET Then
@@ -342,7 +370,17 @@ With d3dd9
 '   j = 1
 '  End If
   '////////test
+  f1 = objTiming.GetMs
+  objTiming.Clear
+  objTiming.StartTiming
   .BeginScene
+  If f1 > 0.01 Then
+   Static f2 As Single
+   f1 = 1000 / f1
+   f2 = (f1 + 15 * f2) / 16
+   s = "FPS:" + Format(f2, "0.0")
+   FakeDXGDIDrawText FakeDXUIDefaultFont, s, 32, 32, 128, 32, 0.75, DT_NOCLIP, -1, , &HFF000000, , , , , True
+  End If
   FakeDXGDIDrawText FakeDXUIDefaultFont, "TEST 2 !!! °¡°¢", 32, 256, 128, 32, 1, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.79, True
   .EndScene
 '  '////////draw window test

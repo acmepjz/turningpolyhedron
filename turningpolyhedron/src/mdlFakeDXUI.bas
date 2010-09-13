@@ -4,6 +4,8 @@ Option Explicit
 Public FakeDXUIControls() As New clsFakeDXUI '1-based
 Public FakeDXUIControlCount As Long
 
+Public FakeDXUIEvent As IFakeDXUIEvent
+
 Public FakeDXUIActiveWindow As Long
 Public FakeDXUIFocus As Long
 Public FakeDXUISetCapture As Long
@@ -75,10 +77,11 @@ Public Enum enumFakeDXUIControlState
 End Enum
 
 Public Enum enumFakeDXUIMessage
- FakeCtl_Msg_Size = 5 'param1=ctlindex param2=SIZE_MAXIMIZED(2) SIZE_MINIMIZED(1)
- FakeCtl_Msg_Close = 16
+ FakeCtl_Msg_Size = 5 'param1=ctlindex param2=maximize(1) minimize(2)
+ FakeCtl_Msg_Close = 16 'param1=ctlindex
  '///
  FakeCtl_Msg_ZOrder = 65001 'param1=ctlindex param2=HWND_TOP(0) HWND_BOTTOM(1) HWND_TOPMOST(-1) HWND_NOTOPMOST(-2)
+ FakeCtl_Msg_Click = 65002 'param1=ctlindex
 End Enum
 
 Public FakeDXUIMessageQueue() As typeFakeDXUIMessage
@@ -111,7 +114,10 @@ D3DXCreateTextureFromFileExW d3dd9, CStr(App.Path) + "\data\gfx\control1.png", D
 End Sub
 
 Public Sub FakeDXUIDispatchMessage(t As typeFakeDXUIMessage)
+Dim b As Boolean
 Select Case t.iMsg
+Case FakeCtl_Msg_Click
+ If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Click FakeDXUIControls(t.nParam1)
 Case FakeCtl_Msg_Size
  Select Case t.nParam2
  Case 1
@@ -120,8 +126,13 @@ Case FakeCtl_Msg_Size
   FakeDXUIControls(t.nParam1).Minimize
  End Select
 Case FakeCtl_Msg_Close
- 'FakeDXUIControls(t.nParam1).Destroy '???
- FakeDXUIControls(t.nParam1).Visible = False '??? :-3
+ Select Case t.nParam2
+ Case 0
+  If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Unload FakeDXUIControls(t.nParam1), b
+  If Not b Then FakeDXUIControls(t.nParam1).CloseWindow
+ Case Else
+  FakeDXUIControls(t.nParam1).Destroy
+ End Select
 Case FakeCtl_Msg_ZOrder
  Select Case t.nParam2
  Case 0
@@ -178,6 +189,7 @@ If Not FakeDXUITexture Is Nothing Then
  FakeDXUISetCapture = 0
  Set FakeDXUIDefaultFont.objFont = Nothing
  Set FakeDXUIDefaultFont.objSprite = Nothing
+ Set FakeDXUIEvent = Nothing '?
  '///
  Erase FakeDXUIMessageQueue
  FakeDXUIMessageQueueHead = 0
@@ -221,6 +233,8 @@ End Function
 '0=move
 '1=down
 '2=up
+'(3=click ?)
+'4=dblclick
 
 Public Function FakeDXUIOnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long) As Boolean
 Dim i As Long

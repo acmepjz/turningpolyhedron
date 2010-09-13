@@ -33,6 +33,7 @@ Private m_tRectScreen As typeFakeDXUIRect
 Private m_tClientMargin As typeFakeDXUIRect
 
 Private m_nAnimVal(15) As Long
+Private m_nClosing As Long
 
 Private m_tDragFirst As typeFakeDXUIPoint, m_tDragLast As typeFakeDXUIPoint
 
@@ -262,6 +263,10 @@ m_bSizeDirty = True
 'TODO:
 End Property
 
+Friend Sub CloseWindow()
+m_nClosing = 1
+End Sub
+
 Friend Sub Destroy()
 Dim t As typeFakeDXUIRect
 Dim t1 As typeFakeDXUIRectEx
@@ -283,6 +288,7 @@ m_nStyle = 0
 m_nState = 0
 m_sCaption = ""
 m_sText = ""
+m_nClosing = 0
 Erase m_nAnimVal
 '///
 If FakeDXUIActiveWindow = m_nIndex Then FakeDXUIActiveWindow = 0
@@ -300,7 +306,7 @@ m_nChildrenCount = 0
 'TODO:etc.
 End Sub
 
-Private Sub pRenderWindowButtonHighlight(ByVal nIndex1 As Long, ByVal nIndex2 As Long, ByVal nLeft As Single, ByVal nTop As Single)
+Private Sub pRenderWindowButtonHighlight(ByVal nIndex1 As Long, ByVal nIndex2 As Long, ByVal nLeft As Single, ByVal nTop As Single, Optional ByVal nOpacity As Single = 1)
 Dim j As Long, k As Long
     j = m_nAnimVal(nIndex1)
     k = m_nAnimVal(nIndex2)
@@ -309,12 +315,17 @@ Dim j As Long, k As Long
     m_nAnimVal(nIndex1) = j
     If j <= 0 Then
     ElseIf j <= 255 Then
+     j = j * nOpacity
      j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
      FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 240, 16, 256, 32, 512, j Or &HFFFFFF
     ElseIf j < 510 Then
-     FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 16, 272, 32, 512, 240, 16, j - 255, -1
+     k = nOpacity * 255
+     k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
+     FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 16, 272, 32, 512, 240, 16, j - 255, k Or &HFFFFFF
     Else
-     FakeDXGDIStretchBlt nLeft, nTop, nLeft + 16, nTop + 16, 256, 16, 272, 32, 512
+     k = nOpacity * 255
+     k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
+     FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 256, 16, 272, 32, 512, k Or &HFFFFFF
     End If
 End Sub
 
@@ -323,8 +334,18 @@ Friend Sub Render(Optional ByVal nParentClientLeft As Single, Optional ByVal nPa
 Dim i As Long, j As Long, k As Long
 Dim nLeft As Single, nTop As Single
 Dim nRight As Single, nBottom As Single
+Dim f As Single
 '///
 Dim bNoChild As Boolean
+'////////
+If m_nClosing Then
+ nOpacity = nOpacity * (1 - m_nClosing * 0.2)
+ m_nClosing = m_nClosing + 1
+ If m_nClosing > 5 Then
+  Destroy
+  Exit Sub
+ End If
+End If
 '////////
 If m_nType < 0 Or Not m_bVisible Then Exit Sub
 'If m_bSizeDirty Then RefreshSize
@@ -346,36 +367,38 @@ Case 1 'form
  End If
  m_nAnimVal(0) = i
  'ignore nOpacity (?)
- nOpacity = 0.2 - i / 2550
+ f = 0.2 - i / 2550
+ k = nOpacity * 255
+ k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000) Or &HFFFFFF
  '///
  If m_nStyle And 32& Then 'titlebar
   If m_nState And 1& Then 'maximized
    If i <= 0 Then
-    FakeDXGDIStretchBltEx nLeft, nTop, nRight, nBottom, 144, 8, 176, 92, 0, 24, 0, 0, 512
+    FakeDXGDIStretchBltExColored nLeft, nTop, nRight, nBottom, 144, 8, 176, 92, 0, 24, 0, 0, 512, k
    ElseIf i < 255 Then
-    FakeDXGDIStretchBltExBlended nLeft, nTop, nRight, nBottom, 32, 8, 64, 92, 0, 24, 0, 0, 512, 144, 8, i, -1
+    FakeDXGDIStretchBltExBlended nLeft, nTop, nRight, nBottom, 32, 8, 64, 92, 0, 24, 0, 0, 512, 144, 8, i, k
    Else
-    FakeDXGDIStretchBltEx nLeft, nTop, nRight, nBottom, 32, 8, 64, 92, 0, 24, 0, 0, 512
+    FakeDXGDIStretchBltExColored nLeft, nTop, nRight, nBottom, 32, 8, 64, 92, 0, 24, 0, 0, 512, k
    End If
   ElseIf m_nState And 2& Then 'minimized
    If i <= 0 Then
-    FakeDXGDIStretchBltEx nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 112, 240, 224, 288, 16, 16, 24, 24, 512
+    FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 112, 240, 224, 288, 16, 16, 24, 24, 512, k
    ElseIf i < 255 Then
-    FakeDXGDIStretchBltExBlended nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 240, 112, 288, 16, 16, 24, 24, 512, 112, 240, i, -1
+    FakeDXGDIStretchBltExBlended nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 240, 112, 288, 16, 16, 24, 24, 512, 112, 240, i, k
    Else
-    FakeDXGDIStretchBltEx nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 240, 112, 288, 16, 16, 24, 24, 512
+    FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 240, 112, 288, 16, 16, 24, 24, 512, k
    End If
    bNoChild = True
   Else
    If i <= 0 Then
-    FakeDXGDIStretchBltEx nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 112, 0, 224, 112, 16, 40, 24, 24, 512
+    FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 112, 0, 224, 112, 16, 40, 24, 24, 512, k
    ElseIf i < 255 Then
-    FakeDXGDIStretchBltExBlended nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 0, 112, 112, 16, 40, 24, 24, 512, 112, 0, i, -1
+    FakeDXGDIStretchBltExBlended nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 0, 112, 112, 16, 40, 24, 24, 512, 112, 0, i, k
    Else
-    FakeDXGDIStretchBltEx nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 0, 112, 112, 16, 40, 24, 24, 512
+    FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 0, 112, 112, 16, 40, 24, 24, 512, k
    End If
   End If
-  i = 255 - 510 * nOpacity
+  i = (255 - 510 * f) * nOpacity
   j = i
   j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 4, nTop, nRight - nLeft - 8, 24, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, j Or &HFFFFFF, , j, , , , , True
@@ -383,7 +406,7 @@ Case 1 'form
   If m_nStyle And &H1C& Then
    '///close button
    If m_nStyle And &H10& Then
-    pRenderWindowButtonHighlight 1, 4, nRight - 20, nTop + 4
+    pRenderWindowButtonHighlight 1, 4, nRight - 20, nTop + 4, nOpacity
     'TODO:etc.
    End If
    j = i
@@ -393,7 +416,7 @@ Case 1 'form
    If m_nStyle And &HC& Then
     '///maximize button
     If m_nStyle And &H8& Then
-     pRenderWindowButtonHighlight 2, 5, nRight - 36, nTop + 4
+     pRenderWindowButtonHighlight 2, 5, nRight - 36, nTop + 4, nOpacity
      'TODO:etc.
     End If
     j = i
@@ -403,7 +426,7 @@ Case 1 'form
     FakeDXGDIStretchBltColored nRight - 36, nTop + 4, nRight - 20, nTop + 20, k, 0, k + 16, 16, 512, j Or &HFFFFFF
     '///minimize button
     If m_nStyle And &H4& Then
-     pRenderWindowButtonHighlight 3, 6, nRight - 52, nTop + 4
+     pRenderWindowButtonHighlight 3, 6, nRight - 52, nTop + 4, nOpacity
      'TODO:etc.
     End If
     j = i
@@ -418,17 +441,17 @@ Case 1 'form
    j = 112
   Else
    j = 176
-   nOpacity = nOpacity * 2
+   f = f * 2
   End If
   If i <= 0 Then
-   FakeDXGDIStretchBltEx nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 112, j, 224, j + 64, 16, 16, 24, 24, 512
+   FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 112, j, 224, j + 64, 16, 16, 24, 24, 512, k
   ElseIf i < 255 Then
-   FakeDXGDIStretchBltExBlended nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, j, 112, j + 64, 16, 16, 24, 24, 512, 112, j, i, -1
+   FakeDXGDIStretchBltExBlended nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, j, 112, j + 64, 16, 16, 24, 24, 512, 112, j, i, k
   Else
-   FakeDXGDIStretchBltEx nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, j, 112, j + 64, 16, 16, 24, 24, 512
+   FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, j, 112, j + 64, 16, 16, 24, 24, 512, k
   End If
  End If
- nOpacity = 1 - nOpacity
+ nOpacity = (1 - f) * nOpacity
 Case 2 'label
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
@@ -694,7 +717,7 @@ Dim bInControl As Boolean
 '///
 Dim bNoChild As Boolean
 '///
-If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Then Exit Function
+If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit Function
 If m_bSizeDirty Then RefreshSize
 '////////
 bInControl = x >= m_tRectScreen.Left And x < m_tRectScreen.Right And y >= m_tRectScreen.Top And y < m_tRectScreen.Bottom And Not bChildrenProcessed
@@ -716,21 +739,21 @@ Case 1 'form
     If m_nStyle And 16& Then
      If x >= m_tRectScreen.Right - 20 And x < m_tRectScreen.Right - 4 Then
       m_nAnimVal(4) = pButtonHighlight_1(1, Button, nEventType, b)
-      If b Then FakeDXUIPostMessage FakeCtl_Msg_Close, m_nIndex, 0, 0
+      If b Then FakeDXUIPostMessage FakeCtl_Msg_Close, m_nIndex
       'If m_nAnimVal(4) Then bChildrenProcessed = True
      End If
     End If
     If m_nStyle And 8& Then
      If x >= m_tRectScreen.Right - 36 And x < m_tRectScreen.Right - 20 Then
       m_nAnimVal(5) = pButtonHighlight_1(2, Button, nEventType, b)
-      If b Then FakeDXUIPostMessage FakeCtl_Msg_Size, m_nIndex, 1, 0
+      If b Then FakeDXUIPostMessage FakeCtl_Msg_Size, m_nIndex, 1
       'If m_nAnimVal(5) Then bChildrenProcessed = True
      End If
     End If
     If m_nStyle And 4& Then
      If x >= m_tRectScreen.Right - 52 And x < m_tRectScreen.Right - 36 Then
       m_nAnimVal(6) = pButtonHighlight_1(3, Button, nEventType, b)
-      If b Then FakeDXUIPostMessage FakeCtl_Msg_Size, m_nIndex, 2, 0
+      If b Then FakeDXUIPostMessage FakeCtl_Msg_Size, m_nIndex, 2
       'If m_nAnimVal(6) Then bChildrenProcessed = True
      End If
     End If
@@ -813,29 +836,25 @@ If Not bChildrenProcessed Then
      End If
     End If
    End If
-   If (m_nState And 1&) = 0 Then
-    '///move window
-    If m_nStyle And 3& Then
-     If (Button And 1&) = 0 Or nEventType = 1 Then
-      If m_nAnimVal(15) = 0 Then
+   '///move window
+   If m_nStyle And 3& Then
+    If (Button And 1&) = 0 Or nEventType = 1 Then
+     If m_nAnimVal(15) = 0 Then
+      If x >= m_tRectScreen.Left And x < m_tRectScreen.Right Then
        If m_nStyle And 32& Then
         If y >= m_tRectScreen.Top And y < m_tRectScreen.Top + 24 Then
-         If x >= m_tRectScreen.Left And x < m_tRectScreen.Right Then
-          m_nAnimVal(15) = -5
-         End If
+         If m_nState And 1& Then m_nAnimVal(15) = -105 Else m_nAnimVal(15) = -5
         End If
        Else
         If y >= m_tRectScreen.Top And y < m_tRectScreen.Bottom Then
-         If x >= m_tRectScreen.Left And x < m_tRectScreen.Right Then
-          m_nAnimVal(15) = -5
-         End If
+         m_nAnimVal(15) = -5
         End If
        End If
       End If
      End If
     End If
-    '///
    End If
+   '///
   End If
  Case Else
   'TODO:
@@ -856,6 +875,20 @@ If Button = 1 And Not bChildrenProcessed Then
    b1 = True
   ElseIf nEventType = 2 Then
    FakeDXUISetCapture = 0
+  ElseIf nEventType = 4 And bInControl Then
+   '///double click event
+   i = m_nAnimVal(15)
+   Select Case i
+   Case -5, -105
+    If m_nStyle And 32& Then
+     If m_nState And 2& Then
+      If m_nStyle And 4& Then FakeDXUIPostMessage FakeCtl_Msg_Size, m_nIndex, 2
+     Else
+      If m_nStyle And 8& Then FakeDXUIPostMessage FakeCtl_Msg_Size, m_nIndex, 1
+     End If
+    End If
+   End Select
+   '///
   ElseIf nEventType = 0 And (bInControl Or FakeDXUISetCapture = m_nIndex) Then
    b1 = True
    '///
@@ -875,12 +908,11 @@ If Button = 1 And Not bChildrenProcessed Then
      m_tRectEx.Left.a = m_tRectEx.Left.a + x - m_tDragLast.x
      If i <> -5 Then
       RefreshSize True
-      f = m_tRect.Left
-      If f < 0 Then
-       m_tRectEx.Left.a = m_tRectEx.Left.a - f
-       x = x - f
-       m_tRect.Left = 0
-      End If
+      If m_tRect.Left < 0 Then f = -m_tRect.Left _
+      Else If m_tRect.Left > m_tRect.Right - 8 Then f = m_tRect.Right - 8 - m_tRect.Left Else f = 0
+      m_tRectEx.Left.a = m_tRectEx.Left.a + f
+      m_tRect.Left = m_tRect.Left + f
+      x = x + f
      End If
     End Select
     Select Case i
@@ -888,12 +920,11 @@ If Button = 1 And Not bChildrenProcessed Then
      m_tRectEx.Top.a = m_tRectEx.Top.a + y - m_tDragLast.y
      If i <> -5 Then
       RefreshSize True
-      f = m_tRect.Top
-      If f < 0 Then
-       m_tRectEx.Top.a = m_tRectEx.Top.a - f
-       y = y - f
-       m_tRect.Top = 0
-      End If
+      If m_tRect.Top < 0 Then f = -m_tRect.Top _
+      Else If m_tRect.Top > m_tRect.Bottom - 8 Then f = m_tRect.Bottom - 8 - m_tRect.Top Else f = 0
+      m_tRectEx.Top.a = m_tRectEx.Top.a + f
+      m_tRect.Top = m_tRect.Top + f
+      y = y + f
      End If
     End Select
     Select Case i
@@ -901,12 +932,11 @@ If Button = 1 And Not bChildrenProcessed Then
      m_tRectEx.Right.a = m_tRectEx.Right.a + x - m_tDragLast.x
      If i <> -5 Then
       RefreshSize True
-      f = w - m_tRect.Right
-      If f < 0 Then
-       m_tRectEx.Right.a = m_tRectEx.Right.a + f
-       x = x + f
-       m_tRect.Right = w
-      End If
+      If m_tRect.Right > w Then f = w - m_tRect.Right _
+      Else If m_tRect.Right < m_tRect.Left + 8 Then f = m_tRect.Left + 8 - m_tRect.Right Else f = 0
+      m_tRectEx.Right.a = m_tRectEx.Right.a + f
+      m_tRect.Right = m_tRect.Right + f
+      x = x + f
      End If
     End Select
     Select Case i
@@ -914,12 +944,11 @@ If Button = 1 And Not bChildrenProcessed Then
      m_tRectEx.Bottom.a = m_tRectEx.Bottom.a + y - m_tDragLast.y
      If i <> -5 Then
       RefreshSize True
-      f = h - m_tRect.Bottom
-      If f < 0 Then
-       m_tRectEx.Bottom.a = m_tRectEx.Bottom.a + f
-       y = y + f
-       m_tRect.Bottom = h
-      End If
+      If m_tRect.Bottom > h Then f = h - m_tRect.Bottom _
+      Else If m_tRect.Bottom < m_tRect.Top + 8 Then f = m_tRect.Top + 8 - m_tRect.Bottom Else f = 0
+      m_tRectEx.Bottom.a = m_tRectEx.Bottom.a + f
+      m_tRect.Bottom = m_tRect.Bottom + f
+      y = y + f
      End If
     End Select
     If i = -5 Then
