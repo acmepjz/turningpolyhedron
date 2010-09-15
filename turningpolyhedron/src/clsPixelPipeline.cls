@@ -77,25 +77,9 @@ objEffect.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), d
 m_tLightPos = d
 End Sub
 
-Friend Sub SetLightPositionByVal(ByVal x As Single, ByVal y As Single, ByVal z As Single)
-m_tLightPos.x = x
-m_tLightPos.y = y
-m_tLightPos.z = z
-m_tLightPos.w = 0
-objEffect.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), m_tLightPos
-End Sub
-
 Friend Sub SetViewPosition(d As D3DXVECTOR4)
 objEffect.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), d
 m_tViewPos = d
-End Sub
-
-Friend Sub SetViewPositionByVal(ByVal x As Single, ByVal y As Single, ByVal z As Single)
-m_tViewPos.x = x
-m_tViewPos.y = y
-m_tViewPos.z = z
-m_tViewPos.w = 0
-objEffect.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), m_tViewPos
 End Sub
 
 Friend Sub SetLightType(ByVal n As D3DLIGHTTYPE)
@@ -113,6 +97,10 @@ End Sub
 
 Friend Sub SetNormalTexture(ByVal obj As Direct3DTexture9)
 objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
+End Sub
+
+Friend Sub SetHeightMapTexture(ByVal obj As Direct3DTexture9)
+objEffect.SetTexture StrPtr(StrConv("texHeight", vbFromUnicode)), obj
 End Sub
 
 Friend Sub CreateShadowMap(ByVal nSize As Long)

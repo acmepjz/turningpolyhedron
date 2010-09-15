@@ -31,44 +31,53 @@ CreateEffect CStr(App.Path) + "\data\shader\test.txt", objEffect, , True
 D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\data\gfx\noise.bmp", texNoise
 End Sub
 
-Friend Sub BeginRender()
-Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
-d3dd9.GetTransform D3DTS_WORLD, mat1
-d3dd9.GetTransform D3DTS_VIEW, mat2
-d3dd9.GetTransform D3DTS_PROJECTION, mat3
-D3DXMatrixMultiply mat, mat1, mat2
-D3DXMatrixMultiply mat, mat, mat3
-''///test
-'Dim v As D3DXVECTOR4
-'v.X = 1
-'v.Y = 1
-'v.z = 2
-'v.w = 1
-'D3DXVec4Transform v, v, mat
-'Debug.Print v.X / v.w, v.Y / v.w, v.z / v.w
-''///
-objEffect.SetMatrix StrPtr(StrConv("mat", vbFromUnicode)), mat
-objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
-objEffect.SetTechnique StrPtr(StrConv("test", vbFromUnicode))
-objEffect.Begin 0, 0
-objEffect.BeginPass 0
-End Sub
+'Friend Sub BeginRender()
+'Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
+'d3dd9.GetTransform D3DTS_WORLD, mat1
+'d3dd9.GetTransform D3DTS_VIEW, mat2
+'d3dd9.GetTransform D3DTS_PROJECTION, mat3
+'D3DXMatrixMultiply mat, mat1, mat2
+'D3DXMatrixMultiply mat, mat, mat3
+'''///test
+''Dim v As D3DXVECTOR4
+''v.X = 1
+''v.Y = 1
+''v.z = 2
+''v.w = 1
+''D3DXVec4Transform v, v, mat
+''Debug.Print v.X / v.w, v.Y / v.w, v.z / v.w
+'''///
+'objEffect.SetMatrix StrPtr(StrConv("mat", vbFromUnicode)), mat
+'objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
+'objEffect.SetTechnique StrPtr(StrConv("test", vbFromUnicode))
+'objEffect.Begin 0, 0
+'objEffect.BeginPass 0
+'End Sub
 
-Friend Sub BeginRenderToTexture(ByVal obj As Direct3DTexture9)
+Friend Sub BeginRenderToTexture(ByVal obj As Direct3DTexture9, ByVal sTechniqueName As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4)
+'///dirty code
+Dim fParam(1 To 4) As D3DXVECTOR4
+fParam(1) = fParam1
+fParam(2) = fParam2
+fParam(3) = fParam3
+fParam(4) = fParam4
+objEffect.SetIntArray StrPtr(StrConv("_iParam", vbFromUnicode)), iParam1, 4&
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), fParam(1), 4&
+'///
 Set objOldTarget = d3dd9.GetRenderTarget(0)
 Set objOldStencil = d3dd9.GetDepthStencilSurface
 d3dd9.SetRenderTarget 0, obj.GetSurfaceLevel(0)
 d3dd9.SetDepthStencilSurface Nothing
 objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
-objEffect.SetTechnique StrPtr(StrConv("test_rtt", vbFromUnicode))
+objEffect.SetTechnique StrPtr(StrConv(sTechniqueName, vbFromUnicode))
 objEffect.Begin 0, 0
 objEffect.BeginPass 0
 End Sub
 
-Friend Sub EndRender()
-objEffect.EndPass
-objEffect.End
-End Sub
+'Friend Sub EndRender()
+'objEffect.EndPass
+'objEffect.End
+'End Sub
 
 Friend Sub EndRenderToTexture()
 objEffect.EndPass
@@ -80,9 +89,14 @@ Set objOldStencil = Nothing
 End Sub
 
 Friend Sub ProcessTexture(ByVal objSrc As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String)
+ProcessTextureEx objSrc, objDest, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4
+End Sub
+
+Friend Sub ProcessTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4)
 Dim t As D3DSURFACE_DESC
 Dim v As D3DXVECTOR4
 Dim p(23) As Single
+'///
 objDest.GetLevelDesc 0, t
 v.x = 1 / t.Width
 v.y = 1 / t.Height
@@ -97,6 +111,15 @@ Set objOldTarget = d3dd9.GetRenderTarget(0)
 Set objOldStencil = d3dd9.GetDepthStencilSurface
 d3dd9.SetRenderTarget 0, objDest.GetSurfaceLevel(0)
 d3dd9.SetDepthStencilSurface Nothing
+'///dirty code
+Dim fParam(1 To 4) As D3DXVECTOR4
+fParam(1) = fParam1
+fParam(2) = fParam2
+fParam(3) = fParam3
+fParam(4) = fParam4
+objEffect.SetIntArray StrPtr(StrConv("_iParam", vbFromUnicode)), iParam1, 4&
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), fParam(1), 4&
+'///
 objEffect.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), objSrc
 objEffect.SetTechnique StrPtr(StrConv(sEffect, vbFromUnicode))
 objEffect.Begin 0, 0
