@@ -11,6 +11,7 @@ Module=mdlFakeDXUI; src\mdlFakeDXUI.bas
 Module=mdlD3DX9; src\mdlD3DX9.bas
 Class=IFakeDXUIEvent; src\IFakeDXUIEvent.cls
 Class=clsTiming; src\clsTiming.cls
+Class=clsCamera; src\clsCamera.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""

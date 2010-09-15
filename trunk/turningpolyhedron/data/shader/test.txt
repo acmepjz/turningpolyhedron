@@ -26,16 +26,33 @@ AddressU=CLAMP;
 AddressV=CLAMP;
 };
 
+texture tex2;
+sampler samp2=sampler_state{
+Texture=<tex2>;
+MipFilter=NONE;
+MinFilter=LINEAR;
+MagFilter=LINEAR;
+AddressU=CLAMP;
+AddressV=CLAMP;
+};
+
 float4 pixelSize;
+
+////////custom parameter
+
+int _iParam[4];
+float4 _fParam[4];
 
 ////////
 
+/*
 VS_OUTPUT vs_func(float4 p:POSITION){
 VS_OUTPUT d;
 d.p=mul(p,mat);
 d.p0=p;
 return d;
 }
+*/
 
 //out: (-1,-1)->(1,1) depth:near=0 far=1 (?)
 
@@ -101,6 +118,19 @@ if(t>0){
 return n*64.0f;
 }
 
+float4 ps_func_simplexnoise(VS_OUTPUT d,uniform int nType):COLOR0{
+float a=0,b=_fParam[0].x,c=_fParam[0].y;
+int i;
+
+for(i=0;i<_iParam[0];i++){
+ if(nType==0) a+=simplexnoise(d.p0.xyz*c+i)*b;
+ else if(nType==1) a+=abs(simplexnoise(d.p0.xyz*c+i))*b;
+ b*=_fParam[0].z;c*=_fParam[0].w;
+}
+
+return float4(a,a,a,1);
+}
+
 float4 ps_func(VS_OUTPUT d):COLOR0{
 
 float a=0,b=1,c=1;
@@ -135,18 +165,26 @@ return float4(a,a,a,1);
 
 }
 
+/*
 technique test{
-pass{
-VertexShader=compile vs_2_0 vs_func();
-PixelShader=compile ps_3_0 ps_func();
+pass{VertexShader=compile vs_2_0 vs_func();
+PixelShader=compile ps_3_0 ps_func();}
 }
-}
+*/
 
 technique test_rtt{
-pass{
-VertexShader=compile vs_2_0 vs_func_rtt();
-PixelShader=compile ps_3_0 ps_func();
+pass{VertexShader=compile vs_2_0 vs_func_rtt();
+PixelShader=compile ps_3_0 ps_func();}
 }
+
+technique gen_simplexnoise{
+pass{VertexShader=compile vs_2_0 vs_func_rtt();
+PixelShader=compile ps_3_0 ps_func_simplexnoise(0);}
+}
+
+technique gen_simplexnoise_abs{
+pass{VertexShader=compile vs_2_0 vs_func_rtt();
+PixelShader=compile ps_3_0 ps_func_simplexnoise(1);}
 }
 
 ////////generate mipmap
@@ -158,12 +196,14 @@ return (tex2D(samp,t)+tex2D(samp,float2(t.x+pixelSize.x,t.y))
 }
 
 technique mipmap4{
-pass{
-PixelShader=compile ps_2_0 mipmap4_func();
-}
+pass{PixelShader=compile ps_2_0 mipmap4_func();}
 }
 
-////////process texture
+////////////////////////////////////////
+//
+// process texture
+//
+////////////////////////////////////////
 
 float4 grayscale_func(float2 t:TEXCOORD0):COLOR0{
 float f=dot(tex2D(samp,t),float4(0.222,0.707,0.071,0));
@@ -171,9 +211,7 @@ return float4(f,f,f,1);
 }
 
 technique grayscale{
-pass{
-PixelShader=compile ps_2_0 grayscale_func();
-}
+pass{PixelShader=compile ps_2_0 grayscale_func();}
 }
 
 float4 normal_func(float2 t:TEXCOORD0):COLOR0{
@@ -189,6 +227,8 @@ clr.x=-(f.z+f.w+tex2D(samp,float2(t.x+pixelSize.x,t.y)).x*2.0f
 -f.x-f.y-tex2D(samp,float2(t.x-pixelSize.x,t.y)).x*2.0f);
 clr.y=-(f.y+f.w+tex2D(samp,float2(t.x,t.y+pixelSize.y))*2.0f
 -f.x-f.z-tex2D(samp,float2(t.x,t.y-pixelSize.y)).x*2.0f);
+///custom amount
+clr.xy*=_fParam[0].xy;
 ///
 clr.z=sqrt(1.0f-clr.x*clr.x-clr.y*clr.y);
 clr.w=1;
@@ -196,9 +236,7 @@ return (clr+1.0f)*0.5f;
 }
 
 technique normal_map{
-pass{
-PixelShader=compile ps_2_0 normal_func();
-}
+pass{PixelShader=compile ps_2_0 normal_func();}
 }
 
 float4 expand4_func(float2 t:TEXCOORD0):COLOR0{
@@ -215,9 +253,7 @@ return clr;
 }
 
 technique expand4{
-pass{
-PixelShader=compile ps_2_0 expand4_func();
-}
+pass{PixelShader=compile ps_2_0 expand4_func();}
 }
 
 float4 expand8_func(float2 t:TEXCOORD0):COLOR0{
@@ -242,7 +278,68 @@ return clr;
 }
 
 technique expand8{
-pass{
-PixelShader=compile ps_2_0 expand8_func();
+pass{PixelShader=compile ps_2_0 expand8_func();}
 }
+
+////////
+
+float4 expand4_r32f_func(float2 t:TEXCOORD0):COLOR0{
+float4 c,clr=tex2D(samp,t);
+c=tex2D(samp,float2(t.x,t.y-pixelSize.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x,t.y+pixelSize.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x-pixelSize.x,t.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x+pixelSize.x,t.y));
+clr=clr.x<-1000.0f?c:clr;
+return clr;
+}
+
+technique expand4_r32f{
+pass{PixelShader=compile ps_2_0 expand4_r32f_func();}
+}
+
+float4 expand8_r32f_func(float2 t:TEXCOORD0):COLOR0{
+float4 c,clr=tex2D(samp,t);
+c=tex2D(samp,float2(t.x,t.y-pixelSize.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x,t.y+pixelSize.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x-pixelSize.x,t.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x+pixelSize.x,t.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x-pixelSize.x,t.y-pixelSize.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x-pixelSize.x,t.y+pixelSize.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x+pixelSize.x,t.y-pixelSize.y));
+clr=clr.x<-1000.0f?c:clr;
+c=tex2D(samp,float2(t.x+pixelSize.x,t.y+pixelSize.y));
+clr=clr.x<-1000.0f?c:clr;
+return clr;
+}
+
+technique expand8_r32f{
+pass{PixelShader=compile ps_2_0 expand8_r32f_func();}
+}
+
+////////
+
+float4 ps_smoothstep(float2 t:TEXCOORD0):COLOR0{
+float a=_fParam[0].z+smoothstep(_fParam[0].x,_fParam[0].y,tex2D(samp,t).x)*_fParam[0].w;
+return float4(a,a,a,1);
+}
+
+technique process_smoothstep{
+pass{PixelShader=compile ps_2_0 ps_smoothstep();}
+}
+
+float4 ps_lerp(float2 t:TEXCOORD0):COLOR0{
+return lerp(_fParam[0],_fParam[1],tex2D(samp,t).x);
+}
+
+technique process_lerp{
+pass{PixelShader=compile ps_2_0 ps_lerp();}
 }

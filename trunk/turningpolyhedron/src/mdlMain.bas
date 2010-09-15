@@ -20,23 +20,25 @@ End Type
 
 Public Const m_nDefaultFVF = D3DFVF_XYZ Or D3DFVF_NORMAL Or D3DFVF_DIFFUSE Or D3DFVF_SPECULAR Or D3DFVF_TEX1
 
-Public m_tVertexDecl() As D3DVERTEXELEMENT9
+Public m_tDefVertexDecl() As D3DVERTEXELEMENT9
 
 Public Type typeFakeDXGDILogFont
  objFont As D3DXFont
  objSprite As D3DXSprite
 End Type
 
+Public objText As New clsGNUGetText
+
 Public Sub CreateVertexDeclaration()
-ReDim m_tVertexDecl(0 To 7)
-m_tVertexDecl(0) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
-m_tVertexDecl(1) = D3DVertexElementCreate(, 12&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_NORMAL)
-m_tVertexDecl(2) = D3DVertexElementCreate(, 24&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_BINORMAL)
-m_tVertexDecl(3) = D3DVertexElementCreate(, 36&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_TANGENT)
-m_tVertexDecl(4) = D3DVertexElementCreate(, 48&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR)
-m_tVertexDecl(5) = D3DVertexElementCreate(, 52&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR, 1)
-m_tVertexDecl(6) = D3DVertexElementCreate(, 56&, D3DDECLTYPE_FLOAT2, , D3DDECLUSAGE_TEXCOORD)
-m_tVertexDecl(7) = D3DDECL_END
+ReDim m_tDefVertexDecl(0 To 7)
+m_tDefVertexDecl(0) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
+m_tDefVertexDecl(1) = D3DVertexElementCreate(, 12&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_NORMAL)
+m_tDefVertexDecl(2) = D3DVertexElementCreate(, 24&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_BINORMAL)
+m_tDefVertexDecl(3) = D3DVertexElementCreate(, 36&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_TANGENT)
+m_tDefVertexDecl(4) = D3DVertexElementCreate(, 48&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR)
+m_tDefVertexDecl(5) = D3DVertexElementCreate(, 52&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR, 1)
+m_tDefVertexDecl(6) = D3DVertexElementCreate(, 56&, D3DDECLTYPE_FLOAT2, , D3DDECLUSAGE_TEXCOORD)
+m_tDefVertexDecl(7) = D3DDECL_END
 End Sub
 
 'Public Sub CreateCube1(ByVal lp As Long, ByVal clr1 As Long, ByVal clr2 As Long)
@@ -64,7 +66,7 @@ Else
  ret = D3DXCreateEffect(d3dd9, ByVal StrPtr(s), LenB(s), ByVal 0, ByVal 0, 0, Nothing, d3dxe, buf)
 End If
 If ret < 0 Then
- s2 = "Can't create D3DXEffect!! &H" + Hex(ret)
+ s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
  If Not buf Is Nothing Then
   ret = buf.GetBufferSize
   s = Space(ret)
@@ -75,7 +77,7 @@ If ret < 0 Then
   s2 = s2 + vbCrLf + s
  End If
  #If IsDebug Then
- MsgBox s2
+ MsgBox s2, vbExclamation, objText.GetText("Error")
  #End If
  sError = s2
  Set d3dxe = Nothing

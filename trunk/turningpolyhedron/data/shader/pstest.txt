@@ -52,7 +52,7 @@ float4 viewPos;
 texture tex;
 sampler samp=sampler_state{
 Texture=<tex>;
-MipFilter=LINEAR;
+MipFilter=NONE;
 MinFilter=LINEAR;
 MagFilter=LINEAR;
 AddressU=CLAMP;
@@ -63,7 +63,18 @@ AddressV=CLAMP;
 texture texNormal;
 sampler sampNormal=sampler_state{
 Texture=<texNormal>;
-MipFilter=LINEAR;
+MipFilter=NONE;
+MinFilter=LINEAR;
+MagFilter=LINEAR;
+AddressU=CLAMP;
+AddressV=CLAMP;
+};
+
+//height map
+texture texHeight;
+sampler sampHeight=sampler_state{
+Texture=<texHeight>;
+MipFilter=NONE;
 MinFilter=LINEAR;
 MagFilter=LINEAR;
 AddressU=CLAMP;
@@ -114,11 +125,30 @@ return d;
 //test
 float4 ps_func(VS_OUTPUT d):COLOR0{
 
+float4 viewVec=normalize(viewPos-d.p);
+
+//new:parallax mapping test
+float4 clr_tex;
+#if 1
+
+//it works!! :)
+clr_tex=float4(dot(viewVec,d.b),dot(viewVec,d.ta),0,0); //parallax_base
+float4 parallax_offset=clr_tex*(tex2D(sampHeight,d.t).x-0.5f)*0.01f; //TODO:scale and offset
+//iteration(?)
+//parallax_offset=(parallax_offset+clr_tex*(tex2D(sampHeight,d.t+parallax_offset).x-0.5f)*0.01f)*0.5f; //TODO:scale and offset
+//parallax_offset=(parallax_offset+clr_tex*(tex2D(sampHeight,d.t+parallax_offset).x-0.5f)*0.01f)*0.5f; //TODO:scale and offset
+
+d.t+=parallax_offset;
+
+#endif
+
 //get texture color
-float4 clr_tex=tex2D(samp,d.t);
+clr_tex=tex2D(samp,d.t);
 
 //shadow map test
 float4 l=1.0f;
+
+#if 0
 
 d.pShadow.xyz/=d.pShadow.w;
 d.pShadow.xy*=float2(0.5f,-0.5f);
@@ -161,10 +191,19 @@ const float dist=0.01f;
  ;
 */
 
+#endif
+
 //normal (normal map)
-//float4 n=d.n;
+#if 1
+
 float4 n=tex2D(sampNormal,d.t)*2.0f-254.0f/255.0f;
 n=n.x*d.b+n.y*d.ta+n.z*d.n; //???????? right?
+
+#else
+
+float4 n=d.n;
+
+#endif
 
 //light vector
 float4 lightVec;
@@ -175,7 +214,7 @@ if(lightType==1){
 }
 
 //halfway vector
-float4 h=normalize(lightVec+normalize(viewPos-d.p)); //TODO:can we use "reflect"?
+float4 h=normalize(lightVec+viewVec); //TODO:can we use "reflect"?
 
 //TEST
 l*=lit(dot(n.xyz,lightVec.xyz),dot(n.xyz,h.xyz),20); //TODO:hardness

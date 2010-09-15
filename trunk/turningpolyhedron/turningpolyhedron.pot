@@ -1,0 +1,33 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+#. Me.Caption = objText.GetText("Initalizing...")
+msgid "Initalizing..."
+msgstr ""
+
+#.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
+msgid "Can't create D3D9!!!"
+msgstr ""
+
+#.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
+#.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
+msgid "Fatal Error"
+msgstr ""
+
+#.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
+msgid "Can't create device!!!"
+msgstr ""
+
+#. Me.Caption = objText.GetText("Turning Polyhedron")
+msgid "Turning Polyhedron"
+msgstr ""
+
+#.  s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
+msgid "Can't create D3DXEffect!! Error number: "
+msgstr ""
+
+#.  MsgBox s2, vbExclamation, objText.GetText("Error")
+msgid "Error"
+msgstr ""
+

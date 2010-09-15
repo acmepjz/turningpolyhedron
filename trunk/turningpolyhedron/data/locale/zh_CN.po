@@ -1,0 +1,42 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: lks <lks@lks.com>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Chinese\n"
+"X-Poedit-Country: CHINA\n"
+
+#. Me.Caption = objText.GetText("Initalizing...")
+msgid "Initalizing..."
+msgstr "正在初始化..."
+
+#.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
+msgid "Can't create D3D9!!!"
+msgstr "初始化D3D9失败!!!"
+
+#.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
+#.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
+msgid "Fatal Error"
+msgstr "严重错误"
+
+#.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
+msgid "Can't create device!!!"
+msgstr "初始化D3D9设备失败!!!"
+
+#. Me.Caption = objText.GetText("Turning Polyhedron")
+msgid "Turning Polyhedron"
+msgstr "摇立体"
+
+#.  s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
+msgid "Can't create D3DXEffect!! Error number: "
+msgstr "初始化D3DXEffect失败!! 错误代码: "
+
+#.  MsgBox s2, vbExclamation, objText.GetText("Error")
+msgid "Error"
+msgstr "错误"
+

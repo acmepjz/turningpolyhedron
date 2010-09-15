@@ -68,17 +68,17 @@ Private objTest As D3DXMesh
 Private objDrawTest As New clsRenderTexture, objRenderTest As New clsRenderPipeline
 
 Private objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
-
-Private nOldX As Long, nOldY As Long
+Private objHeightMapTexture As Direct3DTexture9
 
 '///test
-Private objTextSprite As D3DXSprite
-Private objText As D3DXFont
-'Private objTextEffect As D3DXEffect
+Private objFontSprite As D3DXSprite
+Private objFont As D3DXFont
+'Private objFontEffect As D3DXEffect
 Private bUseTextEffect As Boolean
 '///
 
 Private objTiming As New clsTiming
+Private objCamera As New clsCamera
 
 Private Sub Command1_Click()
 Unload Me
@@ -129,9 +129,15 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
 Dim i As Long
+'///
+objText.LoadFileWithLocale App.Path + "\data\locale\*.mo"
+'///
+Me.Show
+Me.Caption = objText.GetText("Initalizing...")
+'///
 Set d3d9 = Direct3DCreate9(D3D_SDK_VERSION)
 If d3d9 Is Nothing Then
- MsgBox "Can't create D3D9!!!", vbExclamation, "Fatal Error"
+ MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
  Form_Unload 0
  End
 End If
@@ -152,18 +158,18 @@ End With
 'create device
 Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, Me.hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, d3dpp)
 If d3dd9 Is Nothing Then
- MsgBox "Can't create device!!!", vbExclamation, "Fatal Error"
+ MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
  Form_Unload 0
  End
 End If
 '///font test
-D3DXCreateSprite d3dd9, objTextSprite
-D3DXCreateFontW d3dd9, 32, 0, 0, 0, 0, 0, 0, 0, 0, "Tahoma", objText
+D3DXCreateSprite d3dd9, objFontSprite
+D3DXCreateFontW d3dd9, 32, 0, 0, 0, 0, 0, 0, 0, 0, "Tahoma", objFont
 With FakeDXUIDefaultFont
- Set .objFont = objText
- Set .objSprite = objTextSprite
+ Set .objFont = objFont
+ Set .objSprite = objFontSprite
 End With
-'CreateEffect CStr(App.Path) + "\data\shader\texteffect.txt", objTextEffect, , True
+'CreateEffect CStr(App.Path) + "\data\shader\texteffect.txt", objFontEffect, , True
 '///vertex declaration test
 CreateVertexDeclaration
 '///
@@ -173,7 +179,8 @@ objDrawTest.Create
 Set objTest = pTest
 'new:mipmap
 D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
-D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objNormalTexture
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objNormalTexture
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, objHeightMapTexture
 '///
 FakeDXUICreate 0, 0, 640, 480
 FakeDXUIControls(1).AddNewChildren FakeCtl_Form, 120, 240, 260, 400, &HFFFFFF, , , , "Form1234°¡°¢"
@@ -191,14 +198,16 @@ Set FakeDXUIEvent = Me
 '///
 objRenderTest.Create
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
-objRenderTest.SetLightPositionByVal 0, 8, 5
-objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
-'objRenderTest.SetLightType D3DLIGHT_POINT
-pLookAtLH Vec3(6, 2, 3), Vec3, Vec3(, , 1)
-'pLookAtLH Vec3(1, 0, 8), Vec3, Vec3(, , 1)
+objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
+'objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
+objRenderTest.SetLightType D3DLIGHT_POINT
+objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1)
+'objCamera.SetCamrea Vec3(1, 0, 8), Vec3, Vec3(, , 1)
 objRenderTest.CreateShadowMap 1024 'new
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
 objRenderTest.SetShadowState True, 16, -100, 100  'directional
+'///
+Me.Caption = objText.GetText("Turning Polyhedron")
 End Sub
 
 Private Sub pSetRenderState()
@@ -228,39 +237,26 @@ With d3dd9
 End With
 End Sub
 
-Private Sub pLookAtLH(pEye As D3DVECTOR, pAt As D3DVECTOR, pUp As D3DVECTOR)
-Dim mat As D3DMATRIX
-D3DXMatrixLookAtLH mat, pEye, pAt, pUp
-d3dd9.SetTransform D3DTS_VIEW, mat
-objRenderTest.SetViewPositionByVal pEye.x, pEye.y, pEye.z
-End Sub
-
 Private Sub Form_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 '///
 If FakeDXUIOnMouseEvent(Button, Shift, x, y, 1) Then Exit Sub
 '///
-nOldX = x
-nOldY = y
-FakeDXUISetCapture = -1
+Select Case Button
+Case 1, 2
+ objCamera.LockCamera = Button = 2
+ objCamera.BeginDrag x, y
+ FakeDXUISetCapture = -1
+End Select
 End Sub
 
 Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
-Dim xx As Long, yy As Long
-Dim m As D3DMATRIX
 '///
 If FakeDXUIOnMouseEvent(Button, Shift, x, y, 0) Then Exit Sub
 '///
 Select Case Button
-Case 1
- xx = x - nOldX
- yy = y - nOldY
- D3DXMatrixRotationZ m, -xx / 100
- d3dd9.MultiplyTransform D3DTS_VIEW, m
- D3DXMatrixRotationY m, yy / 100
- d3dd9.MultiplyTransform D3DTS_VIEW, m
+Case 1, 2
+ objCamera.Drag x, y, 0.01
 End Select
-nOldX = x
-nOldY = y
 End Sub
 
 Private Sub Form_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
@@ -276,6 +272,7 @@ Set objDrawTest = Nothing
 Set objTest = Nothing
 Set objTexture = Nothing
 Set objNormalTexture = Nothing
+Set objHeightMapTexture = Nothing
 Set d3dd9 = Nothing
 Set d3d9 = Nothing
 End Sub
@@ -284,9 +281,9 @@ Private Function pTest() As D3DXMesh
 Dim obj As D3DXMesh
 Dim objAdjacency As D3DXBuffer
 'bug in x file loader: you must write "1.000" instead of "1" or it'll buggy :-3
-'D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_1.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
-D3DXLoadMeshFromXW CStr(App.Path) + "\media\test.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
-Set obj = obj.CloneMesh(0, m_tVertexDecl(0), d3dd9)
+D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_2.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
+'D3DXLoadMeshFromXW CStr(App.Path) + "\media\test.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
+Set obj = obj.CloneMesh(0, m_tDefVertexDecl(0), d3dd9)
 '///recalculate normal
 D3DXComputeTangentFrame obj, D3DXTANGENT_CALCULATE_NORMALS
 '//poly20-can smooth, monkey can't :-3 cube1-1 can't either ---why?
@@ -326,31 +323,33 @@ With d3dd9
    '////////render texture
    Dim obj As Direct3DTexture9
    '///
-   objDrawTest.BeginRenderToTexture objTexture
-   .Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
+   D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
+   objDrawTest.ProcessTextureEx Nothing, obj, "process_lerp", 0, 0, 0, 0, Vec4(-1024), Vec4(-1024), Vec4, Vec4
+   objDrawTest.BeginRenderToTexture obj, "gen_simplexnoise", 6, 0, 0, 0, Vec4(1, 1, 0.86, 1.85), Vec4, Vec4, Vec4
    .BeginScene
    objTest.DrawSubset 0
    .EndScene
    objDrawTest.EndRenderToTexture
    '///expand texture to eliminate seal
-   D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, obj
-   objDrawTest.ProcessTexture objTexture, obj, "expand8"
-   objDrawTest.ProcessTexture obj, objTexture, "expand8"
+   objDrawTest.ProcessTexture obj, objHeightMapTexture, "expand8_r32f"
+   objDrawTest.ProcessTexture objHeightMapTexture, obj, "expand8_r32f"
+   '///
+   objDrawTest.ProcessTextureEx obj, objHeightMapTexture, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
    Set obj = Nothing
+   '///
+   objDrawTest.ProcessTextureEx objHeightMapTexture, objTexture, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
    objDrawTest.GenerateMipSubLevels objTexture
    '///
-   D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
-   objDrawTest.ProcessTexture objTexture, obj, "grayscale"
-   objDrawTest.ProcessTexture obj, objNormalTexture, "normal_map"
-   Set obj = Nothing
+   objDrawTest.ProcessTextureEx objHeightMapTexture, objNormalTexture, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 0), Vec4, Vec4, Vec4
    objDrawTest.GenerateMipSubLevels objNormalTexture
    '////////
    j = 1
   End If
-   D3DXMatrixRotationZ mat1, 0.01
+   D3DXMatrixRotationZ mat1, 0.005
    .GetTransform D3DTS_WORLD, mat
    D3DXMatrixMultiply mat, mat1, mat
    .SetTransform D3DTS_WORLD, mat
+   objCamera.Apply objRenderTest
    '///
    objRenderTest.BeginRenderShadowMap
    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
@@ -361,6 +360,7 @@ With d3dd9
    '///
    objRenderTest.SetTexture objTexture
    objRenderTest.SetNormalTexture objNormalTexture
+   objRenderTest.SetHeightMapTexture objHeightMapTexture
    objRenderTest.BeginRender
    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
    .BeginScene
