@@ -22,7 +22,7 @@ Private m_sName As String
 Private m_nStyle As Long
 Private m_nState As Long
 
-Private m_sCaption As String, m_sText As String
+Private m_sCaption As String, m_sText As String, m_sGroupName As String
 Private m_bEnabled As Boolean, m_bVisible As Boolean, m_bLocked As Boolean
 Private m_nValue As Long
 
@@ -50,7 +50,32 @@ Value = m_nValue
 End Property
 
 Friend Property Let Value(ByVal n As Long)
+Dim i As Long, j As Long, k As Long
 m_nValue = n
+If n Then
+ If m_nType = 4 Then 'button
+  k = m_nStyle And 7&
+  Select Case k
+  Case 3, 4
+   If m_idxParent > 0 And m_idxParent <= FakeDXUIControlCount Then
+    With FakeDXUIControls(m_idxParent)
+     For i = 1 To .ChildrenCount
+      j = .Children(i)
+      If j > 0 And j <= FakeDXUIControlCount And j <> m_nIndex Then
+       With FakeDXUIControls(j)
+        If .ControlType = 4 Then
+         If (.Style And 7&) = k Then
+          If .GroupName = m_sGroupName Then .Value = 0
+         End If
+        End If
+       End With
+      End If
+     Next i
+    End With
+   End If
+  End Select
+ End If
+End If
 End Property
 
 Friend Property Get Name() As String
@@ -75,6 +100,14 @@ End Property
 
 Friend Property Let Text(ByRef s As String)
 m_sText = s
+End Property
+
+Friend Property Get GroupName() As String
+GroupName = m_sGroupName
+End Property
+
+Friend Property Let GroupName(ByRef s As String)
+m_sGroupName = s
 End Property
 
 Friend Property Get ChildrenCount() As Long
@@ -131,7 +164,7 @@ If i > 1 And i <= m_nChildrenCount Then
 End If
 End Sub
 
-Friend Function AddNewChildren(ByVal nType As enumFakeDXUIControlType, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nStyle As enumFakeDXUIControlStyle, Optional ByVal bEnabled As Boolean = True, Optional ByVal bVisible As Boolean = True, Optional ByVal bLocked As Boolean = False, Optional ByVal sCaption As String, Optional ByVal sText As String, Optional ByVal sName As String, Optional ByVal nLeft2 As Single, Optional ByVal nTop2 As Single, Optional ByVal nRight2 As Single, Optional ByVal nBottom2 As Single, Optional ByVal nValue As Long) As Long
+Friend Function AddNewChildren(ByVal nType As enumFakeDXUIControlType, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nStyle As enumFakeDXUIControlStyle, Optional ByVal bEnabled As Boolean = True, Optional ByVal bVisible As Boolean = True, Optional ByVal bLocked As Boolean = False, Optional ByVal sCaption As String, Optional ByVal sText As String, Optional ByVal sName As String, Optional ByVal nLeft2 As Single, Optional ByVal nTop2 As Single, Optional ByVal nRight2 As Single, Optional ByVal nBottom2 As Single, Optional ByVal nValue As Long, Optional ByVal sGroupName As String) As Long
 Dim i As Long
 i = FakeDXUIGetEmptyControl
 With FakeDXUIControls(i)
@@ -148,6 +181,7 @@ With FakeDXUIControls(i)
  .Text = sText
  .Name = sName
  .Value = nValue
+ .GroupName = sGroupName
  '///
  .Parent = m_nIndex
 End With
@@ -482,12 +516,14 @@ Case 3 'frame
 Case 4 'button
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
- Select Case m_nStyle And 15&
- Case 1, 2 'standard checkbox
+ kk = m_nStyle And 15&
+ Select Case kk
+ Case 1, 2, 3, 4 'checkbox and optionbutton
   f = (nTop + nBottom) / 2
+  If kk > 2 Then kk = 64 Else kk = 0
   If m_bEnabled Then
    '///base
-   FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 0, 368, 16, 384, 512, i Or &HFFFFFF
+   FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk, 368, kk + 16, 384, 512, i Or &HFFFFFF
    '///highlight and pressed
    j = m_nAnimVal(1)
    k = m_nAnimVal(4)
@@ -502,7 +538,7 @@ Case 4 'button
    If j > 0 Then
     j = j * nOpacity
     j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
-    FakeDXGDIStretchBltBlended nLeft, f - 8, nLeft + 16, f + 8, 16, 368, 32, 384, 512, 32, 368, 255 - jj, j
+    FakeDXGDIStretchBltBlended nLeft, f - 8, nLeft + 16, f + 8, kk + 16, 368, kk + 32, 384, 512, kk + 32, 368, 255 - jj, j
    End If
    '///checked
    j = m_nAnimVal(3)
@@ -518,9 +554,9 @@ Case 4 'button
    If j > 0 Then
     j = j * nOpacity
     j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
-    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 0, 384, 16, 400, 512, j
+    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk, 384, kk + 16, 400, 512, j
    End If
-   If jj > 0 Then
+   If jj > 0 And kk = 0 Then
     j = jj * nOpacity
     j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
     FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 32, 384, 48, 400, 512, j
@@ -529,10 +565,10 @@ Case 4 'button
    FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
    i, , , , , , , True
   Else
-   FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 48, 368, 64, 384, 512, i Or &HFFFFFF
+   FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk + 48, 368, kk + 64, 384, 512, i Or &HFFFFFF
    Select Case m_nValue
    Case 1
-    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 16, 384, 32, 400, 512, i Or &HFFFFFF
+    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk + 16, 384, kk + 32, 400, 512, i Or &HFFFFFF
    Case 2
     FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 48, 384, 64, 400, 512, i Or &HFFFFFF
    End Select
@@ -540,8 +576,6 @@ Case 4 'button
    FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
    i Or &H666666, , , , , , , True
   End If
- Case 3, 4 'standard optionbutton
-  'TODO:
  Case Else 'button
   If m_bEnabled Then
    '///base
@@ -559,7 +593,7 @@ Case 4 'button
    If j > k Then j = j - 51
    m_nAnimVal(1) = j
    jj = m_nAnimVal(2)
-   k = m_nAnimVal(5)
+   k = (k And m_nValue <> 0) Or m_nAnimVal(5)
    If jj < k Then jj = jj + 51 Else _
    If jj > k Then jj = jj - 51
    m_nAnimVal(2) = jj
@@ -842,6 +876,11 @@ End If
 pButtonHighlight_1 = i
 End Function
 
+'call this when control contains scrollbar(s)
+Private Sub pProcessScrollbarEvent()
+'TODO:
+End Sub
+
 Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long, Optional ByVal bChildrenProcessed As Boolean) As Boolean
 Dim i As Long
 Dim b As Boolean, b1 As Boolean
@@ -917,7 +956,7 @@ Case 4 'button
     If m_nValue > 2 Then m_nValue = 0
    Case 3, 4 'option and optionnullable
     If m_nValue = 0 Then
-     'TODO:
+     Value = 1
     ElseIf i = 4 Then
      m_nValue = 0
     End If
@@ -1159,7 +1198,33 @@ OnMouseEvent = b Or b1 Or bChildrenProcessed
 End Function
 
 Friend Function OnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean
+Dim i As Long
+Dim b As Boolean
+'///
+If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit Function
+'///
 'TODO:
+'///
+Select Case nEventType
+Case 101, 102 'default,cancel
+ If m_nType = 4 Then
+  b = (nEventType = 101 And (m_nStyle And 16&) <> 0) Or (nEventType = 102 And (m_nStyle And 32&) <> 0)
+ End If
+ '///
+ If b Then
+  FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
+ Else
+  For i = m_nChildrenCount To 1 Step -1
+   If FakeDXUIControls(m_idxChildren(i)).OnKeyEvent(KeyCode, Shift, nEventType) Then
+    b = True
+    Exit For
+   End If
+  Next i
+ End If
+Case Else
+End Select
+'///
+OnKeyEvent = b
 End Function
 
 Friend Function OnMouseWheel(ByVal nDelta As Long, ByVal Shift As Long) As Boolean

@@ -22,28 +22,11 @@ Begin VB.Form frmMain
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   640
    StartUpPosition =   3  '´°¿ÚÈ±Ê¡
-   Begin VB.CommandButton Command2 
-      Caption         =   "Windowed"
-      Height          =   375
-      Left            =   120
-      TabIndex        =   1
-      Top             =   600
-      Visible         =   0   'False
-      Width           =   1095
-   End
    Begin VB.Timer Timer1 
+      Enabled         =   0   'False
       Interval        =   30
       Left            =   3480
       Top             =   1440
-   End
-   Begin VB.CommandButton Command1 
-      Caption         =   "Exit"
-      Height          =   375
-      Left            =   120
-      TabIndex        =   0
-      Top             =   120
-      Visible         =   0   'False
-      Width           =   1095
    End
 End
 Attribute VB_Name = "frmMain"
@@ -61,6 +44,26 @@ Private Type POINTAPI
     x As Long
     y As Long
 End Type
+Private Declare Function GetWindowLong Lib "user32.dll" Alias "GetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long) As Long
+Private Declare Function SetWindowLong Lib "user32.dll" Alias "SetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long, ByVal dwNewLong As Long) As Long
+Private Declare Function SetWindowPos Lib "user32.dll" (ByVal hwnd As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
+Private Const SWP_NOMOVE As Long = &H2
+Private Const SWP_NOZORDER As Long = &H4
+Private Const SWP_NOACTIVATE As Long = &H10
+Private Const GWL_STYLE As Long = -16
+Private Const GWL_EXSTYLE As Long = -20
+Private Declare Function AdjustWindowRectEx Lib "user32.dll" (ByRef lpRect As RECT, ByVal dwStyle As Long, ByVal bMenu As Long, ByVal dwExStyle As Long) As Long
+Private Type RECT
+    Left As Long
+    Top As Long
+    Right As Long
+    Bottom As Long
+End Type
+
+Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
+Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
+
+Public m_sMyGamesPath As String
 
 Implements IFakeDXUIEvent
 
@@ -74,31 +77,22 @@ Private objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
 '///test
 Private objFontSprite As D3DXSprite
 Private objFont As D3DXFont
-'Private objFontEffect As D3DXEffect
-Private bUseTextEffect As Boolean
 '///
 
 Private objTiming As New clsTiming
 Private objCamera As New clsCamera
-
-Private Sub Command1_Click()
-Unload Me
-End Sub
-
-Private Sub Command2_Click()
-On Error Resume Next
-d3dpp.Windowed = 1
-'d3dpp.BackBufferWidth = 800
-'d3dpp.BackBufferHeight = 600 'then change the window's size manually
-d3dd9.Reset d3dpp
-Me.Refresh
-End Sub
 
 Private Sub Form_DblClick()
 Dim p As POINTAPI
 GetCursorPos p
 ScreenToClient Me.hwnd, p
 Call FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4)
+'///debug
+Dim i As Long
+i = GetWindowLong(Me.hwnd, GWL_STYLE)
+Debug.Print Hex(i)
+i = GetWindowLong(Me.hwnd, GWL_EXSTYLE)
+Debug.Print Hex(i)
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
@@ -110,8 +104,6 @@ If KeyCode = vbKeyS And Shift = vbCtrlMask Then
    SaveRenderTargetToFile objTexture, CStr(App.Path) + "\test.bmp", D3DXIFF_BMP
    SaveRenderTargetToFile objNormalTexture, CStr(App.Path) + "\testnormal.bmp", D3DXIFF_BMP
    '///
-ElseIf KeyCode = vbKeyT Then
- bUseTextEffect = Not bUseTextEffect
 End If
 End Sub
 
@@ -130,6 +122,11 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
 Dim i As Long
+'///
+m_sMyGamesPath = Space(1024)
+SHGetSpecialFolderPath 0, m_sMyGamesPath, 5, 1
+m_sMyGamesPath = Left(m_sMyGamesPath, InStr(1, m_sMyGamesPath, vbNullChar) - 1) + "\My Games\Turning Polyhedron\"
+MakeSureDirectoryPathExists m_sMyGamesPath
 '///
 objText.LoadFileWithLocale App.Path + "\data\locale\*.mo"
 '///
@@ -154,6 +151,7 @@ With d3dpp
  .EnableAutoDepthStencil = 1
  .AutoDepthStencilFormat = D3DFMT_D24S8
  '.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
+ .PresentationInterval = D3DPRESENT_INTERVAL_ONE 'D3DPRESENT_INTERVAL_TWO 'Fullscreen only
  '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES
 End With
 'create device
@@ -178,9 +176,6 @@ pSetRenderState
 '//////test
 objDrawTest.Create
 Set objTest = pTest
-'new:mipmap
-D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objNormalTexture
 '///
 pCreateUI
 '///
@@ -197,24 +192,33 @@ objRenderTest.SetShadowState True, 16, -100, 100  'directional
 objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 30, -0.5, 0.02
 '///
 Me.Caption = objText.GetText("Turning Polyhedron")
+'///
+'////////new:deadloop
+Do Until d3dd9 Is Nothing
+ Timer1_Timer
+ DoEvents
+Loop
 End Sub
 
 Private Sub pCreateUI()
 Dim i As Long
 '///
 FakeDXUICreate 0, 0, 640, 480
-FakeDXUIControls(1).AddNewChildren FakeCtl_Button, 8, -32, 64, -8, , , , , "Exit", , "cmdExit", , 1, , 1
+FakeDXUIControls(1).AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1
+FakeDXUIControls(1).AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FakeCtl_Button_CheckBox Or FakeCtl_Button_Graphical, , , , "Fullscreen", , "chkFullscreen", , 1, , 1
 i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 120, 240, 320, 400, &HFFFFFF, , , , "Form1234°¡°¢")
-i = FakeDXUIControls(i).AddNewChildren(FakeCtl_Frame, 16, 16, 160, 96, , , , , "Frame1 yW")
-FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FakeCtl_Button_CheckBox, , , , "Check1", , "Check1", , , , , 1
+i = FakeDXUIControls(i).AddNewChildren(FakeCtl_Frame, 8, 16, 96, 96, , , , , "Frame1 yW")
+FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FakeCtl_Button_CheckBox, , , , "Enabled", , "Check1", , , , , 1
 FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FakeCtl_Button_CheckBoxTristate, , , , "Check2", , "Check2"
+FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 0, 32, 64, 48, , , , , "Danger!!!", , "cmdDanger"
 i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 240, 200, 480, 360, &HFFFFFF, , , , "MDIForm1")
 i = FakeDXUIControls(i).AddNewChildren(FakeCtl_Form, 0, 0, 0, 0, _
 FakeCtl_Form_Moveable Or FakeCtl_Form_TitleBar Or FakeCtl_Form_CloseButton Or FakeCtl_Form_MaxButton Or FakeCtl_Form_MinButton, , , , "Form2", , , _
 0.25, 0.25, 0.75, 0.75)
 i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 2& Or FakeCtl_Style_TopMost, , , , , , "frmTopmost")
 FakeDXUIControls(i).AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
-FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 80, 28, 140, 48, , , , , "Close", , "cmdClose"
+FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 80, 28, 140, 48, FakeCtl_Button_Default Or FakeCtl_Button_Cancel, , , , "Close", , "cmdClose"
+'///
 Set FakeDXUIEvent = Me
 End Sub
 
@@ -290,9 +294,9 @@ Dim objAdjacency As D3DXBuffer
 Dim i As Long, lp As Long
 Dim tDesc As D3DVERTEXBUFFER_DESC
 'bug in x file loader: you must write "1.000" instead of "1" or it'll buggy :-3
-D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_2.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
+D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_2.x", D3DXMESH_MANAGED, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
 'D3DXLoadMeshFromXW CStr(App.Path) + "\media\test.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
-Set obj = obj.CloneMesh(0, m_tDefVertexDecl(0), d3dd9)
+Set obj = obj.CloneMesh(D3DXMESH_MANAGED, m_tDefVertexDecl(0), d3dd9)
 '///recalculate normal
 D3DXComputeTangentFrame obj, D3DXTANGENT_CALCULATE_NORMALS
 '//poly20-can smooth, monkey can't :-3 cube1-1 can't either ---why?
@@ -311,19 +315,123 @@ Set pTest = obj
 End Function
 
 Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
-Dim i As Long
+Dim i As Long, j As Long
 Select Case obj.Name
 Case "cmdClose"
  i = FakeDXUIFindControl("frmTopmost")
  If i Then FakeDXUIControls(i).Unload
 Case "cmdExit"
  Unload Me
+Case "cmdDanger"
+ Randomize Timer
+ For j = 1 To 100
+  i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
+  FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
+ Next j
+Case "chkFullscreen"
+ pChangeResolution , , obj.Value
 Case "Check1"
  i = FakeDXUIFindControl("Check2")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
  i = FakeDXUIFindControl("cmdClose")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
 End Select
+End Sub
+
+Friend Sub pChangeResolution(Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal bFullscreen As VbTriState = vbUseDefault)
+On Error Resume Next
+Dim r As RECT
+'///
+Select Case bFullscreen
+Case vbFalse
+ bFullscreen = 0
+Case vbUseDefault
+ bFullscreen = 1 - d3dpp.Windowed
+Case Else
+ bFullscreen = 1
+End Select
+If nWidth <= 0 Then nWidth = d3dpp.BackBufferWidth
+If nHeight <= 0 Then nHeight = d3dpp.BackBufferHeight
+If nWidth <> d3dpp.BackBufferWidth Or nHeight <> d3dpp.BackBufferHeight Or d3dpp.Windowed <> 1 - bFullscreen Then
+ '///
+ With d3dpp
+  .BackBufferWidth = nWidth
+  .BackBufferHeight = nHeight
+  .Windowed = 1 - bFullscreen
+ End With
+ '///it works!
+ pOnLostDevice
+ d3dd9.Reset d3dpp
+ pOnInitalize True
+ '///
+ If bFullscreen Then
+  SetWindowLong Me.hwnd, GWL_STYLE, &H160A0000
+  SetWindowLong Me.hwnd, GWL_EXSTYLE, &H40000
+ Else
+  SetWindowLong Me.hwnd, GWL_STYLE, &H16CA0000
+  SetWindowLong Me.hwnd, GWL_EXSTYLE, &H40100
+  r.Right = nWidth
+  r.Bottom = nHeight
+  AdjustWindowRectEx r, &H16CA0000, 0, &H40100
+  SetWindowPos Me.hwnd, 0, 0, 0, r.Right - r.Left, r.Bottom - r.Top, SWP_NOMOVE Or SWP_NOZORDER Or SWP_NOACTIVATE
+ End If
+ '///
+End If
+End Sub
+
+Friend Sub pOnLostDevice()
+Set objTexture = Nothing
+Set objNormalTexture = Nothing
+objRenderTest.OnLostDevice
+objDrawTest.OnLostDevice
+objFontSprite.OnLostDevice
+objFont.OnLostDevice
+End Sub
+
+Friend Sub pOnInitalize(Optional ByVal bReset As Boolean)
+Static bInit As Boolean
+If bReset Then bInit = False Else _
+If bInit Then Exit Sub
+'///
+If bReset Then
+ objRenderTest.OnResetDevice
+ objDrawTest.OnResetDevice
+ objFontSprite.OnResetDevice
+ objFont.OnResetDevice
+ '///
+ pSetRenderState
+ '///
+End If
+'///
+D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objNormalTexture
+'///
+Dim obj As Direct3DTexture9
+Dim obj2 As Direct3DTexture9
+'///
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj2
+objDrawTest.ProcessTextureEx Nothing, obj, "process_lerp", 0, 0, 0, 0, Vec4(-1024), Vec4(-1024), Vec4, Vec4
+objDrawTest.BeginRenderToTexture obj, "gen_simplexnoise", 6, 0, 0, 0, Vec4(1, 1, 0.86, 1.85), Vec4, Vec4, Vec4
+d3dd9.BeginScene
+objTest.DrawSubset 0
+d3dd9.EndScene
+objDrawTest.EndRenderToTexture
+'///expand texture to eliminate seal
+objDrawTest.ProcessTexture obj, obj2, "expand8_r32f"
+objDrawTest.ProcessTexture obj2, obj, "expand8_r32f"
+'///
+objDrawTest.ProcessTextureEx obj, obj2, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
+Set obj = Nothing
+'///
+objDrawTest.ProcessTextureEx obj2, objTexture, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
+objDrawTest.GenerateMipSubLevels objTexture
+'///
+objDrawTest.ProcessTextureEx obj2, objNormalTexture, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 1), Vec4, Vec4, Vec4
+objDrawTest.GenerateMipSubLevels objNormalTexture
+Set obj2 = Nothing
+'///
+bInit = True
 End Sub
 
 Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
@@ -337,46 +445,23 @@ Dim mat As D3DMATRIX, mat1 As D3DMATRIX
 Dim r(3) As Long
 Dim f(23) As Single, f1 As Single
 Dim s As String
-Static j As Long
 If Me.WindowState = vbMinimized Then Exit Sub
 With d3dd9
  i = .TestCooperativeLevel
  If i = D3DERR_DEVICENOTRESET Then
+  '///'??? doesn't work
+  pOnLostDevice
+  Err.Clear
   .Reset d3dpp
-'  j = 0
-  i = .TestCooperativeLevel
-  Debug.Print "Reset"
+  i = Err.Number
+  Debug.Print "Reset", i
+  If i = 0 Then pOnInitalize True
+  '///
  End If
  If i = 0 Then
-  If j = 0 Then
-   '////////render texture
-   Dim obj As Direct3DTexture9
-   Dim obj2 As Direct3DTexture9
+   '///init
+   pOnInitalize
    '///
-   D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
-   D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj2
-   objDrawTest.ProcessTextureEx Nothing, obj, "process_lerp", 0, 0, 0, 0, Vec4(-1024), Vec4(-1024), Vec4, Vec4
-   objDrawTest.BeginRenderToTexture obj, "gen_simplexnoise", 6, 0, 0, 0, Vec4(1, 1, 0.86, 1.85), Vec4, Vec4, Vec4
-   .BeginScene
-   objTest.DrawSubset 0
-   .EndScene
-   objDrawTest.EndRenderToTexture
-   '///expand texture to eliminate seal
-   objDrawTest.ProcessTexture obj, obj2, "expand8_r32f"
-   objDrawTest.ProcessTexture obj2, obj, "expand8_r32f"
-   '///
-   objDrawTest.ProcessTextureEx obj, obj2, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
-   Set obj = Nothing
-   '///
-   objDrawTest.ProcessTextureEx obj2, objTexture, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
-   objDrawTest.GenerateMipSubLevels objTexture
-   '///
-   objDrawTest.ProcessTextureEx obj2, objNormalTexture, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 1), Vec4, Vec4, Vec4
-   objDrawTest.GenerateMipSubLevels objNormalTexture
-   Set obj2 = Nothing
-   '////////
-   j = 1
-  End If
    D3DXMatrixRotationZ mat1, 0.005
    .GetTransform D3DTS_WORLD, mat
    D3DXMatrixMultiply mat, mat1, mat
@@ -405,7 +490,7 @@ With d3dd9
   objTiming.Clear
   objTiming.StartTiming
   .BeginScene
-  If f1 > 0.01 Then
+  If f1 > 0.01 Then 'TODO:adaptive framerate
    Static f2 As Single
    f1 = 1000 / f1
    f2 = (f1 + 15 * f2) / 16
