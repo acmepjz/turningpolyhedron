@@ -37,6 +37,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
 Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
@@ -87,12 +88,6 @@ Dim p As POINTAPI
 GetCursorPos p
 ScreenToClient Me.hwnd, p
 Call FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4)
-'///debug
-Dim i As Long
-i = GetWindowLong(Me.hwnd, GWL_STYLE)
-Debug.Print Hex(i)
-i = GetWindowLong(Me.hwnd, GWL_EXSTYLE)
-Debug.Print Hex(i)
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
@@ -173,7 +168,7 @@ End With
 CreateVertexDeclaration
 '///
 pSetRenderState
-'//////test
+'////////test
 objDrawTest.Create
 Set objTest = pTest
 '///
@@ -193,8 +188,10 @@ objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 30, -0.5, 0.02
 '///
 Me.Caption = objText.GetText("Turning Polyhedron")
 '///
+objTiming.MinPeriod = 1000 / 30
 '////////new:deadloop
 Do Until d3dd9 Is Nothing
+ objTiming.WaitForNextFrame
  Timer1_Timer
  DoEvents
 Loop
@@ -203,7 +200,7 @@ End Sub
 Private Sub pCreateUI()
 Dim i As Long
 '///
-FakeDXUICreate 0, 0, 640, 480
+FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
 FakeDXUIControls(1).AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1
 FakeDXUIControls(1).AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FakeCtl_Button_CheckBox Or FakeCtl_Button_Graphical, , , , "Fullscreen", , "chkFullscreen", , 1, , 1
 i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 120, 240, 320, 400, &HFFFFFF, , , , "Form1234가각")
@@ -329,7 +326,7 @@ Case "cmdDanger"
   FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
  Next j
 Case "chkFullscreen"
- pChangeResolution , , obj.Value
+ pChangeResolution 800, 600, obj.Value
 Case "Check1"
  i = FakeDXUIFindControl("Check2")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
@@ -363,7 +360,7 @@ If nWidth <> d3dpp.BackBufferWidth Or nHeight <> d3dpp.BackBufferHeight Or d3dpp
  pOnLostDevice
  d3dd9.Reset d3dpp
  pOnInitalize True
- '///
+ '///resize window
  If bFullscreen Then
   SetWindowLong Me.hwnd, GWL_STYLE, &H160A0000
   SetWindowLong Me.hwnd, GWL_EXSTYLE, &H40000
@@ -375,7 +372,13 @@ If nWidth <> d3dpp.BackBufferWidth Or nHeight <> d3dpp.BackBufferHeight Or d3dpp
   AdjustWindowRectEx r, &H16CA0000, 0, &H40100
   SetWindowPos Me.hwnd, 0, 0, 0, r.Right - r.Left, r.Bottom - r.Top, SWP_NOMOVE Or SWP_NOZORDER Or SWP_NOACTIVATE
  End If
- '///
+ '///resize FakeDXUI
+ If FakeDXUIControlCount > 0 Then
+  With FakeDXUIControls(1)
+   .SetRightEx nWidth, 0
+   .SetBottomEx nHeight, 0
+  End With
+ End If
 End If
 End Sub
 
@@ -443,73 +446,53 @@ On Error Resume Next
 Dim i As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
 Dim r(3) As Long
-Dim f(23) As Single, f1 As Single
 Dim s As String
-If Me.WindowState = vbMinimized Then Exit Sub
+If Me.WindowState = vbMinimized Then
+ Sleep 20
+ Exit Sub
+End If
 With d3dd9
  i = .TestCooperativeLevel
  If i = D3DERR_DEVICENOTRESET Then
-  '///'??? doesn't work
+  Sleep 20
+  '///it works!
   pOnLostDevice
   Err.Clear
   .Reset d3dpp
   i = Err.Number
-  Debug.Print "Reset", i
   If i = 0 Then pOnInitalize True
   '///
  End If
  If i = 0 Then
-   '///init
-   pOnInitalize
-   '///
-   D3DXMatrixRotationZ mat1, 0.005
-   .GetTransform D3DTS_WORLD, mat
-   D3DXMatrixMultiply mat, mat1, mat
-   .SetTransform D3DTS_WORLD, mat
-   objCamera.Apply objRenderTest
-   '///
-   objRenderTest.BeginRenderShadowMap
-   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
-   .BeginScene
-   objTest.DrawSubset 0
-   .EndScene
-   objRenderTest.EndRenderShadowMap
-   '///
-   objRenderTest.SetTexture objTexture
-   objRenderTest.SetNormalTexture objNormalTexture
-   objRenderTest.BeginRender
-   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
-   .BeginScene
-   objTest.DrawSubset 0
-   .EndScene
-   objRenderTest.EndRender
-'   j = 1
-'  End If
-  '////////test
-  f1 = objTiming.GetMs
-  objTiming.Clear
-  objTiming.StartTiming
+  '///init
+  pOnInitalize
+  '///
+  D3DXMatrixRotationZ mat1, 0.005
+  .GetTransform D3DTS_WORLD, mat
+  D3DXMatrixMultiply mat, mat1, mat
+  .SetTransform D3DTS_WORLD, mat
+  objCamera.Apply objRenderTest
+  '///
+  objRenderTest.BeginRenderShadowMap
+  .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
   .BeginScene
-  If f1 > 0.01 Then 'TODO:adaptive framerate
-   Static f2 As Single
-   f1 = 1000 / f1
-   f2 = (f1 + 15 * f2) / 16
-   s = "FPS:" + Format(f2, "0.0")
-   FakeDXGDIDrawText FakeDXUIDefaultFont, s, 32, 32, 128, 32, 0.75, DT_NOCLIP, -1, , &HFF000000, , , , , True
-  End If
+  objTest.DrawSubset 0
+  .EndScene
+  objRenderTest.EndRenderShadowMap
+  '///
+  objRenderTest.SetTexture objTexture
+  objRenderTest.SetNormalTexture objNormalTexture
+  objRenderTest.BeginRender
+  .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
+  .BeginScene
+  objTest.DrawSubset 0
+  .EndScene
+  objRenderTest.EndRender
+  '////////test
+  s = "FPS:" + Format(objTiming.FPS, "0.0")
+  FakeDXGDIDrawText FakeDXUIDefaultFont, s, 32, 32, 128, 32, 0.75, DT_NOCLIP, -1, , &HFF000000, , , , , True
   FakeDXGDIDrawText FakeDXUIDefaultFont, "TEST 2 !!! 가각", 32, 256, 128, 32, 1, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.79, True
   .EndScene
-'  '////////draw window test
-'  .SetTexture 0, FakeDXUITexture
-'  .SetRenderState D3DRS_ALPHABLENDENABLE, 1
-'  .SetFVF D3DFVF_XYZRHW Or D3DFVF_TEX1
-'  f1 = 1 / 1024
-'  f(3) = 1: f(4) = f1: f(5) = f1
-'  f(6) = 512: f(9) = 1: f(10) = 1 + f1: f(11) = f1
-'  f(13) = 512: f(15) = 1: f(16) = f1: f(17) = 1 + f1
-'  f(18) = 512: f(19) = 512: f(21) = 1: f(22) = 1 + f1: f(23) = 1 + f1
-'  .DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, f(0), 24&
-'  .SetRenderState D3DRS_ALPHABLENDENABLE, 0
   '////////
   .BeginScene
   FakeDXUIRender

@@ -15,10 +15,55 @@ Option Explicit
 
 Private Declare Function QueryPerformanceCounter Lib "kernel32.dll" (ByRef lpPerformanceCount As Currency) As Long
 Private Declare Function QueryPerformanceFrequency Lib "kernel32.dll" (ByRef lpFrequency As Currency) As Long
+Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 
 Private t1 As Currency, t2 As Currency
 Private nFreq As Currency
 Private bRun As Boolean
+
+Private m_nMinPeriod As Double
+Private m_nFPS As Double
+
+Friend Property Get FPS() As Double
+FPS = m_nFPS
+End Property
+
+Friend Sub WaitForNextFrame()
+Dim a As Currency
+Dim f As Double
+Dim i As Long
+If m_nMinPeriod <= 0 Then Exit Sub
+If bRun Then
+ Do
+  QueryPerformanceCounter a
+  f = (a - t2) / nFreq * 1000
+  i = (m_nMinPeriod - f) / 2
+  If i <= 1 Then Exit Do
+  Sleep i
+ Loop
+' '///bad code:spinlock
+' If i > 0 Then
+'  Do Until f > m_nMinPeriod
+'   QueryPerformanceCounter a
+'   f = (a - t2) / nFreq * 1000
+'  Loop
+' End If
+' '///
+ m_nFPS = (1000 / f + m_nFPS * 15) / 16
+ t2 = a
+Else
+ QueryPerformanceCounter t2
+ bRun = True
+End If
+End Sub
+
+Friend Property Get MinPeriod() As Double
+MinPeriod = m_nMinPeriod
+End Property
+
+Friend Property Let MinPeriod(ByVal n As Double)
+m_nMinPeriod = n
+End Property
 
 Private Sub Class_Initialize()
 QueryPerformanceFrequency nFreq
@@ -27,6 +72,7 @@ End Sub
 Friend Sub Clear()
 t1 = 0
 t2 = 0
+m_nFPS = 0
 bRun = False
 End Sub
 
