@@ -23,6 +23,8 @@ Private m_nStyle As Long
 Private m_nState As Long
 
 Private m_sCaption As String, m_sText As String
+Private m_bEnabled As Boolean, m_bVisible As Boolean, m_bLocked As Boolean
+Private m_nValue As Long
 
 Private m_tRectEx As typeFakeDXUIRectEx, m_tRectEx_Backup As typeFakeDXUIRectEx
 Private m_tRect As typeFakeDXUIRect
@@ -41,9 +43,15 @@ Private m_idxParent As Long
 Private m_idxChildren() As Long   '1-based
 Private m_nChildrenCount As Long
 
-Private m_bMouseIn As Boolean
+'Private m_bMouseIn As Boolean
 
-Private m_bEnabled As Boolean, m_bVisible As Boolean, m_bLocked As Boolean
+Friend Property Get Value() As Long
+Value = m_nValue
+End Property
+
+Friend Property Let Value(ByVal n As Long)
+m_nValue = n
+End Property
 
 Friend Property Get Name() As String
 Name = m_sName
@@ -123,21 +131,24 @@ If i > 1 And i <= m_nChildrenCount Then
 End If
 End Sub
 
-Friend Function AddNewChildren(ByVal nType As enumFakeDXUIControlType, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nStyle As enumFakeDXUIControlStyle, Optional ByVal bEnabled As Boolean = True, Optional ByVal bVisible As Boolean = True, Optional ByVal bLocked As Boolean = False, Optional ByVal sCaption As String, Optional ByVal sText As String) As Long
+Friend Function AddNewChildren(ByVal nType As enumFakeDXUIControlType, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nStyle As enumFakeDXUIControlStyle, Optional ByVal bEnabled As Boolean = True, Optional ByVal bVisible As Boolean = True, Optional ByVal bLocked As Boolean = False, Optional ByVal sCaption As String, Optional ByVal sText As String, Optional ByVal sName As String, Optional ByVal nLeft2 As Single, Optional ByVal nTop2 As Single, Optional ByVal nRight2 As Single, Optional ByVal nBottom2 As Single, Optional ByVal nValue As Long) As Long
 Dim i As Long
 i = FakeDXUIGetEmptyControl
 With FakeDXUIControls(i)
  .ControlType = nType
- .SetLeftEx nLeft, 0
- .SetTopEx nTop, 0
- .SetRightEx nRight, 0
- .SetBottomEx nBottom, 0
+ .SetLeftEx nLeft, nLeft2
+ .SetTopEx nTop, nTop2
+ .SetRightEx nRight, nRight2
+ .SetBottomEx nBottom, nBottom2
  .Style = nStyle
  .Enabled = bEnabled
  .Visible = bVisible
  .Locked = bLocked
  .Caption = sCaption
  .Text = sText
+ .Name = sName
+ .Value = nValue
+ '///
  .Parent = m_nIndex
 End With
 AddChildren i
@@ -263,7 +274,7 @@ m_bSizeDirty = True
 'TODO:
 End Property
 
-Friend Sub CloseWindow()
+Friend Sub Unload()
 m_nClosing = 1
 End Sub
 
@@ -288,6 +299,7 @@ m_nStyle = 0
 m_nState = 0
 m_sCaption = ""
 m_sText = ""
+m_nValue = 0
 m_nClosing = 0
 Erase m_nAnimVal
 '///
@@ -317,23 +329,24 @@ Dim j As Long, k As Long
     ElseIf j <= 255 Then
      j = j * nOpacity
      j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
-     FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 240, 16, 256, 32, 512, j Or &HFFFFFF
+     FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 232, 24, 248, 40, 512, j Or &HFFFFFF
     ElseIf j < 510 Then
      k = nOpacity * 255
      k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
-     FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 16, 272, 32, 512, 240, 16, j - 255, k Or &HFFFFFF
+     FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, 232, 24, j - 255, k Or &HFFFFFF
     Else
      k = nOpacity * 255
      k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
-     FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 256, 16, 272, 32, 512, k Or &HFFFFFF
+     FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, k Or &HFFFFFF
     End If
 End Sub
 
 'TODO:forecolor,etc.
 Friend Sub Render(Optional ByVal nParentClientLeft As Single, Optional ByVal nParentClientTop As Single, Optional ByVal nOpacity As Single = 1)
-Dim i As Long, j As Long, k As Long
+Dim i As Long, j As Long, jj As Long, k As Long, kk As Long
 Dim nLeft As Single, nTop As Single
 Dim nRight As Single, nBottom As Single
+Dim w As Single, h As Single
 Dim f As Single
 '///
 Dim bNoChild As Boolean
@@ -382,11 +395,11 @@ Case 1 'form
    End If
   ElseIf m_nState And 2& Then 'minimized
    If i <= 0 Then
-    FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 112, 240, 224, 288, 16, 16, 24, 24, 512, k
+    FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 12, 112, 240, 224, 284, 16, 16, 24, 24, 512, k
    ElseIf i < 255 Then
-    FakeDXGDIStretchBltExBlended nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 240, 112, 288, 16, 16, 24, 24, 512, 112, 240, i, k
+    FakeDXGDIStretchBltExBlended nLeft - 8, nTop - 8, nRight + 16, nBottom + 12, 0, 240, 112, 284, 16, 16, 24, 24, 512, 112, 240, i, k
    Else
-    FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 16, 0, 240, 112, 288, 16, 16, 24, 24, 512, k
+    FakeDXGDIStretchBltExColored nLeft - 8, nTop - 8, nRight + 16, nBottom + 12, 0, 240, 112, 284, 16, 16, 24, 24, 512, k
    End If
    bNoChild = True
   Else
@@ -456,6 +469,113 @@ Case 2 'label
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
  FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, , i, , , , , , , True
+Case 3 'frame
+ i = 255 * nOpacity
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
+ FakeDXGDIStretchBltColored nLeft - 4, nTop + 4, nLeft + 8, nTop + 12, 4, 284, 16, 292, 512, i Or &HFFFFFF
+ FakeDXGDIStretchBltColored nRight - 4, nTop + 4, nRight + 4, nTop + 12, 36, 284, 44, 292, 512, i Or &HFFFFFF
+ '///draw text
+ FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 10, nTop - 4, nRight - nLeft, 24, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE Or DT_CALCRECT, i, , , , , , , True, w, h
+ FakeDXGDIStretchBltColored nLeft + w + 12, nTop + 4, nRight - 4, nTop + 12, 16, 284, 32, 292, 512, i Or &HFFFFFF
+ '///
+ FakeDXGDIStretchBltExColored nLeft - 4, nTop + 12, nRight + 4, nBottom + 4, 4, 292, 44, 324, 8, 0, 8, 8, 512, i Or &HFFFFFF
+Case 4 'button
+ i = 255 * nOpacity
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
+ Select Case m_nStyle And 15&
+ Case 1, 2 'standard checkbox
+  f = (nTop + nBottom) / 2
+  If m_bEnabled Then
+   '///base
+   FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 0, 368, 16, 384, 512, i Or &HFFFFFF
+   '///highlight and pressed
+   j = m_nAnimVal(1)
+   k = m_nAnimVal(4)
+   If j < k Then j = j + 51 Else _
+   If j > k Then j = j - 51
+   m_nAnimVal(1) = j
+   jj = m_nAnimVal(2)
+   k = m_nAnimVal(5)
+   If jj < k Then jj = jj + 51 Else _
+   If jj > k Then jj = jj - 51
+   m_nAnimVal(2) = jj
+   If j > 0 Then
+    j = j * nOpacity
+    j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
+    FakeDXGDIStretchBltBlended nLeft, f - 8, nLeft + 16, f + 8, 16, 368, 32, 384, 512, 32, 368, 255 - jj, j
+   End If
+   '///checked
+   j = m_nAnimVal(3)
+   k = (m_nValue = 1) And 255&
+   If j < k Then j = j + 51 Else _
+   If j > k Then j = j - 51
+   m_nAnimVal(3) = j
+   jj = m_nAnimVal(7)
+   k = (m_nValue = 2) And 255&
+   If jj < k Then jj = jj + 51 Else _
+   If jj > k Then jj = jj - 51
+   m_nAnimVal(7) = jj
+   If j > 0 Then
+    j = j * nOpacity
+    j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
+    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 0, 384, 16, 400, 512, j
+   End If
+   If jj > 0 Then
+    j = jj * nOpacity
+    j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
+    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 32, 384, 48, 400, 512, j
+   End If
+   '///caption
+   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
+   i, , , , , , , True
+  Else
+   FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 48, 368, 64, 384, 512, i Or &HFFFFFF
+   Select Case m_nValue
+   Case 1
+    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 16, 384, 32, 400, 512, i Or &HFFFFFF
+   Case 2
+    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 48, 384, 64, 400, 512, i Or &HFFFFFF
+   End Select
+   '///caption
+   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
+   i Or &H666666, , , , , , , True
+  End If
+ Case 3, 4 'standard optionbutton
+  'TODO:
+ Case Else 'button
+  If m_bEnabled Then
+   '///base
+   j = m_nAnimVal(3)
+   k = (m_nValue <> 0) And 255&
+   If j < k Then j = j + 51 Else _
+   If j > k Then j = j - 51
+   m_nAnimVal(3) = j
+   kk = 284 + (((m_nStyle And 16&) <> 0) And 40&)
+   FakeDXGDIStretchBltExBlended nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 44, kk, 84, kk + 40, 8, 8, 8, 8, 512, 124, 284, 255 - j, i Or &HFFFFFF
+   '///highlight and pressed
+   j = m_nAnimVal(1)
+   k = m_nAnimVal(4)
+   If j < k Then j = j + 51 Else _
+   If j > k Then j = j - 51
+   m_nAnimVal(1) = j
+   jj = m_nAnimVal(2)
+   k = m_nAnimVal(5)
+   If jj < k Then jj = jj + 51 Else _
+   If jj > k Then jj = jj - 51
+   m_nAnimVal(2) = jj
+   If j > 0 Then
+    j = j * nOpacity
+    j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
+    FakeDXGDIStretchBltExBlended nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 84, 284, 124, 324, 8, 8, 8, 8, 512, 164, 284, 255 - jj, j
+   End If
+   '///caption
+   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, i, , , , , , , True
+  Else
+   FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 84, 324, 124, 364, 8, 8, 8, 8, 512, i Or &HFFFFFF
+   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, _
+   i Or &H666666, , , , , , , True
+  End If
+ End Select
 End Select
 '////////
 If Not bNoChild Then
@@ -498,6 +618,11 @@ If m_bSizeDirty Or bForce Then
    t.Bottom = 4
   End If
   If m_nStyle And 32& Then t.Top = 24
+ Case 3 'frame
+  t.Left = 4
+  t.Top = 16
+  t.Right = 4
+  t.Bottom = 4
  End Select
  '///
  m_tClientMargin = t
@@ -684,7 +809,15 @@ Destroy
 End Sub
 
 Friend Sub BeforeMouseEvent()
-m_bMouseIn = False
+'m_bMouseIn = False
+'///
+'Select Case m_nType
+'Case 1, 4
+ m_nAnimVal(4) = 0
+ m_nAnimVal(5) = 0
+ m_nAnimVal(6) = 0
+'End Select
+'///
 'TODO:
 End Sub
 
@@ -724,9 +857,6 @@ bInControl = x >= m_tRectScreen.Left And x < m_tRectScreen.Right And y >= m_tRec
 '////////before
 Select Case m_nType
 Case 1 'form
- m_nAnimVal(4) = 0
- m_nAnimVal(5) = 0
- m_nAnimVal(6) = 0
  If bInControl Then
   If nEventType = 1 Then
    m_nAnimVal(15) = 0 '???
@@ -767,6 +897,37 @@ Case 1 'form
   b = True
  End If
  If m_nState And 2& Then bNoChild = True
+Case 4 'button
+ If bInControl Then
+  i = pButtonHighlight_1(1, Button, nEventType, b)
+  If i > 255 Then
+   m_nAnimVal(4) = 255
+   m_nAnimVal(5) = 255
+  Else
+   m_nAnimVal(4) = i
+   m_nAnimVal(5) = 0
+  End If
+  If b Then
+   i = m_nStyle And 7&
+   Select Case i
+   Case 1 'checkbox
+    m_nValue = (m_nValue = 0) And 1&
+   Case 2 '3state
+    m_nValue = m_nValue + 1
+    If m_nValue > 2 Then m_nValue = 0
+   Case 3, 4 'option and optionnullable
+    If m_nValue = 0 Then
+     'TODO:
+    ElseIf i = 4 Then
+     m_nValue = 0
+    End If
+   Case Else
+    m_nValue = 0
+   End Select
+   FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
+  End If
+  b = True
+ End If
 Case Else
  'TODO:
 End Select
@@ -863,7 +1024,7 @@ End If
 '////////standard drag
 If Button = 1 And Not bChildrenProcessed Then
  Select Case m_nType
- Case -1, 0, 2
+ Case -1, 0, 2, 3
  Case Else
   If nEventType = 1 And bInControl Then
    FakeDXUISetCapture = m_nIndex

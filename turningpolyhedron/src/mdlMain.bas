@@ -10,13 +10,15 @@ Public d3dd9 As Direct3DDevice9
 
 Public d3dpp As D3DPRESENT_PARAMETERS
 
-Public Type typeVertex
- p As D3DVECTOR
- n As D3DVECTOR
- clr1 As Long 'diffuse
- clr2 As Long 'specular
- t As D3DXVECTOR2
-End Type
+'Public Type typeVertex
+' p As D3DVECTOR
+' n As D3DVECTOR
+'' b As D3DVECTOR
+'' ta As D3DVECTOR
+' clr1 As Long 'diffuse
+' clr2 As Long 'specular
+' t As D3DXVECTOR2
+'End Type
 
 Public Const m_nDefaultFVF = D3DFVF_XYZ Or D3DFVF_NORMAL Or D3DFVF_DIFFUSE Or D3DFVF_SPECULAR Or D3DFVF_TEX1
 
@@ -38,7 +40,7 @@ m_tDefVertexDecl(3) = D3DVertexElementCreate(, 36&, D3DDECLTYPE_FLOAT3, , D3DDEC
 m_tDefVertexDecl(4) = D3DVertexElementCreate(, 48&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR)
 m_tDefVertexDecl(5) = D3DVertexElementCreate(, 52&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR, 1)
 m_tDefVertexDecl(6) = D3DVertexElementCreate(, 56&, D3DDECLTYPE_FLOAT2, , D3DDECLUSAGE_TEXCOORD)
-m_tDefVertexDecl(7) = D3DDECL_END
+m_tDefVertexDecl(7) = D3DDECL_END '64 bytes
 End Sub
 
 'Public Sub CreateCube1(ByVal lp As Long, ByVal clr1 As Long, ByVal clr2 As Long)
@@ -333,7 +335,7 @@ d3dd9.SetTexture 1, Nothing
 End Sub
 
 Public Sub FakeDXGDIDrawText(ByRef tFont As typeFakeDXGDILogFont, ByVal lpStr As String, ByVal nLeft As Single, ByVal nTop As Single, Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal nZoom As Single = 1, Optional ByVal wFormat As D3DXDRAWTEXTFORMAT, _
-Optional ByVal nColor As Long = -1, Optional ByVal nTextLODBias As Single = -0.5, Optional ByVal nShadowColor As Long = 0, Optional ByVal nShadowOffsetX As Long = 2, Optional ByVal nShadowOffsetY As Long = 2, Optional ByVal nShadowLODBias As Single = 1.5, Optional ByVal nAngle As Single, Optional ByVal bSingle As Boolean)
+Optional ByVal nColor As Long = -1, Optional ByVal nTextLODBias As Single = -0.5, Optional ByVal nShadowColor As Long = 0, Optional ByVal nShadowOffsetX As Long = 2, Optional ByVal nShadowOffsetY As Long = 2, Optional ByVal nShadowLODBias As Single = 1.5, Optional ByVal nAngle As Single, Optional ByVal bSingle As Boolean, Optional ByRef nWidthReturn As Single, Optional ByRef nHeightReturn As Single)
 Dim mat As D3DMATRIX
 Dim p As D3DRECT
 Dim obj As Direct3DDevice9
@@ -356,7 +358,7 @@ If nShadowColor Then
  p.X2 = nWidth + nShadowOffsetX
  p.Y2 = nHeight + nShadowOffsetY
  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nShadowLODBias)
- tFont.objFont.DrawTextW tFont.objSprite, lpStr, -1, p, wFormat, nShadowColor
+ tFont.objFont.DrawTextW tFont.objSprite, lpStr, -1, p, wFormat And Not DT_CALCRECT, nShadowColor
  tFont.objSprite.Flush
 End If
 If nColor Then
@@ -365,7 +367,12 @@ If nColor Then
  p.X2 = nWidth
  p.Y2 = nHeight
  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nTextLODBias)
- tFont.objFont.DrawTextW tFont.objSprite, lpStr, -1, p, wFormat, nColor
+ If wFormat And DT_CALCRECT Then
+  tFont.objFont.DrawTextW tFont.objSprite, lpStr, -1, p, wFormat, nColor
+  nWidthReturn = p.X2 * nZoom
+  nHeightReturn = p.Y2 * nZoom
+ End If
+ tFont.objFont.DrawTextW tFont.objSprite, lpStr, -1, p, wFormat And Not DT_CALCRECT, nColor
  tFont.objSprite.Flush
 End If
 If bSingle Then tFont.objSprite.End

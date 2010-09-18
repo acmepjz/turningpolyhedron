@@ -57,6 +57,8 @@ Public Enum enumFakeDXUIControlType
  FakeCtl_None = 0
  FakeCtl_Form = 1
  FakeCtl_Label = 2
+ FakeCtl_Frame = 3
+ FakeCtl_Button = 4
 End Enum
 
 Public Enum enumFakeDXUIControlStyle
@@ -69,6 +71,14 @@ Public Enum enumFakeDXUIControlStyle
  FakeCtl_Form_MaxButton = 8
  FakeCtl_Form_CloseButton = 16
  FakeCtl_Form_TitleBar = 32
+ '///
+ FakeCtl_Button_CheckBox = 1
+ FakeCtl_Button_CheckBoxTristate = 2
+ FakeCtl_Button_OptionButton = 3
+ FakeCtl_Button_OptionNullable = 4
+ FakeCtl_Button_Graphical = 8
+ FakeCtl_Button_Default = 16
+ FakeCtl_Button_Cancel = 32
 End Enum
 
 Public Enum enumFakeDXUIControlState
@@ -129,7 +139,7 @@ Case FakeCtl_Msg_Close
  Select Case t.nParam2
  Case 0
   If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Unload FakeDXUIControls(t.nParam1), b
-  If Not b Then FakeDXUIControls(t.nParam1).CloseWindow
+  If Not b Then FakeDXUIControls(t.nParam1).Unload
  Case Else
   FakeDXUIControls(t.nParam1).Destroy
  End Select
@@ -228,6 +238,20 @@ If FakeDXUIControlCount > 0 Then
 End If
 End Function
 
+Public Function FakeDXUIFindControl(ByVal sName As String, Optional ByVal nParent As Long) As Long
+Dim i As Long
+If nParent > 0 And nParent <= FakeDXUIControlCount Then
+ 'TODO:
+Else
+ For i = 1 To FakeDXUIControlCount
+  If FakeDXUIControls(i).Name = sName Then
+   FakeDXUIFindControl = i
+   Exit Function
+  End If
+ Next i
+End If
+End Function
+
 '////////
 
 '0=move
@@ -255,10 +279,10 @@ FakeDXUIOnMouseEvent = obj.OnMouseEvent(Button, Shift, x, y, nEventType)
 For i = 1 To FakeDXUIControlCount
  FakeDXUIControls(i).AfterMouseEvent
 Next i
-'///
-FakeDXUIDoEvents
 '///???
 frmMain.MousePointer = FakeDXUIMousePointer
+'///
+FakeDXUIDoEvents
 End Function
 
 '////////

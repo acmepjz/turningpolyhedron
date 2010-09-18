@@ -22,7 +22,7 @@ float4 ta:TEXCOORD4;//tangent
 float4 pShadow:TEXCOORD5;
 };
 
-struct VS_OUTPUT2{
+struct VS_OUTPUT_SHADOW{
 float4 _p:POSITION;
 float4 c:TEXCOORD0; //fix color out of range bug (old:COLOR0)
 };
@@ -36,6 +36,8 @@ float4x4 matWorld1;
 //world-view-proj matrix
 float4x4 mat,matShadow;
 
+//////// light settings
+
 //directional light:direction
 float4 lightDir;
 
@@ -44,6 +46,12 @@ float4 lightPos;
 
 //light type 0-directional 1-point
 int lightType;
+
+//0---ambient
+//1---x:hardness y:parallax offset z:parallax scale
+float4 _fParam[4];
+
+////////
 
 //view pos
 float4 viewPos;
@@ -59,7 +67,7 @@ AddressU=CLAMP;
 AddressV=CLAMP;
 };
 
-//normal map
+//normal (and height) map
 texture texNormal;
 sampler sampNormal=sampler_state{
 Texture=<texNormal>;
@@ -70,16 +78,7 @@ AddressU=CLAMP;
 AddressV=CLAMP;
 };
 
-//height map
-texture texHeight;
-sampler sampHeight=sampler_state{
-Texture=<texHeight>;
-MipFilter=NONE;
-MinFilter=LINEAR;
-MagFilter=LINEAR;
-AddressU=CLAMP;
-AddressV=CLAMP;
-};
+//TODO:specular map,hardness map,etc.
 
 //shadow map
 texture texShadow;
@@ -106,8 +105,8 @@ AddressV=WRAP;
 VS_OUTPUT vs_func(VS_INPUT d0){
 VS_OUTPUT d;
 d._p=mul(d0.p,mat);
-d.c=1;//d0.c;
-d.c1=1;//d0.c1;
+d.c=d0.c; //1
+d.c1=d0.c1; //1
 d.t=d0.t;
 d.p=mul(d0.p,matWorld);
 d.n=mul(d0.n,matWorld1);
@@ -132,11 +131,11 @@ float4 clr_tex;
 #if 1
 
 //it works!! :)
-clr_tex=float4(dot(viewVec,d.b),dot(viewVec,d.ta),0,0); //parallax_base
-float4 parallax_offset=clr_tex*(tex2D(sampHeight,d.t).x-0.5f)*0.01f; //TODO:scale and offset
+clr_tex=float4(dot(viewVec,d.b),dot(viewVec,d.ta),0,0); //parallax_base // /dot(viewVec,d.n)
+float4 parallax_offset=clr_tex*(tex2D(sampNormal,d.t).w+_fParam[1].y)*_fParam[1].z;
 //iteration(?)
-//parallax_offset=(parallax_offset+clr_tex*(tex2D(sampHeight,d.t+parallax_offset).x-0.5f)*0.01f)*0.5f; //TODO:scale and offset
-//parallax_offset=(parallax_offset+clr_tex*(tex2D(sampHeight,d.t+parallax_offset).x-0.5f)*0.01f)*0.5f; //TODO:scale and offset
+parallax_offset=(parallax_offset+clr_tex*(tex2D(sampNormal,d.t+parallax_offset).w+_fParam[1].y)*_fParam[1].z)*0.5f;
+parallax_offset=(parallax_offset+clr_tex*(tex2D(sampNormal,d.t+parallax_offset).w+_fParam[1].y)*_fParam[1].z)*0.5f;
 
 d.t+=parallax_offset;
 
@@ -196,7 +195,7 @@ const float dist=0.01f;
 //normal (normal map)
 #if 1
 
-float4 n=tex2D(sampNormal,d.t)*2.0f-254.0f/255.0f;
+float4 n=tex2D(sampNormal,d.t)*2.0f-1.0f;
 n=n.x*d.b+n.y*d.ta+n.z*d.n; //???????? right?
 
 #else
@@ -217,9 +216,9 @@ if(lightType==1){
 float4 h=normalize(lightVec+viewVec); //TODO:can we use "reflect"?
 
 //TEST
-l*=lit(dot(n.xyz,lightVec.xyz),dot(n.xyz,h.xyz),20); //TODO:hardness
+l*=lit(dot(n.xyz,lightVec.xyz),dot(n.xyz,h.xyz),_fParam[1].x);
 //
-float4 diffuse=d.c*clr_tex*min(0.5+l.y,1); //TODO:ambient
+float4 diffuse=d.c*clr_tex*min(_fParam[0]+l.y,1.0f);
 float4 specular=d.c1*l.z;
 return diffuse+specular;
 }
@@ -233,15 +232,15 @@ PixelShader=compile ps_3_0 ps_func();
 
 ////////test creating shadow map
 
-VS_OUTPUT2 vs_func_shadow(VS_INPUT d0){
-VS_OUTPUT2 d;
+VS_OUTPUT_SHADOW vs_func_shadow(VS_INPUT d0){
+VS_OUTPUT_SHADOW d;
 d._p=mul(d0.p,matShadow);
 d.c=d._p; //????
 //d.c=d._p.z/d._p.w+0.0001f; //eps=?
 return d;
 }
 
-float4 ps_func_shadow(VS_OUTPUT2 d):COLOR0{
+float4 ps_func_shadow(VS_OUTPUT_SHADOW d):COLOR0{
 return d.c.z/d.c.w+0.0001f; //????
 //return d.c; //????
 }
