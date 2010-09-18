@@ -53,6 +53,8 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
+Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
 Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
@@ -68,7 +70,6 @@ Private objTest As D3DXMesh
 Private objDrawTest As New clsRenderTexture, objRenderTest As New clsRenderPipeline
 
 Private objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
-Private objHeightMapTexture As Direct3DTexture9
 
 '///test
 Private objFontSprite As D3DXSprite
@@ -180,21 +181,8 @@ Set objTest = pTest
 'new:mipmap
 D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
 D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objNormalTexture
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, objHeightMapTexture
 '///
-FakeDXUICreate 0, 0, 640, 480
-FakeDXUIControls(1).AddNewChildren FakeCtl_Form, 120, 240, 260, 400, &HFFFFFF, , , , "Form1234가각"
-i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 240, 200, 480, 360, &HFFFFFF, , , , "MDIForm1")
-i = FakeDXUIControls(i).AddNewChildren(FakeCtl_Form, 0, 0, 0, 0, FakeCtl_Form_Moveable Or FakeCtl_Form_TitleBar Or FakeCtl_Form_CloseButton Or FakeCtl_Form_MaxButton Or FakeCtl_Form_MinButton, , , , "Form2")
-With FakeDXUIControls(i)
- .SetLeftEx 0, 0.25
- .SetTopEx 0, 0.25
- .SetRightEx 0, 0.75
- .SetBottomEx 0, 0.75
-End With
-i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 3& Or FakeCtl_Style_TopMost)
-FakeDXUIControls(i).AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
-Set FakeDXUIEvent = Me
+pCreateUI
 '///
 objRenderTest.Create
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
@@ -206,8 +194,28 @@ objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1)
 objRenderTest.CreateShadowMap 1024 'new
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
 objRenderTest.SetShadowState True, 16, -100, 100  'directional
+objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 30, -0.5, 0.02
 '///
 Me.Caption = objText.GetText("Turning Polyhedron")
+End Sub
+
+Private Sub pCreateUI()
+Dim i As Long
+'///
+FakeDXUICreate 0, 0, 640, 480
+FakeDXUIControls(1).AddNewChildren FakeCtl_Button, 8, -32, 64, -8, , , , , "Exit", , "cmdExit", , 1, , 1
+i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 120, 240, 320, 400, &HFFFFFF, , , , "Form1234가각")
+i = FakeDXUIControls(i).AddNewChildren(FakeCtl_Frame, 16, 16, 160, 96, , , , , "Frame1 yW")
+FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FakeCtl_Button_CheckBox, , , , "Check1", , "Check1", , , , , 1
+FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FakeCtl_Button_CheckBoxTristate, , , , "Check2", , "Check2"
+i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 240, 200, 480, 360, &HFFFFFF, , , , "MDIForm1")
+i = FakeDXUIControls(i).AddNewChildren(FakeCtl_Form, 0, 0, 0, 0, _
+FakeCtl_Form_Moveable Or FakeCtl_Form_TitleBar Or FakeCtl_Form_CloseButton Or FakeCtl_Form_MaxButton Or FakeCtl_Form_MinButton, , , , "Form2", , , _
+0.25, 0.25, 0.75, 0.75)
+i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 2& Or FakeCtl_Style_TopMost, , , , , , "frmTopmost")
+FakeDXUIControls(i).AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
+FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 80, 28, 140, 48, , , , , "Close", , "cmdClose"
+Set FakeDXUIEvent = Me
 End Sub
 
 Private Sub pSetRenderState()
@@ -272,7 +280,6 @@ Set objDrawTest = Nothing
 Set objTest = Nothing
 Set objTexture = Nothing
 Set objNormalTexture = Nothing
-Set objHeightMapTexture = Nothing
 Set d3dd9 = Nothing
 Set d3d9 = Nothing
 End Sub
@@ -280,6 +287,8 @@ End Sub
 Private Function pTest() As D3DXMesh
 Dim obj As D3DXMesh
 Dim objAdjacency As D3DXBuffer
+Dim i As Long, lp As Long
+Dim tDesc As D3DVERTEXBUFFER_DESC
 'bug in x file loader: you must write "1.000" instead of "1" or it'll buggy :-3
 D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_2.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
 'D3DXLoadMeshFromXW CStr(App.Path) + "\media\test.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
@@ -289,12 +298,32 @@ D3DXComputeTangentFrame obj, D3DXTANGENT_CALCULATE_NORMALS
 '//poly20-can smooth, monkey can't :-3 cube1-1 can't either ---why?
 'D3DXComputeTangentFrameEx obj, D3DDECLUSAGE_TEXCOORD, 0, D3DDECLUSAGE_BINORMAL, 0, D3DDECLUSAGE_TANGENT, 0, D3DDECLUSAGE_NORMAL, 0, _
 'D3DXTANGENT_GENERATE_IN_PLACE Or D3DXTANGENT_CALCULATE_NORMALS, ByVal objAdjacency.GetBufferPointer, 0.01, 0.25, 0.01, Nothing, Nothing
+'///set color
+obj.LockVertexBuffer 0, lp
+obj.GetVertexBuffer.GetDesc tDesc
+For i = 48 To tDesc.Size - 1 Step 64
+ CopyMemory ByVal lp + i, &HFFFFFFFF, 4& 'ambient
+ CopyMemory ByVal lp + i + 4, &HFFFFFFCC, 4& 'specular
+Next i
+obj.UnlockVertexBuffer
 '///
 Set pTest = obj
 End Function
 
 Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
-'
+Dim i As Long
+Select Case obj.Name
+Case "cmdClose"
+ i = FakeDXUIFindControl("frmTopmost")
+ If i Then FakeDXUIControls(i).Unload
+Case "cmdExit"
+ Unload Me
+Case "Check1"
+ i = FakeDXUIFindControl("Check2")
+ If i Then FakeDXUIControls(i).Enabled = obj.Value
+ i = FakeDXUIFindControl("cmdClose")
+ If i Then FakeDXUIControls(i).Enabled = obj.Value
+End Select
 End Sub
 
 Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
@@ -322,8 +351,10 @@ With d3dd9
   If j = 0 Then
    '////////render texture
    Dim obj As Direct3DTexture9
+   Dim obj2 As Direct3DTexture9
    '///
    D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
+   D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj2
    objDrawTest.ProcessTextureEx Nothing, obj, "process_lerp", 0, 0, 0, 0, Vec4(-1024), Vec4(-1024), Vec4, Vec4
    objDrawTest.BeginRenderToTexture obj, "gen_simplexnoise", 6, 0, 0, 0, Vec4(1, 1, 0.86, 1.85), Vec4, Vec4, Vec4
    .BeginScene
@@ -331,17 +362,18 @@ With d3dd9
    .EndScene
    objDrawTest.EndRenderToTexture
    '///expand texture to eliminate seal
-   objDrawTest.ProcessTexture obj, objHeightMapTexture, "expand8_r32f"
-   objDrawTest.ProcessTexture objHeightMapTexture, obj, "expand8_r32f"
+   objDrawTest.ProcessTexture obj, obj2, "expand8_r32f"
+   objDrawTest.ProcessTexture obj2, obj, "expand8_r32f"
    '///
-   objDrawTest.ProcessTextureEx obj, objHeightMapTexture, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
+   objDrawTest.ProcessTextureEx obj, obj2, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
    Set obj = Nothing
    '///
-   objDrawTest.ProcessTextureEx objHeightMapTexture, objTexture, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
+   objDrawTest.ProcessTextureEx obj2, objTexture, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
    objDrawTest.GenerateMipSubLevels objTexture
    '///
-   objDrawTest.ProcessTextureEx objHeightMapTexture, objNormalTexture, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 0), Vec4, Vec4, Vec4
+   objDrawTest.ProcessTextureEx obj2, objNormalTexture, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 1), Vec4, Vec4, Vec4
    objDrawTest.GenerateMipSubLevels objNormalTexture
+   Set obj2 = Nothing
    '////////
    j = 1
   End If
@@ -360,7 +392,6 @@ With d3dd9
    '///
    objRenderTest.SetTexture objTexture
    objRenderTest.SetNormalTexture objNormalTexture
-   objRenderTest.SetHeightMapTexture objHeightMapTexture
    objRenderTest.BeginRender
    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
    .BeginScene

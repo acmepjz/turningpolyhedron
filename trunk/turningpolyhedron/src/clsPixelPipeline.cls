@@ -42,6 +42,8 @@ Private m_bShadowEnabled As Boolean
 Private m_tLightViewProj As D3DMATRIX
 Private m_nShadowMapSize As Long
 
+Private m_fParam(3) As D3DXVECTOR4
+
 Friend Property Get Effect() As D3DXEffect
 Set Effect = objEffect
 End Property
@@ -97,10 +99,6 @@ End Sub
 
 Friend Sub SetNormalTexture(ByVal obj As Direct3DTexture9)
 objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
-End Sub
-
-Friend Sub SetHeightMapTexture(ByVal obj As Direct3DTexture9)
-objEffect.SetTexture StrPtr(StrConv("texHeight", vbFromUnicode)), obj
 End Sub
 
 Friend Sub CreateShadowMap(ByVal nSize As Long)
@@ -179,6 +177,50 @@ End Sub
 Friend Sub EndRender()
 objEffect.EndPass
 objEffect.End
+End Sub
+
+Friend Property Get AmbientColor() As D3DXVECTOR4
+AmbientColor = m_fParam(0)
+End Property
+
+Friend Property Let AmbientColor(ByRef v As D3DXVECTOR4)
+m_fParam(0) = v
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End Property
+
+Friend Property Get SpecularHardness() As Single
+SpecularHardness = m_fParam(1).x
+End Property
+
+Friend Property Let SpecularHardness(ByVal f As Single)
+m_fParam(1).x = f
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End Property
+
+Friend Property Get ParallaxOffset() As Single
+ParallaxOffset = m_fParam(1).y
+End Property
+
+Friend Property Let ParallaxOffset(ByVal f As Single)
+m_fParam(1).y = f
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End Property
+
+Friend Property Get ParallaxScale() As Single
+ParallaxScale = m_fParam(1).z
+End Property
+
+Friend Property Let ParallaxScale(ByVal f As Single)
+m_fParam(1).z = f
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End Property
+
+Friend Sub SetFloatParams(ByRef tAmbientColor As D3DXVECTOR4, ByVal fSpecularHardness As Single, ByVal fParallaxOffset As Single, ByVal fParallaxScale As Single)
+m_fParam(0) = tAmbientColor
+m_fParam(1).x = fSpecularHardness
+m_fParam(1).y = fParallaxOffset
+m_fParam(1).z = fParallaxScale
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
 End Sub
 
 Private Sub Class_Terminate()

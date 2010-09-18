@@ -231,8 +231,9 @@ clr.y=-(f.y+f.w+tex2D(samp,float2(t.x,t.y+pixelSize.y))*2.0f
 clr.xy*=_fParam[0].xy;
 ///
 clr.z=sqrt(1.0f-clr.x*clr.x-clr.y*clr.y);
-clr.w=1;
-return (clr+1.0f)*0.5f;
+clr.xyz=(clr.xyz+1.0f)*0.5f;
+clr.w=_fParam[0].z+_fParam[0].w*tex2D(samp,t).x;
+return clr;
 }
 
 technique normal_map{
