@@ -19,6 +19,17 @@ Private texNoise As Direct3DTexture9
 Private objOldTarget As Direct3DSurface9
 Private objOldStencil As Direct3DSurface9
 
+Friend Sub OnLostDevice()
+Set objOldTarget = Nothing
+Set objOldStencil = Nothing
+'///
+objEffect.OnLostDevice
+End Sub
+
+Friend Sub OnResetDevice()
+objEffect.OnResetDevice
+End Sub
+
 Friend Property Get Effect() As D3DXEffect
 Set Effect = objEffect
 End Property

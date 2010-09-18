@@ -101,9 +101,26 @@ Friend Sub SetNormalTexture(ByVal obj As Direct3DTexture9)
 objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
 End Sub
 
-Friend Sub CreateShadowMap(ByVal nSize As Long)
+Friend Sub OnLostDevice()
+Set objOldTarget = Nothing
+Set objOldStencil = Nothing
 Set objShadowMap = Nothing
 Set objShadowStencil = Nothing
+'///
+objEffect.OnLostDevice
+End Sub
+
+Friend Sub OnResetDevice()
+If m_nShadowMapSize > 0 Then
+ D3DXCreateTexture d3dd9, m_nShadowMapSize, m_nShadowMapSize, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, objShadowMap
+ d3dd9.CreateDepthStencilSurface m_nShadowMapSize, m_nShadowMapSize, D3DFMT_D24S8, 0, 0, 1, objShadowStencil, ByVal 0
+End If
+'///
+objEffect.OnResetDevice
+'TODO:etc.
+End Sub
+
+Friend Sub CreateShadowMap(ByVal nSize As Long)
 D3DXCreateTexture d3dd9, nSize, nSize, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, objShadowMap
 d3dd9.CreateDepthStencilSurface nSize, nSize, D3DFMT_D24S8, 0, 0, 1, objShadowStencil, ByVal 0
 m_nShadowMapSize = nSize

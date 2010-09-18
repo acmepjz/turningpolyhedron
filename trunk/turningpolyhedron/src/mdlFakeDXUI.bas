@@ -211,6 +211,7 @@ If Not FakeDXUITexture Is Nothing Then
 End If
 End Sub
 
+'inefficient when drawing a lot of controls (50+)
 Public Sub FakeDXUIRender()
 Dim i As Long
 If FakeDXUIControlCount > 0 Then
@@ -290,10 +291,42 @@ End Function
 '0=press
 '1=down
 '2=up
+'(101=default)
+'(102=cancel)
+
 Public Function FakeDXUIOnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean
 Dim obj As clsFakeDXUI
 If FakeDXUIControlCount <= 0 Then Exit Function
-'TODO:hot key and key preview and tab,enter,esc process
+Do
+ 'TODO:hot key and key preview and vbKeyTab and vbKeySpace process
+ '///enter
+ If KeyCode = vbKeyReturn And Shift = 0 And nEventType = 1 Then
+  If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
+   Set obj = FakeDXUIControls(FakeDXUIActiveWindow)
+   If obj.ControlType >= 0 And obj.Enabled And obj.Visible And Not obj.Locked Then
+    If obj.OnKeyEvent(0, 0, 101) Then
+     FakeDXUIOnKeyEvent = True
+     Exit Do
+    End If
+   End If
+  End If
+ End If
+ '///esc
+ If KeyCode = vbKeyEscape And Shift = 0 And nEventType = 1 Then
+  If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
+   Set obj = FakeDXUIControls(FakeDXUIActiveWindow)
+   If obj.ControlType >= 0 And obj.Enabled And obj.Visible And Not obj.Locked Then
+    If obj.OnKeyEvent(0, 0, 102) Then
+     FakeDXUIOnKeyEvent = True
+     Exit Do
+    End If
+   End If
+  End If
+ End If
+ '///
+ 'TODO:
+ '///
+Loop While False
 '///
 FakeDXUIDoEvents
 End Function
