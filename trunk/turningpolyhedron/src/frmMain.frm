@@ -40,6 +40,7 @@ Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef D
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
+Private Declare Function GetAsyncKeyState Lib "user32.dll" (ByVal vKey As Long) As Integer
 Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
     x As Long
@@ -82,6 +83,15 @@ Private objFont As D3DXFont
 
 Private objTiming As New clsTiming
 Private objCamera As New clsCamera
+
+Private cSub As New cSubclass
+
+Implements iSubclass
+
+Private Const WM_IME_COMPOSITION As Long = &H10F
+Private Const WM_IME_STARTCOMPOSITION As Long = &H10D
+Private Const WM_IME_NOTIFY As Long = &H282
+Private Const WM_MOUSEWHEEL As Long = &H20A
 
 Private Sub Form_DblClick()
 Dim p As POINTAPI
@@ -187,7 +197,13 @@ objRenderTest.SetShadowState True, 16, -100, 100  'directional
 objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 30, -0.5, 0.02
 '///
 Me.Caption = objText.GetText("Turning Polyhedron")
-'///
+'////////new:subclass
+cSub.AddMsg WM_IME_NOTIFY, MSG_AFTER
+cSub.AddMsg WM_IME_COMPOSITION, MSG_AFTER
+cSub.AddMsg WM_IME_STARTCOMPOSITION, MSG_AFTER
+cSub.AddMsg WM_MOUSEWHEEL, MSG_AFTER
+cSub.Subclass Me.hwnd, Me
+'////////
 objTiming.MinPeriod = 1000 / 30
 '////////new:deadloop
 Do Until d3dd9 Is Nothing
@@ -198,23 +214,33 @@ Loop
 End Sub
 
 Private Sub pCreateUI()
-Dim i As Long
-'///
 FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
-FakeDXUIControls(1).AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1
-FakeDXUIControls(1).AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FakeCtl_Button_CheckBox Or FakeCtl_Button_Graphical, , , , "Fullscreen", , "chkFullscreen", , 1, , 1
-i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 120, 240, 320, 400, &HFFFFFF, , , , "Form1234가각")
-i = FakeDXUIControls(i).AddNewChildren(FakeCtl_Frame, 8, 16, 96, 96, , , , , "Frame1 yW")
-FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FakeCtl_Button_CheckBox, , , , "Enabled", , "Check1", , , , , 1
-FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FakeCtl_Button_CheckBoxTristate, , , , "Check2", , "Check2"
-FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 0, 32, 64, 48, , , , , "Danger!!!", , "cmdDanger"
-i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 240, 200, 480, 360, &HFFFFFF, , , , "MDIForm1")
-i = FakeDXUIControls(i).AddNewChildren(FakeCtl_Form, 0, 0, 0, 0, _
-FakeCtl_Form_Moveable Or FakeCtl_Form_TitleBar Or FakeCtl_Form_CloseButton Or FakeCtl_Form_MaxButton Or FakeCtl_Form_MinButton, , , , "Form2", , , _
-0.25, 0.25, 0.75, 0.75)
-i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 2& Or FakeCtl_Style_TopMost, , , , , , "frmTopmost")
-FakeDXUIControls(i).AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
-FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 80, 28, 140, 48, FakeCtl_Button_Default Or FakeCtl_Button_Cancel, , , , "Close", , "cmdClose"
+With FakeDXUIControls(1)
+ .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1
+ .AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FakeCtl_Button_CheckBox Or FakeCtl_Button_Graphical, , , , "Fullscreen", , "chkFullscreen", , 1, , 1
+ With .AddNewChildren(FakeCtl_Form, 120, 240, 320, 400, &HFFFFFF, , , , "Form1234가각")
+  .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FakeCtl_Button_CheckBox, , , , "Enabled", , "Check1", , , , , 1
+  .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FakeCtl_Button_CheckBoxTristate, , , , "Check2", , "Check2"
+  .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, , , , , "Danger!!!", , "cmdDanger"
+ End With
+ With .AddNewChildren(FakeCtl_Form, 240, 200, 480, 360, &HFFFFFF, , , , "MDIForm1")
+  .ScrollBars = vbBoth
+  .Min = -50
+  .Max = 50
+  .LargeChange = 10
+  .Min(1) = -50
+  .Max(1) = 50
+  .LargeChange(1) = 10
+  '///
+  .AddNewChildren FakeCtl_Form, 0, 0, 0, 0, _
+  FakeCtl_Form_Moveable Or FakeCtl_Form_TitleBar Or FakeCtl_Form_CloseButton Or FakeCtl_Form_MaxButton Or FakeCtl_Form_MinButton, , , , "Form2", , , _
+  0.25, 0.25, 0.75, 0.75
+ End With
+ With .AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 2& Or FakeCtl_Style_TopMost, , , , , , "frmTopmost")
+  .AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
+  .AddNewChildren FakeCtl_Button, 80, 28, 140, 48, FakeCtl_Button_Default Or FakeCtl_Button_Cancel, , , , "Close", , "cmdClose"
+ End With
+End With
 '///
 Set FakeDXUIEvent = Me
 End Sub
@@ -275,6 +301,10 @@ If FakeDXUIOnMouseEvent(Button, Shift, x, y, 2) Then Exit Sub
 FakeDXUISetCapture = 0
 End Sub
 
+Private Sub Form_QueryUnload(Cancel As Integer, UnloadMode As Integer)
+cSub.UnSubclass
+End Sub
+
 Private Sub Form_Unload(Cancel As Integer)
 FakeDXUIDestroy
 Set objDrawTest = Nothing
@@ -312,7 +342,7 @@ Set pTest = obj
 End Function
 
 Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
-Dim i As Long, j As Long
+Dim i As Long
 Select Case obj.Name
 Case "cmdClose"
  i = FakeDXUIFindControl("frmTopmost")
@@ -321,16 +351,21 @@ Case "cmdExit"
  Unload Me
 Case "cmdDanger"
  Randomize Timer
- For j = 1 To 100
-  i = FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
-  FakeDXUIControls(i).AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
- Next j
+ For i = 1 To 100
+  With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
+   .AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
+  End With
+ Next i
 Case "chkFullscreen"
  pChangeResolution 800, 600, obj.Value
 Case "Check1"
  i = FakeDXUIFindControl("Check2")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
  i = FakeDXUIFindControl("cmdClose")
+ If i Then FakeDXUIControls(i).Enabled = obj.Value
+ i = FakeDXUIFindControl("hs1")
+ If i Then FakeDXUIControls(i).Enabled = obj.Value
+ i = FakeDXUIFindControl("vs1")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
 End Select
 End Sub
@@ -439,6 +474,60 @@ End Sub
 
 Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
 'Cancel = True
+End Sub
+
+Private Sub iSubclass_After(lReturn As Long, ByVal hwnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
+Dim h As Long
+Dim s As String
+Dim i As Long, m As Long
+Dim p As POINTAPI
+Select Case uMsg
+'Case WM_IME_NOTIFY
+' Select Case wParam
+' Case IMN_OPENCANDIDATE, IMN_CHANGECANDIDATE
+'  Timer1_Timer 'ABC-OK ,M$PY-doesn't work
+' Case IMN_CLOSECANDIDATE
+'  Label1.Caption = ""
+' End Select
+'Case WM_IME_COMPOSITION, WM_IME_STARTCOMPOSITION
+' h = ImmGetContext(Me.hwnd)
+' If h Then
+'  '///
+'  s = Space(1024)
+'  m = ImmGetCompositionString(h, GCS_COMPSTR, ByVal StrPtr(s), 2048)
+'  If m Then
+'   s = LeftB(s, m)
+'   i = ImmGetCompositionString(h, GCS_CURSORPOS, ByVal 0, 0)
+'   If i >= 0 And i <= m Then
+'    s = LeftB(s, i) + LeftB("|", 1) + MidB(s, i + 1)
+'   End If
+'   s = StrConv(s, vbUnicode)
+'  Else
+'   s = ""
+'  End If
+'  '///
+'  Label2.Caption = s
+'  '///
+'  ImmReleaseContext Me.hwnd, h
+' End If
+Case WM_MOUSEWHEEL
+ i = (wParam And &HFFFF0000) \ &H10000
+' p.x = (lParam And &H7FFF&) Or (&HFFFF8000 And ((lParam And &H8000&) <> 0))
+' p.y = (lParam And &HFFFF0000) \ &H10000
+ GetCursorPos p
+ ScreenToClient Me.hwnd, p
+ OnMouseWheel (wParam And 3&) Or (vbMiddleButton And ((wParam And &H10&) <> 0)), _
+ ((wParam And &HC&) \ 4&) Or (vbAltMask And ((GetAsyncKeyState(vbKeyMenu) And 1&) <> 0)), p.x, p.y, i
+End Select
+End Sub
+
+Private Sub iSubclass_Before(bHandled As Boolean, lReturn As Long, hwnd As Long, uMsg As Long, wParam As Long, lParam As Long)
+'
+End Sub
+
+Friend Sub OnMouseWheel(ByVal Button As MouseButtonConstants, ByVal Shift As ShiftConstants, ByVal x As Long, ByVal y As Long, ByVal nDelta As Long)
+If FakeDXUIOnMouseWheel(nDelta, Shift) Then Exit Sub
+'etc.
 End Sub
 
 Private Sub Timer1_Timer()

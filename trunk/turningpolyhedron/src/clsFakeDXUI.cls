@@ -25,6 +25,7 @@ Private m_nState As Long
 Private m_sCaption As String, m_sText As String, m_sGroupName As String
 Private m_bEnabled As Boolean, m_bVisible As Boolean, m_bLocked As Boolean
 Private m_nValue As Long
+Private m_nScrollBars As ScrollBarConstants
 
 Private m_tRectEx As typeFakeDXUIRectEx, m_tRectEx_Backup As typeFakeDXUIRectEx
 Private m_tRect As typeFakeDXUIRect
@@ -34,7 +35,7 @@ Private m_tClientToScreenOffset As typeFakeDXUIPoint
 Private m_tRectScreen As typeFakeDXUIRect
 Private m_tClientMargin As typeFakeDXUIRect
 
-Private m_nAnimVal(15) As Long
+Private m_nAnimVal(31) As Integer
 Private m_nClosing As Long
 
 Private m_tDragFirst As typeFakeDXUIPoint, m_tDragLast As typeFakeDXUIPoint
@@ -45,15 +46,116 @@ Private m_nChildrenCount As Long
 
 'Private m_bMouseIn As Boolean
 
-Friend Property Get Value() As Long
-Value = m_nValue
+'////////scroll bar
+
+Private m_tScrollBar(1) As typeFakeDXUIScrollBar
+
+Friend Property Get ScrollBars() As ScrollBarConstants
+ScrollBars = m_nScrollBars
 End Property
 
-Friend Property Let Value(ByVal n As Long)
+Friend Property Let ScrollBars(ByVal n As ScrollBarConstants)
+If m_nScrollBars = n Then Exit Property
+m_nScrollBars = n
+m_bSizeDirty = True
+'TODO:
+End Property
+
+Friend Property Get Min(Optional ByVal nIndex As Long) As Long
+Min = m_tScrollBar(nIndex).nMin
+End Property
+
+Friend Property Let Min(Optional ByVal nIndex As Long, ByVal n As Long)
+Select Case m_nType
+Case 1, 5, 6
+ With m_tScrollBar(nIndex)
+  .nMin = n
+  If .nValue < n Then
+   .nValue = n
+   .nReserved = 1
+  End If
+ End With
+ 'TODO:
+End Select
+End Property
+
+Friend Property Get Max(Optional ByVal nIndex As Long) As Long
+Max = m_tScrollBar(nIndex).nMax
+End Property
+
+Friend Property Let Max(Optional ByVal nIndex As Long, ByVal n As Long)
+Select Case m_nType
+Case 1, 5, 6
+ With m_tScrollBar(nIndex)
+  .nMax = n
+  If .nValue > n Then
+   .nValue = n
+   .nReserved = 1
+  End If
+ End With
+ 'TODO:
+End Select
+End Property
+
+Friend Property Get SmallChange(Optional ByVal nIndex As Long) As Long
+SmallChange = m_tScrollBar(nIndex).nSmallChange
+End Property
+
+Friend Property Let SmallChange(Optional ByVal nIndex As Long, ByVal n As Long)
+If n < 0 Then Exit Property
+m_tScrollBar(nIndex).nSmallChange = n
+'TODO:
+End Property
+
+Friend Property Get LargeChange(Optional ByVal nIndex As Long) As Long
+LargeChange = m_tScrollBar(nIndex).nLargeChange
+End Property
+
+Friend Property Let LargeChange(Optional ByVal nIndex As Long, ByVal n As Long)
+If n < 0 Then Exit Property
+m_tScrollBar(nIndex).nLargeChange = n
+'TODO:
+End Property
+
+Friend Property Get Orientation() As Long
+Select Case m_nType
+Case 5
+ Orientation = m_tScrollBar(0).nOrientation
+End Select
+End Property
+
+Friend Property Let Orientation(ByVal n As Long)
+Select Case m_nType
+Case 5
+ m_tScrollBar(0).nOrientation = n
+ 'TODO:
+End Select
+End Property
+
+Friend Property Get Value(Optional ByVal nIndex As Long) As Long
+Select Case m_nType
+Case 1, 5, 6
+ Value = m_tScrollBar(nIndex).nValue
+Case Else
+ Value = m_nValue
+End Select
+End Property
+
+Friend Property Let Value(Optional ByVal nIndex As Long, ByVal n As Long)
 Dim i As Long, j As Long, k As Long
-m_nValue = n
-If n Then
- If m_nType = 4 Then 'button
+Select Case m_nType
+Case 1, 5, 6
+ With m_tScrollBar(nIndex)
+  If n < .nMin Then n = .nMin Else If n > .nMax Then n = .nMax
+  If .nValue <> n Then
+   .nValue = n
+   .nReserved = 1
+  End If
+ End With
+ 'TODO:
+Case 4 'button
+ m_nValue = n
+ If n Then
   k = m_nStyle And 7&
   Select Case k
   Case 3, 4
@@ -75,7 +177,7 @@ If n Then
    End If
   End Select
  End If
-End If
+End Select
 End Property
 
 Friend Property Get Name() As String
@@ -164,7 +266,7 @@ If i > 1 And i <= m_nChildrenCount Then
 End If
 End Sub
 
-Friend Function AddNewChildren(ByVal nType As enumFakeDXUIControlType, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nStyle As enumFakeDXUIControlStyle, Optional ByVal bEnabled As Boolean = True, Optional ByVal bVisible As Boolean = True, Optional ByVal bLocked As Boolean = False, Optional ByVal sCaption As String, Optional ByVal sText As String, Optional ByVal sName As String, Optional ByVal nLeft2 As Single, Optional ByVal nTop2 As Single, Optional ByVal nRight2 As Single, Optional ByVal nBottom2 As Single, Optional ByVal nValue As Long, Optional ByVal sGroupName As String) As Long
+Friend Function AddNewChildren(ByVal nType As enumFakeDXUIControlType, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nStyle As enumFakeDXUIControlStyle, Optional ByVal bEnabled As Boolean = True, Optional ByVal bVisible As Boolean = True, Optional ByVal bLocked As Boolean = False, Optional ByVal sCaption As String, Optional ByVal sText As String, Optional ByVal sName As String, Optional ByVal nLeft2 As Single, Optional ByVal nTop2 As Single, Optional ByVal nRight2 As Single, Optional ByVal nBottom2 As Single, Optional ByVal nValue As Long, Optional ByVal sGroupName As String) As clsFakeDXUI
 Dim i As Long
 i = FakeDXUIGetEmptyControl
 With FakeDXUIControls(i)
@@ -186,7 +288,7 @@ With FakeDXUIControls(i)
  .Parent = m_nIndex
 End With
 AddChildren i
-AddNewChildren = i
+Set AddNewChildren = FakeDXUIControls(i)
 End Function
 
 Friend Sub AddChildren(ByVal nControlIndex As Long)
@@ -279,6 +381,18 @@ End Property
 
 Friend Property Let Enabled(ByVal b As Boolean)
 m_bEnabled = b
+Select Case m_nType
+Case 5
+ m_tScrollBar(0).bEnabled = b
+End Select
+End Property
+
+Friend Property Get ScrollBarEnabled(Optional ByVal nIndex As Long) As Boolean
+ScrollBarEnabled = m_tScrollBar(nIndex).bEnabled
+End Property
+
+Friend Property Let ScrollBarEnabled(Optional ByVal nIndex As Long, ByVal b As Boolean)
+m_tScrollBar(nIndex).bEnabled = b
 End Property
 
 Friend Property Get Visible() As Boolean
@@ -303,13 +417,20 @@ ControlType = m_nType
 End Property
 
 Friend Property Let ControlType(ByVal n As enumFakeDXUIControlType)
+If m_nType = n Then Exit Property
 m_nType = n
 m_bSizeDirty = True
-'TODO:
+'///
+Select Case n
+Case 5
+ m_tScrollBar(0).bEnabled = m_bEnabled
+End Select
+'///TODO:
 End Property
 
 Friend Sub Unload()
 m_nClosing = 1
+'///TODO:
 End Sub
 
 Friend Sub Destroy()
@@ -335,7 +456,20 @@ m_sCaption = ""
 m_sText = ""
 m_nValue = 0
 m_nClosing = 0
+m_nScrollBars = 0
 Erase m_nAnimVal
+Erase m_tScrollBar
+With m_tScrollBar(0)
+ .nSmallChange = 1
+ .nLargeChange = 1
+ .bEnabled = True
+End With
+With m_tScrollBar(1)
+ .nSmallChange = 1
+ .nLargeChange = 1
+ .bEnabled = True
+ .nOrientation = 1
+End With
 '///
 If FakeDXUIActiveWindow = m_nIndex Then FakeDXUIActiveWindow = 0
 If FakeDXUIFocus = m_nIndex Then FakeDXUIFocus = 0
@@ -375,6 +509,40 @@ Dim j As Long, k As Long
     End If
 End Sub
 
+Private Sub pRenderScrollBars(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bDrawResizeGripper As Boolean)
+Dim i As Long
+nLeft = nLeft + m_tClientMargin.Left
+nTop = nTop + m_tClientMargin.Top
+nRight = nRight - m_tClientMargin.Right
+nBottom = nBottom - m_tClientMargin.Bottom
+If m_nScrollBars And vbHorizontal Then
+ With m_tScrollBar(0).tRect
+  .Left = nLeft
+  .Top = nBottom
+  .Right = nRight
+  .Bottom = nBottom + 16
+ End With
+ FakeDXUIRenderScrollBar m_tScrollBar(0), nOpacity
+End If
+If m_nScrollBars And vbVertical Then
+ With m_tScrollBar(1).tRect
+  .Left = nRight
+  .Top = nTop
+  .Right = nRight + 16
+  .Bottom = nBottom
+ End With
+ FakeDXUIRenderScrollBar m_tScrollBar(1), nOpacity
+ '///
+ If m_nScrollBars And vbHorizontal Then
+  If bDrawResizeGripper Then
+   i = nOpacity * 255
+   i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+   FakeDXGDIStretchBltColored nRight, nBottom, nRight + 16, nBottom + 16, 96, 384, 112, 400, 512, i
+  End If
+ End If
+End If
+End Sub
+
 'TODO:forecolor,etc.
 Friend Sub Render(Optional ByVal nParentClientLeft As Single, Optional ByVal nParentClientTop As Single, Optional ByVal nOpacity As Single = 1)
 Dim i As Long, j As Long, jj As Long, k As Long, kk As Long
@@ -382,6 +550,7 @@ Dim nLeft As Single, nTop As Single
 Dim nRight As Single, nBottom As Single
 Dim w As Single, h As Single
 Dim f As Single
+Dim r0 As D3DRECT, r As D3DRECT
 '///
 Dim bNoChild As Boolean
 '////////
@@ -499,6 +668,10 @@ Case 1 'form
   End If
  End If
  nOpacity = (1 - f) * nOpacity
+ '///new:scrollbar
+ If Not bNoChild Then
+  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, (m_nState And 3&) = 0 And (m_nStyle And 1&) <> 0
+ End If
 Case 2 'label
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
@@ -610,11 +783,33 @@ Case 4 'button
    i Or &H666666, , , , , , , True
   End If
  End Select
+Case 5 'scrollbar
+ With m_tScrollBar(0).tRect
+  .Left = nLeft
+  .Top = nTop
+  .Right = nRight
+  .Bottom = nBottom
+ End With
+ FakeDXUIRenderScrollBar m_tScrollBar(0), nOpacity
+ If m_tScrollBar(0).nReserved Then
+  m_tScrollBar(0).nReserved = 0
+  FakeDXUIPostMessage FakeCtl_Msg_ScrollChange, m_nIndex
+ End If
+'Case Else 'TODO:
 End Select
 '////////
 If Not bNoChild Then
+ '///new:clip rect
+ r.X1 = nLeft
+ r.Y1 = nTop
+ r.X2 = nRight
+ r.Y2 = nBottom
+ d3dd9.GetScissorRect r0
+ d3dd9.SetScissorRect r
+ '///
  nLeft = nLeft + m_tClientMargin.Left
  nTop = nTop + m_tClientMargin.Top
+ '///
  For i = 1 To m_nChildrenCount
   With FakeDXUIControls(m_idxChildren(i))
    If (.Style And FakeCtl_Style_TopMost) = 0 Then .Render nLeft, nTop, nOpacity
@@ -625,6 +820,8 @@ If Not bNoChild Then
    If .Style And FakeCtl_Style_TopMost Then .Render nLeft, nTop, nOpacity
   End With
  Next i
+ '///
+ d3dd9.SetScissorRect r0
 End If
 End Sub
 
@@ -652,6 +849,8 @@ If m_bSizeDirty Or bForce Then
    t.Bottom = 4
   End If
   If m_nStyle And 32& Then t.Top = 24
+  If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
+  If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
  Case 3 'frame
   t.Left = 4
   t.Top = 16
@@ -836,6 +1035,17 @@ Private Sub Class_Initialize()
 m_nType = -1
 m_bEnabled = True
 m_bVisible = True
+With m_tScrollBar(0)
+ .nSmallChange = 1
+ .nLargeChange = 1
+ .bEnabled = True
+End With
+With m_tScrollBar(1)
+ .nSmallChange = 1
+ .nLargeChange = 1
+ .bEnabled = True
+ .nOrientation = 1
+End With
 End Sub
 
 Private Sub Class_Terminate()
@@ -850,6 +1060,20 @@ Friend Sub BeforeMouseEvent()
  m_nAnimVal(4) = 0
  m_nAnimVal(5) = 0
  m_nAnimVal(6) = 0
+ With m_tScrollBar(0)
+  .nAnimVal(11) = 0
+  .nAnimVal(12) = 0
+  .nAnimVal(13) = 0
+  .nAnimVal(14) = 0
+  .nAnimVal(15) = 0
+ End With
+ With m_tScrollBar(1)
+  .nAnimVal(11) = 0
+  .nAnimVal(12) = 0
+  .nAnimVal(13) = 0
+  .nAnimVal(14) = 0
+  .nAnimVal(15) = 0
+ End With
 'End Select
 '///
 'TODO:
@@ -876,11 +1100,6 @@ End If
 pButtonHighlight_1 = i
 End Function
 
-'call this when control contains scrollbar(s)
-Private Sub pProcessScrollbarEvent()
-'TODO:
-End Sub
-
 Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long, Optional ByVal bChildrenProcessed As Boolean) As Boolean
 Dim i As Long
 Dim b As Boolean, b1 As Boolean
@@ -896,6 +1115,17 @@ bInControl = x >= m_tRectScreen.Left And x < m_tRectScreen.Right And y >= m_tRec
 '////////before
 Select Case m_nType
 Case 1 'form
+ '///new:scrollbar
+ If m_nAnimVal(15) = 0 Or FakeDXUISetCapture <> m_nIndex Then
+  If m_nScrollBars And vbHorizontal Then
+   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
+  End If
+  If m_nScrollBars And vbVertical Then
+   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
+  End If
+  b1 = b '???
+ End If
+ '///
  If bInControl Then
   If nEventType = 1 Then
    m_nAnimVal(15) = 0 '???
@@ -909,21 +1139,21 @@ Case 1 'form
      If x >= m_tRectScreen.Right - 20 And x < m_tRectScreen.Right - 4 Then
       m_nAnimVal(4) = pButtonHighlight_1(1, Button, nEventType, b)
       If b Then FakeDXUIPostMessage FakeCtl_Msg_Close, m_nIndex
-      'If m_nAnimVal(4) Then bChildrenProcessed = True
+      If m_nAnimVal(4) Then b1 = True '???
      End If
     End If
     If m_nStyle And 8& Then
      If x >= m_tRectScreen.Right - 36 And x < m_tRectScreen.Right - 20 Then
       m_nAnimVal(5) = pButtonHighlight_1(2, Button, nEventType, b)
       If b Then FakeDXUIPostMessage FakeCtl_Msg_Size, m_nIndex, 1
-      'If m_nAnimVal(5) Then bChildrenProcessed = True
+      If m_nAnimVal(5) Then b1 = True '???
      End If
     End If
     If m_nStyle And 4& Then
      If x >= m_tRectScreen.Right - 52 And x < m_tRectScreen.Right - 36 Then
       m_nAnimVal(6) = pButtonHighlight_1(3, Button, nEventType, b)
       If b Then FakeDXUIPostMessage FakeCtl_Msg_Size, m_nIndex, 2
-      'If m_nAnimVal(6) Then bChildrenProcessed = True
+      If m_nAnimVal(6) Then b1 = True '???
      End If
     End If
    End If
@@ -967,12 +1197,15 @@ Case 4 'button
   End If
   b = True
  End If
+Case 5 'scrollbar
+ b = FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
 Case Else
  'TODO:
 End Select
 '////////
 If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
  For i = m_nChildrenCount To 1 Step -1
+  If bChildrenProcessed Then Exit For '???
   With FakeDXUIControls(m_idxChildren(i))
    If .Style And FakeCtl_Style_TopMost Then
     If .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed) Then
@@ -982,6 +1215,7 @@ If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
   End With
  Next i
  For i = m_nChildrenCount To 1 Step -1
+  If bChildrenProcessed Then Exit For '???
   With FakeDXUIControls(m_idxChildren(i))
    If (.Style And FakeCtl_Style_TopMost) = 0 Then
     If .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed) Then
@@ -993,7 +1227,7 @@ If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
 End If
 '////////after
 '///
-If Not bChildrenProcessed Then
+If Not bChildrenProcessed And Not b1 Then
  Select Case m_nType
  Case 1 'form
   If bInControl Then
@@ -1061,6 +1295,7 @@ If Not bChildrenProcessed Then
  End Select
 End If
 '////////standard drag
+b1 = False
 If Button = 1 And Not bChildrenProcessed Then
  Select Case m_nType
  Case -1, 0, 2, 3
