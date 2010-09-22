@@ -20,3 +20,8 @@ End Sub
 Public Sub Unload(ByVal obj As clsFakeDXUI, ByRef Cancel As Boolean)
 '
 End Sub
+
+Public Sub Change(ByVal obj As clsFakeDXUI)
+'
+End Sub
+

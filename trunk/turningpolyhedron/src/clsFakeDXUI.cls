@@ -17,7 +17,7 @@ Private Const m_nFontZoom As Single = 0.5
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
-Private m_nType As Long, m_nIndex As Long
+Private m_nType As Long, m_nIndex As Long, m_nChildIndex As Long
 Private m_sName As String
 Private m_nStyle As Long
 Private m_nState As Long
@@ -35,20 +35,36 @@ Private m_tClientToScreenOffset As typeFakeDXUIPoint
 Private m_tRectScreen As typeFakeDXUIRect
 Private m_tClientMargin As typeFakeDXUIRect
 
-Private m_nAnimVal(31) As Integer
 Private m_nClosing As Long
+Private m_nAnimVal(31) As Integer
+'0=window is active? (0-255)
+'1-3=current(0-255-510)
+'4-6=goal(0-255-510)
+'7=current(0-255) (check3state)
+'14=control is focus? (0-255)
+'15=highlight(0-3-?)
 
 Private m_tDragFirst As typeFakeDXUIPoint, m_tDragLast As typeFakeDXUIPoint
 
 Private m_idxParent As Long
-Private m_idxChildren() As Long   '1-based
+Private m_idxChildren() As Long '1-based
 Private m_nChildrenCount As Long
+Private m_idxFocus As Long 'focus control on form
 
 'Private m_bMouseIn As Boolean
 
 '////////scroll bar
 
 Private m_tScrollBar(1) As typeFakeDXUIScrollBar
+
+Friend Property Get Focus() As Long
+Focus = m_idxFocus
+End Property
+
+'internal use only
+Friend Property Let Focus(ByVal n As Long)
+m_idxFocus = n
+End Property
 
 Friend Property Get ScrollBars() As ScrollBarConstants
 ScrollBars = m_nScrollBars
@@ -216,53 +232,63 @@ Friend Property Get ChildrenCount() As Long
 ChildrenCount = m_nChildrenCount
 End Property
 
-Friend Property Get Children(ByVal Index As Long) As Long
-Children = m_idxChildren(Index)
+Friend Property Get Children(ByVal nIndex As Long) As Long
+Children = m_idxChildren(nIndex)
 End Property
 
 Friend Sub BringToFront()
 If m_idxParent > 0 And m_idxParent <= FakeDXUIControlCount Then
- FakeDXUIControls(m_idxParent).BringChildrenToFront m_nIndex, True
+ FakeDXUIControls(m_idxParent).BringChildrenToFront m_nChildIndex
 End If
 End Sub
 
 Friend Sub SendToBack()
 If m_idxParent > 0 And m_idxParent <= FakeDXUIControlCount Then
- FakeDXUIControls(m_idxParent).SendChildrenToBack m_nIndex, True
+ FakeDXUIControls(m_idxParent).SendChildrenToBack m_nChildIndex
 End If
 End Sub
 
-Friend Sub BringChildrenToFront(ByVal Index As Long, Optional ByVal ByControlIndex As Boolean)
-Dim i As Long
+Friend Sub BringChildrenToFront(ByVal nIndex As Long, Optional ByVal ByControlIndex As Boolean)
+Dim i As Long, j As Long
 If ByControlIndex Then
  For i = 1 To m_nChildrenCount
-  If m_idxChildren(i) = Index Then Exit For
+  If m_idxChildren(i) = nIndex Then Exit For
  Next i
- If i > m_nChildrenCount Then Exit Sub
 Else
- i = Index
- Index = m_idxChildren(i)
+ i = nIndex
+ nIndex = m_idxChildren(i)
 End If
 If i > 0 And i < m_nChildrenCount Then
- CopyMemory m_idxChildren(i), m_idxChildren(i + 1), (m_nChildrenCount - i) * 4&
- m_idxChildren(m_nChildrenCount) = Index
+ Do
+  j = m_idxChildren(i + 1)
+  m_idxChildren(i) = j
+  FakeDXUIControls(j).ChildIndex = i
+  i = i + 1
+ Loop While i < m_nChildrenCount
+ m_idxChildren(m_nChildrenCount) = nIndex
+ FakeDXUIControls(nIndex).ChildIndex = m_nChildrenCount
 End If
 End Sub
 
-Friend Sub SendChildrenToBack(ByVal Index As Long, Optional ByVal ByControlIndex As Boolean)
-Dim i As Long
+Friend Sub SendChildrenToBack(ByVal nIndex As Long, Optional ByVal ByControlIndex As Boolean)
+Dim i As Long, j As Long
 If ByControlIndex Then
  For i = 1 To m_nChildrenCount
-  If m_idxChildren(i) = Index Then Exit For
+  If m_idxChildren(i) = nIndex Then Exit For
  Next i
- If i > m_nChildrenCount Then Exit Sub
 Else
- i = Index
- Index = m_idxChildren(i)
+ i = nIndex
+ nIndex = m_idxChildren(i)
 End If
 If i > 1 And i <= m_nChildrenCount Then
- CopyMemory m_idxChildren(2), m_idxChildren(1), (i - 1) * 4&
- m_idxChildren(1) = Index
+ Do
+  j = m_idxChildren(i - 1)
+  m_idxChildren(i) = j
+  FakeDXUIControls(j).ChildIndex = i
+  i = i - 1
+ Loop While i > 1
+ m_idxChildren(1) = nIndex
+ FakeDXUIControls(nIndex).ChildIndex = 1
 End If
 End Sub
 
@@ -291,10 +317,56 @@ AddChildren i
 Set AddNewChildren = FakeDXUIControls(i)
 End Function
 
-Friend Sub AddChildren(ByVal nControlIndex As Long)
+Friend Property Get ChildIndex() As Long
+ChildIndex = m_nChildIndex
+End Property
+
+Friend Property Let ChildIndex(ByVal n As Long)
+m_nChildIndex = n
+End Property
+
+Friend Sub AddChildren(ByVal nControlIndex As Long, Optional ByVal nIndex As Long)
+Dim i As Long, j As Long
+If nIndex <= 0 Or nIndex > m_nChildrenCount Then nIndex = m_nChildrenCount + 1
 m_nChildrenCount = m_nChildrenCount + 1
 ReDim Preserve m_idxChildren(1 To m_nChildrenCount)
-m_idxChildren(m_nChildrenCount) = nControlIndex
+For i = m_nChildrenCount To nIndex + 1 Step -1
+ j = m_idxChildren(i - 1)
+ m_idxChildren(i) = j
+ FakeDXUIControls(j).ChildIndex = i
+Next i
+m_idxChildren(nIndex) = nControlIndex
+FakeDXUIControls(nControlIndex).ChildIndex = nIndex
+End Sub
+
+Friend Sub RemoveChildren(ByVal nIndex As Long, Optional ByVal ByControlIndex As Boolean, Optional ByVal bDestroy As Boolean)
+Dim i As Long, j As Long, k As Long
+If ByControlIndex Then
+ For i = 1 To m_nChildrenCount
+  If m_idxChildren(i) = nIndex Then Exit For
+ Next i
+ If i > m_nChildrenCount Then Exit Sub
+ k = nIndex
+ nIndex = i
+Else
+ If nIndex <= 0 Or nIndex > m_nChildrenCount Then Exit Sub
+ k = m_idxChildren(nIndex)
+End If
+'///
+For i = nIndex To m_nChildrenCount - 1
+ j = m_idxChildren(i + 1)
+ m_idxChildren(i) = j
+ FakeDXUIControls(j).ChildIndex = i
+Next i
+If m_nChildrenCount > 1 Then
+ m_nChildrenCount = m_nChildrenCount - 1
+ ReDim Preserve m_idxChildren(1 To m_nChildrenCount)
+Else
+ m_nChildrenCount = 0
+ Erase m_idxChildren
+End If
+FakeDXUIControls(k).ChildIndex = 0
+If bDestroy Then FakeDXUIControls(k).Destroy
 End Sub
 
 Friend Property Get Parent() As Long
@@ -310,6 +382,7 @@ Friend Property Get Index() As Long
 Index = m_nIndex
 End Property
 
+'internal use only
 Friend Property Let Index(ByVal n As Long)
 m_nIndex = n
 End Property
@@ -445,7 +518,6 @@ m_tRectEx = t1
 m_tRectEx_Backup = t1
 m_tClientMargin = t
 m_bSizeDirty = False
-m_nType = 0
 m_bEnabled = True
 m_bVisible = True
 m_bLocked = False
@@ -457,6 +529,7 @@ m_sText = ""
 m_nValue = 0
 m_nClosing = 0
 m_nScrollBars = 0
+m_idxFocus = 0
 Erase m_nAnimVal
 Erase m_tScrollBar
 With m_tScrollBar(0)
@@ -475,12 +548,18 @@ If FakeDXUIActiveWindow = m_nIndex Then FakeDXUIActiveWindow = 0
 If FakeDXUIFocus = m_nIndex Then FakeDXUIFocus = 0
 If FakeDXUISetCapture = m_nIndex Then FakeDXUISetCapture = 0
 '///
+If m_idxParent > 0 And m_idxParent <= FakeDXUIControlCount Then
+ FakeDXUIControls(m_idxParent).RemoveChildren m_nChildIndex
+End If
+'///
 m_idxParent = 0
 For i = 1 To m_nChildrenCount
+ FakeDXUIControls(m_idxChildren(i)).ChildIndex = 0
  FakeDXUIControls(m_idxChildren(i)).Destroy
 Next i
 Erase m_idxChildren
 m_nChildrenCount = 0
+m_nChildIndex = 0
 '///
 '///
 'TODO:etc.
@@ -509,8 +588,8 @@ Dim j As Long, k As Long
     End If
 End Sub
 
-Private Sub pRenderScrollBars(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bDrawResizeGripper As Boolean)
-Dim i As Long
+Private Sub pRenderScrollBars(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bDrawResizeGripper As Boolean, Optional ByVal bRaiseEvent As Boolean)
+Dim i As Long, b As Boolean
 nLeft = nLeft + m_tClientMargin.Left
 nTop = nTop + m_tClientMargin.Top
 nRight = nRight - m_tClientMargin.Right
@@ -523,6 +602,10 @@ If m_nScrollBars And vbHorizontal Then
   .Bottom = nBottom + 16
  End With
  FakeDXUIRenderScrollBar m_tScrollBar(0), nOpacity
+ If m_tScrollBar(0).nReserved Then
+  m_tScrollBar(0).nReserved = 0
+  b = True
+ End If
 End If
 If m_nScrollBars And vbVertical Then
  With m_tScrollBar(1).tRect
@@ -532,14 +615,34 @@ If m_nScrollBars And vbVertical Then
   .Bottom = nBottom
  End With
  FakeDXUIRenderScrollBar m_tScrollBar(1), nOpacity
- '///
- If m_nScrollBars And vbHorizontal Then
-  If bDrawResizeGripper Then
-   i = nOpacity * 255
-   i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
-   FakeDXGDIStretchBltColored nRight, nBottom, nRight + 16, nBottom + 16, 96, 384, 112, 400, 512, i
-  End If
+ If m_tScrollBar(1).nReserved Then
+  m_tScrollBar(1).nReserved = 0
+  b = True
  End If
+ '///
+ If b And bRaiseEvent Then FakeDXUIPostMessage FakeCtl_Msg_ScrollChange, m_nIndex
+ '///
+ If m_nScrollBars = vbBoth And bDrawResizeGripper Then
+  i = nOpacity * 255
+  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+  FakeDXGDIStretchBltColored nRight, nBottom, nRight + 16, nBottom + 16, 96, 384, 112, 400, 512, i
+ End If
+End If
+End Sub
+
+Private Sub pRenderFocusRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1)
+Dim i As Long
+i = m_nAnimVal(14)
+If FakeDXUIFocus = m_nIndex Then
+ If i < 255 Then i = i + 51
+Else
+ If i > 0 Then i = i - 51
+End If
+m_nAnimVal(14) = i
+If i > 0 Then
+ i = i * nOpacity
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+ FakeDXGDIStretchBltExColored nLeft, nTop, nRight, nBottom, 8, 328, 40, 360, 4, 4, 4, 4, 512, i
 End If
 End Sub
 
@@ -553,6 +656,11 @@ Dim f As Single
 Dim r0 As D3DRECT, r As D3DRECT
 '///
 Dim bNoChild As Boolean
+'////////adjust window opacity???
+If m_nType = 1 Then
+ nOpacity = nOpacity * 1.2
+ If nOpacity > 1 Then nOpacity = 1
+End If
 '////////
 If m_nClosing Then
  nOpacity = nOpacity * (1 - m_nClosing * 0.2)
@@ -670,7 +778,7 @@ Case 1 'form
  nOpacity = (1 - f) * nOpacity
  '///new:scrollbar
  If Not bNoChild Then
-  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, (m_nState And 3&) = 0 And (m_nStyle And 1&) <> 0
+  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, (m_nState And 3&) = 0 And (m_nStyle And 1&) <> 0, True
  End If
 Case 2 'label
  i = 255 * nOpacity
@@ -734,6 +842,8 @@ Case 4 'button
     j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
     FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 32, 384, 48, 400, 512, j
    End If
+   '///focus
+   pRenderFocusRect nLeft + 16, nTop, nRight, nBottom, nOpacity
    '///caption
    FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
    i, , , , , , , True
@@ -775,6 +885,8 @@ Case 4 'button
     j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
     FakeDXGDIStretchBltExBlended nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 84, 284, 124, 324, 8, 8, 8, 8, 512, 164, 284, 255 - jj, j
    End If
+   '///focus
+   pRenderFocusRect nLeft, nTop, nRight, nBottom, nOpacity
    '///caption
    FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, i, , , , , , , True
   Else
@@ -800,11 +912,15 @@ End Select
 '////////
 If Not bNoChild Then
  '///new:clip rect
+ d3dd9.GetScissorRect r0
  r.X1 = nLeft
  r.Y1 = nTop
  r.X2 = nRight
  r.Y2 = nBottom
- d3dd9.GetScissorRect r0
+ If r.X1 < r0.X1 Then r.X1 = r0.X1
+ If r.Y1 < r0.Y1 Then r.Y1 = r0.Y1
+ If r.X2 > r0.X2 Then r.X2 = r0.X2
+ If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
  d3dd9.SetScissorRect r
  '///
  nLeft = nLeft + m_tClientMargin.Left
@@ -812,12 +928,12 @@ If Not bNoChild Then
  '///
  For i = 1 To m_nChildrenCount
   With FakeDXUIControls(m_idxChildren(i))
-   If (.Style And FakeCtl_Style_TopMost) = 0 Then .Render nLeft, nTop, nOpacity
+   If (.Style And FCS_TopMost) = 0 Then .Render nLeft, nTop, nOpacity
   End With
  Next i
  For i = 1 To m_nChildrenCount
   With FakeDXUIControls(m_idxChildren(i))
-   If .Style And FakeCtl_Style_TopMost Then .Render nLeft, nTop, nOpacity
+   If .Style And FCS_TopMost Then .Render nLeft, nTop, nOpacity
   End With
  Next i
  '///
@@ -1100,6 +1216,31 @@ End If
 pButtonHighlight_1 = i
 End Function
 
+Private Sub pSetFocus()
+If m_nStyle And &H1000000 Then FakeDXUIFocus = m_nIndex
+End Sub
+
+Private Sub pButtonClick()
+Dim i As Long
+i = m_nStyle And 7&
+Select Case i
+Case 1 'checkbox
+ m_nValue = (m_nValue = 0) And 1&
+Case 2 '3state
+ m_nValue = m_nValue + 1
+ If m_nValue > 2 Then m_nValue = 0
+Case 3, 4 'option and optionnullable
+ If m_nValue = 0 Then
+  Value = 1
+ ElseIf i = 4 Then
+  m_nValue = 0
+ End If
+Case Else
+ m_nValue = 0
+End Select
+FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
+End Sub
+
 Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long, Optional ByVal bChildrenProcessed As Boolean) As Boolean
 Dim i As Long
 Dim b As Boolean, b1 As Boolean
@@ -1129,7 +1270,15 @@ Case 1 'form
  If bInControl Then
   If nEventType = 1 Then
    m_nAnimVal(15) = 0 '???
-   FakeDXUIActiveWindow = m_nIndex
+   '///change active window and focus
+   If FakeDXUIActiveWindow <> m_nIndex Then
+    If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
+     FakeDXUIControls(FakeDXUIActiveWindow).Focus = FakeDXUIFocus
+    End If
+    FakeDXUIActiveWindow = m_nIndex
+    FakeDXUIFocus = m_idxFocus
+   End If
+   '///
    FakeDXUIPostMessage FakeCtl_Msg_ZOrder, m_nIndex, 0
   End If
   '///window button
@@ -1168,6 +1317,7 @@ Case 1 'form
  If m_nState And 2& Then bNoChild = True
 Case 4 'button
  If bInControl Then
+  If nEventType = 1 Then pSetFocus
   i = pButtonHighlight_1(1, Button, nEventType, b)
   If i > 255 Then
    m_nAnimVal(4) = 255
@@ -1176,28 +1326,11 @@ Case 4 'button
    m_nAnimVal(4) = i
    m_nAnimVal(5) = 0
   End If
-  If b Then
-   i = m_nStyle And 7&
-   Select Case i
-   Case 1 'checkbox
-    m_nValue = (m_nValue = 0) And 1&
-   Case 2 '3state
-    m_nValue = m_nValue + 1
-    If m_nValue > 2 Then m_nValue = 0
-   Case 3, 4 'option and optionnullable
-    If m_nValue = 0 Then
-     Value = 1
-    ElseIf i = 4 Then
-     m_nValue = 0
-    End If
-   Case Else
-    m_nValue = 0
-   End Select
-   FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
-  End If
+  If b Then pButtonClick
   b = True
  End If
 Case 5 'scrollbar
+ If bInControl And nEventType = 1 Then pSetFocus
  b = FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
 Case Else
  'TODO:
@@ -1207,7 +1340,7 @@ If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
  For i = m_nChildrenCount To 1 Step -1
   If bChildrenProcessed Then Exit For '???
   With FakeDXUIControls(m_idxChildren(i))
-   If .Style And FakeCtl_Style_TopMost Then
+   If .Style And FCS_TopMost Then
     If .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed) Then
      bChildrenProcessed = True
     End If
@@ -1217,7 +1350,7 @@ If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
  For i = m_nChildrenCount To 1 Step -1
   If bChildrenProcessed Then Exit For '???
   With FakeDXUIControls(m_idxChildren(i))
-   If (.Style And FakeCtl_Style_TopMost) = 0 Then
+   If (.Style And FCS_TopMost) = 0 Then
     If .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed) Then
      bChildrenProcessed = True
     End If
@@ -1267,6 +1400,15 @@ If Not bChildrenProcessed And Not b1 Then
         FakeDXUIMousePointer = vbSizeNWSE
        End If
       End If
+      '///new:resize gripper
+      If m_nScrollBars = vbBoth Then
+       If x >= m_tRectScreen.Right - m_tClientMargin.Right And y >= m_tRectScreen.Bottom - m_tClientMargin.Bottom And _
+       x < m_tRectScreen.Right And y < m_tRectScreen.Bottom Then
+        m_nAnimVal(15) = -9
+        FakeDXUIMousePointer = vbSizeNWSE
+       End If
+      End If
+      '///
      End If
     End If
    End If
@@ -1441,6 +1583,11 @@ If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit F
 'TODO:
 '///
 Select Case nEventType
+Case 1 'down
+ Select Case m_nType
+ Case 4 'button
+  If KeyCode = vbKeyReturn Or KeyCode = vbKeySpace Then pButtonClick
+ End Select
 Case 101, 102 'default,cancel
  If m_nType = 4 Then
   b = (nEventType = 101 And (m_nStyle And 16&) <> 0) Or (nEventType = 102 And (m_nStyle And 32&) <> 0)
@@ -1465,4 +1612,3 @@ End Function
 Friend Function OnMouseWheel(ByVal nDelta As Long, ByVal Shift As Long) As Boolean
 'TODO:
 End Function
-

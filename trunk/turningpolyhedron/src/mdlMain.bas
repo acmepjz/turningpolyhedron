@@ -377,3 +377,76 @@ If nColor Then
 End If
 If bSingle Then tFont.objSprite.End
 End Sub
+
+'Public Sub FakeDXGDIMaskBltExEx(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, _
+'ByVal nLeftMargin As Single, ByVal nTopMargin As Single, ByVal nRightMargin As Single, ByVal nBottomMargin As Single, ByVal nSize As Single, _
+'ByVal objTexture2 As Direct3DTexture9, ByVal nSrcLeft2 As Single, ByVal nSrcTop2 As Single, ByVal nSrcRight2 As Single, ByVal nSrcBottom2 As Single, _
+'ByVal nLeftMargin2 As Single, ByVal nTopMargin2 As Single, ByVal nRightMargin2 As Single, ByVal nBottomMargin2 As Single, ByVal nSize2 As Single, _
+'ByVal nColor As Long, ByVal nMipFilter As D3DTEXTUREFILTERTYPE, ByVal nMinFilter As D3DTEXTUREFILTERTYPE, ByVal nMagFilter As D3DTEXTUREFILTERTYPE)
+''Dim f(135) As Single
+''Dim idx(53) As Integer
+''Dim i As Long, j As Long, k As Long, l As Long
+''Dim ii As Long, jj As Long
+''f(128) = (nSrcLeft + 0.5) / nSize
+''f(129) = (nSrcLeft + nLeftMargin + 0.5) / nSize
+''f(130) = (nSrcRight - nRightMargin + 0.5) / nSize
+''f(131) = (nSrcRight + 0.5) / nSize
+''f(132) = (nSrcTop + 0.5) / nSize
+''f(133) = (nSrcTop + nTopMargin + 0.5) / nSize
+''f(134) = (nSrcBottom - nBottomMargin + 0.5) / nSize
+''f(135) = (nSrcBottom + 0.5) / nSize
+''nSrcLeft2 = (nSrcLeft2 - nSrcLeft) / nSize
+''nSrcTop2 = (nSrcTop2 - nSrcTop) / nSize
+''For i = 0 To 96 Step 32
+'' f(i) = nLeft: f(i + 3) = 1: f(i + 4) = f(128): f(i + 6) = f(128) + nSrcLeft2
+'' f(i + 8) = nLeft + nLeftMargin: f(i + 11) = 1: f(i + 12) = f(129): f(i + 14) = f(129) + nSrcLeft2
+'' f(i + 16) = nRight - nRightMargin: f(i + 19) = 1: f(i + 20) = f(130): f(i + 22) = f(130) + nSrcLeft2
+'' f(i + 24) = nRight: f(i + 27) = 1: f(i + 28) = f(131): f(i + 30) = f(131) + nSrcLeft2
+''Next i
+''For i = 1 To 25 Step 8
+'' f(i) = nTop: f(i + 4) = f(132): f(i + 6) = f(132) + nSrcTop2
+'' f(i + 32) = nTop + nTopMargin: f(i + 36) = f(133): f(i + 38) = f(133) + nSrcTop2
+'' f(i + 64) = nBottom - nBottomMargin: f(i + 68) = f(134): f(i + 70) = f(134) + nSrcTop2
+'' f(i + 96) = nBottom: f(i + 100) = f(135): f(i + 102) = f(135) + nSrcTop2
+''Next i
+''If f(8) < f(16) Then ii = 1 Else ii = 3
+''If f(33) < f(65) Then jj = 1 Else jj = 3
+''For j = 0 To 2 Step jj
+'' For i = 0 To 2 Step ii
+''  l = j * 4& + i
+''  idx(k) = l: idx(k + 1) = l + ii: idx(k + 2) = l + jj * 4&
+''  idx(k + 3) = idx(k + 1): idx(k + 4) = idx(k + 2) + ii: idx(k + 5) = idx(k + 2)
+''  k = k + 6
+'' Next i
+''Next j
+'''///
+''nFactor = nFactor And &HFF&
+''nFactor = nFactor Or (nFactor * &H100&)
+''nFactor = nFactor Or ((nFactor And &H7FFF&) * &H10000) Or ((nFactor > &H7FFF&) And &H80000000)
+''d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_TEX2
+''d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1
+''d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1
+''d3dd9.SetTextureStageState 1, D3DTSS_COLOROP, D3DTOP_LERP
+''d3dd9.SetTextureStageState 1, D3DTSS_COLORARG0, D3DTA_CONSTANT
+''d3dd9.SetTextureStageState 1, D3DTSS_COLORARG1, D3DTA_CURRENT
+''d3dd9.SetTextureStageState 1, D3DTSS_COLORARG2, D3DTA_TEXTURE
+''d3dd9.SetTextureStageState 1, D3DTSS_ALPHAOP, D3DTOP_LERP
+''d3dd9.SetTextureStageState 1, D3DTSS_ALPHAARG0, D3DTA_CONSTANT
+''d3dd9.SetTextureStageState 1, D3DTSS_ALPHAARG1, D3DTA_CURRENT
+''d3dd9.SetTextureStageState 1, D3DTSS_ALPHAARG2, D3DTA_TEXTURE
+''d3dd9.SetTextureStageState 1, D3DTSS_CONSTANT, nFactor
+''d3dd9.SetTextureStageState 2, D3DTSS_COLOROP, D3DTOP_MODULATE
+''d3dd9.SetTextureStageState 2, D3DTSS_COLORARG1, D3DTA_CURRENT
+''d3dd9.SetTextureStageState 2, D3DTSS_COLORARG2, D3DTA_CONSTANT
+''d3dd9.SetTextureStageState 2, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+''d3dd9.SetTextureStageState 2, D3DTSS_ALPHAARG1, D3DTA_CURRENT
+''d3dd9.SetTextureStageState 2, D3DTSS_ALPHAARG2, D3DTA_CONSTANT
+''d3dd9.SetTextureStageState 2, D3DTSS_CONSTANT, nColor
+''d3dd9.SetTexture 1, d3dd9.GetTexture(0)
+''d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, 16, k \ 3&, idx(0), D3DFMT_INDEX16, f(0), 32&
+''d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+''d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+''d3dd9.SetTextureStageState 1, D3DTSS_COLOROP, D3DTOP_DISABLE
+''d3dd9.SetTextureStageState 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE
+''d3dd9.SetTexture 1, Nothing
+'End Sub

@@ -168,7 +168,7 @@ If d3dd9 Is Nothing Then
 End If
 '///font test
 D3DXCreateSprite d3dd9, objFontSprite
-D3DXCreateFontW d3dd9, 32, 0, 0, 0, 0, 0, 0, 0, 0, "Tahoma", objFont
+D3DXCreateFontW d3dd9, 32, 0, 0, 0, 0, 1, 0, 0, 0, "ÎÄÈªæäÎ¢Ã×ºÚ", objFont
 With FakeDXUIDefaultFont
  Set .objFont = objFont
  Set .objSprite = objFontSprite
@@ -202,7 +202,7 @@ cSub.AddMsg WM_IME_NOTIFY, MSG_AFTER
 cSub.AddMsg WM_IME_COMPOSITION, MSG_AFTER
 cSub.AddMsg WM_IME_STARTCOMPOSITION, MSG_AFTER
 cSub.AddMsg WM_MOUSEWHEEL, MSG_AFTER
-cSub.Subclass Me.hwnd, Me
+'cSub.Subclass Me.hwnd, Me
 '////////
 objTiming.MinPeriod = 1000 / 30
 '////////new:deadloop
@@ -216,14 +216,29 @@ End Sub
 Private Sub pCreateUI()
 FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
 With FakeDXUIControls(1)
- .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1
- .AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FakeCtl_Button_CheckBox Or FakeCtl_Button_Graphical, , , , "Fullscreen", , "chkFullscreen", , 1, , 1
+ .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, FCS_TabStop, , , , "Exit", , "cmdExit", , 1, , 1
+ .AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FBS_CheckBox Or FBS_Graphical Or FCS_TabStop, , , , "Fullscreen", , "chkFullscreen", , 1, , 1
  With .AddNewChildren(FakeCtl_Form, 120, 240, 320, 400, &HFFFFFF, , , , "Form1234°¡°¢")
-  .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FakeCtl_Button_CheckBox, , , , "Enabled", , "Check1", , , , , 1
-  .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FakeCtl_Button_CheckBoxTristate, , , , "Check2", , "Check2"
-  .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, , , , , "Danger!!!", , "cmdDanger"
+  .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
+  .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_TabStop, , , , "Check2", , "Check2"
+  .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
+'////////tab debug
+ With .AddNewChildren(FakeCtl_Frame, 120, 140, 240, 400, &HFFFFFF, , , , "Form1234°¡°¢")
+  .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
+  .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_TabStop, , , , "Check2", , "Check2"
+  .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
  End With
- With .AddNewChildren(FakeCtl_Form, 240, 200, 480, 360, &HFFFFFF, , , , "MDIForm1")
+  .AddNewChildren FakeCtl_Button, 90, 0, 164, 16, FBS_CheckBox Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
+  .AddNewChildren FakeCtl_Button, 90, 16, 164, 32, FBS_CheckBoxTristate Or FCS_TabStop, , , , "Check2", , "Check2"
+  .AddNewChildren FakeCtl_Button, 90, 32, 164, 48, FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
+ With .AddNewChildren(FakeCtl_Frame, 240, 140, 360, 400, &HFFFFFF, , , , "Form1234°¡°¢")
+  .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
+  .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_TabStop, , , , "Check2", , "Check2"
+  .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
+ End With
+'////////
+ End With
+ With .AddNewChildren(FakeCtl_Form, 240, 200, 480, 360, &HFFFFFF, , , , "É½Õ¯MDIForm1")
   .ScrollBars = vbBoth
   .Min = -50
   .Max = 50
@@ -232,13 +247,14 @@ With FakeDXUIControls(1)
   .Max(1) = 50
   .LargeChange(1) = 10
   '///
+  .AddNewChildren FakeCtl_Label, 8, 8, 128, 32, , , , , , , "Label1"
   .AddNewChildren FakeCtl_Form, 0, 0, 0, 0, _
-  FakeCtl_Form_Moveable Or FakeCtl_Form_TitleBar Or FakeCtl_Form_CloseButton Or FakeCtl_Form_MaxButton Or FakeCtl_Form_MinButton, , , , "Form2", , , _
+  FFS_Moveable Or FFS_TitleBar Or FFS_CloseButton Or FFS_MaxButton Or FFS_MinButton, , , , "Form2", , , _
   0.25, 0.25, 0.75, 0.75
  End With
- With .AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 2& Or FakeCtl_Style_TopMost, , , , , , "frmTopmost")
+ With .AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 2& Or FCS_TopMost, , , , , , "frmTopmost")
   .AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
-  .AddNewChildren FakeCtl_Button, 80, 28, 140, 48, FakeCtl_Button_Default Or FakeCtl_Button_Cancel, , , , "Close", , "cmdClose"
+  .AddNewChildren FakeCtl_Button, 80, 28, 140, 48, FBS_Default Or FBS_Cancel Or FCS_TabStop, , , , "Close", , "cmdClose"
  End With
 End With
 '///
@@ -253,6 +269,9 @@ With d3dd9
  .SetSamplerState 0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
  .SetSamplerState 0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR
  .SetSamplerState 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR
+ .SetSamplerState 1, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
+ .SetSamplerState 1, D3DSAMP_MINFILTER, D3DTEXF_LINEAR
+ .SetSamplerState 1, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR
  D3DXMatrixPerspectiveFovLH mat, Atn(1), Me.ScaleWidth / Me.ScaleHeight, 0.1, 100
  .SetTransform D3DTS_PROJECTION, mat
  '///
@@ -341,6 +360,12 @@ obj.UnlockVertexBuffer
 Set pTest = obj
 End Function
 
+Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
+Dim i As Long
+i = FakeDXUIFindControl("Label1")
+If i Then FakeDXUIControls(i).Caption = CStr(obj.Value) + "," + CStr(obj.Value(1))
+End Sub
+
 Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
 Dim i As Long
 Select Case obj.Name
@@ -351,7 +376,7 @@ Case "cmdExit"
  Unload Me
 Case "cmdDanger"
  Randomize Timer
- For i = 1 To 100
+ For i = 1 To 1
   With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
    .AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
   End With
@@ -362,10 +387,6 @@ Case "Check1"
  i = FakeDXUIFindControl("Check2")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
  i = FakeDXUIFindControl("cmdClose")
- If i Then FakeDXUIControls(i).Enabled = obj.Value
- i = FakeDXUIFindControl("hs1")
- If i Then FakeDXUIControls(i).Enabled = obj.Value
- i = FakeDXUIFindControl("vs1")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
 End Select
 End Sub

@@ -92,23 +92,24 @@ Public Enum enumFakeDXUIControlType
 End Enum
 
 Public Enum enumFakeDXUIControlStyle
- FakeCtl_Style_TabStop = &H1000000
- FakeCtl_Style_TopMost = &H10000000
- '///
- FakeCtl_Form_Sizable = 1
- FakeCtl_Form_Moveable = 2
- FakeCtl_Form_MinButton = 4
- FakeCtl_Form_MaxButton = 8
- FakeCtl_Form_CloseButton = 16
- FakeCtl_Form_TitleBar = 32
- '///
- FakeCtl_Button_CheckBox = 1
- FakeCtl_Button_CheckBoxTristate = 2
- FakeCtl_Button_OptionButton = 3
- FakeCtl_Button_OptionNullable = 4
- FakeCtl_Button_Graphical = 8
- FakeCtl_Button_Default = 16
- FakeCtl_Button_Cancel = 32
+ '///general
+ FCS_TabStop = &H1000000
+ FCS_TopMost = &H10000000
+ '///form
+ FFS_Sizable = 1
+ FFS_Moveable = 2
+ FFS_MinButton = 4
+ FFS_MaxButton = 8
+ FFS_CloseButton = 16
+ FFS_TitleBar = 32
+ '///button
+ FBS_CheckBox = 1
+ FBS_CheckBoxTristate = 2
+ FBS_OptionButton = 3
+ FBS_OptionNullable = 4
+ FBS_Graphical = 8
+ FBS_Default = 16
+ FBS_Cancel = 32
 End Enum
 
 Public Enum enumFakeDXUIControlState
@@ -160,6 +161,13 @@ Dim b As Boolean
 Select Case t.iMsg
 Case FakeCtl_Msg_Click
  If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Click FakeDXUIControls(t.nParam1)
+Case FakeCtl_Msg_Change
+ If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Change FakeDXUIControls(t.nParam1)
+Case FakeCtl_Msg_ScrollChange
+ Select Case FakeDXUIControls(t.nParam1).ControlType
+ Case 1, 5, 6
+  If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Change FakeDXUIControls(t.nParam1)
+ End Select
 Case FakeCtl_Msg_Size
  Select Case t.nParam2
  Case 1
@@ -183,11 +191,11 @@ Case FakeCtl_Msg_ZOrder
   FakeDXUIControls(t.nParam1).SendToBack
  Case -1
   With FakeDXUIControls(t.nParam1)
-   .Style = .Style Or FakeCtl_Style_TopMost
+   .Style = .Style Or FCS_TopMost
   End With
  Case -2
   With FakeDXUIControls(t.nParam1)
-   .Style = .Style And Not FakeCtl_Style_TopMost
+   .Style = .Style And Not FCS_TopMost
   End With
  End Select
 End Select
@@ -335,33 +343,47 @@ End Function
 '(102=cancel)
 
 Public Function FakeDXUIOnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean
-Dim obj As clsFakeDXUI
+'Dim obj As clsFakeDXUI
 If FakeDXUIControlCount <= 0 Then Exit Function
 Do
- 'TODO:hot key and key preview and vbKeyTab and vbKeySpace process
+ 'TODO:hot key and key preview
+ '////////////////before
  '///enter
  If KeyCode = vbKeyReturn And Shift = 0 And nEventType = 1 Then
   If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
-   Set obj = FakeDXUIControls(FakeDXUIActiveWindow)
-   If obj.ControlType >= 0 And obj.Enabled And obj.Visible And Not obj.Locked Then
-    If obj.OnKeyEvent(0, 0, 101) Then
-     FakeDXUIOnKeyEvent = True
-     Exit Do
-    End If
+   If FakeDXUIControls(FakeDXUIActiveWindow).OnKeyEvent(0, 0, 101) Then
+    FakeDXUIOnKeyEvent = True
+    Exit Do
+   End If
+  End If
+ '///esc
+ ElseIf KeyCode = vbKeyEscape And Shift = 0 And nEventType = 1 Then
+  If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
+   If FakeDXUIControls(FakeDXUIActiveWindow).OnKeyEvent(0, 0, 102) Then
+    FakeDXUIOnKeyEvent = True
+    Exit Do
    End If
   End If
  End If
- '///esc
- If KeyCode = vbKeyEscape And Shift = 0 And nEventType = 1 Then
-  If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
-   Set obj = FakeDXUIControls(FakeDXUIActiveWindow)
-   If obj.ControlType >= 0 And obj.Enabled And obj.Visible And Not obj.Locked Then
-    If obj.OnKeyEvent(0, 0, 102) Then
-     FakeDXUIOnKeyEvent = True
-     Exit Do
-    End If
-   End If
+ '////////////////process
+ If FakeDXUIFocus > 0 And FakeDXUIFocus <= FakeDXUIControlCount Then
+  If FakeDXUIControls(FakeDXUIFocus).OnKeyEvent(KeyCode, Shift, nEventType) Then
+   FakeDXUIOnKeyEvent = True
+   Exit Do
   End If
+ End If
+ '////////////////after
+ '///tab
+ If KeyCode = vbKeyTab And Shift = 0 And nEventType = 1 Then
+  FakeDXUIToNextFocus
+  FakeDXUIOnKeyEvent = True
+  Exit Do
+ '///shift+tab
+ ElseIf KeyCode = vbKeyTab And Shift = 1 And nEventType = 1 Then
+  FakeDXUIToPrevFocus
+  FakeDXUIOnKeyEvent = True
+  Exit Do
+ '///
  End If
  '///
  'TODO:
@@ -448,7 +470,7 @@ End Function
 Public Function FakeDXUIOnScrollBarMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long, ByRef t As typeFakeDXUIScrollBar) As Boolean
 Dim bInControl_0 As Boolean, bInControl As Boolean
 Dim b As Boolean
-Dim f As Single, f1 As Single
+Dim f As Single, f1 As Single, f2 As Single
 Dim i As Long
 '///
 'TODO:menu,etc.
@@ -484,8 +506,9 @@ If t.nAnimVal(0) = 3 And Button = 1 And nEventType = 0 And t.fValuePerPixel > 0 
  '///
  b = True
 ElseIf bInControl_0 Then
+ If t.fValuePerPixel > 0 Then f2 = f + 16 Else f2 = (f + f1) / 2
  If x < f Then
- ElseIf x < f + 16 And x < (f + f1) / 2 Then '-smallchange
+ ElseIf x < f2 Then '-smallchange
   pScrollBarButtonHighlight_1 t, 1, 11, Button, nEventType, b
   If b Then
    i = t.nValue - t.nSmallChange
@@ -497,51 +520,56 @@ ElseIf bInControl_0 Then
    t.nAnimVal(30) = 8 'TODO:adjustable timer
   End If
   b = True
- ElseIf x < t.fThumbStart And t.fValuePerPixel > 0 Then '-largechange
-  pScrollBarButtonHighlight_1 t, 2, 12, Button, nEventType, b
-  If b Then
-   i = t.nValue - t.nLargeChange
-   If i < t.nMin Then i = t.nMin
-   If t.nValue <> i Then
-    t.nValue = i
-    t.nReserved = 1
+ Else
+  If t.fValuePerPixel > 0 Then
+   If x < t.fThumbStart Then '-largechange
+    pScrollBarButtonHighlight_1 t, 2, 12, Button, nEventType, b
+    If b Then
+     i = t.nValue - t.nLargeChange
+     If i < t.nMin Then i = t.nMin
+     If t.nValue <> i Then
+      t.nValue = i
+      t.nReserved = 1
+     End If
+     t.nAnimVal(30) = 8 'TODO:adjustable timer
+    End If
+    If t.nAnimVal(12) Then t.nCriticalValue = t.nMin + (x - f - 16) * t.fValuePerPixel
+    b = True
+   ElseIf x < t.fThumbEnd Then 'start drag
+    pScrollBarButtonHighlight_1 t, 3, 13, Button, nEventType, b
+    If b Then
+     t.nCriticalValue = t.nValue
+     t.fStartDragPos = x
+    End If
+    b = True
+   ElseIf x < f1 - 16 Then '+largechange
+    pScrollBarButtonHighlight_1 t, 4, 14, Button, nEventType, b
+    If b Then
+     i = t.nValue + t.nLargeChange
+     If i > t.nMax Then i = t.nMax
+     If t.nValue <> i Then
+      t.nValue = i
+      t.nReserved = 1
+     End If
+     t.nAnimVal(30) = 8 'TODO:adjustable timer
+    End If
+    If t.nAnimVal(14) Then t.nCriticalValue = t.nMin - t.nLargeChange + (x - f - 16) * t.fValuePerPixel
+    b = True
    End If
-   t.nAnimVal(30) = 8 'TODO:adjustable timer
   End If
-  If t.nAnimVal(12) Then t.nCriticalValue = t.nMin + (x - f - 16) * t.fValuePerPixel
-  b = True
- ElseIf x < t.fThumbEnd And t.fValuePerPixel > 0 Then 'start drag
-  pScrollBarButtonHighlight_1 t, 3, 13, Button, nEventType, b
-  If b Then
-   t.nCriticalValue = t.nValue
-   t.fStartDragPos = x
-  End If
-  b = True
- ElseIf x < f1 - 16 And t.fValuePerPixel > 0 Then '+largechange
-  pScrollBarButtonHighlight_1 t, 4, 14, Button, nEventType, b
-  If b Then
-   i = t.nValue + t.nLargeChange
-   If i > t.nMax Then i = t.nMax
-   If t.nValue <> i Then
-    t.nValue = i
-    t.nReserved = 1
+  If x < f1 And Not b Then '+smallchange
+   pScrollBarButtonHighlight_1 t, 5, 15, Button, nEventType, b
+   If b Then
+    i = t.nValue + t.nSmallChange
+    If i > t.nMax Then i = t.nMax
+    If t.nValue <> i Then
+     t.nValue = i
+     t.nReserved = 1
+    End If
+    t.nAnimVal(30) = 8 'TODO:adjustable timer
    End If
-   t.nAnimVal(30) = 8 'TODO:adjustable timer
+   b = True
   End If
-  If t.nAnimVal(14) Then t.nCriticalValue = t.nMin - t.nLargeChange + (x - f - 16) * t.fValuePerPixel
-  b = True
- ElseIf x < f1 Then '+smallchange
-  pScrollBarButtonHighlight_1 t, 5, 15, Button, nEventType, b
-  If b Then
-   i = t.nValue + t.nSmallChange
-   If i > t.nMax Then i = t.nMax
-   If t.nValue <> i Then
-    t.nValue = i
-    t.nReserved = 1
-   End If
-   t.nAnimVal(30) = 8 'TODO:adjustable timer
-  End If
-  b = True
  End If
 End If
 If nEventType = 2 Then
@@ -718,3 +746,99 @@ Else 'horizontal
  End If
 End If
 End Sub
+
+Public Sub FakeDXUIToNextFocus()
+Dim idx As Long, idxOld As Long
+Dim i As Long, j As Long, k As Long, m As Long
+i = FakeDXUIFocus
+If i = 0 Then i = FakeDXUIActiveWindow
+If i > 0 And i <= FakeDXUIControlCount Then
+ idxOld = i
+ Do
+  idx = i
+  i = 0
+  With FakeDXUIControls(idx)
+   If .Enabled And .Visible Then
+    If (.Style And FCS_TabStop) <> 0 And idx <> FakeDXUIFocus Then
+     i = -1
+    Else
+     If .ChildrenCount > 0 Then 'first children
+      i = .Children(1)
+      If FakeDXUIControls(i).ControlType = FakeCtl_Form Then i = 0
+     End If
+    End If
+   End If
+  End With
+  If i = 0 Then
+   Do
+    If FakeDXUIControls(idx).ControlType = FakeCtl_Form Then
+     i = idx
+     Exit Do
+    End If
+    j = FakeDXUIControls(idx).Parent
+    If j > 0 And j <= FakeDXUIControlCount Then
+     k = FakeDXUIControls(idx).ChildIndex + 1
+     m = FakeDXUIControls(j).ChildrenCount
+     Do Until k > m Or i <> 0 'next sibling
+      i = FakeDXUIControls(j).Children(k)
+      If FakeDXUIControls(i).ControlType = FakeCtl_Form Then i = 0
+      k = k + 1
+     Loop
+     If i = 0 Then idx = j 'parent
+     If i Then Exit Do
+    Else
+     i = idx
+     Exit Do
+    End If
+   Loop
+  End If
+ Loop Until i <= 0 Or i = idxOld
+ If i < 0 Then FakeDXUIFocus = idx
+End If
+End Sub
+
+Public Sub FakeDXUIToPrevFocus()
+Dim idx As Long, idxOld As Long
+Dim i As Long, j As Long, k As Long
+i = FakeDXUIFocus
+If i = 0 Then i = FakeDXUIActiveWindow
+If i > 0 And i <= FakeDXUIControlCount Then
+ idxOld = i
+ Do
+  idx = i
+  i = 0
+  With FakeDXUIControls(idx)
+   If .Enabled And .Visible Then
+    If (.Style And FCS_TabStop) <> 0 And idx <> FakeDXUIFocus Then i = -1
+   End If
+   j = .Parent
+   If .ControlType = FakeCtl_Form Then j = 0
+   k = .ChildIndex
+  End With
+  'last node of previous sibling
+  If i = 0 Then
+   If j > 0 And j <= FakeDXUIControlCount Then
+    If k > 1 Then
+     i = FakeDXUIControls(j).Children(k - 1)
+    End If
+   Else
+    k = FakeDXUIControls(idx).ChildrenCount
+    If k > 0 Then i = FakeDXUIControls(idx).Children(k)
+   End If
+   If i Then
+    Do
+     With FakeDXUIControls(i)
+      k = .ChildrenCount
+      If .Enabled And .Visible And .ControlType <> FakeCtl_Form And k > 0 Then j = .Children(k) Else j = -1
+     End With
+     If j > 0 Then i = j Else Exit Do
+    Loop
+   End If
+  End If
+  'parent
+  If i = 0 Then i = j
+ Loop Until i <= 0 Or i = idxOld
+ If i < 0 Then FakeDXUIFocus = idx
+End If
+End Sub
+
