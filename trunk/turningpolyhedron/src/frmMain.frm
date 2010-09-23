@@ -93,6 +93,32 @@ Private Const WM_IME_STARTCOMPOSITION As Long = &H10D
 Private Const WM_IME_NOTIFY As Long = &H282
 Private Const WM_MOUSEWHEEL As Long = &H20A
 
+Private Function pGetFontName(ByVal s As String) As String
+On Error Resume Next
+Dim v As Variant
+Dim i As Long
+Dim fnt As StdFont
+Dim s0 As String
+v = Split(s, ";")
+For i = 0 To UBound(v)
+ s = Trim(v(i))
+ If s <> "" Then
+  Set fnt = New StdFont
+  s0 = fnt.Name
+  If StrComp(s, s0, vbTextCompare) = 0 Then
+   pGetFontName = s0
+   Exit Function
+  End If
+  fnt.Name = s
+  s = fnt.Name
+  If StrComp(s, s0, vbTextCompare) Then
+   pGetFontName = s
+   Exit Function
+  End If
+ End If
+Next i
+End Function
+
 Private Sub Form_DblClick()
 Dim p As POINTAPI
 GetCursorPos p
@@ -127,6 +153,7 @@ End Sub
 Private Sub Form_Load()
 On Error Resume Next
 Dim i As Long
+Dim s As String
 '///
 m_sMyGamesPath = Space(1024)
 SHGetSpecialFolderPath 0, m_sMyGamesPath, 5, 1
@@ -167,8 +194,10 @@ If d3dd9 Is Nothing Then
  End
 End If
 '///font test
+s = objText.GetText("DejaVu Sans;Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language.
+'///
 D3DXCreateSprite d3dd9, objFontSprite
-D3DXCreateFontW d3dd9, 32, 0, 0, 0, 0, 1, 0, 0, 0, "ÎÄÈªæäÎ¢Ã×ºÚ", objFont
+D3DXCreateFontW d3dd9, 32, 0, 0, 0, 0, 1, 0, 0, 0, pGetFontName(s), objFont
 With FakeDXUIDefaultFont
  Set .objFont = objFont
  Set .objSprite = objFontSprite
@@ -202,7 +231,7 @@ cSub.AddMsg WM_IME_NOTIFY, MSG_AFTER
 cSub.AddMsg WM_IME_COMPOSITION, MSG_AFTER
 cSub.AddMsg WM_IME_STARTCOMPOSITION, MSG_AFTER
 cSub.AddMsg WM_MOUSEWHEEL, MSG_AFTER
-'cSub.Subclass Me.hwnd, Me
+cSub.Subclass Me.hwnd, Me
 '////////
 objTiming.MinPeriod = 1000 / 30
 '////////new:deadloop
@@ -223,7 +252,8 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
 '////////tab debug
- With .AddNewChildren(FakeCtl_Frame, 120, 140, 240, 400, &HFFFFFF, , , , "Form1234°¡°¢")
+ With .AddNewChildren(FakeCtl_Frame, 120, 80, 240, 200, &HFFFFFF, , , , "Form1234°¡°¢")
+  .ScrollBars = vbBoth
   .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
@@ -231,7 +261,8 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 90, 0, 164, 16, FBS_CheckBox Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 90, 16, 164, 32, FBS_CheckBoxTristate Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 90, 32, 164, 48, FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
- With .AddNewChildren(FakeCtl_Frame, 240, 140, 360, 400, &HFFFFFF, , , , "Form1234°¡°¢")
+ With .AddNewChildren(FakeCtl_Frame, 240, 80, 360, 200, &HFFFFFF, , , , "Form1234°¡°¢")
+  .Enabled = False
   .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
@@ -538,7 +569,7 @@ Case WM_MOUSEWHEEL
  GetCursorPos p
  ScreenToClient Me.hwnd, p
  OnMouseWheel (wParam And 3&) Or (vbMiddleButton And ((wParam And &H10&) <> 0)), _
- ((wParam And &HC&) \ 4&) Or (vbAltMask And ((GetAsyncKeyState(vbKeyMenu) And 1&) <> 0)), p.x, p.y, i
+ ((wParam And &HC&) \ 4&) Or (vbAltMask And ((GetAsyncKeyState(vbKeyMenu) And &H8000&) <> 0)), p.x, p.y, i \ 120&
 End Select
 End Sub
 
@@ -549,6 +580,11 @@ End Sub
 Friend Sub OnMouseWheel(ByVal Button As MouseButtonConstants, ByVal Shift As ShiftConstants, ByVal x As Long, ByVal y As Long, ByVal nDelta As Long)
 If FakeDXUIOnMouseWheel(nDelta, Shift) Then Exit Sub
 'etc.
+If nDelta > 0 Then
+ objCamera.Zoom 0.8
+Else
+ objCamera.Zoom 1.25
+End If
 End Sub
 
 Private Sub Timer1_Timer()

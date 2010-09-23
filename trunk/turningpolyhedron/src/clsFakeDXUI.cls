@@ -57,6 +57,10 @@ Private m_idxFocus As Long 'focus control on form
 
 Private m_tScrollBar(1) As typeFakeDXUIScrollBar
 
+'////////text box
+
+Private m_objTextBox As clsFakeDXUITextBox
+
 Friend Property Get Focus() As Long
 Focus = m_idxFocus
 End Property
@@ -83,7 +87,7 @@ End Property
 
 Friend Property Let Min(Optional ByVal nIndex As Long, ByVal n As Long)
 Select Case m_nType
-Case 1, 5, 6
+Case 1, 3, 5, 6
  With m_tScrollBar(nIndex)
   .nMin = n
   If .nValue < n Then
@@ -101,7 +105,7 @@ End Property
 
 Friend Property Let Max(Optional ByVal nIndex As Long, ByVal n As Long)
 Select Case m_nType
-Case 1, 5, 6
+Case 1, 3, 5, 6
  With m_tScrollBar(nIndex)
   .nMax = n
   If .nValue > n Then
@@ -150,7 +154,7 @@ End Property
 
 Friend Property Get Value(Optional ByVal nIndex As Long) As Long
 Select Case m_nType
-Case 1, 5, 6
+Case 1, 3, 5, 6
  Value = m_tScrollBar(nIndex).nValue
 Case Else
  Value = m_nValue
@@ -160,7 +164,7 @@ End Property
 Friend Property Let Value(Optional ByVal nIndex As Long, ByVal n As Long)
 Dim i As Long, j As Long, k As Long
 Select Case m_nType
-Case 1, 5, 6
+Case 1, 3, 5, 6
  With m_tScrollBar(nIndex)
   If n < .nMin Then n = .nMin Else If n > .nMax Then n = .nMax
   If .nValue <> n Then
@@ -588,7 +592,7 @@ Dim j As Long, k As Long
     End If
 End Sub
 
-Private Sub pRenderScrollBars(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bDrawResizeGripper As Boolean, Optional ByVal bRaiseEvent As Boolean)
+Private Sub pRenderScrollBars(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bDrawResizeGripper As Boolean, Optional ByVal bRaiseEvent As Boolean, Optional ByVal bEnabled As Boolean = True)
 Dim i As Long, b As Boolean
 nLeft = nLeft + m_tClientMargin.Left
 nTop = nTop + m_tClientMargin.Top
@@ -601,7 +605,7 @@ If m_nScrollBars And vbHorizontal Then
   .Right = nRight
   .Bottom = nBottom + 16
  End With
- FakeDXUIRenderScrollBar m_tScrollBar(0), nOpacity
+ FakeDXUIRenderScrollBar m_tScrollBar(0), nOpacity, bEnabled
  If m_tScrollBar(0).nReserved Then
   m_tScrollBar(0).nReserved = 0
   b = True
@@ -614,7 +618,7 @@ If m_nScrollBars And vbVertical Then
   .Right = nRight + 16
   .Bottom = nBottom
  End With
- FakeDXUIRenderScrollBar m_tScrollBar(1), nOpacity
+ FakeDXUIRenderScrollBar m_tScrollBar(1), nOpacity, bEnabled
  If m_tScrollBar(1).nReserved Then
   m_tScrollBar(1).nReserved = 0
   b = True
@@ -647,15 +651,16 @@ End If
 End Sub
 
 'TODO:forecolor,etc.
-Friend Sub Render(Optional ByVal nParentClientLeft As Single, Optional ByVal nParentClientTop As Single, Optional ByVal nOpacity As Single = 1)
+Friend Sub Render(Optional ByVal nParentClientLeft As Single, Optional ByVal nParentClientTop As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True)
 Dim i As Long, j As Long, jj As Long, k As Long, kk As Long
 Dim nLeft As Single, nTop As Single
 Dim nRight As Single, nBottom As Single
 Dim w As Single, h As Single
 Dim f As Single
 Dim r0 As D3DRECT, r As D3DRECT
-'///
 Dim bNoChild As Boolean
+'////////
+bEnabled = bEnabled And m_bEnabled
 '////////adjust window opacity???
 If m_nType = 1 Then
  nOpacity = nOpacity * 1.2
@@ -778,7 +783,7 @@ Case 1 'form
  nOpacity = (1 - f) * nOpacity
  '///new:scrollbar
  If Not bNoChild Then
-  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, (m_nState And 3&) = 0 And (m_nStyle And 1&) <> 0, True
+  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, (m_nState And 3&) = 0 And (m_nStyle And 1&) <> 0, True, bEnabled
  End If
 Case 2 'label
  i = 255 * nOpacity
@@ -790,10 +795,13 @@ Case 3 'frame
  FakeDXGDIStretchBltColored nLeft - 4, nTop + 4, nLeft + 8, nTop + 12, 4, 284, 16, 292, 512, i Or &HFFFFFF
  FakeDXGDIStretchBltColored nRight - 4, nTop + 4, nRight + 4, nTop + 12, 36, 284, 44, 292, 512, i Or &HFFFFFF
  '///draw text
- FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 10, nTop - 4, nRight - nLeft, 24, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE Or DT_CALCRECT, i, , , , , , , True, w, h
+ FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 10, nTop - 4, nRight - nLeft, 24, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE Or DT_CALCRECT, _
+ i Or (&H666666 And Not bEnabled), , , , , , , True, w, h
  FakeDXGDIStretchBltColored nLeft + w + 12, nTop + 4, nRight - 4, nTop + 12, 16, 284, 32, 292, 512, i Or &HFFFFFF
  '///
  FakeDXGDIStretchBltExColored nLeft - 4, nTop + 12, nRight + 4, nBottom + 4, 4, 292, 44, 324, 8, 0, 8, 8, 512, i Or &HFFFFFF
+ '///new:scrollbar
+ pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , True, bEnabled
 Case 4 'button
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
@@ -802,7 +810,7 @@ Case 4 'button
  Case 1, 2, 3, 4 'checkbox and optionbutton
   f = (nTop + nBottom) / 2
   If kk > 2 Then kk = 64 Else kk = 0
-  If m_bEnabled Then
+  If bEnabled Then
    '///base
    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk, 368, kk + 16, 384, 512, i Or &HFFFFFF
    '///highlight and pressed
@@ -845,7 +853,7 @@ Case 4 'button
    '///focus
    pRenderFocusRect nLeft + 16, nTop, nRight, nBottom, nOpacity
    '///caption
-   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
+   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft - 16, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
    i, , , , , , , True
   Else
    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk + 48, 368, kk + 64, 384, 512, i Or &HFFFFFF
@@ -856,11 +864,11 @@ Case 4 'button
     FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 48, 384, 64, 400, 512, i Or &HFFFFFF
    End Select
    '///caption
-   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
+   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft - 16, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
    i Or &H666666, , , , , , , True
   End If
  Case Else 'button
-  If m_bEnabled Then
+  If bEnabled Then
    '///base
    j = m_nAnimVal(3)
    k = (m_nValue <> 0) And 255&
@@ -902,7 +910,7 @@ Case 5 'scrollbar
   .Right = nRight
   .Bottom = nBottom
  End With
- FakeDXUIRenderScrollBar m_tScrollBar(0), nOpacity
+ FakeDXUIRenderScrollBar m_tScrollBar(0), nOpacity, bEnabled
  If m_tScrollBar(0).nReserved Then
   m_tScrollBar(0).nReserved = 0
   FakeDXUIPostMessage FakeCtl_Msg_ScrollChange, m_nIndex
@@ -928,12 +936,12 @@ If Not bNoChild Then
  '///
  For i = 1 To m_nChildrenCount
   With FakeDXUIControls(m_idxChildren(i))
-   If (.Style And FCS_TopMost) = 0 Then .Render nLeft, nTop, nOpacity
+   If (.Style And FCS_TopMost) = 0 Then .Render nLeft, nTop, nOpacity, bEnabled
   End With
  Next i
  For i = 1 To m_nChildrenCount
   With FakeDXUIControls(m_idxChildren(i))
-   If .Style And FCS_TopMost Then .Render nLeft, nTop, nOpacity
+   If .Style And FCS_TopMost Then .Render nLeft, nTop, nOpacity, bEnabled
   End With
  Next i
  '///
@@ -972,6 +980,15 @@ If m_bSizeDirty Or bForce Then
   t.Top = 16
   t.Right = 4
   t.Bottom = 4
+  If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
+  If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
+ Case 6 'picturebox
+  t.Left = 4
+  t.Top = 4
+  t.Right = 4
+  t.Bottom = 4
+  If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
+  If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
  End Select
  '///
  m_tClientMargin = t
@@ -1315,6 +1332,14 @@ Case 1 'form
   b = True
  End If
  If m_nState And 2& Then bNoChild = True
+Case 3 'frame
+ 'new:scrollbar
+ If m_nScrollBars And vbHorizontal Then
+  b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
+ End If
+ If m_nScrollBars And vbVertical Then
+  b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
+ End If
 Case 4 'button
  If bInControl Then
   If nEventType = 1 Then pSetFocus
@@ -1610,5 +1635,39 @@ OnKeyEvent = b
 End Function
 
 Friend Function OnMouseWheel(ByVal nDelta As Long, ByVal Shift As Long) As Boolean
+Dim idx As Long
+Dim i As Long
+Dim b As Boolean
+'///
+If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit Function
+'///
 'TODO:
+'///
+idx = -1
+Select Case m_nType
+Case 1, 3, 6, 7, 8
+ If (m_nScrollBars And vbVertical) <> 0 And (Shift And vbShiftMask) = 0 Then
+  idx = 1
+ ElseIf m_nScrollBars And vbHorizontal Then
+  idx = 0
+ End If
+Case 5
+ idx = 0
+End Select
+'///
+If idx >= 0 Then
+ With m_tScrollBar(idx)
+  If .bEnabled Then
+   i = .nValue - nDelta * .nSmallChange * 4&
+   If i < .nMin Then i = .nMin Else If i > .nMax Then i = .nMax
+   If .nValue <> i Then
+    .nValue = i
+    .nReserved = 1
+   End If
+  End If
+ End With
+ b = True
+End If
+'///
+OnMouseWheel = b
 End Function
