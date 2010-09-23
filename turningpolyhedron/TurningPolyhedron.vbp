@@ -14,6 +14,7 @@ Class=clsTiming; src\clsTiming.cls
 Class=clsCamera; src\clsCamera.cls
 Class=cSubclass; src\cSubclass.cls
 Class=iSubclass; src\iSubclass.cls
+Class=clsFakeDXUITextBox; src\clsFakeDXUITextBox.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""

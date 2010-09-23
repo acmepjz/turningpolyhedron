@@ -89,6 +89,7 @@ Public Enum enumFakeDXUIControlType
  FakeCtl_PictureBox = 6
  FakeCtl_TextBox = 7
  FakeCtl_ListBox = 8
+ FakeCtl_ComboBox = 9
 End Enum
 
 Public Enum enumFakeDXUIControlStyle
@@ -395,8 +396,25 @@ End Function
 
 '////////
 
+'???
 Public Function FakeDXUIOnMouseWheel(ByVal nDelta As Long, ByVal Shift As Long) As Boolean
-'TODO:
+If FakeDXUIControlCount <= 0 Then Exit Function
+'///
+Do
+ If FakeDXUIFocus > 0 And FakeDXUIFocus <= FakeDXUIControlCount Then
+  If FakeDXUIControls(FakeDXUIFocus).OnMouseWheel(nDelta, Shift) Then
+   FakeDXUIOnMouseWheel = True
+   Exit Do
+  End If
+ End If
+ '///
+ If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
+  If FakeDXUIControls(FakeDXUIActiveWindow).OnMouseWheel(nDelta, Shift) Then
+   FakeDXUIOnMouseWheel = True
+   Exit Do
+  End If
+ End If
+Loop While False
 '///
 FakeDXUIDoEvents
 End Function
@@ -580,14 +598,15 @@ End If
 FakeDXUIOnScrollBarMouseEvent = b
 End Function
 
-Public Sub FakeDXUIRenderScrollBarButton(ByRef t As typeFakeDXUIScrollBar, ByVal nIndex As Long, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1)
+Public Sub FakeDXUIRenderScrollBarButton(ByRef t As typeFakeDXUIScrollBar, ByVal nIndex As Long, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True)
 Dim i As Long, j As Long, k As Long
 i = nOpacity * 255
 i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+bEnabled = bEnabled And t.bEnabled
 '///
 If nIndex And 1& Then 'button
  k = 416 + ((t.nOrientation <> 0) And 32&)
- If t.bEnabled Then
+ If bEnabled Then
   FakeDXGDIStretchBltExColored nLeft, nTop, nRight, nBottom, 0, k, 32, k + 32, 4, 4, 4, 4, 512, i
   j = t.nAnimVal(nIndex + nIndex - 1)
   If j > 0 Then
@@ -600,14 +619,14 @@ If nIndex And 1& Then 'button
  End If
  If nIndex <> 3 Then
   j = k - 288 + ((nIndex = 5) And 16&)
-  k = 384 - (t.bEnabled And 16&)
+  k = 384 - (bEnabled And 16&)
   nLeft = (nLeft + nRight) / 2
   nTop = (nTop + nBottom) / 2
   FakeDXGDIStretchBltColored nLeft - 8, nTop - 8, nLeft + 8, nTop + 8, j, k, j + 16, k + 16, 512, i
  End If
 Else 'scroll area
  If t.nOrientation Then 'vertical
-  If t.bEnabled Then
+  If bEnabled Then
    FakeDXGDIStretchBltExColored nLeft, nTop, nRight, nBottom, 144, 466, 176, 466, 1, 1, 1, 1, 512, i
    j = t.nAnimVal(nIndex + nIndex - 1)
    If j > 0 Then
@@ -619,7 +638,7 @@ Else 'scroll area
    FakeDXGDIStretchBltExColored nLeft, nTop, nRight, nBottom, 144, 478, 176, 478, 1, 1, 1, 1, 512, i
   End If
  Else 'horizontal
-  If t.bEnabled Then
+  If bEnabled Then
    FakeDXGDIStretchBltExColored nLeft, nTop, nRight, nBottom, 146, 416, 146, 448, 1, 1, 1, 1, 512, i
    j = t.nAnimVal(nIndex + nIndex - 1)
    If j > 0 Then
@@ -634,7 +653,7 @@ Else 'scroll area
 End If
 End Sub
 
-Public Sub FakeDXUIRenderScrollBar(ByRef t As typeFakeDXUIScrollBar, Optional ByVal nOpacity As Single = 1)
+Public Sub FakeDXUIRenderScrollBar(ByRef t As typeFakeDXUIScrollBar, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True)
 Dim i As Long
 Dim j As Long, k As Long
 Dim jj As Long, kk As Long
@@ -642,7 +661,8 @@ Dim f As Single, f2 As Single
 '///
 FakeDXUIScrollBarCalcPos t
 '///update animation variable
-If t.bEnabled Then
+bEnabled = bEnabled And t.bEnabled
+If bEnabled Then
  For i = 1 To 5
   j = t.nAnimVal(i + i - 1)
   jj = t.nAnimVal(i + i)
@@ -722,27 +742,27 @@ End If
 '///draw
 If t.nOrientation Then 'vertical
  If t.fValuePerPixel > 0 Then '5 buttons
-  FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, t.tRect.Right, t.tRect.Top + 16, nOpacity
-  FakeDXUIRenderScrollBarButton t, 2, t.tRect.Left, t.tRect.Top + 16, t.tRect.Right, t.fThumbStart, nOpacity
-  FakeDXUIRenderScrollBarButton t, 3, t.tRect.Left, t.fThumbStart, t.tRect.Right, t.fThumbEnd, nOpacity
-  FakeDXUIRenderScrollBarButton t, 4, t.tRect.Left, t.fThumbEnd, t.tRect.Right, t.tRect.Bottom - 16, nOpacity
-  FakeDXUIRenderScrollBarButton t, 5, t.tRect.Left, t.tRect.Bottom - 16, t.tRect.Right, t.tRect.Bottom, nOpacity
+  FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, t.tRect.Right, t.tRect.Top + 16, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 2, t.tRect.Left, t.tRect.Top + 16, t.tRect.Right, t.fThumbStart, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 3, t.tRect.Left, t.fThumbStart, t.tRect.Right, t.fThumbEnd, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 4, t.tRect.Left, t.fThumbEnd, t.tRect.Right, t.tRect.Bottom - 16, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 5, t.tRect.Left, t.tRect.Bottom - 16, t.tRect.Right, t.tRect.Bottom, nOpacity, bEnabled
  Else '2 buttons
   f = (t.tRect.Top + t.tRect.Bottom) / 2
-  FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, t.tRect.Right, f, nOpacity
-  FakeDXUIRenderScrollBarButton t, 5, t.tRect.Left, f, t.tRect.Right, t.tRect.Bottom, nOpacity
+  FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, t.tRect.Right, f, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 5, t.tRect.Left, f, t.tRect.Right, t.tRect.Bottom, nOpacity, bEnabled
  End If
 Else 'horizontal
  If t.fValuePerPixel > 0 Then '5 buttons
-  FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, t.tRect.Left + 16, t.tRect.Bottom, nOpacity
-  FakeDXUIRenderScrollBarButton t, 2, t.tRect.Left + 16, t.tRect.Top, t.fThumbStart, t.tRect.Bottom, nOpacity
-  FakeDXUIRenderScrollBarButton t, 3, t.fThumbStart, t.tRect.Top, t.fThumbEnd, t.tRect.Bottom, nOpacity
-  FakeDXUIRenderScrollBarButton t, 4, t.fThumbEnd, t.tRect.Top, t.tRect.Right - 16, t.tRect.Bottom, nOpacity
-  FakeDXUIRenderScrollBarButton t, 5, t.tRect.Right - 16, t.tRect.Top, t.tRect.Right, t.tRect.Bottom, nOpacity
+  FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, t.tRect.Left + 16, t.tRect.Bottom, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 2, t.tRect.Left + 16, t.tRect.Top, t.fThumbStart, t.tRect.Bottom, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 3, t.fThumbStart, t.tRect.Top, t.fThumbEnd, t.tRect.Bottom, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 4, t.fThumbEnd, t.tRect.Top, t.tRect.Right - 16, t.tRect.Bottom, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 5, t.tRect.Right - 16, t.tRect.Top, t.tRect.Right, t.tRect.Bottom, nOpacity, bEnabled
  Else '2 buttons
   f = (t.tRect.Left + t.tRect.Right) / 2
-  FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, f, t.tRect.Bottom, nOpacity
-  FakeDXUIRenderScrollBarButton t, 5, f, t.tRect.Top, t.tRect.Right, t.tRect.Bottom, nOpacity
+  FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, f, t.tRect.Bottom, nOpacity, bEnabled
+  FakeDXUIRenderScrollBarButton t, 5, f, t.tRect.Top, t.tRect.Right, t.tRect.Bottom, nOpacity, bEnabled
  End If
 End If
 End Sub

@@ -19,6 +19,10 @@ msgstr ""
 msgid "Can't create device!!!"
 msgstr ""
 
+#. s = objText.GetText("DejaVu Sans;Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language.
+msgid "DejaVu Sans;Tahoma"
+msgstr ""
+
 #. Me.Caption = objText.GetText("Turning Polyhedron")
 msgid "Turning Polyhedron"
 msgstr ""
