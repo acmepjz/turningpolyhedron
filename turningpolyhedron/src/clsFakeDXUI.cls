@@ -78,7 +78,23 @@ Friend Property Let ScrollBars(ByVal n As ScrollBarConstants)
 If m_nScrollBars = n Then Exit Property
 m_nScrollBars = n
 m_bSizeDirty = True
+'///
+If Not m_objTextBox Is Nothing Then
+ m_objTextBox.Wrap = (n And vbHorizontal) = 0 And m_objTextBox.MultiLine
+End If
 'TODO:
+End Property
+
+Friend Property Get MultiLine() As Boolean
+If Not m_objTextBox Is Nothing Then MultiLine = m_objTextBox.MultiLine
+End Property
+
+Friend Property Let MultiLine(ByVal b As Boolean)
+If Not m_objTextBox Is Nothing Then
+ m_objTextBox.MultiLine = b
+ m_objTextBox.Wrap = (m_nScrollBars And vbHorizontal) = 0 And b
+ m_bSizeDirty = True
+End If
 End Property
 
 Friend Property Get Min(Optional ByVal nIndex As Long) As Long
@@ -87,7 +103,7 @@ End Property
 
 Friend Property Let Min(Optional ByVal nIndex As Long, ByVal n As Long)
 Select Case m_nType
-Case 1, 3, 5, 6
+Case 1, 3, 5, 6, 10
  With m_tScrollBar(nIndex)
   .nMin = n
   If .nValue < n Then
@@ -105,7 +121,7 @@ End Property
 
 Friend Property Let Max(Optional ByVal nIndex As Long, ByVal n As Long)
 Select Case m_nType
-Case 1, 3, 5, 6
+Case 1, 3, 5, 6, 10
  With m_tScrollBar(nIndex)
   .nMax = n
   If .nValue > n Then
@@ -154,7 +170,7 @@ End Property
 
 Friend Property Get Value(Optional ByVal nIndex As Long) As Long
 Select Case m_nType
-Case 1, 3, 5, 6
+Case 1, 3, 5, 6, 10
  Value = m_tScrollBar(nIndex).nValue
 Case Else
  Value = m_nValue
@@ -164,7 +180,7 @@ End Property
 Friend Property Let Value(Optional ByVal nIndex As Long, ByVal n As Long)
 Dim i As Long, j As Long, k As Long
 Select Case m_nType
-Case 1, 3, 5, 6
+Case 1, 3, 5, 6, 10
  With m_tScrollBar(nIndex)
   If n < .nMin Then n = .nMin Else If n > .nMax Then n = .nMax
   If .nValue <> n Then
@@ -217,11 +233,19 @@ m_sCaption = s
 End Property
 
 Friend Property Get Text() As String
-Text = m_sText
+If Not m_objTextBox Is Nothing Then
+ Text = m_objTextBox.Text
+Else
+ Text = m_sText
+End If
 End Property
 
 Friend Property Let Text(ByRef s As String)
-m_sText = s
+If Not m_objTextBox Is Nothing Then
+ m_objTextBox.Text = s
+Else
+ m_sText = s
+End If
 End Property
 
 Friend Property Get GroupName() As String
@@ -498,9 +522,13 @@ If m_nType = n Then Exit Property
 m_nType = n
 m_bSizeDirty = True
 '///
+Set m_objTextBox = Nothing
 Select Case n
 Case 5
  m_tScrollBar(0).bEnabled = m_bEnabled
+Case 7
+ Set m_objTextBox = New clsFakeDXUITextBox
+ m_objTextBox.FontZoom = m_nFontZoom
 End Select
 '///TODO:
 End Property
@@ -534,6 +562,7 @@ m_nValue = 0
 m_nClosing = 0
 m_nScrollBars = 0
 m_idxFocus = 0
+Set m_objTextBox = Nothing
 Erase m_nAnimVal
 Erase m_tScrollBar
 With m_tScrollBar(0)
@@ -915,10 +944,83 @@ Case 5 'scrollbar
   m_tScrollBar(0).nReserved = 0
   FakeDXUIPostMessage FakeCtl_Msg_ScrollChange, m_nIndex
  End If
-'Case Else 'TODO:
+Case 6 'picturebox
+ i = 255 * nOpacity
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+ kk = 164 - (bEnabled And 40&)
+ FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
+ '///scrollbar
+ pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , True, bEnabled
+Case 7 'textbox
+ '////////border
+ i = 255 * nOpacity
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+ kk = 164 - (bEnabled And 40&)
+ FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
+ '////////scrollbar and text
+ r.X1 = nLeft + m_tClientMargin.Left
+ r.Y1 = nTop + m_tClientMargin.Top
+ r.X2 = nRight - m_tClientMargin.Right
+ r.Y2 = nBottom - m_tClientMargin.Bottom
+ If m_objTextBox.MultiLine Then pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
+ i = r.X2 - r.X1
+ j = r.Y2 - r.Y1
+ If i > 4 And j > 4 Then 'size limit ??? TODO:
+  m_objTextBox.Width = i
+  m_objTextBox.Height = j
+  m_objTextBox.CalcLineDataIfSizeChanged
+  '///
+  With m_tScrollBar(0)
+   .nSmallChange = 32
+   .nLargeChange = i / m_nFontZoom
+   .nMax = m_objTextBox.TextWidth - .nLargeChange
+   If .nMax > 0 Then
+    .bEnabled = True
+   Else
+    .bEnabled = False
+    .nMax = 0
+   End If
+   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+   m_objTextBox.ScrollValue(0) = .nValue
+  End With
+  With m_tScrollBar(1)
+   .nSmallChange = 32
+   .nLargeChange = j / m_nFontZoom
+   .nMax = m_objTextBox.TextHeight - .nLargeChange
+   If .nMax > 0 Then
+    .bEnabled = True
+   Else
+    .bEnabled = False
+    .nMax = 0
+   End If
+   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+   m_objTextBox.ScrollValue(1) = .nValue
+  End With
+  '///
+  d3dd9.GetScissorRect r0
+  If r.X1 < r0.X1 Then r.X1 = r0.X1
+  If r.Y1 < r0.Y1 Then r.Y1 = r0.Y1
+  If r.X2 > r0.X2 Then r.X2 = r0.X2
+  If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
+  d3dd9.SetScissorRect r
+  m_objTextBox.Render nLeft + m_tClientMargin.Left, nTop + m_tClientMargin.Top, nOpacity, bEnabled, FakeDXUIFocus = m_nIndex
+  '///
+  With m_tScrollBar(0)
+   .nValue = m_objTextBox.ScrollValue(0)
+   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+  End With
+  With m_tScrollBar(1)
+   .nValue = m_objTextBox.ScrollValue(1)
+   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+  End With
+  '///
+  d3dd9.SetScissorRect r0
+ End If
+Case Else
+ 'TODO:
 End Select
 '////////
-If Not bNoChild Then
+If m_nChildrenCount > 0 And Not bNoChild Then
  '///new:clip rect
  d3dd9.GetScissorRect r0
  r.X1 = nLeft
@@ -953,6 +1055,7 @@ Friend Sub RefreshSize(Optional ByVal bForce As Boolean)
 Dim w As Single, h As Single
 Dim p As typeFakeDXUIPoint
 Dim t As typeFakeDXUIRect
+Dim b As Boolean
 If m_bSizeDirty Or bForce Then
  m_bSizeDirty = False
  If m_idxParent > 0 Then
@@ -982,13 +1085,16 @@ If m_bSizeDirty Or bForce Then
   t.Bottom = 4
   If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
   If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
- Case 6 'picturebox
+ Case 6, 7 'picturebox,textbox
   t.Left = 4
   t.Top = 4
   t.Right = 4
   t.Bottom = 4
-  If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
-  If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
+  If m_objTextBox Is Nothing Then b = True Else b = m_objTextBox.MultiLine
+  If b Then
+   If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
+   If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
+  End If
  End Select
  '///
  m_tClientMargin = t
@@ -1333,7 +1439,9 @@ Case 1 'form
  End If
  If m_nState And 2& Then bNoChild = True
 Case 3 'frame
- 'new:scrollbar
+ '///focus(?)
+ If bInControl And nEventType = 1 Then pSetFocus
+ '///scrollbar
  If m_nScrollBars And vbHorizontal Then
   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
  End If
@@ -1357,6 +1465,32 @@ Case 4 'button
 Case 5 'scrollbar
  If bInControl And nEventType = 1 Then pSetFocus
  b = FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
+Case 6 'picturebox
+ If bInControl Then
+  If nEventType = 1 Then pSetFocus
+  b = True
+ End If
+ '///scrollbar
+ If m_nScrollBars And vbHorizontal Then
+  b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
+ End If
+ If m_nScrollBars And vbVertical Then
+  b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
+ End If
+Case 7 'textbox
+ If bInControl And nEventType = 1 Then pSetFocus
+ '///scrollbar
+ If m_objTextBox.MultiLine Then
+  If m_nScrollBars And vbHorizontal Then
+   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
+  End If
+  If m_nScrollBars And vbVertical Then
+   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
+  End If
+ End If
+ '///
+ 'TODO:
+ '///
 Case Else
  'TODO:
 End Select
@@ -1645,7 +1779,7 @@ If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit F
 '///
 idx = -1
 Select Case m_nType
-Case 1, 3, 6, 7, 8
+Case 1, 3, 6, 7, 8, 10
  If (m_nScrollBars And vbVertical) <> 0 And (Shift And vbShiftMask) = 0 Then
   idx = 1
  ElseIf m_nScrollBars And vbHorizontal Then

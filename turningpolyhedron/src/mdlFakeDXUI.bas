@@ -78,6 +78,14 @@ Public Type typeFakeDXUIScrollBar
  'etc. (?)
 End Type
 
+Public Type typeFakeDXUITextBoxLineMetric
+ nLineWidth As Long
+ '///auto wrap mode
+ nLineHeight As Long 'wrapped line count
+ nLineStart() As Long '(0-based) start character index (0-based)
+ nLineLength() As Long '(0-based) wrapped line length
+End Type
+
 Public Enum enumFakeDXUIControlType
  FakeCtl_Unused = -1
  FakeCtl_None = 0
@@ -90,11 +98,13 @@ Public Enum enumFakeDXUIControlType
  FakeCtl_TextBox = 7
  FakeCtl_ListBox = 8
  FakeCtl_ComboBox = 9
+ FakeCtl_TabStrip = 10
 End Enum
 
 Public Enum enumFakeDXUIControlStyle
  '///general
- FCS_TabStop = &H1000000
+ FCS_CanGetFocus = &H1000000
+ FCS_TabStop = &H2000000
  FCS_TopMost = &H10000000
  '///form
  FFS_Sizable = 1
@@ -166,7 +176,7 @@ Case FakeCtl_Msg_Change
  If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Change FakeDXUIControls(t.nParam1)
 Case FakeCtl_Msg_ScrollChange
  Select Case FakeDXUIControls(t.nParam1).ControlType
- Case 1, 5, 6
+ Case 1, 3, 5, 6, 10
   If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Change FakeDXUIControls(t.nParam1)
  End Select
 Case FakeCtl_Msg_Size
@@ -452,7 +462,7 @@ Else 'horizontal
 End If
 If f2 > 0 Then
  t.fValuePerPixel = (t.nMax - t.nMin + t.nLargeChange) / f2
- f1 = t.nLargeChange / t.fValuePerPixel
+ If t.fValuePerPixel > 0.0001 Then f1 = t.nLargeChange / t.fValuePerPixel
  If f1 < 4 And f2 > 4 Then
   t.fValuePerPixel = (t.nMax - t.nMin) / (f2 - 4)
   f1 = 4
