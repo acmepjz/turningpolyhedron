@@ -178,7 +178,7 @@ End Sub
 
 Friend Function LoadFileWithLocale(ByRef sFileName As String, Optional ByVal Locale As Long) As Boolean
 On Error Resume Next
-Dim v() As Variant
+Dim v As Variant, m As Long
 Dim s1 As String, s2 As String
 Dim i As Long, lps As Long
 If Locale = 0 Then Locale = LOCALE_USER_DEFAULT
@@ -196,8 +196,9 @@ If s1 = "" Then
  s2 = Left(s2, InStr(1, s2, vbNullChar) - 1)
  If s2 <> "" Then s1 = s1 + "_" + s2
 End If
-v = Split(s1, ":")
-For i = 0 To UBound(v)
+v = Split(Replace(Replace(s1, ";", ":"), ",", ":"), ":")
+m = UBound(v)
+For i = 0 To m
  s1 = Trim(v(i))
  If s1 <> "" Then
   '///
