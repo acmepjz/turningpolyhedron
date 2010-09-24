@@ -380,12 +380,14 @@ interface D3DXFont:IUnknown{
 	HRESULT GetGlyphData(UINT Glyph, Direct3DTexture9** ppTexture, void* pBlackBox, void* pCellInc);
 	HRESULT PreloadCharacters(UINT First, UINT Last);
 	HRESULT PreloadGlyphs(UINT First, UINT Last);
-	[helpstring("String must be StrConv-vbFromUnicode")]
-	HRESULT PreloadTextA(BSTR pString,int Count);
-	HRESULT PreloadTextW(BSTR pString,int Count);
-	[helpstring("String must be StrConv-vbFromUnicode")]
-	int DrawTextA(D3DXSprite* pSprite,BSTR pString, int Count, void* pRect, D3DXDRAWTEXTFORMAT Format, int Color);
-	int DrawTextW(D3DXSprite* pSprite,BSTR pString, int Count, void* pRect, D3DXDRAWTEXTFORMAT Format, int Color);
+	[helpstring("ByVal StrPtr(StrConv(s,vbFronUnicode))")]
+	HRESULT PreloadTextA(void* pString,int Count);
+	[helpstring("ByVal StrPtr(s) or simply ByVal s")]
+	HRESULT PreloadTextW(void* pString,int Count);
+	[helpstring("ByVal StrPtr(StrConv(s,vbFronUnicode))")]
+	int DrawTextA(D3DXSprite* pSprite,void* pString, int Count, void* pRect, D3DXDRAWTEXTFORMAT Format, int Color);
+	[helpstring("ByVal StrPtr(s) or simply ByVal s")]
+	int DrawTextW(D3DXSprite* pSprite,void* pString, int Count, void* pRect, D3DXDRAWTEXTFORMAT Format, int Color);
     HRESULT OnLostDevice();
     HRESULT OnResetDevice();
 };

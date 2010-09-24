@@ -358,7 +358,7 @@ If nShadowColor Then
  p.X2 = nWidth + nShadowOffsetX
  p.Y2 = nHeight + nShadowOffsetY
  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nShadowLODBias)
- tFont.objFont.DrawTextW tFont.objSprite, lpStr, -1, p, wFormat And Not DT_CALCRECT, nShadowColor
+ tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nShadowColor
  tFont.objSprite.Flush
 End If
 If nColor Then
@@ -368,11 +368,11 @@ If nColor Then
  p.Y2 = nHeight
  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nTextLODBias)
  If wFormat And DT_CALCRECT Then
-  tFont.objFont.DrawTextW tFont.objSprite, lpStr, -1, p, wFormat, nColor
+  tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat, nColor
   nWidthReturn = p.X2 * nZoom
   nHeightReturn = p.Y2 * nZoom
  End If
- tFont.objFont.DrawTextW tFont.objSprite, lpStr, -1, p, wFormat And Not DT_CALCRECT, nColor
+ tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nColor
  tFont.objSprite.Flush
 End If
 If bSingle Then tFont.objSprite.End
