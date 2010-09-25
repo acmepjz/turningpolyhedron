@@ -15,6 +15,7 @@ Class=clsCamera; src\clsCamera.cls
 Class=cSubclass; src\cSubclass.cls
 Class=iSubclass; src\iSubclass.cls
 Class=clsFakeDXUITextBox; src\clsFakeDXUITextBox.cls
+Class=clsFakeDXUI_IME; src\clsFakeDXUI_IME.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""

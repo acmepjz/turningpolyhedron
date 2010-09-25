@@ -1318,10 +1318,6 @@ Friend Sub BeforeMouseEvent()
 'TODO:
 End Sub
 
-Friend Sub AfterMouseEvent()
-'TODO:
-End Sub
-
 Private Function pButtonHighlight_1(ByVal nIndex As Long, ByVal Button As Long, ByVal nEventType As Long, Optional ByRef bPressed As Boolean) As Long
 Dim i As Long
 i = 255

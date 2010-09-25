@@ -16,6 +16,8 @@ Public FakeDXUIDefaultFont As typeFakeDXGDILogFont
 
 Public FakeDXUIMousePointer As MousePointerConstants
 
+Public FakeDXUI_IME As New clsFakeDXUI_IME
+
 Public Type typeFakeDXUIPosition 'a+b*w
  a As Single
  b As Single
@@ -84,6 +86,11 @@ Public Type typeFakeDXUITextBoxLineMetric
  nLineHeight As Long 'wrapped line count
  nLineStart() As Long '(0-based) start character index (0-based)
  nLineLength() As Long '(0-based) wrapped line length
+End Type
+
+Public Type typeFakeDXUITextBoxPos
+ nRow As Long
+ nPosition As Long
 End Type
 
 Public Enum enumFakeDXUIControlType
@@ -158,6 +165,7 @@ With FakeDXUIControls(1)
  .SetRightEx nRight, 0
  .SetBottomEx nBottom, 0
 End With
+FakeDXUI_IME.Create frmMain.hWnd '?
 '///
 'TODO:FakeDXUIDefaultFont
 '///
@@ -251,6 +259,7 @@ If Not FakeDXUITexture Is Nothing Then
  Set FakeDXUIDefaultFont.objFont = Nothing
  Set FakeDXUIDefaultFont.objSprite = Nothing
  Set FakeDXUIEvent = Nothing '?
+ FakeDXUI_IME.Destroy
  '///
  Erase FakeDXUIMessageQueue
  FakeDXUIMessageQueueHead = 0
@@ -274,7 +283,10 @@ If FakeDXUIControlCount > 0 Then
  r.X2 = d3dpp.BackBufferWidth
  r.Y2 = d3dpp.BackBufferHeight
  d3dd9.SetScissorRect r
+ '///
  FakeDXUIControls(1).Render
+ FakeDXUI_IME.Render
+ '///
  d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, i
  d3dd9.SetRenderState D3DRS_SCISSORTESTENABLE, 0
  '///???
@@ -321,7 +333,7 @@ End Function
 '4=dblclick
 
 Public Function FakeDXUIOnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long) As Boolean
-Dim i As Long
+Dim i As Long, b As Boolean
 Dim obj As clsFakeDXUI
 If FakeDXUIControlCount <= 0 Or FakeDXUISetCapture < 0 Then Exit Function
 FakeDXUIMousePointer = 0
@@ -332,13 +344,14 @@ If FakeDXUISetCapture > 0 And FakeDXUISetCapture <= FakeDXUIControlCount Then
 End If
 If obj Is Nothing Then Set obj = FakeDXUIControls(1)
 '///
+FakeDXUI_IME.BeforeMouseEvent
 For i = 1 To FakeDXUIControlCount
  FakeDXUIControls(i).BeforeMouseEvent
 Next i
-FakeDXUIOnMouseEvent = obj.OnMouseEvent(Button, Shift, x, y, nEventType)
-For i = 1 To FakeDXUIControlCount
- FakeDXUIControls(i).AfterMouseEvent
-Next i
+'///
+b = FakeDXUI_IME.OnMouseEvent(Button, Shift, x, y, nEventType)
+If Not b Then b = obj.OnMouseEvent(Button, Shift, x, y, nEventType)
+FakeDXUIOnMouseEvent = b
 '///???
 frmMain.MousePointer = FakeDXUIMousePointer
 '///
