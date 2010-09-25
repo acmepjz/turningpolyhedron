@@ -36,21 +36,21 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
 Private Declare Function GetAsyncKeyState Lib "user32.dll" (ByVal vKey As Long) As Integer
-Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hWnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
     x As Long
     y As Long
 End Type
-Private Declare Function GetWindowLong Lib "user32.dll" Alias "GetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long) As Long
-Private Declare Function SetWindowLong Lib "user32.dll" Alias "SetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long, ByVal dwNewLong As Long) As Long
-Private Declare Function SetWindowPos Lib "user32.dll" (ByVal hwnd As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
+Private Declare Function GetWindowLong Lib "user32.dll" Alias "GetWindowLongA" (ByVal hWnd As Long, ByVal nIndex As Long) As Long
+Private Declare Function SetWindowLong Lib "user32.dll" Alias "SetWindowLongA" (ByVal hWnd As Long, ByVal nIndex As Long, ByVal dwNewLong As Long) As Long
+Private Declare Function SetWindowPos Lib "user32.dll" (ByVal hWnd As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
 Private Const SWP_NOMOVE As Long = &H2
 Private Const SWP_NOZORDER As Long = &H4
 Private Const SWP_NOACTIVATE As Long = &H10
@@ -64,7 +64,7 @@ Private Type RECT
     Bottom As Long
 End Type
 
-Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
+Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hWnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
 
 Public m_sMyGamesPath As String
@@ -90,8 +90,10 @@ Private cSub As New cSubclass
 
 Implements iSubclass
 
+Private Const WM_INPUTLANGCHANGE As Long = &H51
 Private Const WM_IME_COMPOSITION As Long = &H10F
 Private Const WM_IME_STARTCOMPOSITION As Long = &H10D
+Private Const WM_IME_ENDCOMPOSITION As Long = &H10E
 Private Const WM_IME_NOTIFY As Long = &H282
 Private Const WM_MOUSEWHEEL As Long = &H20A
 
@@ -125,7 +127,7 @@ End Function
 Private Sub Form_DblClick()
 Dim p As POINTAPI
 GetCursorPos p
-ScreenToClient Me.hwnd, p
+ScreenToClient Me.hWnd, p
 Call FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4)
 End Sub
 
@@ -175,14 +177,14 @@ If d3d9 Is Nothing Then
  End
 End If
 With d3dpp
- .hDeviceWindow = Me.hwnd
+ .hDeviceWindow = Me.hWnd
  .SwapEffect = D3DSWAPEFFECT_DISCARD
  .BackBufferCount = 1
  .BackBufferFormat = D3DFMT_X8R8G8B8
  .BackBufferWidth = 640
  .BackBufferHeight = 480
  .Windowed = 1
- .hDeviceWindow = Me.hwnd
+ .hDeviceWindow = Me.hWnd
  .EnableAutoDepthStencil = 1
  .AutoDepthStencilFormat = D3DFMT_D24S8
  '.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
@@ -190,7 +192,7 @@ With d3dpp
  '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES
 End With
 'create device
-Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, Me.hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, d3dpp)
+Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, Me.hWnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, d3dpp)
 If d3dd9 Is Nothing Then
  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
  Form_Unload 0
@@ -231,12 +233,18 @@ objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 30, -0.5, 0.02
 Me.Caption = objText.GetText("Turning Polyhedron")
 '////////new:subclass
 #If UseSubclass Then
-cSub.AddMsg WM_IME_NOTIFY, MSG_AFTER
-cSub.AddMsg WM_IME_COMPOSITION, MSG_AFTER
-cSub.AddMsg WM_IME_STARTCOMPOSITION, MSG_AFTER
-cSub.AddMsg WM_MOUSEWHEEL, MSG_AFTER
-cSub.Subclass Me.hwnd, Me
+If True Then
+#Else
+If App.LogMode = 1 Then
 #End If
+ cSub.AddMsg WM_IME_NOTIFY, MSG_AFTER
+ cSub.AddMsg WM_IME_COMPOSITION, MSG_AFTER
+ cSub.AddMsg WM_IME_STARTCOMPOSITION, MSG_AFTER
+ cSub.AddMsg WM_IME_ENDCOMPOSITION, MSG_AFTER
+ cSub.AddMsg WM_INPUTLANGCHANGE, MSG_AFTER
+ cSub.AddMsg WM_MOUSEWHEEL, MSG_AFTER
+ cSub.Subclass Me.hWnd, Me
+End If
 '////////
 objTiming.MinPeriod = 1000 / 30
 '////////new:deadloop
@@ -258,8 +266,8 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   '////////tab debug
   With .AddNewChildren(FakeCtl_TextBox, 168, 8, 320, 80, &H3000000, , , , , _
-  "Text1 blah blak blah blah blah xxxxxxxxxxxxxx yyyyyyyyy zzzzzz" + vbCrLf + "xxx" + vbCrLf + "xxx" + vbCrLf + "xxx" + vbCrLf + vbCrLf + "xxx" + Replace(Space(10000), " ", vbCrLf) + String(50, "가"))
-   .ScrollBars = vbVertical
+  "Text1 blah blak blah blah blah xxxxxxxxxxxxxx yyyyyyyyy zzzzzz" + vbCrLf + "xxx" + vbCrLf + "xxx" + vbCrLf + "xxx" + vbCrLf + vbCrLf + "xxx" + vbCrLf + String(50, "가"))
+   .ScrollBars = vbBoth
    .MultiLine = True
   End With
   With .AddNewChildren(FakeCtl_Frame, 120, 80, 240, 200, FCS_CanGetFocus, , , , "Form1234가각")
@@ -310,7 +318,7 @@ With FakeDXUIControls(1)
   With .AddNewChildren(FakeCtl_Form, 0, 0, 320, 240, _
   3& Or FFS_TitleBar Or FFS_CloseButton Or FFS_MaxButton Or FFS_MinButton, , , , "Form2")
    With .AddNewChildren(FakeCtl_TextBox, 0, 0, 0, 0, &H3000000, , , , , _
-   Replace(Space(1000), " ", "Text2 blah blah blah 가가가가가가각가가가가가가가가가가가가 blah blah blah" + vbCrLf), , , , 1, 1)
+   Replace(Space(100), " ", "Text2 blah blah blah 가가가가가가각가가가가가가가가가가가가 blah blah blah" + vbCrLf), , , , 1, 1)
     .ScrollBars = vbVertical
     .MultiLine = True
    End With
@@ -482,15 +490,15 @@ If nWidth <> d3dpp.BackBufferWidth Or nHeight <> d3dpp.BackBufferHeight Or d3dpp
  pOnInitalize True
  '///resize window
  If bFullscreen Then
-  SetWindowLong Me.hwnd, GWL_STYLE, &H160A0000
-  SetWindowLong Me.hwnd, GWL_EXSTYLE, &H40000
+  SetWindowLong Me.hWnd, GWL_STYLE, &H160A0000
+  SetWindowLong Me.hWnd, GWL_EXSTYLE, &H40000
  Else
-  SetWindowLong Me.hwnd, GWL_STYLE, &H16CA0000
-  SetWindowLong Me.hwnd, GWL_EXSTYLE, &H40100
+  SetWindowLong Me.hWnd, GWL_STYLE, &H16CA0000
+  SetWindowLong Me.hWnd, GWL_EXSTYLE, &H40100
   r.Right = nWidth
   r.Bottom = nHeight
   AdjustWindowRectEx r, &H16CA0000, 0, &H40100
-  SetWindowPos Me.hwnd, 0, 0, 0, r.Right - r.Left, r.Bottom - r.Top, SWP_NOMOVE Or SWP_NOZORDER Or SWP_NOACTIVATE
+  SetWindowPos Me.hWnd, 0, 0, 0, r.Right - r.Left, r.Bottom - r.Top, SWP_NOMOVE Or SWP_NOZORDER Or SWP_NOACTIVATE
  End If
  '///resize FakeDXUI
  If FakeDXUIControlCount > 0 Then
@@ -561,52 +569,28 @@ Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
 'Cancel = True
 End Sub
 
-Private Sub iSubclass_After(lReturn As Long, ByVal hwnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
-Dim h As Long
-Dim s As String
-Dim i As Long, m As Long
+Private Sub iSubclass_After(lReturn As Long, ByVal hWnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
+Dim i As Long
 Dim p As POINTAPI
 Select Case uMsg
-'Case WM_IME_NOTIFY
-' Select Case wParam
-' Case IMN_OPENCANDIDATE, IMN_CHANGECANDIDATE
-'  Timer1_Timer 'ABC-OK ,M$PY-doesn't work
-' Case IMN_CLOSECANDIDATE
-'  Label1.Caption = ""
-' End Select
-'Case WM_IME_COMPOSITION, WM_IME_STARTCOMPOSITION
-' h = ImmGetContext(Me.hwnd)
-' If h Then
-'  '///
-'  s = Space(1024)
-'  m = ImmGetCompositionString(h, GCS_COMPSTR, ByVal StrPtr(s), 2048)
-'  If m Then
-'   s = LeftB(s, m)
-'   i = ImmGetCompositionString(h, GCS_CURSORPOS, ByVal 0, 0)
-'   If i >= 0 And i <= m Then
-'    s = LeftB(s, i) + LeftB("|", 1) + MidB(s, i + 1)
-'   End If
-'   s = StrConv(s, vbUnicode)
-'  Else
-'   s = ""
-'  End If
-'  '///
-'  Label2.Caption = s
-'  '///
-'  ImmReleaseContext Me.hwnd, h
-' End If
+Case WM_IME_NOTIFY
+ FakeDXUI_IME.OnIMENotify wParam, lParam
+Case WM_IME_COMPOSITION, WM_IME_STARTCOMPOSITION, WM_IME_ENDCOMPOSITION
+ FakeDXUI_IME.OnIMEComposition wParam, lParam
+Case WM_INPUTLANGCHANGE
+ FakeDXUI_IME.OnInputLanguageChange
 Case WM_MOUSEWHEEL
  i = (wParam And &HFFFF0000) \ &H10000
 ' p.x = (lParam And &H7FFF&) Or (&HFFFF8000 And ((lParam And &H8000&) <> 0))
 ' p.y = (lParam And &HFFFF0000) \ &H10000
  GetCursorPos p
- ScreenToClient Me.hwnd, p
+ ScreenToClient Me.hWnd, p
  OnMouseWheel (wParam And 3&) Or (vbMiddleButton And ((wParam And &H10&) <> 0)), _
  ((wParam And &HC&) \ 4&) Or (vbAltMask And ((GetAsyncKeyState(vbKeyMenu) And &H8000&) <> 0)), p.x, p.y, i \ 120&
 End Select
 End Sub
 
-Private Sub iSubclass_Before(bHandled As Boolean, lReturn As Long, hwnd As Long, uMsg As Long, wParam As Long, lParam As Long)
+Private Sub iSubclass_Before(bHandled As Boolean, lReturn As Long, hWnd As Long, uMsg As Long, wParam As Long, lParam As Long)
 '
 End Sub
 
