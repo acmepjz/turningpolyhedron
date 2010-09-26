@@ -23,7 +23,7 @@ Private m_nStyle As Long
 Private m_nState As Long
 
 Private m_sCaption As String, m_sText As String, m_sGroupName As String
-Private m_bEnabled As Boolean, m_bVisible As Boolean, m_bLocked As Boolean
+Private m_bEnabled As Boolean, m_bVisible As Boolean
 Private m_nValue As Long
 Private m_nScrollBars As ScrollBarConstants
 
@@ -506,11 +506,11 @@ If Not b Then Erase m_nAnimVal '??
 End Property
 
 Friend Property Get Locked() As Boolean
-Locked = m_bLocked
+If Not m_objTextBox Is Nothing Then Locked = m_objTextBox.Locked
 End Property
 
 Friend Property Let Locked(ByVal b As Boolean)
-m_bLocked = b
+If Not m_objTextBox Is Nothing Then m_objTextBox.Locked = b
 End Property
 
 Friend Property Get ControlType() As enumFakeDXUIControlType
@@ -552,7 +552,6 @@ m_tClientMargin = t
 m_bSizeDirty = False
 m_bEnabled = True
 m_bVisible = True
-m_bLocked = False
 m_sName = ""
 m_nStyle = 0
 m_nState = 0
@@ -1485,7 +1484,9 @@ Case 7 'textbox
   End If
  End If
  '///
- 'TODO:
+ If bInControl Or FakeDXUISetCapture = m_nIndex Then
+  b = b Or m_objTextBox.OnMouseEvent(Button, Shift, x - m_tClientToScreenOffset.x, y - m_tClientToScreenOffset.y, nEventType)
+ End If
  '///
 Case Else
  'TODO:
@@ -1736,6 +1737,11 @@ Dim b As Boolean
 If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit Function
 '///
 'TODO:
+'///
+Select Case m_nType
+Case 7 'textbox
+ b = m_objTextBox.OnKeyEvent(KeyCode, Shift, nEventType)
+End Select
 '///
 Select Case nEventType
 Case 1 'down
