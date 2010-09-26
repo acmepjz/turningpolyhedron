@@ -36,7 +36,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = True
+#Const UseSubclass = False
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
@@ -265,7 +265,7 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   '////////tab debug
-  .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 80, &H3000000, , , , , "Single line text box"
+  .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 80, &H3000000, , , , , "Single line text box blah blah blah 가가가 blah blah"
   With .AddNewChildren(FakeCtl_TextBox, 168, 8, 320, 80, &H3000000, , , , , _
   "Text1 blah blak blah blah blah xxxxxxxxxxxxxx yyyyyyyyy zzzzzz" + vbCrLf + "xxx" + vbCrLf + "xxx" + vbCrLf + "xxx" + vbCrLf + vbCrLf + "xxx" + vbCrLf + String(50, "가"))
    .ScrollBars = vbBoth
