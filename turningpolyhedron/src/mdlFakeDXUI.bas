@@ -83,6 +83,7 @@ End Type
 Public Type typeFakeDXUITextBoxLineMetric
  nLineWidth As Long
  '///auto wrap mode
+ nLineOffset As Long
  nLineHeight As Long 'wrapped line count
  nLineStart() As Long '(0-based) start character index (0-based)
  nLineLength() As Long '(0-based) wrapped line length
