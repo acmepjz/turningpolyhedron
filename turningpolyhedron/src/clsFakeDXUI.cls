@@ -959,59 +959,71 @@ Case 7 'textbox
  '////////scrollbar and text
  r.X1 = nLeft + m_tClientMargin.Left
  r.Y1 = nTop + m_tClientMargin.Top
- r.X2 = nRight - m_tClientMargin.Right
+ r.x2 = nRight - m_tClientMargin.Right
  r.Y2 = nBottom - m_tClientMargin.Bottom
  If m_objTextBox.MultiLine Then pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
- i = r.X2 - r.X1
+ i = r.x2 - r.X1
  j = r.Y2 - r.Y1
  If i > 4 And j > 4 Then 'size limit ??? TODO:
   m_objTextBox.Width = i
   m_objTextBox.Height = j
   m_objTextBox.CalcLineDataIfSizeChanged
+  '///add:autoscroll
+  If m_objTextBox.ScrollChanged Then
+   m_tScrollBar(0).nValue = m_objTextBox.ScrollValue(0)
+   m_tScrollBar(1).nValue = m_objTextBox.ScrollValue(1)
+   m_objTextBox.ScrollChanged = False
+  End If
   '///
-  With m_tScrollBar(0)
-   .nSmallChange = 32
-   .nLargeChange = i / m_nFontZoom
-   .nMax = m_objTextBox.TextWidth - .nLargeChange
-   If .nMax > 0 Then
-    .bEnabled = True
-   Else
-    .bEnabled = False
-    .nMax = 0
+  If m_objTextBox.MultiLine Then
+   If m_nScrollBars And vbHorizontal Then
+    With m_tScrollBar(0)
+     .nSmallChange = 32
+     .nLargeChange = i / m_nFontZoom
+     .nMax = m_objTextBox.TextWidth - .nLargeChange
+     If .nMax > 0 Then
+      .bEnabled = True
+     Else
+      .bEnabled = False
+      .nMax = 0
+     End If
+     If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+     m_objTextBox.ScrollValue(0) = .nValue
+    End With
    End If
-   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
-   m_objTextBox.ScrollValue(0) = .nValue
-  End With
-  With m_tScrollBar(1)
-   .nSmallChange = 32
-   .nLargeChange = j / m_nFontZoom
-   .nMax = m_objTextBox.TextHeight - .nLargeChange
-   If .nMax > 0 Then
-    .bEnabled = True
-   Else
-    .bEnabled = False
-    .nMax = 0
+   If m_nScrollBars And vbVertical Then
+    With m_tScrollBar(1)
+     .nSmallChange = 32
+     .nLargeChange = j / m_nFontZoom
+     .nMax = m_objTextBox.TextHeight - .nLargeChange
+     If .nMax > 0 Then
+      .bEnabled = True
+     Else
+      .bEnabled = False
+      .nMax = 0
+     End If
+     If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+     m_objTextBox.ScrollValue(1) = .nValue
+    End With
    End If
-   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
-   m_objTextBox.ScrollValue(1) = .nValue
-  End With
+  End If
   '///
   d3dd9.GetScissorRect r0
   If r.X1 < r0.X1 Then r.X1 = r0.X1
   If r.Y1 < r0.Y1 Then r.Y1 = r0.Y1
-  If r.X2 > r0.X2 Then r.X2 = r0.X2
+  If r.x2 > r0.x2 Then r.x2 = r0.x2
   If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
   d3dd9.SetScissorRect r
   m_objTextBox.Render nLeft + m_tClientMargin.Left, nTop + m_tClientMargin.Top, nOpacity, bEnabled, FakeDXUIFocus = m_nIndex
-  '///
-  With m_tScrollBar(0)
-   .nValue = m_objTextBox.ScrollValue(0)
-   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
-  End With
-  With m_tScrollBar(1)
-   .nValue = m_objTextBox.ScrollValue(1)
-   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
-  End With
+'  '///???
+'  With m_tScrollBar(0)
+'   .nValue = m_objTextBox.ScrollValue(0)
+'   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+'  End With
+'  With m_tScrollBar(1)
+'   .nValue = m_objTextBox.ScrollValue(1)
+'   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+'  End With
   '///
   d3dd9.SetScissorRect r0
  End If
@@ -1024,11 +1036,11 @@ If m_nChildrenCount > 0 And Not bNoChild Then
  d3dd9.GetScissorRect r0
  r.X1 = nLeft
  r.Y1 = nTop
- r.X2 = nRight
+ r.x2 = nRight
  r.Y2 = nBottom
  If r.X1 < r0.X1 Then r.X1 = r0.X1
  If r.Y1 < r0.Y1 Then r.Y1 = r0.Y1
- If r.X2 > r0.X2 Then r.X2 = r0.X2
+ If r.x2 > r0.x2 Then r.x2 = r0.x2
  If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
  d3dd9.SetScissorRect r
  '///
@@ -1491,7 +1503,9 @@ Case 7 'textbox
 Case Else
  'TODO:
 End Select
-'////////
+'////////////////////////////////
+'//                            //
+'////////////////////////////////
 If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
  For i = m_nChildrenCount To 1 Step -1
   If bChildrenProcessed Then Exit For '???

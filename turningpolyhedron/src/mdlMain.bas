@@ -146,6 +146,37 @@ d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_DIFFUSE Or D3DFVF_TEX1
 d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, f(0), 28&
 End Sub
 
+Public Sub FakeDXGDIFillRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nColor As Long)
+Dim f(19) As Single
+CopyMemory f(4), nColor, 4&
+f(0) = nLeft: f(1) = nTop: f(3) = 1
+f(5) = nRight: f(6) = nTop: f(8) = 1: f(9) = f(4)
+f(10) = nLeft: f(11) = nBottom: f(13) = 1: f(14) = f(4)
+f(15) = nRight: f(16) = nBottom: f(18) = 1: f(19) = f(4)
+d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_DIFFUSE
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
+d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, f(0), 20&
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+End Sub
+
+Public Sub FakeDXGDIFrameRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nColor As Long)
+Dim f(24) As Single
+CopyMemory f(4), nColor, 4&
+f(0) = nLeft: f(1) = nTop: f(3) = 1
+f(5) = nRight: f(6) = nTop: f(8) = 1: f(9) = f(4)
+f(10) = nLeft: f(11) = nBottom: f(13) = 1: f(14) = f(4)
+f(15) = nRight: f(16) = nBottom: f(18) = 1: f(19) = f(4)
+f(20) = nLeft: f(21) = nTop: f(23) = 1: f(24) = f(4)
+d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_DIFFUSE
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
+d3dd9.DrawPrimitiveUP D3DPT_LINESTRIP, 4&, f(0), 20&
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+End Sub
+
 Public Sub FakeDXGDIStretchBltBlended(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, ByVal nSize As Single, ByVal nSrcLeft2 As Single, ByVal nSrcTop2 As Single, ByVal nFactor As Long, ByVal nColor As Long)
 Dim f(31) As Single
 nSrcLeft2 = (nSrcLeft2 - nSrcLeft) / nSize

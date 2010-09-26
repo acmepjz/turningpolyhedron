@@ -30,7 +30,7 @@ msgstr "初始化D3D9设备失败!!!"
 
 #. s = objText.GetText("DejaVu Sans;Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language.
 msgid "DejaVu Sans;Tahoma"
-msgstr "文泉驿微米黑;文泉驿正黑;宋体;Tahoma"
+msgstr "文泉驿微米黑;文泉驿正黑;微软雅黑;黑体;宋体;Tahoma"
 
 #. Me.Caption = objText.GetText("Turning Polyhedron")
 msgid "Turning Polyhedron"
