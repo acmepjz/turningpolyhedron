@@ -281,7 +281,7 @@ If FakeDXUIControlCount > 0 Then
  i = d3dd9.GetRenderState(D3DRS_ALPHABLENDENABLE)
  d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, 1
  d3dd9.SetRenderState D3DRS_SCISSORTESTENABLE, 1
- r.X2 = d3dpp.BackBufferWidth
+ r.x2 = d3dpp.BackBufferWidth
  r.Y2 = d3dpp.BackBufferHeight
  d3dd9.SetScissorRect r
  '///
@@ -390,14 +390,6 @@ Do
    End If
   End If
  End If
- '////////////////process
- If FakeDXUIFocus > 0 And FakeDXUIFocus <= FakeDXUIControlCount Then
-  If FakeDXUIControls(FakeDXUIFocus).OnKeyEvent(KeyCode, Shift, nEventType) Then
-   FakeDXUIOnKeyEvent = True
-   Exit Do
-  End If
- End If
- '////////////////after
  '///tab
  If KeyCode = vbKeyTab And Shift = 0 And nEventType = 1 Then
   FakeDXUIToNextFocus
@@ -410,6 +402,14 @@ Do
   Exit Do
  '///
  End If
+ '////////////////process
+ If FakeDXUIFocus > 0 And FakeDXUIFocus <= FakeDXUIControlCount Then
+  If FakeDXUIControls(FakeDXUIFocus).OnKeyEvent(KeyCode, Shift, nEventType) Then
+   FakeDXUIOnKeyEvent = True
+   Exit Do
+  End If
+ End If
+ '////////////////after
  '///
  'TODO:
  '///

@@ -148,33 +148,57 @@ End Sub
 
 Public Sub FakeDXGDIFillRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nColor As Long)
 Dim f(19) As Single
+Dim i(4) As Long
 CopyMemory f(4), nColor, 4&
 f(0) = nLeft: f(1) = nTop: f(3) = 1
 f(5) = nRight: f(6) = nTop: f(8) = 1: f(9) = f(4)
 f(10) = nLeft: f(11) = nBottom: f(13) = 1: f(14) = f(4)
 f(15) = nRight: f(16) = nBottom: f(18) = 1: f(19) = f(4)
+'///
+i(4) = d3dd9.GetFVF
 d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_DIFFUSE
+i(0) = d3dd9.GetTextureStageState(0, D3DTSS_COLOROP)
+i(1) = d3dd9.GetTextureStageState(0, D3DTSS_ALPHAOP)
+i(2) = d3dd9.GetTextureStageState(0, D3DTSS_COLORARG2)
+i(3) = d3dd9.GetTextureStageState(0, D3DTSS_ALPHAARG2)
 d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
+d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE
 d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, f(0), 20&
-d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
-d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+d3dd9.SetFVF i(4)
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, i(0)
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, i(1)
+d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, i(2)
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, i(3)
 End Sub
 
 Public Sub FakeDXGDIFrameRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nColor As Long)
 Dim f(24) As Single
+Dim i(4) As Long
 CopyMemory f(4), nColor, 4&
 f(0) = nLeft: f(1) = nTop: f(3) = 1
 f(5) = nRight: f(6) = nTop: f(8) = 1: f(9) = f(4)
 f(10) = nLeft: f(11) = nBottom: f(13) = 1: f(14) = f(4)
 f(15) = nRight: f(16) = nBottom: f(18) = 1: f(19) = f(4)
 f(20) = nLeft: f(21) = nTop: f(23) = 1: f(24) = f(4)
+'///
+i(4) = d3dd9.GetFVF
 d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_DIFFUSE
+i(0) = d3dd9.GetTextureStageState(0, D3DTSS_COLOROP)
+i(1) = d3dd9.GetTextureStageState(0, D3DTSS_ALPHAOP)
+i(2) = d3dd9.GetTextureStageState(0, D3DTSS_COLORARG2)
+i(3) = d3dd9.GetTextureStageState(0, D3DTSS_ALPHAARG2)
 d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
+d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE
 d3dd9.DrawPrimitiveUP D3DPT_LINESTRIP, 4&, f(0), 20&
-d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
-d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+d3dd9.SetFVF i(4)
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, i(0)
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, i(1)
+d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, i(2)
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, i(3)
 End Sub
 
 Public Sub FakeDXGDIStretchBltBlended(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, ByVal nSize As Single, ByVal nSrcLeft2 As Single, ByVal nSrcTop2 As Single, ByVal nFactor As Long, ByVal nColor As Long)
@@ -386,7 +410,7 @@ tFont.objSprite.SetTransform mat
 If nShadowColor Then
  p.X1 = nShadowOffsetX
  p.Y1 = nShadowOffsetY
- p.X2 = nWidth + nShadowOffsetX
+ p.x2 = nWidth + nShadowOffsetX
  p.Y2 = nHeight + nShadowOffsetY
  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nShadowLODBias)
  tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nShadowColor
@@ -395,12 +419,12 @@ End If
 If nColor Then
  p.X1 = 0
  p.Y1 = 0
- p.X2 = nWidth
+ p.x2 = nWidth
  p.Y2 = nHeight
  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nTextLODBias)
  If wFormat And DT_CALCRECT Then
   tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat, nColor
-  nWidthReturn = p.X2 * nZoom
+  nWidthReturn = p.x2 * nZoom
   nHeightReturn = p.Y2 * nZoom
  End If
  tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nColor
