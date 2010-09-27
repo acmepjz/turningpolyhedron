@@ -204,6 +204,47 @@ m_tSelStart.nRow = -1
 CalcLineData
 End Property
 
+Friend Property Get SelText(Optional ByVal bInsertMode As Boolean) As String
+Dim bSelection As Boolean
+Dim tSelStart As typeFakeDXUITextBoxPos, tSelEnd As typeFakeDXUITextBoxPos
+Dim i As Long, j As Long, k As Long
+Dim s As String
+'///
+If m_tSelStart.nRow >= 0 Then
+ If m_tSelStart.nRow < m_tCaret.nRow Then
+  tSelStart = m_tSelStart
+  tSelEnd = m_tCaret
+  bSelection = True
+ ElseIf m_tSelStart.nRow > m_tCaret.nRow Then
+  tSelStart = m_tCaret
+  tSelEnd = m_tSelStart
+  bSelection = True
+ ElseIf m_tSelStart.nPosition < m_tCaret.nPosition Then
+  tSelStart = m_tSelStart
+  tSelEnd = m_tCaret
+  bSelection = True
+ ElseIf m_tSelStart.nPosition > m_tCaret.nPosition Then
+  tSelStart = m_tCaret
+  tSelEnd = m_tSelStart
+  bSelection = True
+ End If
+End If
+'///
+If bSelection Then
+ For i = tSelStart.nRow To tSelEnd.nRow
+  If i = tSelStart.nRow Then j = tSelStart.nPosition Else j = 0
+  If i = tSelEnd.nRow Then k = tSelStart.nPosition Else k = Len(m_sLines(i))
+  s = s + Mid$(m_sLines(i), j + 1, k - j)
+  If i < tSelEnd.nRow Then s = s + vbCrLf
+ Next i
+End If
+SelText = s
+End Property
+
+Friend Property Let SelText(Optional ByVal bInsertMode As Boolean, ByVal s As String)
+'TODO:
+End Property
+
 Friend Property Get MultiLine() As Boolean
 MultiLine = m_bMultiLine
 End Property
@@ -289,7 +330,7 @@ m_nFontZoom = f
 End Property
 
 Friend Function OnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean
-Dim m As Long
+Dim i As Long
 '///
 'TODO:other
 '///
@@ -298,17 +339,79 @@ Case 0 'keypress
  If KeyCode >= 0 And KeyCode < 32 Then 'control code
   Select Case KeyCode
   Case 1 'Ctrl+A
+   If m_nLineCount > 0 Then
+    With m_tSelStart
+     .nRow = 0
+     .nPosition = 0
+    End With
+    ChangeCaretPos m_nLineCount - 1, Len(m_sLines(m_nLineCount - 1)), True, True
+   End If
   Case 24 'Ctrl+X
+   If m_bLocked Then
+    Beep
+   ElseIf m_nLineCount > 0 And m_tSelStart.nRow >= 0 And (m_tSelStart.nRow <> m_tCaret.nRow Or m_tSelStart.nPosition <> m_tCaret.nPosition) Then
+    Clipboard.Clear
+    Clipboard.SetText SelText
+    SelText = ""
+   End If
   Case 3 'Ctrl+C
+   If m_nLineCount > 0 And m_tSelStart.nRow >= 0 And (m_tSelStart.nRow <> m_tCaret.nRow Or m_tSelStart.nPosition <> m_tCaret.nPosition) Then
+    Clipboard.Clear
+    Clipboard.SetText SelText
+   End If
   Case 22 'Ctrl+V
+   If m_bLocked Then
+    Beep
+   ElseIf Clipboard.GetFormat(1) Then 'CF_TEXT
+    SelText = Clipboard.GetText(1)
+   End If
   Case 26 'Ctrl+Z
+   'TODO:
   Case 8 'backspace
+   If m_bLocked Then
+    Beep
+   ElseIf m_nLineCount > 0 Then
+    If m_tSelStart.nRow >= 0 And (m_tSelStart.nRow <> m_tCaret.nRow Or m_tSelStart.nPosition <> m_tCaret.nPosition) Then
+     SelText = ""
+    ElseIf m_tCaret.nPosition > 0 Then
+     With m_tCaret
+      m_sLines(.nRow) = Left$(m_sLines(.nRow), .nPosition - 1) + Mid$(m_sLines(.nRow), .nPosition + 1)
+      .nPosition = .nPosition - 1
+     End With
+     CalcLineData m_tCaret.nRow
+     ChangeCaretPos , , True
+     m_nCaretTimer = 0
+    ElseIf m_tCaret.nRow > 0 Then
+     With m_tCaret
+      .nRow = .nRow - 1
+      .nPosition = Len(m_sLines(.nRow))
+      m_sLines(.nRow) = m_sLines(.nRow) + m_sLines(.nRow + 1)
+      For i = .nRow + 1 To m_nLineCount - 2
+       m_sLines(i) = m_sLines(i + 1)
+       m_tLineData(i) = m_tLineData(i + 1)
+      Next i
+      m_nLineCount = m_nLineCount - 1
+     End With
+     CalcLineData m_tCaret.nRow
+     ChangeCaretPos , , True
+     m_nCaretTimer = 0
+    End If
+   End If
   Case 10, 13 'enter
+   If m_bLocked Or Not m_bMultiLine Then
+    Beep
+   Else
+    SelText = vbCrLf
+   End If
   End Select
   KeyCode = 0
  End If
  If KeyCode Then
-  'TODO:
+  If m_bLocked Then
+   Beep
+  Else
+   SelText(True) = Chr(KeyCode)
+  End If
  End If
 Case 1 'keydown
  If Shift And vbCtrlMask Then
@@ -326,12 +429,52 @@ Case 1 'keydown
   Case vbKeyRight
    ChangeCaretPosByDelta 1, True, Shift And vbShiftMask
   Case vbKeyUp
+   If m_bMultiLine Then ChangeCaretPosFromPointDelta 0, -m_nLineHeight, True, Shift And vbShiftMask
   Case vbKeyDown
+   If m_bMultiLine Then ChangeCaretPosFromPointDelta 0, m_nLineHeight, True, Shift And vbShiftMask
   Case vbKeyInsert
    m_bInsertMode = Not m_bInsertMode
   Case vbKeyDelete
+   If m_bLocked Then
+    Beep
+   ElseIf m_nLineCount > 0 Then
+    If m_tSelStart.nRow >= 0 And (m_tSelStart.nRow <> m_tCaret.nRow Or m_tSelStart.nPosition <> m_tCaret.nPosition) Then
+     SelText = ""
+    ElseIf m_tCaret.nPosition < Len(m_sLines(m_tCaret.nRow)) Then
+     With m_tCaret
+      m_sLines(.nRow) = Left$(m_sLines(.nRow), .nPosition) + Mid$(m_sLines(.nRow), .nPosition + 2)
+     End With
+     CalcLineData m_tCaret.nRow
+     ChangeCaretPos , , True
+     m_nCaretTimer = 0
+    ElseIf m_tCaret.nRow < m_nLineCount - 1 Then
+     With m_tCaret
+      m_sLines(.nRow) = m_sLines(.nRow) + m_sLines(.nRow + 1)
+      For i = .nRow + 1 To m_nLineCount - 2
+       m_sLines(i) = m_sLines(i + 1)
+       m_tLineData(i) = m_tLineData(i + 1)
+      Next i
+      m_nLineCount = m_nLineCount - 1
+     End With
+     CalcLineData m_tCaret.nRow
+     ChangeCaretPos , , True
+     m_nCaretTimer = 0
+    End If
+   End If
   Case vbKeyPageUp
+   If m_bMultiLine Then
+    i = m_nHeight / m_nFontZoom
+    m_nScrollValue(1) = m_nScrollValue(1) - i
+    m_bScrollChanged = True
+    ChangeCaretPosFromPointDelta 0, -i, True, Shift And vbShiftMask
+   End If
   Case vbKeyPageDown
+   If m_bMultiLine Then
+    i = m_nHeight / m_nFontZoom
+    m_nScrollValue(1) = m_nScrollValue(1) + i
+    m_bScrollChanged = True
+    ChangeCaretPosFromPointDelta 0, i, True, Shift And vbShiftMask
+   End If
   Case vbKeyHome
    If m_tCaret.nRow >= 0 And m_tCaret.nRow < m_nLineCount Then _
    ChangeCaretPos m_tCaret.nRow, 0, True, Shift And vbShiftMask
@@ -352,7 +495,7 @@ If Button = 1 Then
  Select Case nEventType
  Case 0 'mousemove
   If m_bCapture Then
-   'TODO:
+   ChangeCaretPosFromPoint xClient / m_nFontZoom + m_nScrollValue(0), yClient / m_nFontZoom + m_nScrollValue(1), True, True
    FakeDXUIMousePointer = vbIbeam
   End If
  Case 1 'mousedown
@@ -373,14 +516,36 @@ Friend Sub Render(Optional ByVal nLeft As Single, Optional ByVal nTop As Single,
 Dim mat As D3DMATRIX
 Dim r As D3DRECT
 Dim i As Long, ii As Long
-Dim j As Long, jj As Long
-Dim k As Long
+Dim j As Long, jj As Long, jjj As Long
+Dim k As Long, kk As Long
 Dim m As Long
 Dim lp As Long
 Dim nStartLine As Long, nEndLine As Long
-Dim clr As Long, clr1 As Long
+Dim clr As Long
+Dim bSelection As Boolean
+Dim tSelStart As typeFakeDXUITextBoxPos, tSelEnd As typeFakeDXUITextBoxPos
 '///
 'TODO:other
+'///
+If m_tSelStart.nRow >= 0 And bFocus Then
+ If m_tSelStart.nRow < m_tCaret.nRow Then
+  tSelStart = m_tSelStart
+  tSelEnd = m_tCaret
+  bSelection = True
+ ElseIf m_tSelStart.nRow > m_tCaret.nRow Then
+  tSelStart = m_tCaret
+  tSelEnd = m_tSelStart
+  bSelection = True
+ ElseIf m_tSelStart.nPosition < m_tCaret.nPosition Then
+  tSelStart = m_tSelStart
+  tSelEnd = m_tCaret
+  bSelection = True
+ ElseIf m_tSelStart.nPosition > m_tCaret.nPosition Then
+  tSelStart = m_tCaret
+  tSelEnd = m_tSelStart
+  bSelection = True
+ End If
+End If
 '///
 clr = nOpacity * 255
 clr = ((clr And &H7F&) * &H1000000) Or ((clr > &H7F&) And &H80000000)
@@ -434,6 +599,42 @@ If m_nLineCount > 0 Then
       Do While k < m And i <= nEndLine
        r.Y1 = i * m_nLineHeight
        r.Y2 = r.Y1 + m_nLineHeight
+       '///selection
+       If bSelection Then
+        If j >= tSelStart.nRow And j <= tSelEnd.nRow Then
+         If j = tSelStart.nRow Then
+          If .nLineStart(k) >= tSelStart.nPosition Then
+           jj = 0
+          ElseIf .nLineStart(k) + .nLineLength(k) <= tSelStart.nPosition And k < m - 1 Then
+           jj = -1
+          Else
+           CalcCaretPos tSelStart.nRow, tSelStart.nPosition, jj
+           jj = jj * m_nFontZoom
+          End If
+         Else
+          jj = 0
+         End If
+         If j = tSelEnd.nRow Then
+          If .nLineStart(k) >= tSelEnd.nPosition Then
+           jj = -1
+          ElseIf .nLineStart(k) + .nLineLength(k) <= tSelEnd.nPosition And k < m - 1 Then
+           jjj = m_nWidth
+          Else
+           CalcCaretPos tSelEnd.nRow, tSelEnd.nPosition, jjj
+           jjj = jjj * m_nFontZoom
+          End If
+         Else
+          jjj = m_nWidth
+         End If
+         If jj >= 0 Then
+          jj = nLeft + jj
+          jjj = nLeft + jjj
+          kk = nTop + (r.Y1 - m_nScrollValue(1)) * m_nFontZoom
+          FakeDXGDIFillRect jj, kk, jjj, kk + m_nLineHeight * m_nFontZoom, clr Or &H5987D6
+         End If
+        End If
+       End If
+       '///text
        FakeDXUIDefaultFont.objFont.DrawTextW FakeDXUIDefaultFont.objSprite, ByVal (lp + .nLineStart(k) * 2&), .nLineLength(k), r, DT_VCENTER Or DT_SINGLELINE Or DT_NOCLIP, clr
        i = i + 1
        k = k + 1
@@ -442,24 +643,45 @@ If m_nLineCount > 0 Then
     End With
     i = ii
    Next j
-   '///TODO:selection
   Else
    If nStartLine < 0 Then nStartLine = 0
    If nEndLine >= m_nLineCount Then nEndLine = m_nLineCount - 1
    For i = nStartLine To nEndLine
     r.Y1 = i * m_nLineHeight
     r.Y2 = r.Y1 + m_nLineHeight
+    '///selection
+    If bSelection Then
+     If i >= tSelStart.nRow And i <= tSelEnd.nRow Then
+      If i = tSelStart.nRow Then CalcCaretPos tSelStart.nRow, tSelStart.nPosition, jj _
+      Else jj = 0
+      If i = tSelEnd.nRow Then CalcCaretPos tSelEnd.nRow, tSelEnd.nPosition, jjj _
+      Else jjj = m_tLineData(i).nLineWidth + 16
+      jj = nLeft + (jj - m_nScrollValue(0)) * m_nFontZoom
+      jjj = nLeft + (jjj - m_nScrollValue(0)) * m_nFontZoom
+      kk = nTop + (r.Y1 - m_nScrollValue(1)) * m_nFontZoom
+      FakeDXGDIFillRect jj, kk, jjj, kk + m_nLineHeight * m_nFontZoom, clr Or &H5987D6
+     End If
+    End If
+    '///text
     FakeDXUIDefaultFont.objFont.DrawTextW FakeDXUIDefaultFont.objSprite, ByVal StrPtr(m_sLines(i)), -1, r, DT_VCENTER Or DT_SINGLELINE Or DT_NOCLIP, clr
    Next i
-   '///TODO:selection
   End If
  Else
-  '///text
   If m_nLineCount > 0 Then
    r.Y2 = m_nHeight / m_nFontZoom
+   '///selection
+   If bSelection Then
+    CalcCaretPos tSelStart.nRow, tSelStart.nPosition, jj
+    CalcCaretPos tSelEnd.nRow, tSelEnd.nPosition, jjj
+    '///
+    jj = nLeft + (jj - m_nScrollValue(0)) * m_nFontZoom
+    jjj = nLeft + (jjj - m_nScrollValue(0)) * m_nFontZoom
+    kk = nTop + m_nHeight \ 2 - (m_nLineHeight \ 2) * m_nFontZoom
+    FakeDXGDIFillRect jj, kk, jjj, kk + m_nLineHeight * m_nFontZoom, clr Or &H5987D6
+   End If
+   '///text
    FakeDXUIDefaultFont.objFont.DrawTextW FakeDXUIDefaultFont.objSprite, ByVal StrPtr(m_sLines(0)), -1, r, DT_VCENTER Or DT_SINGLELINE Or DT_NOCLIP, clr
   End If
-  '///TODO:selection
  End If
 End If
 FakeDXUIDefaultFont.objSprite.End
@@ -581,6 +803,9 @@ Dim j As Long
 Dim k As Long
 Dim lp As Long, m As Long
 '///
+If y < 0 Then y = 0 Else _
+If y >= m_nTextHeight Then y = m_nTextHeight - 1
+'///
 If m_nLineCount > 0 Then
  If m_bMultiLine Then
   y = y \ m_nLineHeight
@@ -651,6 +876,8 @@ If m_nLineCount > 0 Then
    Erase nCaretPos
    Erase nDistance
   End If
+' ElseIf bValidPosOnly Then
+'  Exit Function
  ElseIf y > 0 Then
   nRow = m_nLineCount - 1
   nPosition = Len(m_sLines(nRow))
@@ -658,6 +885,12 @@ If m_nLineCount > 0 Then
 End If
 '///
 ChangeCaretPosFromPoint = ChangeCaretPos(nRow, nPosition, bEnsureVisible, bSelection)
+End Function
+
+Friend Function ChangeCaretPosFromPointDelta(Optional ByVal nDeltaX As Long, Optional ByVal nDeltaY As Long, Optional ByVal bEnsureVisible As Boolean, Optional ByVal bSelection As Boolean) As Boolean
+Dim x As Long, y As Long
+CalcCaretPos , , x, , y
+ChangeCaretPosFromPointDelta = ChangeCaretPosFromPoint(x + nDeltaX, y + nDeltaY + m_nLineHeight \ 2, bEnsureVisible, bSelection)
 End Function
 
 Friend Function ChangeCaretPosByDelta(Optional ByVal nDelta As Long, Optional ByVal bEnsureVisible As Boolean, Optional ByVal bSelection As Boolean) As Boolean
@@ -692,9 +925,6 @@ End Function
 
 Friend Function ChangeCaretPos(Optional ByVal nRow As Long = -1, Optional ByVal nPosition As Long = -1, Optional ByVal bEnsureVisible As Boolean, Optional ByVal bSelection As Boolean) As Boolean
 Dim i As Long, j As Long, k As Long
-'///
-'TODO:selection
-'///
 If nRow >= 0 And nRow < m_nLineCount And nPosition >= 0 Then
  If nPosition <= Len(m_sLines(nRow)) Then
   If m_tCaret.nRow <> nRow Or m_tCaret.nPosition <> nPosition Then
@@ -705,6 +935,9 @@ If nRow >= 0 And nRow < m_nLineCount And nPosition >= 0 Then
   End If
  End If
 End If
+'///selection (??)
+If m_tSelStart.nRow < 0 Or Not bSelection Then m_tSelStart = m_tCaret
+'///
 If bEnsureVisible Then
  CalcCaretPos , , j, , k
  '///horizontal
@@ -720,8 +953,12 @@ If bEnsureVisible Then
  '///vertical
  If m_bMultiLine Then
   i = m_nHeight / m_nFontZoom - m_nLineHeight
-  If k < m_nScrollValue(1) Or k >= m_nScrollValue(1) + i Then
-   k = k - i \ 2
+  If k < m_nScrollValue(1) Then
+   If k < 0 Then k = 0
+   m_nScrollValue(1) = k
+   m_bScrollChanged = True
+  ElseIf k > m_nScrollValue(1) + i Then
+   k = k - i
    If k < 0 Then k = 0
    m_nScrollValue(1) = k
    m_bScrollChanged = True
