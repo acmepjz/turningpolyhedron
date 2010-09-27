@@ -233,7 +233,7 @@ End If
 If bSelection Then
  For i = tSelStart.nRow To tSelEnd.nRow
   If i = tSelStart.nRow Then j = tSelStart.nPosition Else j = 0
-  If i = tSelEnd.nRow Then k = tSelStart.nPosition Else k = Len(m_sLines(i))
+  If i = tSelEnd.nRow Then k = tSelEnd.nPosition Else k = Len(m_sLines(i))
   s = s + Mid$(m_sLines(i), j + 1, k - j)
   If i < tSelEnd.nRow Then s = s + vbCrLf
  Next i
@@ -242,7 +242,96 @@ SelText = s
 End Property
 
 Friend Property Let SelText(Optional ByVal bInsertMode As Boolean, ByVal s As String)
-'TODO:
+Dim s1() As String, m As Long, m0 As Long
+Dim s2 As String
+Dim bSelection As Boolean
+Dim tSelStart As typeFakeDXUITextBoxPos, tSelEnd As typeFakeDXUITextBoxPos
+Dim nNewCount As Long
+Dim i As Long, j As Long, k As Long
+If m_nLineCount > 0 Then
+ '///calc SelText data
+ If Not m_bMultiLine Then s = Replace(s, vbCrLf, "")
+ s1 = Split(s, vbCrLf)
+ m = UBound(s1) + 1
+ If m <= 0 Then
+  ReDim s1(0)
+  m = 1
+ End If
+ '///calc selection pos
+ If m_tSelStart.nRow >= 0 Then
+  If m_tSelStart.nRow < m_tCaret.nRow Then
+   tSelStart = m_tSelStart
+   tSelEnd = m_tCaret
+   bSelection = True
+  ElseIf m_tSelStart.nRow > m_tCaret.nRow Then
+   tSelStart = m_tCaret
+   tSelEnd = m_tSelStart
+   bSelection = True
+  ElseIf m_tSelStart.nPosition < m_tCaret.nPosition Then
+   tSelStart = m_tSelStart
+   tSelEnd = m_tCaret
+   bSelection = True
+  ElseIf m_tSelStart.nPosition > m_tCaret.nPosition Then
+   tSelStart = m_tCaret
+   tSelEnd = m_tSelStart
+   bSelection = True
+  End If
+ End If
+ If Not bSelection Then
+  tSelStart = m_tCaret
+  tSelEnd = m_tCaret
+ End If
+ '///resize
+ m0 = tSelEnd.nRow - tSelStart.nRow + 1
+ nNewCount = m_nLineCount - m0 + m
+ If nNewCount > m_nLineMax Then
+  m_nLineMax = nNewCount + 16
+  ReDim Preserve m_sLines(m_nLineMax - 1)
+  ReDim Preserve m_tLineData(m_nLineMax - 1)
+ End If
+ '///backup old string
+ s2 = m_sLines(tSelEnd.nRow)
+ '///move data
+ If nNewCount > m_nLineCount Then
+  For i = m_nLineCount - 1 To tSelEnd.nRow + 1 Step -1
+   m_sLines(i - m0 + m) = m_sLines(i)
+   m_tLineData(i - m0 + m) = m_tLineData(i)
+  Next i
+ ElseIf nNewCount < m_nLineCount Then
+  For i = tSelEnd.nRow + 1 To m_nLineCount - 1
+   m_sLines(i - m0 + m) = m_sLines(i)
+   m_tLineData(i - m0 + m) = m_tLineData(i)
+  Next i
+ End If
+ '///merge SelText to string
+ For i = 0 To m - 1
+  If i = 0 Then
+   If m > 1 Then
+    m_sLines(tSelStart.nRow + i) = Left$(m_sLines(tSelStart.nRow + i), tSelStart.nPosition) + s1(i)
+   ElseIf bInsertMode Then
+    m_sLines(tSelStart.nRow + i) = Left$(m_sLines(tSelStart.nRow + i), tSelStart.nPosition) + s1(i) + Mid$(s2, tSelEnd.nPosition + Len(s1(i)) + 1)
+   Else
+    m_sLines(tSelStart.nRow + i) = Left$(m_sLines(tSelStart.nRow + i), tSelStart.nPosition) + s1(i) + Mid$(s2, tSelEnd.nPosition + 1)
+   End If
+  ElseIf i = m - 1 Then
+   m_sLines(tSelStart.nRow + i) = s1(i) + Mid$(s2, tSelEnd.nPosition + 1)
+  Else
+   m_sLines(tSelStart.nRow + i) = s1(i)
+  End If
+ Next i
+ m_nLineCount = nNewCount
+ '///change caret pos and update width data
+ If m > 1 Then m_tCaret.nPosition = 0 Else m_tCaret.nPosition = tSelStart.nPosition
+ m_tCaret.nPosition = m_tCaret.nPosition + Len(s1(m - 1))
+ m_tCaret.nRow = tSelStart.nRow + m - 1
+ CalcLineData tSelStart.nRow, m_tCaret.nRow
+ '///over
+ ChangeCaretPos , , True
+ m_nCaretTimer = 0
+Else
+ Text = s
+ ChangeCaretPos m_nLineCount - 1, Len(m_sLines(m_nLineCount - 1)), True
+End If
 End Property
 
 Friend Property Get MultiLine() As Boolean
@@ -331,6 +420,7 @@ End Property
 
 Friend Function OnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean
 Dim i As Long
+Dim s As String
 '///
 'TODO:other
 '///
@@ -362,8 +452,9 @@ Case 0 'keypress
   Case 22 'Ctrl+V
    If m_bLocked Then
     Beep
-   ElseIf Clipboard.GetFormat(1) Then 'CF_TEXT
-    SelText = Clipboard.GetText(1)
+   Else
+    s = Clipboard.GetText
+    If s <> "" Then SelText = s
    End If
   Case 26 'Ctrl+Z
    'TODO:
@@ -397,21 +488,15 @@ Case 0 'keypress
      m_nCaretTimer = 0
     End If
    End If
+'  Case 9 'tab
+'   If m_bLocked Then Beep Else SelText(m_bInsertMode) = vbTab '???
   Case 10, 13 'enter
-   If m_bLocked Or Not m_bMultiLine Then
-    Beep
-   Else
-    SelText = vbCrLf
-   End If
+   If m_bLocked Or Not m_bMultiLine Then Beep Else SelText = vbCrLf
   End Select
   KeyCode = 0
  End If
  If KeyCode Then
-  If m_bLocked Then
-   Beep
-  Else
-   SelText(True) = Chr(KeyCode)
-  End If
+  If m_bLocked Then Beep Else SelText(m_bInsertMode) = Chr(KeyCode)
  End If
 Case 1 'keydown
  If Shift And vbCtrlMask Then
