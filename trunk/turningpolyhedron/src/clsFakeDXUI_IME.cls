@@ -53,6 +53,12 @@ Private Const IME_CMODE_FULLSHAPE As Long = &H8
 Private Const IME_CMODE_SYMBOL As Long = &H400
 Private Declare Function ImmSetOpenStatus Lib "imm32.dll" (ByVal himc As Long, ByVal b As Long) As Long
 
+Private Declare Function GetTextExtentPoint32W Lib "Gdi32.dll" ( _
+  ByVal hdc As Long, _
+  ByRef lpString As Any, _
+  ByVal c As Long, _
+  ByRef lpSize As Any) As Long
+
 Private Type POINTAPI
     x As Long
     y As Long
@@ -110,16 +116,18 @@ Private m_bHasImm32 As Boolean
 
 Private m_bIsIME As Boolean, m_sIMEName As String
 Private m_sCandidateString As String
-Private m_sCompositionString As String
+Private m_sCompositionString As String, m_nCompositionCaretPos As Long
 
 Private m_nAnimVal(31) As Integer
-'0=
-'1-3=
-'4-6=
+'0=xx
+'1-3=xx
+'4-6=xx
 '8=ime? (0-255)
 '9=fullshape? (0-255)
 '10=symbol? (0-255)
-'11-13=
+'11-13=xx
+'16=CompositionString? (0-255)
+'17=caret timer
 
 Friend Property Get CandidateString() As String
 CandidateString = m_sCandidateString
@@ -202,19 +210,20 @@ h = ImmGetContext(m_hWnd)
 If h Then
  '///
  s = Space(1024)
- m = ImmGetCompositionString(h, GCS_COMPSTR, ByVal StrPtr(s), 2048)
+ m = ImmGetCompositionStringW(h, GCS_COMPSTR, ByVal StrPtr(s), 1024)
  If m Then
-  s = LeftB(s, m)
-  i = ImmGetCompositionString(h, GCS_CURSORPOS, ByVal 0, 0)
-  If i >= 0 And i <= m Then
-   s = LeftB(s, i) + LeftB("|", 1) + MidB(s, i + 1) 'TODO:good-looking caret
-  End If
-  s = StrConv(s, vbUnicode)
+  s = Left(s, m)
+  i = ImmGetCompositionStringW(h, GCS_CURSORPOS, ByVal 0, 0)
  Else
   s = ""
+  i = -1
  End If
  '///
  m_sCompositionString = s
+ If m_nCompositionCaretPos <> i Then
+  m_nCompositionCaretPos = i
+  m_nAnimVal(17) = 0
+ End If
  '///
  ImmReleaseContext m_hWnd, h
 End If
@@ -258,6 +267,8 @@ End Sub
 Friend Sub Render(Optional ByVal nOpacity As Single = 1)
 Dim h As Long
 Dim i As Long, ii As Long, j As Long, jj As Long, k As Long
+Dim m As Long
+Dim p(1) As Long
 '///
 If Not m_bHasImm32 Then Exit Sub
 '///
@@ -299,6 +310,49 @@ FakeDXGDIStretchBltColored d3dpp.BackBufferWidth - 18, d3dpp.BackBufferHeight - 
 FakeDXGDIDrawText FakeDXUIDefaultFont, m_sIMEName, 0, d3dpp.BackBufferHeight - 18, d3dpp.BackBufferWidth - 56, 18, m_nFontZoom, DT_RIGHT, i, , , , , , , True
 '///candidate
 FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCandidateString, 0, d3dpp.BackBufferHeight - 18, d3dpp.BackBufferWidth - 56, 18, m_nFontZoom, , i, , , , , , , True
+'///composition string
+m = Len(m_sCompositionString)
+i = m_nAnimVal(16)
+k = (m > 0) And &HFF&
+If i < k Then i = i + 51 Else _
+If i > k Then i = i - 51
+m_nAnimVal(16) = i
+If i <= 0 Then Exit Sub
+j = i * nOpacity * 0.75
+j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
+FakeDXGDIStretchBltExColored -4, d3dpp.BackBufferHeight - 44, d3dpp.BackBufferWidth + 4, d3dpp.BackBufferHeight - 16, 124, 324, 164, 364, 8, 8, 8, 8, 512, j Or &HFFFFFF
+j = i * nOpacity
+j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
+If m > 0 Then
+ FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCompositionString, 4, d3dpp.BackBufferHeight - 38, d3dpp.BackBufferWidth - 8, 18, m_nFontZoom, , j, , , , , , , True
+End If
+'///caret
+If m_nCompositionCaretPos >= 0 Then
+ k = (m_nAnimVal(17) + 1) And &H1F&
+ m_nAnimVal(17) = k
+ If k And &H10& Then
+  k = k - 27
+  If k < 0 Then k = 0
+ Else
+  k = 16 - k
+  If k > 5 Then k = 5
+ End If
+ If k > 0 Then
+  j = i * nOpacity * k / 5
+  j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
+  '///
+  If m_nCompositionCaretPos > 0 Then
+   i = m_nCompositionCaretPos
+   If i > m Then i = m
+   GetTextExtentPoint32W FakeDXUIDefaultFont.objFont.GetDC, ByVal StrPtr(m_sCompositionString), i, p(0)
+  Else
+   p(0) = 0
+  End If
+  '///draw
+  p(0) = 4 + p(0) * m_nFontZoom
+  FakeDXGDIFillRect p(0), d3dpp.BackBufferHeight - 38, p(0) + 2, d3dpp.BackBufferHeight - 22, j Or &HC409A
+ End If
+End If
 End Sub
 
 Friend Sub Destroy()
