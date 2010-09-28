@@ -36,7 +36,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
@@ -306,7 +306,7 @@ With FakeDXUIControls(1)
   End With
   '////////
  End With
- With .AddNewChildren(FakeCtl_Form, 240, 200, 480, 360, &HFFFFFF, , , , "ɽկMDIForm1")
+ With .AddNewChildren(FakeCtl_Form, 160, 120, 600, 400, &HFFFFFF, , , , "ɽկMDIForm1")
   .ScrollBars = vbBoth
   .Min = -50
   .Max = 50
