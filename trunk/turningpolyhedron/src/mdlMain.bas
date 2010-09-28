@@ -173,6 +173,42 @@ d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, i(2)
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, i(3)
 End Sub
 
+Public Sub FakeDXGDIGradientFillRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nColor1 As Long, ByVal nColor2 As Long, ByVal bVertical As Boolean)
+Dim f(19) As Single
+Dim i(4) As Long
+CopyMemory f(4), nColor1, 4&
+If bVertical Then
+ CopyMemory f(14), nColor2, 4&
+ f(9) = f(4)
+ f(19) = f(14)
+Else
+ CopyMemory f(9), nColor2, 4&
+ f(14) = f(4)
+ f(19) = f(9)
+End If
+f(0) = nLeft: f(1) = nTop: f(3) = 1
+f(5) = nRight: f(6) = nTop: f(8) = 1
+f(10) = nLeft: f(11) = nBottom: f(13) = 1
+f(15) = nRight: f(16) = nBottom: f(18) = 1
+'///
+i(4) = d3dd9.GetFVF
+d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_DIFFUSE
+i(0) = d3dd9.GetTextureStageState(0, D3DTSS_COLOROP)
+i(1) = d3dd9.GetTextureStageState(0, D3DTSS_ALPHAOP)
+i(2) = d3dd9.GetTextureStageState(0, D3DTSS_COLORARG2)
+i(3) = d3dd9.GetTextureStageState(0, D3DTSS_ALPHAARG2)
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
+d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE
+d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, f(0), 20&
+d3dd9.SetFVF i(4)
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, i(0)
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, i(1)
+d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, i(2)
+d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, i(3)
+End Sub
+
 Public Sub FakeDXGDIFrameRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nColor As Long)
 Dim f(24) As Single
 Dim i(4) As Long
