@@ -104,7 +104,7 @@ Public Enum enumFakeDXUIControlType
  FakeCtl_ScrollBar = 5
  FakeCtl_PictureBox = 6
  FakeCtl_TextBox = 7
- FakeCtl_ListBox = 8
+ FakeCtl_ListView = 8
  FakeCtl_ComboBox = 9
  FakeCtl_TabStrip = 10
 End Enum
@@ -151,6 +151,17 @@ Public FakeDXUIMessageQueueHead As Long
 Public FakeDXUIMessageQueueTail As Long
 Public FakeDXUIMessageQueueMax As Long
 
+'///NOTE: different from GDI coloes
+
+Public Const d_Bar1 = &HD0E2FA
+Public Const d_Bar2 = &H81A9E2
+Public Const d_Hl1 = &HFDFCD0
+Public Const d_Hl2 = &HFDDF9D
+Public Const d_Checked1 = &HFADD7D
+Public Const d_Checked2 = &HF5BC4E
+Public Const d_Pressed1 = &HF88655
+Public Const d_Pressed2 = &HD2370A
+
 Public Sub FakeDXUICreate(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single)
 Dim t As D3DXIMAGE_INFO
 '///
@@ -166,7 +177,7 @@ With FakeDXUIControls(1)
  .SetRightEx nRight, 0
  .SetBottomEx nBottom, 0
 End With
-FakeDXUI_IME.Create frmMain.hWnd '?
+FakeDXUI_IME.Create frmMain.hwnd '?
 '///
 'TODO:FakeDXUIDefaultFont
 '///
@@ -344,11 +355,13 @@ If FakeDXUISetCapture > 0 And FakeDXUISetCapture <= FakeDXUIControlCount Then
  If obj.ControlType < 0 Then Set obj = Nothing
 End If
 If obj Is Nothing Then Set obj = FakeDXUIControls(1)
-'///
-FakeDXUI_IME.BeforeMouseEvent
-For i = 1 To FakeDXUIControlCount
- FakeDXUIControls(i).BeforeMouseEvent
-Next i
+'///???
+If nEventType = 0 Then
+ FakeDXUI_IME.BeforeMouseEvent
+ For i = 1 To FakeDXUIControlCount
+  FakeDXUIControls(i).BeforeMouseEvent
+ Next i
+End If
 '///
 b = FakeDXUI_IME.OnMouseEvent(Button, Shift, x, y, nEventType)
 If Not b Then b = obj.OnMouseEvent(Button, Shift, x, y, nEventType)

@@ -15,22 +15,19 @@ Option Explicit
 
 '///FakeDXUIListView - modified from FakeListView ver2
 
-Private Declare Function CreateSolidBrush Lib "gdi32.dll" (ByVal crColor As Long) As Long
-Private Declare Function FrameRect Lib "user32.dll" (ByVal hdc As Long, ByRef lpRect As RECT, ByVal hBrush As Long) As Long
-Private Declare Function FillRect Lib "user32.dll" (ByVal hdc As Long, ByRef lpRect As RECT, ByVal hBrush As Long) As Long
-Private Declare Function DeleteObject Lib "gdi32.dll" (ByVal hObject As Long) As Long
-Private Declare Function SetPixelV Lib "gdi32.dll" (ByVal hdc As Long, ByVal x As Long, ByVal y As Long, ByVal crColor As Long) As Long
-Private Declare Function GetDC Lib "user32.dll" (ByVal hwnd As Long) As Long
-Private Declare Function ReleaseDC Lib "user32.dll" (ByVal hwnd As Long, ByVal hdc As Long) As Long
-Private Declare Function BitBlt Lib "gdi32.dll" (ByVal hDestDC As Long, ByVal x As Long, ByVal y As Long, ByVal nWidth As Long, ByVal nHeight As Long, ByVal hSrcDC As Long, ByVal xSrc As Long, ByVal ySrc As Long, ByVal dwRop As Long) As Long
+Private Declare Function GetTextExtentPoint32W Lib "gdi32.dll" ( _
+  ByVal hdc As Long, _
+  ByRef lpString As Any, _
+  ByVal c As Long, _
+  ByRef lpSize As Any) As Long
 
-Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
-Private Declare Function GetKeyState Lib "user32.dll" (ByVal nVirtKey As Long) As Integer
-Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
-Private Type POINTAPI
-    x As Long
-    y As Long
-End Type
+'Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
+'Private Declare Function GetKeyState Lib "user32.dll" (ByVal nVirtKey As Long) As Integer
+'Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
+'Private Type POINTAPI
+'    x As Long
+'    y As Long
+'End Type
 
 Private Type RECT
     Left As Long
@@ -55,6 +52,11 @@ Private Type typeFakeColumnHeader
  nWidth As Long '0=right one or min size
  '///internal
  nLeft As Long
+ '///FakeDXUI new
+ bAnimVal1 As Byte
+ bAnimVal2 As Byte
+ bAnimVal3 As Byte
+ bAnimVal4 As Byte
 End Type
 
 Public Enum enumFakeColumnDataType
@@ -79,8 +81,12 @@ End Enum
 Private Type typeFakeListViewItem
  sValue As String
  nItemData As Long
- nFlags As Long '???
+ nFlags As Byte '???
  '1-selected
+ '///FakeDXUI new
+ bAnimVal1 As Byte
+ bAnimVal2 As Byte
+ bAnimVal3 As Byte
 End Type
 
 Private m_nColumns As Long, m_nRows As Long
@@ -100,7 +106,7 @@ Private m_nSelColumn As Long, m_nSelRow As Long
 
 Private m_bSizing As Boolean, m_nSizeIndex As Long, m_nSizeX As Long
 
-Private m_bNoUpdate As Boolean, m_bLocked As Boolean
+Private m_bLocked As Boolean
 
 'virtual mode ??? test only
 Private m_bVirtual As Boolean
@@ -137,6 +143,7 @@ Private m_bEnabled As Boolean
 
 Private m_nScrollValue(1) As Long, m_bScrollChanged As Boolean
 Private m_nSmallChange(1) As Long
+Private m_bCapture As Boolean
 
 Friend Property Get ScrollChanged() As Boolean
 ScrollChanged = m_bScrollChanged
@@ -154,6 +161,14 @@ Friend Property Let ScrollValue(Optional ByVal nIndex As Long, ByVal n As Long)
 m_nScrollValue(nIndex) = n
 End Property
 
+Friend Property Get SmallChange(Optional ByVal nIndex As Long) As Long
+SmallChange = m_nSmallChange(nIndex)
+End Property
+
+Friend Property Let SmallChange(Optional ByVal nIndex As Long, ByVal n As Long)
+m_nSmallChange(nIndex) = n
+End Property
+
 Friend Property Get Width() As Long
 Width = m_nWidth
 End Property
@@ -168,6 +183,14 @@ End Property
 
 Friend Property Let Height(ByVal n As Long)
 m_nHeight = n
+End Property
+
+Friend Property Get TotalWidth() As Long
+TotalWidth = m_nTotalWidth
+End Property
+
+Friend Property Get TotalHeight() As Long
+TotalHeight = m_nTotalHeight
 End Property
 
 Friend Property Get VirtualMode() As Boolean
@@ -231,28 +254,20 @@ If nColumn > 0 And nColumn <= m_nColumns Then
 End If
 End Sub
 
-Friend Sub Refresh()
-Dim b As Boolean
-b = m_bNoUpdate
-m_bNoUpdate = False
-pRefresh
-m_bNoUpdate = b
-End Sub
-
 Private Sub pDrawArrow(ByVal x As Long, ByVal y As Long, ByVal nOpacity As Single, ByVal bEnabled As Boolean, ByVal bDescending As Boolean)
 Dim i As Long, j As Long, k As Long
 i = nOpacity * 255
-i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
+i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
 j = 160 + (bDescending And 16&)
 k = 384 - (bEnabled And 16&)
-FakeDXGDIStretchBltColored x - 8, y - 8, x + 8, y + 8, j, k, j + 8, k + 8, 512, i
+FakeDXGDIStretchBltColored x - 8, y - 8, x + 8, y + 8, j, k, j + 16, k + 16, 512, i
 End Sub
 
 'TODO:enabled and animation
 Private Sub pDrawCheck(ByVal nOpacity As Single, ByVal x As Long, ByVal y As Long, ByVal nValue As Long, ByVal nState As Long)
 Dim i As Long, j As Long
 i = nOpacity * 255
-i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
+i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
 nState = nState * 16&
 FakeDXGDIStretchBltColored x, y, x + 16, y + 16, nState, 368, nState + 16, 384, 512, i
 If nValue > 0 Then
@@ -279,22 +294,13 @@ Friend Property Let MultiSelect(ByVal b As Boolean)
 m_bMultiSelect = b
 End Property
 
-Friend Sub LockUpdate()
-m_bNoUpdate = True
-End Sub
-
-Friend Sub UnlockUpdate()
-m_bNoUpdate = False
-pRefresh
-End Sub
-
 Friend Sub ClearAll()
 m_nColumns = 0
 m_nRows = 0
 m_nSelColumn = 0
 m_nSelRow = 0
 Erase m_tHdr, m_sData, m_nVirtualIndex
-pRefresh
+Refresh
 End Sub
 
 Friend Sub Clear()
@@ -303,7 +309,7 @@ m_nSelColumn = 0
 m_nSelRow = 0
 If m_nRowMax = 0 Then Erase m_sData
 Erase m_nVirtualIndex
-pRefresh
+Refresh
 End Sub
 
 Friend Property Get ColumnCount() As Long
@@ -331,7 +337,7 @@ If m_bVirtual And m_nRows <> n And n >= 0 Then
   Next i
  End If
  m_nRows = n
- pRefresh
+ Refresh
 End If
 End Property
 
@@ -374,7 +380,7 @@ End Property
 
 Friend Property Let ColumnFlags(ByVal nIndex As Long, ByVal n As enumFakeColumnFlags)
 m_tHdr(nIndex).nFlags = n
-pRefresh
+Refresh
 End Property
 
 Friend Property Get ColumnWidth(ByVal nIndex As Long) As Long
@@ -383,7 +389,7 @@ End Property
 
 Friend Property Let ColumnWidth(ByVal nIndex As Long, ByVal n As Long)
 m_tHdr(nIndex).nWidth = n
-pRefresh
+Refresh
 End Property
 
 Friend Property Get List(ByVal nRow As Long, ByVal nColumn As Long) As String
@@ -566,7 +572,7 @@ ElseIf k <> vbError Then
 End If
 On Error GoTo 0
 '///
-pRefresh
+Refresh
 '///
 AddItem = nIndex
 End Function
@@ -590,7 +596,7 @@ If m_nRowMax = 0 Then ReDim Preserve m_sData(1 To m_nColumns, 1 To m_nRows)
 '///
 If m_nSelRow > nIndex Then m_nSelRow = m_nSelRow - 1 Else If m_nSelRow = nIndex Then m_nSelRow = 0: m_nSelColumn = 0
 '///
-pRefresh
+Refresh
 End Sub
 
 Friend Function AddColumn(ByVal sCaption As String, Optional ByVal nIndex As Long, Optional ByVal nDataType As enumFakeColumnDataType, Optional ByVal nFlags As enumFakeColumnFlags, Optional ByVal nWidth As Long) As Long
@@ -631,7 +637,7 @@ If (m_nRows > 0 Or m_nRowMax > 0) And Not m_bVirtual Then
  m_sData = s
 End If
 '///
-pRefresh
+Refresh
 '///
 AddColumn = nIndex
 End Function
@@ -681,7 +687,7 @@ If (m_nRows > 0 Or m_nRowMax > 0) And Not m_bVirtual Then
  m_sData = s
 End If
 '///
-pRefresh
+Refresh
 End Sub
 
 Friend Property Get RowHeight() As Long
@@ -693,7 +699,7 @@ If n > 0 And m_nItemHeight <> n Then
  m_nItemHeight = n
  m_nSmallChange(1) = n
  m_bScrollChanged = True
- pRefresh
+ Refresh
 End If
 End Property
 
@@ -703,7 +709,7 @@ End Property
 
 Friend Property Let ColumnHeader(ByVal b As Boolean)
 m_bHeader = b
-pRefresh
+Refresh
 End Property
 
 Friend Property Get GridLines() As Boolean
@@ -826,61 +832,13 @@ m_nHlColumn = 0
 m_nHlRow = 0
 End Sub
 
-'Private Sub t1_Timer()
-'Dim p As POINTAPI
-'If m_bPressed Then
-' If ((GetKeyState(1) Or GetKeyState(2) Or GetKeyState(4)) And &H8000&) = 0 Then m_bPressed = False '????????
-'End If
-'If Not m_bPressed And Not m_bSizing Then
-' GetCursorPos p
-' ScreenToClient hwnd, p
-' If p.x < 0 Or p.y < 0 Or p.x >= m_nWidth Or p.y >= m_nHeight Then
-'  If m_nHlColumn <> 0 Then
-'   m_nHlColumn = 0
-'   m_nHlRow = 0
-'   'TODO:raise event
-'  End If
-'  t1.Enabled = False
-' End If
-'End If
-'End Sub
-
-Private Sub UserControl_DblClick()
-If m_nHlColumn > 0 And m_nHlColumn <= m_nColumns Then
- If m_nHlRow > 0 And m_nHlRow <= m_nRows Then
-  RaiseEvent DblClick(m_nHlRow, m_nHlColumn)
- Else
-  'header double click
-  'TODO:
- End If
-End If
-End Sub
-
-Private Sub UserControl_InitProperties()
-m_nItemHeight = 16&
-m_bHeader = True
-m_nMinSize = 64&
-pInit
-End Sub
-
-Private Sub UserControl_KeyDown(ByVal KeyCode As Long, ByVal Shift As Long)
-RaiseEvent KeyDown(KeyCode, Shift)
-End Sub
-
-Private Sub UserControl_KeyUp(ByVal KeyCode As Long, ByVal Shift As Long)
-RaiseEvent KeyUp(KeyCode, Shift)
-End Sub
-
-Private Sub UserControl_MouseMove(ByVal Button As Long, ByVal Shift As Long, ByVal xCur As Long, ByVal yCur As Long)
+Friend Sub OnMouseMove(ByVal Button As Long, ByVal Shift As Long, ByVal xCur As Long, ByVal yCur As Long)
 Dim i As Long, j As Long
-Dim p As POINTAPI
 Dim b As Boolean
 Dim x As Long, y As Long, w As Long
 Dim ww As Long, hh As Long
 '///
 Dim xx As Long, yy As Long
-'///
-If m_bNoUpdate Then Exit Sub
 '///sizing column header?
 If m_bSizing Then
  If m_nSizeX <> xCur Then
@@ -890,7 +848,9 @@ If m_bSizing Then
     i = xCur - m_nSizeX
     If w + i < 16 Then i = 16 - w
     m_tHdr(m_nSizeIndex).nWidth = w + i
-    m_nSizeX = xCur + i
+    m_nSizeX = m_nSizeX + i
+    FakeDXUIMousePointer = vbSizeWE
+    Refresh
    End If
   End If
  End If
@@ -994,7 +954,7 @@ End If
 '///
 End Sub
 
-Private Sub UserControl_MouseUp(ByVal Button As Long, ByVal Shift As Long, ByVal xCur As Long, ByVal yCur As Long)
+Friend Sub OnMouseUp(ByVal Button As Long, ByVal Shift As Long, ByVal xCur As Long, ByVal yCur As Long)
 On Error Resume Next
 Dim i As Long, j As Long, s As String
 If m_bPressed Then
@@ -1005,7 +965,7 @@ If m_bPressed Then
    m_nSizeIndex = 0
   End If
   m_bSizing = False
-  pRefresh
+  Refresh
   Exit Sub
  End If
  If m_nHlColumn > 0 Then
@@ -1064,17 +1024,17 @@ If m_bPressed Then
 End If
 End Sub
 
-Private Sub UserControl_MouseDown(ByVal Button As Long, ByVal Shift As Long, ByVal xCur As Long, ByVal yCur As Long)
+Friend Sub OnMouseDown(ByVal Button As Long, ByVal Shift As Long, ByVal xCur As Long, ByVal yCur As Long)
 Dim i As Long, j As Long, jj As Long
 Dim m As Long, n As Long
 Dim m2 As Long, n2 As Long
-Dim p As POINTAPI
 If Not m_bPressed Then
  m_bPressed = True
  'resize header
  If m_nSizeIndex > 0 And m_nSizeIndex <= m_nColumns Then
   m_nSizeX = xCur
   m_bSizing = True
+  FakeDXUIMousePointer = vbSizeWE
   Exit Sub
  End If
  If m_nHlColumn > 0 Then
@@ -1234,10 +1194,6 @@ If Not m_bPressed Then
 End If
 End Sub
 
-Private Sub UserControl_Resize()
-pRefresh
-End Sub
-
 Friend Property Get Locked() As Boolean
 Locked = m_bLocked
 End Property
@@ -1254,25 +1210,28 @@ End Property
 
 Friend Property Let MinColumnSize(ByVal n As Long)
 m_nMinSize = n
-pRefresh
+Refresh
 End Property
 
-Private Sub pInit()
+Private Sub Class_Initialize()
+m_nItemHeight = 16&
+'m_bHeader = True
+m_nMinSize = 64&
+'///
 m_nRowMax = 0
 m_nRowStep = 256&
 '///
-pRefresh
+Refresh
 '///
 m_nSmallChange(0) = 16&
 m_nSmallChange(1) = m_nItemHeight
 m_bScrollChanged = True
 End Sub
 
-Private Sub pRefresh()
+Friend Sub Refresh()
 Dim i As Long, j As Long
 Dim w As Long, h As Long
 Dim ww As Long, hh As Long
-If m_bNoUpdate Then Exit Sub
 '///
 'For j = 1 To 2 '????????
  ww = m_nWidth
@@ -1297,10 +1256,9 @@ If m_bNoUpdate Then Exit Sub
  Next i
  '///calc height :-3
  h = m_nRows * m_nItemHeight
- If m_bHeader Then hh = hh - m_nItemHeight
-' '///??
-' w = w + 1
-' h = h + 1
+ '///??
+ w = w + 1
+ h = h + 1
  m_nTotalWidth = w
  m_nTotalHeight = h
  '/// TODO:
@@ -1327,83 +1285,74 @@ If m_bNoUpdate Then Exit Sub
 End Sub
 
 Friend Sub Render(Optional ByVal nLeft As Single, Optional ByVal nTop As Single, Optional ByVal nOpacity As Single = 1)
-'TODO:
 On Error Resume Next
 Dim i As Long, j As Long, jj As Long, k As Long
 Dim kk As Long
 Dim x As Long, y As Long, w As Long
 Dim ww As Long, hh As Long
-Dim r As RECT, hbr As Long, hbrBorder As Long
-Dim clr As Long
+Dim r As RECT
+Dim clr As Long, clr0 As Long
 Dim s As String, b As Boolean
 Dim bHighlight As Boolean, bSelected As Boolean
-Dim r2 As RECT, r3 As RECT, p As POINTAPI
-If m_bNoUpdate Then Exit Sub
+Dim r2 As RECT, r3 As RECT
+Dim f As Single
 ww = m_nWidth
 hh = m_nHeight
-'///BackColor (ignore)
-r.Right = ww
-r.Bottom = hh
-'hbr = CreateSolidBrush(TranslateColor(Label1.BackColor))
-'FillRect bm.hdc, r, hbr
-'DeleteObject hbr
-'///
-hbrBorder = CreateSolidBrush(d_Border)
 '///grid line
 If m_bGrid Then
- hbr = CreateSolidBrush(TranslateColor(FillColor))
- k = m_nScrollValue(1) \ m_nItemHeight
- y = k * m_nItemHeight - m_nScrollValue(1)
- Do
-  r.Left = 0
-  r.Top = y
-  r.Right = ww
-  r.Bottom = y + 1
-  FillRect bm.hdc, r, hbr
-  y = y + m_nItemHeight
- Loop Until y >= hh
- x = m_nScrollValue(0)
- For i = 1 To m_nColumns
-  With m_tHdr(i)
-   If (.nFlags And 8&) = 0 Then
-    w = .nWidth
-    If w = 0 Then
-     If i = m_nColumns Then
-      w = ww - .nLeft + x
-     Else
-      w = m_nMinSize
-     End If
-    End If
-    If .nLeft < x + ww And .nLeft + w > x Then
-     r.Left = .nLeft - x
-     r.Top = -1
-     r.Right = r.Left + w + 1
-     r.Bottom = hh + 1
-     FrameRect bm.hdc, r, hbr
-    End If
-   End If
-  End With
- Next i
- DeleteObject hbr
+ 'TODO:!!!!!!!!
+' hbr = CreateSolidBrush(TranslateColor(FillColor))
+' k = m_nScrollValue(1) \ m_nItemHeight
+' y = k * m_nItemHeight - m_nScrollValue(1)
+' Do
+'  r.Left = 0
+'  r.Top = y
+'  r.Right = ww
+'  r.Bottom = y + 1
+'  FillRect bm.hdc, r, hbr
+'  y = y + m_nItemHeight
+' Loop Until y >= hh
+' x = m_nScrollValue(0)
+' For i = 1 To m_nColumns
+'  With m_tHdr(i)
+'   If (.nFlags And 8&) = 0 Then
+'    w = .nWidth
+'    If w = 0 Then
+'     If i = m_nColumns Then
+'      w = ww - .nLeft + x
+'     Else
+'      w = m_nMinSize
+'     End If
+'    End If
+'    If .nLeft < x + ww And .nLeft + w > x Then
+'     r.Left = .nLeft - x
+'     r.Top = -1
+'     r.Right = r.Left + w + 1
+'     r.Bottom = hh + 1
+'     FrameRect bm.hdc, r, hbr
+'    End If
+'   End If
+'  End With
+' Next i
+' DeleteObject hbr
 End If
 '///list item
-If m_bEnabled Then clr = Label1.ForeColor Else clr = vbGrayText
-clr = TranslateColor(clr)
+clr0 = nOpacity * 255
+clr0 = ((clr0 And &H7F&) * &H1000000) Or ((clr0 > &H7F&) And &H80000000)
+clr = clr0 Or (&H666666 And Not m_bEnabled)
+'///
 k = m_nScrollValue(1) \ m_nItemHeight
 x = m_nScrollValue(0)
 r2.Left = &H80000000
 r3.Left = &H80000000
-''
-GetCursorPos p
-ScreenToClient hwnd, p
-''
 For i = 1 To m_nColumns
  With m_tHdr(i)
   If (.nFlags And 8&) = 0 Then
    w = .nWidth
    If w = 0 Then
     If i = m_nColumns Then
-     w = ww - .nLeft + x
+     w = ww - .nLeft + x - 1 '???
+     If w < m_nMinSize Then w = m_nMinSize '???
     Else
      w = m_nMinSize
     End If
@@ -1429,23 +1378,23 @@ For i = 1 To m_nColumns
       End If
       'fill
       If (bSelected And Not m_bMultiSelect) Or (kk And 1&) <> 0 Then
-       r.Left = .nLeft - x
-       r.Top = y
+       r.Left = .nLeft - x + nLeft
+       r.Top = y + nTop
        r.Right = r.Left + w
        r.Bottom = r.Top + m_nItemHeight
        If m_bGrid Then r.Left = r.Left + 1: r.Top = r.Top + 1
        If bHighlight Then
-        GradientFillRect bm.hdc, r.Left, r.Top, r.Right, r.Bottom, d_Pressed1, d_Pressed2, GRADIENT_FILL_RECT_V
+        FakeDXGDIGradientFillRect r.Left, r.Top, r.Right, r.Bottom, d_Pressed1 Or clr0, d_Pressed2 Or clr0, True
        Else
-        GradientFillRect bm.hdc, r.Left, r.Top, r.Right, r.Bottom, d_Checked1, d_Checked2, GRADIENT_FILL_RECT_V
+        FakeDXGDIGradientFillRect r.Left, r.Top, r.Right, r.Bottom, d_Checked1 Or clr0, d_Checked2 Or clr0, True
        End If
       ElseIf bHighlight Then
-       r.Left = .nLeft - x
-       r.Top = y
+       r.Left = .nLeft - x + nLeft
+       r.Top = y + nTop
        r.Right = r.Left + w
        r.Bottom = r.Top + m_nItemHeight
        If m_bGrid Then r.Left = r.Left + 1: r.Top = r.Top + 1
-       GradientFillRect bm.hdc, r.Left, r.Top, r.Right, r.Bottom, d_Hl1, d_Hl2, GRADIENT_FILL_RECT_V
+       FakeDXGDIGradientFillRect r.Left, r.Top, r.Right, r.Bottom, d_Hl1 Or clr0, d_Hl2 Or clr0, True
       End If
       'save border data
       If bHighlight Then
@@ -1494,7 +1443,7 @@ For i = 1 To m_nColumns
       Else
        kk = m_sData(i, j).nItemData
       End If
-      RaiseEvent OwnerDraw(bm.hdc, p.x, p.y, .nLeft - x, y, w, m_nItemHeight, j, i, m_bPressed, s, kk, b)
+      RaiseEvent OwnerDraw(0, 0, 0, .nLeft - x, y, w, m_nItemHeight, j, i, m_bPressed, s, kk, b)
      Else
       b = True
      End If
@@ -1509,10 +1458,10 @@ For i = 1 To m_nColumns
        Else
         r.Bottom = 0
        End If
-       pDrawCheck nOpacity, .nLeft - x + w \ 2 - 8, y + m_nItemHeight \ 2 - 8, r.Right, r.Bottom
+       pDrawCheck nOpacity, nLeft + .nLeft - x + w \ 2 - 8, nTop + y + m_nItemHeight \ 2 - 8, r.Right, r.Bottom
       Case Else
        If .nFlags And 32& Then kk = DT_RIGHT Else If .nFlags And 64& Then kk = DT_CENTER Else kk = 0
-       cFnt.DrawTextXP bm.hdc, s, .nLeft - x + 2, y, w - 4, m_nItemHeight, DT_VCENTER Or DT_SINGLELINE Or DT_END_ELLIPSIS Or DT_NOPREFIX Or kk, clr, , True
+       FakeDXGDIDrawText FakeDXUIDefaultFont, s, nLeft + .nLeft - x + 2, nTop + y, w - 4, m_nItemHeight, 0.5, DT_VCENTER Or DT_SINGLELINE Or kk, clr, , , , , , , True
       End Select
      End If
      '////////
@@ -1524,69 +1473,82 @@ For i = 1 To m_nColumns
  End With
 Next i
 '///selection border
-If r2.Left <> &H80000000 Then FrameRect bm.hdc, r2, hbrBorder
-If r3.Left <> &H80000000 Then FrameRect bm.hdc, r3, hbrBorder
+If r2.Left <> &H80000000 Then
+ FakeDXGDIStretchBltExColored r2.Left + nLeft, r2.Top + nTop, r2.Right + nLeft, r2.Bottom + nTop, 232, 48, 248, 64, 4, 4, 4, 4, 512, clr0 Or &HFFFFFF
+End If
+If r3.Left <> &H80000000 Then
+ FakeDXGDIStretchBltExColored r3.Left + nLeft, r3.Top + nTop, r3.Right + nLeft, r3.Bottom + nTop, 232, 48, 248, 64, 4, 4, 4, 4, 512, clr0 Or &HFFFFFF
+End If
 '///header
 If m_bHeader Then
- If Not m_bEnabled Then clr = d_TextDis
- '///
- GradientFillRect bm.hdc, 0, 0, ww, m_nItemHeight, d_Bar1, d_Bar2, GRADIENT_FILL_RECT_V
- r.Left = 0
- r.Top = m_nItemHeight
- r.Right = ww
- r.Bottom = r.Top + 1
- FillRect bm.hdc, r, hbrBorder
+' '///
+' GradientFillRect bm.hdc, 0, 0, ww, m_nItemHeight, d_Bar1, d_Bar2, GRADIENT_FILL_RECT_V
+' r.Left = 0
+' r.Top = m_nItemHeight
+' r.Right = ww
+' r.Bottom = r.Top + 1
+' FillRect bm.hdc, r, hbrBorder
  For i = 1 To m_nColumns
   With m_tHdr(i)
    If (.nFlags And 8&) = 0 Then
     w = .nWidth
     If w = 0 Then
      If i = m_nColumns Then
-      w = ww - .nLeft + x
+      w = ww - .nLeft + x - 1 '???
+      If w < m_nMinSize Then w = m_nMinSize '???
      Else
       w = m_nMinSize
      End If
     End If
     If .nLeft < x + ww And .nLeft + w > x Then
      'draw header
-     r.Left = .nLeft - x
-     r.Top = -1
-     r.Right = r.Left + w + 1
-     r.Bottom = m_nItemHeight + 1
-     FrameRect bm.hdc, r, hbrBorder
+     r.Left = nLeft + .nLeft - x
+     r.Top = nTop
+     r.Right = r.Left + w
+     r.Bottom = nTop + m_nItemHeight
      'highlight
+     FakeDXGDIStretchBltExColored r.Left, r.Top, r.Right, r.Bottom, 0, 420, 32, 448, 4, 0, 4, 4, 512, clr0 Or &HFFFFFF
      If m_nHlColumn = i And m_nHlRow = 0 Then
+      If .bAnimVal1 < 255 Then .bAnimVal1 = .bAnimVal1 + 51
       If m_bPressed Then
-       GradientFillRect bm.hdc, r.Left + 1, 0, r.Right - 1, m_nItemHeight, d_Pressed1, d_Pressed2, GRADIENT_FILL_RECT_V
+       If .bAnimVal2 < 255 Then .bAnimVal2 = .bAnimVal2 + 51
       Else
-       GradientFillRect bm.hdc, r.Left + 1, 0, r.Right - 1, m_nItemHeight, d_Hl1, d_Hl2, GRADIENT_FILL_RECT_V
+       If .bAnimVal2 > 0 Then .bAnimVal2 = .bAnimVal2 - 51
       End If
+     Else
+      If .bAnimVal1 > 0 Then .bAnimVal1 = .bAnimVal1 - 51
+      If .bAnimVal2 > 0 Then .bAnimVal2 = .bAnimVal2 - 51
+     End If
+     If .bAnimVal1 > 0 Then
+      k = .bAnimVal1 * nOpacity
+      k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
+      FakeDXGDIStretchBltExBlended r.Left, r.Top, r.Right, r.Bottom, 64, 420, 96, 448, 4, 0, 4, 4, 512, 32, 420, .bAnimVal2, k Or &HFFFFFF
      End If
      'draw text and sort icon
      If .nFlags And 32& Then
       If i = (m_nSortIndex And &HFFFFFF) Then
-       cFnt.DrawTextXP bm.hdc, .sCaption, r.Left + 2, 0, w - 14, r.Bottom, DT_VCENTER Or DT_SINGLELINE Or DT_END_ELLIPSIS Or DT_NOPREFIX Or DT_RIGHT, clr, , True
-       pDrawArrow r.Left + w - 7, m_nItemHeight \ 2, nOpacity, bEnabled, m_nSortIndex And &H1000000
+       FakeDXGDIDrawText FakeDXUIDefaultFont, .sCaption, r.Left + 2, r.Top, w - 14, m_nItemHeight, 0.5, DT_VCENTER Or DT_SINGLELINE Or DT_RIGHT, clr, , , , , , , True
+       pDrawArrow r.Left + w - 7, r.Top + m_nItemHeight \ 2, nOpacity, m_bEnabled, m_nSortIndex And &H1000000
       Else
-       cFnt.DrawTextXP bm.hdc, .sCaption, r.Left + 2, 0, w - 4, r.Bottom, DT_VCENTER Or DT_SINGLELINE Or DT_END_ELLIPSIS Or DT_NOPREFIX Or DT_RIGHT, clr, , True
+       FakeDXGDIDrawText FakeDXUIDefaultFont, .sCaption, r.Left + 2, r.Top, w - 4, m_nItemHeight, 0.5, DT_VCENTER Or DT_SINGLELINE Or DT_RIGHT, clr, , , , , , , True
       End If
      ElseIf .nFlags And 64& Then
       If i = (m_nSortIndex And &HFFFFFF) Then
-       cFnt.DrawTextXP bm.hdc, .sCaption, 0, 0, r.Right, 0, DT_VCENTER Or DT_SINGLELINE Or DT_CALCRECT
+       GetTextExtentPoint32W FakeDXUIDefaultFont.objFont.GetDC, ByVal StrPtr(.sCaption), -1, r3
+       r.Right = r3.Left \ 2
        If r.Right >= w - 14 Then r.Right = w - 14
-       cFnt.DrawTextXP bm.hdc, .sCaption, r.Left + 2, 0, w - 14, r.Bottom, DT_VCENTER Or DT_SINGLELINE Or DT_END_ELLIPSIS Or DT_NOPREFIX Or DT_CENTER, clr, , True
-       pDrawArrow r.Left + (w + r.Right) \ 2, m_nItemHeight \ 2, nOpacity, bEnabled, m_nSortIndex And &H1000000
+       FakeDXGDIDrawText FakeDXUIDefaultFont, .sCaption, r.Left + 2, r.Top, w - 14, m_nItemHeight, DT_VCENTER Or DT_SINGLELINE Or DT_CENTER, clr, , , , , , , , True
+       pDrawArrow r.Left + (w + r.Right) \ 2, r.Top + m_nItemHeight \ 2, nOpacity, m_bEnabled, m_nSortIndex And &H1000000
       Else
-       cFnt.DrawTextXP bm.hdc, .sCaption, r.Left + 2, 0, w - 4, r.Bottom, DT_VCENTER Or DT_SINGLELINE Or DT_END_ELLIPSIS Or DT_NOPREFIX Or DT_CENTER, clr, , True
+       FakeDXGDIDrawText FakeDXUIDefaultFont, .sCaption, r.Left + 2, r.Top, w - 4, m_nItemHeight, 0.5, DT_VCENTER Or DT_SINGLELINE Or DT_CENTER, clr, , , , , , , True
       End If
      Else
       If i = (m_nSortIndex And &HFFFFFF) Then
-       cFnt.DrawTextXP bm.hdc, .sCaption, 0, 0, r.Right, 0, DT_VCENTER Or DT_SINGLELINE Or DT_CALCRECT
-       If r.Right > w - 14 Then r.Right = w - 14
-       cFnt.DrawTextXP bm.hdc, .sCaption, r.Left + 2, 0, r.Right, r.Bottom, DT_VCENTER Or DT_SINGLELINE Or DT_END_ELLIPSIS Or DT_NOPREFIX, clr, , True
-       pDrawArrow r.Left + r.Right + 7, m_nItemHeight \ 2, nOpacity, bEnabled, m_nSortIndex And &H1000000
+       FakeDXGDIDrawText FakeDXUIDefaultFont, .sCaption, r.Left + 2, r.Top, w - 4, m_nItemHeight, 0.5, DT_VCENTER Or DT_SINGLELINE Or DT_CALCRECT, clr, , , , , , , True, f
+       If f > w - 14 Then f = w - 14
+       pDrawArrow r.Left + f + 7, r.Top + m_nItemHeight \ 2, nOpacity, m_bEnabled, m_nSortIndex And &H1000000
       Else
-       cFnt.DrawTextXP bm.hdc, .sCaption, r.Left + 2, 0, w - 4, r.Bottom, DT_VCENTER Or DT_SINGLELINE Or DT_END_ELLIPSIS Or DT_NOPREFIX, clr, , True
+       FakeDXGDIDrawText FakeDXUIDefaultFont, .sCaption, r.Left + 2, r.Top, w - 4, m_nItemHeight, 0.5, DT_VCENTER Or DT_SINGLELINE, clr, , , , , , , True
       End If
      End If
     End If
@@ -1595,8 +1557,56 @@ If m_bHeader Then
  Next i
 End If
 '///
-DeleteObject hbrBorder
-'///
 End Sub
 
+Friend Function OnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean
+If Not m_bEnabled Then Exit Function
+Select Case nEventType
+Case 0 'keypress
+Case 1 'keydown
+ RaiseEvent KeyDown(KeyCode, Shift)
+Case 2 'keyup
+ RaiseEvent KeyUp(KeyCode, Shift)
+End Select
+OnKeyEvent = True
+End Function
 
+Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal xClient As Single, ByVal yClient As Single, ByVal nEventType As Long) As Boolean
+Dim bInControl As Boolean
+If Not m_bEnabled Then Exit Function
+bInControl = xClient >= 0 And xClient < m_nWidth And yClient >= 0 And yClient < m_nHeight
+Select Case nEventType
+Case 0 'mousemove
+ If (m_bCapture And Button = 1) Or (bInControl And Button <> 1) Then
+  OnMouseMove Button, Shift, xClient, yClient
+  OnMouseEvent = True
+ End If
+Case 1 'mousedown
+ If bInControl Then
+  OnMouseDown Button, Shift, xClient, yClient
+  If Button = 1 Then m_bCapture = True
+  OnMouseEvent = True
+ End If
+Case 2 'mouseup
+ If (m_bCapture And Button = 1) Or (bInControl And Button <> 1) Then
+  OnMouseUp Button, Shift, xClient, yClient
+  If Button = 1 Then m_bCapture = False
+  OnMouseEvent = True
+ End If
+Case 4 'dblclick
+ If bInControl Then
+  '///
+  If m_nHlColumn > 0 And m_nHlColumn <= m_nColumns Then
+   If m_nHlRow > 0 And m_nHlRow <= m_nRows Then
+    RaiseEvent DblClick(m_nHlRow, m_nHlColumn)
+   Else
+    'header double click
+    'TODO:
+   End If
+  End If
+  '///
+  OnMouseEvent = True
+ End If
+End Select
+End Function
+ 
