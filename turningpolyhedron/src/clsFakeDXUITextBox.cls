@@ -15,7 +15,7 @@ Option Explicit
 
 Private Const m_nLineHeight As Long = 32
 
-Private Declare Function GetCharacterPlacementW Lib "Gdi32.dll" ( _
+Private Declare Function GetCharacterPlacementW Lib "gdi32.dll" ( _
   ByVal hdc As Long, _
   ByRef lpString As Any, _
   ByVal nCount As Long, _
@@ -23,11 +23,12 @@ Private Declare Function GetCharacterPlacementW Lib "Gdi32.dll" ( _
   ByRef lpResults As GCP_RESULTS, _
   ByVal dwFlags As Long) As Long
 
-Private Declare Function GetTextExtentPoint32W Lib "Gdi32.dll" ( _
+Private Declare Function GetTextExtentPoint32W Lib "gdi32.dll" ( _
   ByVal hdc As Long, _
   ByRef lpString As Any, _
   ByVal c As Long, _
   ByRef lpSize As Any) As Long
+
 Private Const GCP_MAXEXTENT As Long = &H100000
 
 Private Type GCP_RESULTS
@@ -582,12 +583,14 @@ If Button = 1 Then
   If m_bCapture Then
    ChangeCaretPosFromPoint xClient / m_nFontZoom + m_nScrollValue(0), yClient / m_nFontZoom + m_nScrollValue(1), True, True
    FakeDXUIMousePointer = vbIbeam
+   OnMouseEvent = True
   End If
  Case 1 'mousedown
   If bInControl Then
    ChangeCaretPosFromPoint xClient / m_nFontZoom + m_nScrollValue(0), yClient / m_nFontZoom + m_nScrollValue(1), True, Shift And vbShiftMask
    FakeDXUIMousePointer = vbIbeam
    m_bCapture = True
+   OnMouseEvent = True
   End If
  Case 2
   m_bCapture = False
@@ -1053,5 +1056,6 @@ End If
 End Function
 
 Private Sub Class_Initialize()
+m_nFontZoom = 0.5
 m_tSelStart.nRow = -1
 End Sub

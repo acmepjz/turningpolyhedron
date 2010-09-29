@@ -57,9 +57,14 @@ Private m_idxFocus As Long 'focus control on form
 
 Private m_tScrollBar(1) As typeFakeDXUIScrollBar
 
-'////////text box
+'////////controls
 
 Private m_objTextBox As clsFakeDXUITextBox
+Private m_objListView As clsFakeDXUIListView
+
+Friend Property Get ListViewObject() As clsFakeDXUIListView
+Set ListViewObject = m_objListView
+End Property
 
 Friend Property Get Focus() As Long
 Focus = m_idxFocus
@@ -486,6 +491,7 @@ Select Case m_nType
 Case 5
  m_tScrollBar(0).bEnabled = b
 End Select
+If Not m_objListView Is Nothing Then m_objListView.Enabled = b
 End Property
 
 Friend Property Get ScrollBarEnabled(Optional ByVal nIndex As Long) As Boolean
@@ -511,6 +517,7 @@ End Property
 
 Friend Property Let Locked(ByVal b As Boolean)
 If Not m_objTextBox Is Nothing Then m_objTextBox.Locked = b
+If Not m_objListView Is Nothing Then m_objListView.Locked = b
 End Property
 
 Friend Property Get ControlType() As enumFakeDXUIControlType
@@ -523,12 +530,15 @@ m_nType = n
 m_bSizeDirty = True
 '///
 Set m_objTextBox = Nothing
+Set m_objListView = Nothing
 Select Case n
 Case 5
  m_tScrollBar(0).bEnabled = m_bEnabled
 Case 7
  Set m_objTextBox = New clsFakeDXUITextBox
  m_objTextBox.FontZoom = m_nFontZoom
+Case 8
+ Set m_objListView = New clsFakeDXUIListView
 End Select
 '///TODO:
 End Property
@@ -562,6 +572,7 @@ m_nClosing = 0
 m_nScrollBars = 0
 m_idxFocus = 0
 Set m_objTextBox = Nothing
+Set m_objListView = Nothing
 Erase m_nAnimVal
 Erase m_tScrollBar
 With m_tScrollBar(0)
@@ -964,7 +975,7 @@ Case 7 'textbox
  If m_objTextBox.MultiLine Then pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
  i = r.x2 - r.X1
  j = r.Y2 - r.Y1
- If i > 4 And j > 4 Then 'size limit ??? TODO:
+ If i > 4 And j > 4 Then 'size limit ???
   m_objTextBox.Width = i
   m_objTextBox.Height = j
   m_objTextBox.CalcLineDataIfSizeChanged
@@ -1015,15 +1026,72 @@ Case 7 'textbox
   If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
   d3dd9.SetScissorRect r
   m_objTextBox.Render nLeft + m_tClientMargin.Left, nTop + m_tClientMargin.Top, nOpacity, bEnabled, FakeDXUIFocus = m_nIndex
-'  '///???
-'  With m_tScrollBar(0)
-'   .nValue = m_objTextBox.ScrollValue(0)
-'   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
-'  End With
-'  With m_tScrollBar(1)
-'   .nValue = m_objTextBox.ScrollValue(1)
-'   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
-'  End With
+  '///
+  d3dd9.SetScissorRect r0
+ End If
+Case 8 'listview
+ '////////border
+ i = 255 * nOpacity
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+ kk = 164 - (bEnabled And 40&)
+ FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
+ '////////scrollbar
+ r.X1 = nLeft + m_tClientMargin.Left
+ r.Y1 = nTop + m_tClientMargin.Top
+ r.x2 = nRight - m_tClientMargin.Right
+ r.Y2 = nBottom - m_tClientMargin.Bottom
+ pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
+ i = r.x2 - r.X1
+ j = r.Y2 - r.Y1
+ If i > 4 And j > 4 Then 'size limit ???
+  m_objListView.Width = i
+  m_objListView.Height = j
+  '///add:autoscroll
+  If m_objListView.ScrollChanged Then
+   m_tScrollBar(0).nValue = m_objListView.ScrollValue(0)
+   m_tScrollBar(1).nValue = m_objListView.ScrollValue(1)
+   m_tScrollBar(0).nSmallChange = m_objListView.SmallChange(0)
+   m_tScrollBar(1).nSmallChange = m_objListView.SmallChange(1)
+   m_objListView.ScrollChanged = False
+  End If
+  '///
+  With m_tScrollBar(0)
+   .nLargeChange = i
+   .nMax = m_objListView.TotalWidth - .nLargeChange
+   If .nMax > 0 Then
+    .bEnabled = True
+    m_nScrollBars = m_nScrollBars Or vbHorizontal
+   Else
+    .bEnabled = False
+    m_nScrollBars = m_nScrollBars And Not vbHorizontal
+    .nMax = 0
+   End If
+   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+   m_objListView.ScrollValue(0) = .nValue
+  End With
+  With m_tScrollBar(1)
+   .nLargeChange = j
+   If m_objListView.ColumnHeader Then .nLargeChange = .nLargeChange - m_objListView.RowHeight
+   .nMax = m_objListView.TotalHeight - .nLargeChange
+   If .nMax > 0 Then
+    .bEnabled = True
+    m_nScrollBars = m_nScrollBars Or vbVertical
+   Else
+    .bEnabled = False
+    m_nScrollBars = m_nScrollBars And Not vbVertical
+    .nMax = 0
+   End If
+   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+   m_objListView.ScrollValue(1) = .nValue
+  End With
+  '///
+  d3dd9.GetScissorRect r0
+  If r.X1 < r0.X1 Then r.X1 = r0.X1
+  If r.Y1 < r0.Y1 Then r.Y1 = r0.Y1
+  If r.x2 > r0.x2 Then r.x2 = r0.x2
+  If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
+  d3dd9.SetScissorRect r
+  m_objListView.Render nLeft + m_tClientMargin.Left, nTop + m_tClientMargin.Top, nOpacity
   '///
   d3dd9.SetScissorRect r0
  End If
@@ -1096,7 +1164,7 @@ If m_bSizeDirty Or bForce Then
   t.Bottom = 4
   If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
   If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
- Case 6, 7 'picturebox,textbox
+ Case 6, 7, 8 'picturebox,textbox,listview
   t.Left = 4
   t.Top = 4
   t.Right = 4
@@ -1324,6 +1392,7 @@ Friend Sub BeforeMouseEvent()
   .nAnimVal(14) = 0
   .nAnimVal(15) = 0
  End With
+If Not m_objListView Is Nothing Then m_objListView.BeforeMouseEvent
 'End Select
 '///
 'TODO:
@@ -1498,6 +1567,20 @@ Case 7 'textbox
  '///
  If bInControl Or FakeDXUISetCapture = m_nIndex Then
   b = b Or m_objTextBox.OnMouseEvent(Button, Shift, x - m_tClientToScreenOffset.x, y - m_tClientToScreenOffset.y, nEventType)
+ End If
+ '///
+Case 8 'listview
+ If bInControl And nEventType = 1 Then pSetFocus
+ '///scrollbar
+ If m_nScrollBars And vbHorizontal Then
+  b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
+ End If
+ If m_nScrollBars And vbVertical Then
+  b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
+ End If
+ '///
+ If bInControl Or FakeDXUISetCapture = m_nIndex Then
+  b = b Or m_objListView.OnMouseEvent(Button, Shift, x - m_tClientToScreenOffset.x, y - m_tClientToScreenOffset.y, nEventType)
  End If
  '///
 Case Else
@@ -1755,6 +1838,8 @@ If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit F
 Select Case m_nType
 Case 7 'textbox
  b = m_objTextBox.OnKeyEvent(KeyCode, Shift, nEventType)
+Case 8 'listview
+ b = m_objListView.OnKeyEvent(KeyCode, Shift, nEventType)
 End Select
 '///
 Select Case nEventType
