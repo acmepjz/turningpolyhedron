@@ -267,18 +267,6 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   '////////tab debug
   .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 80, &H3000000, , , , , "Single line text box blah blah blah 가가가 blah blah"
-  With .AddNewChildren(FakeCtl_ListView, 168, 4, 360, 76, &H3000000)
-   With .ListViewObject
-    .FullRowSelect = True
-    .ColumnHeader = True
-    .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
-    .AddColumn "he2", , efctCheck, , 32
-    .AddColumn "he3", , efctCheck3State, , 32
-    For i = 1 To 100
-     .AddItem CStr(i)
-    Next i
-   End With
-  End With
   With .AddNewChildren(FakeCtl_Frame, 120, 80, 240, 200, FCS_CanGetFocus, , , , "Form1234가각")
    .ScrollBars = vbBoth
    .Min = -50
@@ -327,9 +315,23 @@ With FakeDXUIControls(1)
   With .AddNewChildren(FakeCtl_Form, 0, 0, 320, 240, _
   3& Or FFS_TitleBar Or FFS_CloseButton Or FFS_MaxButton Or FFS_MinButton, , , , "Form2")
    With .AddNewChildren(FakeCtl_TextBox, 0, 0, 0, 0, &H3000000, , , , , _
-   Replace(Space(100), " ", "Text2 blah blah blah 가가가가가가각가가가가가가가가가가가가 blah blah blah" + vbCrLf), , , , 1, 1)
+   Replace(Space(100), " ", "Text2 blah blah blah 가가가가가가각가가가가가가가가가가가가 blah blah blah" + vbCrLf), , , , 0.5, 1)
     .ScrollBars = vbVertical
     .MultiLine = True
+   End With
+   With .AddNewChildren(FakeCtl_ListView, 0, 0, 0, 0, &H3000000, , , , , , , 0.5, , 1, 1)
+    With .ListViewObject
+     .FullRowSelect = True
+     .ColumnHeader = True
+     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
+     .AddColumn "he2", , , efcfSizable Or efcfSortable, 48
+     .AddColumn "he3", , , efcfSizable Or efcfSortable, 48
+     .AddColumn "A", , efctCheck, , 16
+     .AddColumn "B", , efctCheck3State, , 16
+     For i = 1 To 1000
+      .AddItem CStr(i), , , Array(CStr(i * i), CStr(i * i * i))
+     Next i
+    End With
    End With
   End With
  End With
