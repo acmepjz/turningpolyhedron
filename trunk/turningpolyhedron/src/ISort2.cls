@@ -62,7 +62,7 @@ End Function
 
 Friend Sub QuickSort(idxArray() As Long, ByVal nStart As Long, ByVal nEnd As Long, Optional ByVal obj As ISort2, Optional ByVal nUserData As Long, Optional ByVal nLimit As Long = 8)
 '///check
-If nEnd - nStart <= 1 Then Exit Sub
+If nEnd - nStart <= 0 Then Exit Sub
 If obj Is Nothing Then Set obj = Me
 '///
 #If UseMSVCRT Then
@@ -365,7 +365,7 @@ Dim i As Long, j As Long
 Dim nCurrent As Long, nParent As Long, nCurrent2 As Long
 Dim nTemp As Long
 '///check
-If nEnd - nStart <= 1 Then Exit Sub
+If nEnd - nStart <= 0 Then Exit Sub
 If obj Is Nothing Then Set obj = Me
 '///
 nStart = nStart - 1

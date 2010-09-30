@@ -21,14 +21,6 @@ Private Declare Function GetTextExtentPoint32W Lib "gdi32.dll" ( _
   ByVal c As Long, _
   ByRef lpSize As Any) As Long
 
-'Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
-'Private Declare Function GetKeyState Lib "user32.dll" (ByVal nVirtKey As Long) As Integer
-'Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
-'Private Type POINTAPI
-'    x As Long
-'    y As Long
-'End Type
-
 Private Type RECT
     Left As Long
     Top As Long
@@ -268,11 +260,23 @@ Private Sub pDrawCheck(ByVal nOpacity As Single, ByVal x As Long, ByVal y As Lon
 Dim i As Long, j As Long
 i = nOpacity * 255
 i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
-nState = nState * 16&
-FakeDXGDIStretchBltColored x, y, x + 16, y + 16, nState, 368, nState + 16, 384, 512, i
-If nValue > 0 Then
- nValue = (nValue - 1) * 32&
- FakeDXGDIStretchBltColored x, y, x + 16, y + 16, nValue, 384, nValue + 16, 400, 512, i
+FakeDXGDIStretchBltColored x, y, x + 16, y + 16, 0, 368, 16, 384, 512, i
+If nState Then
+ i = nOpacity * ((nState And &HF&) * 51&)
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+ FakeDXGDIStretchBltBlended x, y, x + 16, y + 16, 32, 368, 48, 384, 512, 16, 368, (nState \ &H10&) * 51&, i
+End If
+j = nValue And &HF&
+If j > 0 Then
+ i = nOpacity * (j * 51&)
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+ FakeDXGDIStretchBltColored x, y, x + 16, y + 16, 0, 384, 16, 400, 512, i
+End If
+j = nValue \ &H10&
+If j > 0 Then
+ i = nOpacity * (j * 51&)
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+ FakeDXGDIStretchBltColored x, y, x + 16, y + 16, 32, 384, 48, 400, 512, i
 End If
 End Sub
 
@@ -1287,7 +1291,7 @@ End Sub
 Friend Sub Render(Optional ByVal nLeft As Single, Optional ByVal nTop As Single, Optional ByVal nOpacity As Single = 1)
 On Error Resume Next
 Dim i As Long, j As Long, jj As Long, k As Long
-Dim kk As Long
+Dim kk As Long, kkk As Long, kkkk As Long, kkkkk As Long
 Dim x As Long, y As Long, w As Long
 Dim ww As Long, hh As Long
 Dim r As RECT
@@ -1376,25 +1380,39 @@ For i = 1 To m_nColumns
       Else
        kk = m_sData(i, j).nFlags
       End If
-      'fill
+      'fill new:animation TODO:animation with virtual mode
+      kkk = m_sData(i, j).bAnimVal1
+      If bHighlight Then
+       If (kkk And &HF&) < 5 Then kkk = kkk + 1
+      Else
+       If (kkk And &HF&) > 0 Then kkk = kkk - 1
+      End If
       If (bSelected And Not m_bMultiSelect) Or (kk And 1&) <> 0 Then
+       If kkk < &H50& Then kkk = kkk + &H10&
+      Else
+       If kkk >= &H10& Then kkk = kkk - &H10&
+      End If
+      m_sData(i, j).bAnimVal1 = kkk
+      If kkk Then
        r.Left = .nLeft - x + nLeft
        r.Top = y + nTop
        r.Right = r.Left + w
        r.Bottom = r.Top + m_nItemHeight
        If m_bGrid Then r.Left = r.Left + 1: r.Top = r.Top + 1
-       If bHighlight Then
-        FakeDXGDIGradientFillRect r.Left, r.Top, r.Right, r.Bottom, d_Pressed1 Or clr0, d_Pressed2 Or clr0, True
-       Else
-        FakeDXGDIGradientFillRect r.Left, r.Top, r.Right, r.Bottom, d_Checked1 Or clr0, d_Checked2 Or clr0, True
+       '///
+       kkkk = (kkk And &HF&) * 51&
+       If kkkk Then
+        kkkkk = nOpacity * kkkk
+        kkkkk = ((kkkkk And &H7F&) * &H1000000) Or ((kkkkk > &H7F&) And &H80000000) Or &HFFFFFF
+        FakeDXGDIStretchBltColored r.Left, r.Top, r.Right, r.Bottom, 166, 416, 166, 448, 512, kkkkk
        End If
-      ElseIf bHighlight Then
-       r.Left = .nLeft - x + nLeft
-       r.Top = y + nTop
-       r.Right = r.Left + w
-       r.Bottom = r.Top + m_nItemHeight
-       If m_bGrid Then r.Left = r.Left + 1: r.Top = r.Top + 1
-       FakeDXGDIGradientFillRect r.Left, r.Top, r.Right, r.Bottom, d_Hl1 Or clr0, d_Hl2 Or clr0, True
+       '///
+       kkk = (kkk \ &H10&) * 51&
+       If kkk Then
+        kkkkk = nOpacity * kkk
+        kkkkk = ((kkkkk And &H7F&) * &H1000000) Or ((kkkkk > &H7F&) And &H80000000) Or &HFFFFFF
+        FakeDXGDIStretchBltBlended r.Left, r.Top, r.Right, r.Bottom, 174, 416, 174, 448, 512, 170, 416, kkkk, kkkkk
+       End If
       End If
       'save border data
       If bHighlight Then
@@ -1458,6 +1476,35 @@ For i = 1 To m_nColumns
        Else
         r.Bottom = 0
        End If
+       '///new:animation TODO:animation with virtual mode
+       kkk = m_sData(i, j).bAnimVal2
+       If r.Right = 1 Then
+        If (kkk And &HF&) < 5 Then kkk = kkk + 1
+       Else
+        If (kkk And &HF&) > 0 Then kkk = kkk - 1
+       End If
+       If r.Right = 2 Then
+        If kkk < &H50& Then kkk = kkk + &H10&
+       Else
+        If kkk >= &H10& Then kkk = kkk - &H10&
+       End If
+       r.Right = kkk
+       m_sData(i, j).bAnimVal2 = kkk
+       '///
+       kkk = m_sData(i, j).bAnimVal3
+       If r.Bottom > 0 Then
+        If (kkk And &HF&) < 5 Then kkk = kkk + 1
+       Else
+        If (kkk And &HF&) > 0 Then kkk = kkk - 1
+       End If
+       If r.Bottom > 1 Then
+        If kkk < &H50& Then kkk = kkk + &H10&
+       Else
+        If kkk >= &H10& Then kkk = kkk - &H10&
+       End If
+       r.Bottom = kkk
+       m_sData(i, j).bAnimVal3 = kkk
+       '///
        pDrawCheck nOpacity, nLeft + .nLeft - x + w \ 2 - 8, nTop + y + m_nItemHeight \ 2 - 8, r.Right, r.Bottom
       Case Else
        If .nFlags And 32& Then kk = DT_RIGHT Else If .nFlags And 64& Then kk = DT_CENTER Else kk = 0
@@ -1481,13 +1528,7 @@ If r3.Left <> &H80000000 Then
 End If
 '///header
 If m_bHeader Then
-' '///
-' GradientFillRect bm.hdc, 0, 0, ww, m_nItemHeight, d_Bar1, d_Bar2, GRADIENT_FILL_RECT_V
-' r.Left = 0
-' r.Top = m_nItemHeight
-' r.Right = ww
-' r.Bottom = r.Top + 1
-' FillRect bm.hdc, r, hbrBorder
+ '///
  For i = 1 To m_nColumns
   With m_tHdr(i)
    If (.nFlags And 8&) = 0 Then
