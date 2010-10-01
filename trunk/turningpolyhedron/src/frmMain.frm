@@ -420,8 +420,9 @@ End Sub
 Private Function pTest() As D3DXMesh
 Dim obj As D3DXMesh
 Dim objAdjacency As D3DXBuffer
-Dim i As Long, lp As Long
+Dim i As Long, j As Long, lp As Long
 Dim tDesc As D3DVERTEXBUFFER_DESC
+'////////
 'bug in x file loader: you must write "1.000" instead of "1" or it'll buggy :-3
 D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_2.x", D3DXMESH_MANAGED, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
 'D3DXLoadMeshFromXW CStr(App.Path) + "\media\test.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
@@ -620,6 +621,7 @@ On Error Resume Next
 Dim i As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
 Dim r(3) As Long
+Dim f(3) As Single
 Dim s As String
 If Me.WindowState = vbMinimized Then
  Sleep 20
@@ -662,7 +664,28 @@ With d3dd9
   objTest.DrawSubset 0
   .EndScene
   objRenderTest.EndRender
-  '////////test
+'  '////////patch test 'video card unsupported!!! :-(
+'  Dim tRectPatchInfo As D3DRECTPATCH_INFO
+'  .BeginScene
+'  .SetStreamSource 0, objPatchTest, 0, 16&
+'  .SetFVF D3DFVF_XYZ Or D3DFVF_DIFFUSE
+'  .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
+'  .SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
+'  tRectPatchInfo.Width = 11
+'  tRectPatchInfo.Height = 11
+'  tRectPatchInfo.Stride = 11
+'  tRectPatchInfo.Basis = D3DBASIS_BSPLINE
+'  tRectPatchInfo.Order = 1
+'  f(0) = 1
+'  f(1) = 1
+'  f(2) = 1
+'  f(3) = 1
+'  .DrawRectPatch 0, f(0), tRectPatchInfo
+'  .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+'  .SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+'  .EndScene
+  '////////draw text test
+  .BeginScene
   s = "FPS:" + Format(objTiming.FPS, "0.0")
   FakeDXGDIDrawText FakeDXUIDefaultFont, s, 32, 32, 128, 32, 0.75, DT_NOCLIP, -1, , &HFF000000, , , , , True
   FakeDXGDIDrawText FakeDXUIDefaultFont, "TEST 2 !!! °¡°¢", 32, 256, 128, 32, 1, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.79, True
