@@ -10,17 +10,17 @@ Public d3dd9 As Direct3DDevice9
 
 Public d3dpp As D3DPRESENT_PARAMETERS
 
-'Public Type typeVertex
-' p As D3DVECTOR
-' n As D3DVECTOR
-'' b As D3DVECTOR
-'' ta As D3DVECTOR
-' clr1 As Long 'diffuse
-' clr2 As Long 'specular
-' t As D3DXVECTOR2
-'End Type
+Public Type typeVertex
+ p As D3DVECTOR
+ n As D3DVECTOR
+ b As D3DVECTOR
+ ta As D3DVECTOR
+ clr1 As Long 'diffuse
+ clr2 As Long 'specular
+ t As D3DXVECTOR2
+End Type
 
-Public Const m_nDefaultFVF = D3DFVF_XYZ Or D3DFVF_NORMAL Or D3DFVF_DIFFUSE Or D3DFVF_SPECULAR Or D3DFVF_TEX1
+'Public Const m_nDefaultFVF = D3DFVF_XYZ Or D3DFVF_NORMAL Or D3DFVF_DIFFUSE Or D3DFVF_SPECULAR Or D3DFVF_TEX1
 
 Public m_tDefVertexDecl() As D3DVERTEXELEMENT9
 

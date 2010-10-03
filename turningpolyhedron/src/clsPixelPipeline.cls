@@ -44,6 +44,8 @@ Private m_nShadowMapSize As Long
 
 Private m_fParam(3) As D3DXVECTOR4
 
+Private m_fovy As Single, m_fAspect As Single, m_zn As Single, m_zf As Single
+
 Friend Property Get Effect() As D3DXEffect
 Set Effect = objEffect
 End Property
@@ -245,5 +247,23 @@ Set objShadowMap = Nothing
 Set objShadowStencil = Nothing
 Set texNoise = Nothing
 Set objEffect = Nothing
+End Sub
+
+Friend Sub SetProjection_PerspectiveFovLH(Optional ByVal fovy As Single = 0.7854, Optional ByVal Aspect As Single, Optional ByVal zn As Single = 0.1, Optional ByVal zf As Single = 100)
+Dim mat As D3DMATRIX
+If Aspect <= 0.0001 Then Aspect = d3dpp.BackBufferWidth / d3dpp.BackBufferHeight
+m_fovy = fovy
+m_fAspect = Aspect
+m_zn = zn
+m_zf = zf
+D3DXMatrixPerspectiveFovLH mat, m_fovy, Aspect, zn, zf
+d3dd9.SetTransform D3DTS_PROJECTION, mat
+End Sub
+
+Friend Sub GetProjection_PerspectiveFovLH(ByRef fovy As Single, ByRef Aspect As Single, ByRef zn As Single, ByRef zf As Single)
+fovy = m_fovy
+Aspect = m_fAspect
+zn = m_zn
+zf = m_zf
 End Sub
 
