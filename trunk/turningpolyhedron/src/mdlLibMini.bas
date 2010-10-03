@@ -224,6 +224,12 @@ Public Declare Sub Mini_SetRealHeightFloat Lib "libmini.dll" (ByVal x As Single,
 Public Declare Sub Mini_UpdateMaps Lib "libmini.dll" (ByVal bFast As Long, ByVal avgd2 As Single, ByVal bReCalc As Long)
 Public Declare Sub Mini_DeleteMaps Lib "libmini.dll" ()
 
+'inline float getX(const float i)
+'   {return((i-S/2)*Dx+OX);}
+'inline float getY(const float y)
+'   {return(y*SCALE+OY);}
+'inline float getZ(const float j)
+'   {return((S/2-j)*Dz+OZ);}
 Public Declare Function Mini_GetX Lib "libmini.dll" (ByVal i As Single) As Single
 Public Declare Function Mini_GetY Lib "libmini.dll" (ByVal y As Single) As Single
 Public Declare Function Mini_GetZ Lib "libmini.dll" (ByVal j As Single) As Single

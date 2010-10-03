@@ -354,7 +354,13 @@ If FakeDXUISetCapture > 0 And FakeDXUISetCapture <= FakeDXUIControlCount Then
  Set obj = FakeDXUIControls(FakeDXUISetCapture)
  If obj.ControlType < 0 Then Set obj = Nothing
 End If
-If obj Is Nothing Then Set obj = FakeDXUIControls(1)
+If obj Is Nothing Then
+ Set obj = FakeDXUIControls(1)
+ If nEventType = 1 Then
+  FakeDXUIActiveWindow = 0 '????????
+  FakeDXUIFocus = 0 '????????
+ End If
+End If
 '///???
 If nEventType = 0 Then
  FakeDXUI_IME.BeforeMouseEvent

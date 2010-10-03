@@ -1288,58 +1288,105 @@ Dim ww As Long, hh As Long
 '///
 End Sub
 
+Friend Sub pDrawGridLine(Optional ByVal nLeft As Single, Optional ByVal nTop As Single, Optional ByVal nOpacity As Single = 1)
+Dim i As Long, k As Long
+Dim x As Long, xx As Long, y As Long, w As Long
+'///
+Dim f() As Single, m As Long, m2 As Long
+'///
+k = m_nScrollValue(1) \ m_nItemHeight
+y = k * m_nItemHeight - m_nScrollValue(1)
+Do
+ If m + 8 >= m2 Then
+  m2 = m2 + 1024&
+  ReDim Preserve f(m2 - 1)
+ End If
+ f(m) = nLeft
+ f(m + 1) = nTop + y
+ f(m + 3) = 1
+ f(m + 4) = nLeft + m_nWidth
+ f(m + 5) = f(m + 1)
+ f(m + 7) = 1
+ m = m + 8
+ y = y + m_nItemHeight
+Loop Until y >= m_nHeight
+x = m_nScrollValue(0)
+xx = -1
+For i = 1 To m_nColumns
+ With m_tHdr(i)
+  If (.nFlags And 8&) = 0 Then
+   w = .nWidth
+   If w = 0 Then
+    If i = m_nColumns Then
+     w = m_nWidth - .nLeft + x
+    Else
+     w = m_nMinSize
+    End If
+   End If
+   If .nLeft < x + m_nWidth And .nLeft + w > x Then
+    If m + 8 >= m2 Then
+     m2 = m2 + 1024&
+     ReDim Preserve f(m2 - 1)
+    End If
+    xx = nLeft + .nLeft - x
+    f(m) = xx
+    f(m + 1) = nTop
+    f(m + 3) = 1
+    f(m + 4) = xx
+    f(m + 5) = nTop + m_nHeight
+    f(m + 7) = 1
+    m = m + 8
+    xx = xx + w
+   End If
+  End If
+ End With
+Next i
+'///
+If xx >= 0 Then
+ If m + 8 >= m2 Then
+  m2 = m2 + 1024&
+  ReDim Preserve f(m2 - 1)
+ End If
+ f(m) = xx
+ f(m + 1) = nTop
+ f(m + 3) = 1
+ f(m + 4) = xx
+ f(m + 5) = nTop + m_nHeight
+ f(m + 7) = 1
+ m = m + 8
+End If
+'///
+If m > 0 Then
+ i = nOpacity * 255
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
+ d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
+ d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
+ d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_CONSTANT
+ d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, D3DTA_CONSTANT
+ d3dd9.SetTextureStageState 0, D3DTSS_CONSTANT, i Or &H999999
+ d3dd9.SetFVF D3DFVF_XYZRHW
+ d3dd9.DrawPrimitiveUP D3DPT_LINELIST, m \ 8&, f(0), 16&
+ d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+ d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+ d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
+ d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE
+End If
+'///
+End Sub
+
 Friend Sub Render(Optional ByVal nLeft As Single, Optional ByVal nTop As Single, Optional ByVal nOpacity As Single = 1)
 On Error Resume Next
 Dim i As Long, j As Long, jj As Long, k As Long
 Dim kk As Long, kkk As Long, kkkk As Long, kkkkk As Long
 Dim x As Long, y As Long, w As Long
-Dim ww As Long, hh As Long
 Dim r As RECT
 Dim clr As Long, clr0 As Long
 Dim s As String, b As Boolean
 Dim bHighlight As Boolean, bSelected As Boolean
 Dim r2 As RECT, r3 As RECT
 Dim f As Single
-ww = m_nWidth
-hh = m_nHeight
 '///grid line
-If m_bGrid Then
- 'TODO:!!!!!!!!
-' hbr = CreateSolidBrush(TranslateColor(FillColor))
-' k = m_nScrollValue(1) \ m_nItemHeight
-' y = k * m_nItemHeight - m_nScrollValue(1)
-' Do
-'  r.Left = 0
-'  r.Top = y
-'  r.Right = ww
-'  r.Bottom = y + 1
-'  FillRect bm.hdc, r, hbr
-'  y = y + m_nItemHeight
-' Loop Until y >= hh
-' x = m_nScrollValue(0)
-' For i = 1 To m_nColumns
-'  With m_tHdr(i)
-'   If (.nFlags And 8&) = 0 Then
-'    w = .nWidth
-'    If w = 0 Then
-'     If i = m_nColumns Then
-'      w = ww - .nLeft + x
-'     Else
-'      w = m_nMinSize
-'     End If
-'    End If
-'    If .nLeft < x + ww And .nLeft + w > x Then
-'     r.Left = .nLeft - x
-'     r.Top = -1
-'     r.Right = r.Left + w + 1
-'     r.Bottom = hh + 1
-'     FrameRect bm.hdc, r, hbr
-'    End If
-'   End If
-'  End With
-' Next i
-' DeleteObject hbr
-End If
+If m_bGrid Then pDrawGridLine nLeft, nTop, nOpacity
 '///list item
 clr0 = nOpacity * 255
 clr0 = ((clr0 And &H7F&) * &H1000000) Or ((clr0 > &H7F&) And &H80000000)
@@ -1355,13 +1402,13 @@ For i = 1 To m_nColumns
    w = .nWidth
    If w = 0 Then
     If i = m_nColumns Then
-     w = ww - .nLeft + x - 1 '???
+     w = m_nWidth - .nLeft + x - 1 '???
      If w < m_nMinSize Then w = m_nMinSize '???
     Else
      w = m_nMinSize
     End If
    End If
-   If .nLeft < x + ww And .nLeft + w > x Then
+   If .nLeft < x + m_nWidth And .nLeft + w > x Then
     y = k * m_nItemHeight - m_nScrollValue(1)
     If m_bHeader Then y = y + m_nItemHeight
     For j = k + 1 To m_nRows
@@ -1513,7 +1560,7 @@ For i = 1 To m_nColumns
      End If
      '////////
      y = y + m_nItemHeight
-     If y >= hh Then Exit For
+     If y >= m_nHeight Then Exit For
     Next j
    End If
   End If
@@ -1528,6 +1575,7 @@ If r3.Left <> &H80000000 Then
 End If
 '///header
 If m_bHeader Then
+ r.Right = 0
  '///
  For i = 1 To m_nColumns
   With m_tHdr(i)
@@ -1535,20 +1583,20 @@ If m_bHeader Then
     w = .nWidth
     If w = 0 Then
      If i = m_nColumns Then
-      w = ww - .nLeft + x - 1 '???
+      w = m_nWidth - .nLeft + x - 1 '???
       If w < m_nMinSize Then w = m_nMinSize '???
      Else
       w = m_nMinSize
      End If
     End If
-    If .nLeft < x + ww And .nLeft + w > x Then
+    If .nLeft < x + m_nWidth And .nLeft + w > x Then
      'draw header
      r.Left = nLeft + .nLeft - x
      r.Top = nTop
      r.Right = r.Left + w
      r.Bottom = nTop + m_nItemHeight
-     'highlight
      FakeDXGDIStretchBltExColored r.Left, r.Top, r.Right, r.Bottom, 0, 420, 32, 448, 4, 0, 4, 4, 512, clr0 Or &HFFFFFF
+     'highlight
      If m_nHlColumn = i And m_nHlRow = 0 Then
       If .bAnimVal1 < 255 Then .bAnimVal1 = .bAnimVal1 + 51
       If m_bPressed Then
@@ -1596,8 +1644,16 @@ If m_bHeader Then
    End If
   End With
  Next i
+ '///
+ If r.Right < nLeft + m_nWidth Then
+  r.Left = r.Right
+  r.Top = nTop
+  r.Right = nLeft + m_nWidth + 8
+  r.Bottom = nTop + m_nItemHeight
+  FakeDXGDIStretchBltExColored r.Left, r.Top, r.Right, r.Bottom, 0, 420, 32, 448, 4, 0, 4, 4, 512, clr0 Or &HFFFFFF
+ End If
+ '///
 End If
-'///
 End Sub
 
 Friend Function OnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean

@@ -22,12 +22,6 @@ Begin VB.Form frmMain
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   640
    StartUpPosition =   3  '´°¿ÚÈ±Ê¡
-   Begin VB.Timer Timer1 
-      Enabled         =   0   'False
-      Interval        =   30
-      Left            =   3480
-      Top             =   1440
-   End
 End
 Attribute VB_Name = "frmMain"
 Attribute VB_GlobalNameSpace = False
@@ -63,6 +57,7 @@ Private Type RECT
     Right As Long
     Bottom As Long
 End Type
+Private Declare Function GetActiveWindow Lib "user32.dll" () As Long
 
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
@@ -75,6 +70,7 @@ Implements IFakeDXUIEvent
 
 Private objTest As D3DXMesh
 Private objDrawTest As New clsRenderTexture, objRenderTest As New clsRenderPipeline
+Private objLand As New clsRenderLandscape, objLandTexture As Direct3DTexture9
 
 Private objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
 
@@ -156,6 +152,40 @@ If FakeDXUIOnKeyEvent(KeyCode, Shift, 2) Then Exit Sub
 End Sub
 
 Private Sub Form_Load()
+pInit
+pMainLoop
+End Sub
+
+Private Sub pMainLoop()
+objTiming.MinPeriod = 1000 / 30
+Do Until d3dd9 Is Nothing
+ '///process key event
+ pKeyEvent
+ '///
+ objTiming.WaitForNextFrame
+ Timer1_Timer
+ DoEvents
+Loop
+End Sub
+
+Private Sub pKeyEvent()
+Dim dx As Single, dz As Single
+If GetActiveWindow = Me.hwnd And FakeDXUIActiveWindow = 0 Then
+ If GetAsyncKeyState(vbKeyA) And &H8000& Then
+  dx = -0.1
+ ElseIf GetAsyncKeyState(vbKeyD) And &H8000& Then
+  dx = 0.1
+ End If
+ If GetAsyncKeyState(vbKeyS) And &H8000& Then
+  dz = -0.1
+ ElseIf GetAsyncKeyState(vbKeyW) And &H8000& Then
+  dz = 0.1
+ End If
+ If dx <> 0 Or dz <> 0 Then objCamera.MoveByLocalCoordinatesLH dx, 0, dz
+End If
+End Sub
+
+Private Sub pInit()
 On Error Resume Next
 Dim i As Long
 Dim s As String
@@ -229,8 +259,6 @@ objRenderTest.CreateShadowMap 1024 'new
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
 objRenderTest.SetShadowState True, 16, -100, 100  'directional
 objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 30, -0.5, 0.02
-'///
-Me.Caption = objText.GetText("Turning Polyhedron")
 '////////new:subclass
 #If UseSubclass Then
 If True Then
@@ -245,14 +273,13 @@ If App.LogMode = 1 Then
  cSub.AddMsg WM_MOUSEWHEEL, MSG_AFTER
  cSub.Subclass Me.hwnd, Me
 End If
+'////////test
+Dim t As D3DXIMAGE_INFO
+objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , -15
+D3DXCreateTextureFromFileExW d3dd9, App.Path + "\test0.png", D3DX_DEFAULT, D3DX_DEFAULT, 1, 0, D3DFMT_FROM_FILE, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, t, ByVal 0, objLandTexture
 '////////
-objTiming.MinPeriod = 1000 / 30
-'////////new:deadloop
-Do Until d3dd9 Is Nothing
- objTiming.WaitForNextFrame
- Timer1_Timer
- DoEvents
-Loop
+Me.Caption = objText.GetText("Turning Polyhedron")
+'////////
 End Sub
 
 Private Sub pCreateUI()
@@ -323,6 +350,7 @@ With FakeDXUIControls(1)
     With .ListViewObject
      .FullRowSelect = True
      .ColumnHeader = True
+     .GridLines = True
      .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
      .AddColumn "he2", , , efcfSizable Or efcfSortable, 48
      .AddColumn "he3", , , efcfSizable Or efcfSortable, 48
@@ -346,7 +374,7 @@ End Sub
 
 Private Sub pSetRenderState()
 'test only
-Dim mat As D3DMATRIX
+objRenderTest.SetProjection_PerspectiveFovLH Atn(1), Me.ScaleWidth / Me.ScaleHeight, 0.1, 200
 With d3dd9
  .SetRenderState D3DRS_LIGHTING, 0
  .SetSamplerState 0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
@@ -355,8 +383,6 @@ With d3dd9
  .SetSamplerState 1, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
  .SetSamplerState 1, D3DSAMP_MINFILTER, D3DTEXF_LINEAR
  .SetSamplerState 1, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR
- D3DXMatrixPerspectiveFovLH mat, Atn(1), Me.ScaleWidth / Me.ScaleHeight, 0.1, 100
- .SetTransform D3DTS_PROJECTION, mat
  '///
  .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
  .SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_TEXTURE
@@ -408,7 +434,13 @@ cSub.UnSubclass
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
+pDestroy
+End Sub
+
+Private Sub pDestroy()
 FakeDXUIDestroy
+Set objLand = Nothing
+Set objLandTexture = Nothing
 Set objDrawTest = Nothing
 Set objTest = Nothing
 Set objTexture = Nothing
@@ -664,31 +696,18 @@ With d3dd9
   objTest.DrawSubset 0
   .EndScene
   objRenderTest.EndRender
-'  '////////patch test 'video card unsupported!!! :-(
-'  Dim tRectPatchInfo As D3DRECTPATCH_INFO
-'  .BeginScene
-'  .SetStreamSource 0, objPatchTest, 0, 16&
-'  .SetFVF D3DFVF_XYZ Or D3DFVF_DIFFUSE
-'  .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
-'  .SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
-'  tRectPatchInfo.Width = 11
-'  tRectPatchInfo.Height = 11
-'  tRectPatchInfo.Stride = 11
-'  tRectPatchInfo.Basis = D3DBASIS_BSPLINE
-'  tRectPatchInfo.Order = 1
-'  f(0) = 1
-'  f(1) = 1
-'  f(2) = 1
-'  f(3) = 1
-'  .DrawRectPatch 0, f(0), tRectPatchInfo
-'  .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
-'  .SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
-'  .EndScene
+  '////////draw landscape test
+  .SetTexture 0, objLandTexture
+  .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
+  .BeginScene
+  objLand.Render objRenderTest, objCamera
+  .EndScene
+  .SetTransform D3DTS_WORLD, mat
   '////////draw text test
   .BeginScene
   s = "FPS:" + Format(objTiming.FPS, "0.0")
   FakeDXGDIDrawText FakeDXUIDefaultFont, s, 32, 32, 128, 32, 0.75, DT_NOCLIP, -1, , &HFF000000, , , , , True
-  FakeDXGDIDrawText FakeDXUIDefaultFont, "TEST 2 !!! °¡°¢", 32, 256, 128, 32, 1, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.79, True
+  FakeDXGDIDrawText FakeDXUIDefaultFont, "Landscape" + vbCrLf + "Triangles:" + CStr(MyMini_IndexCount), 48, 256, 128, 32, 1, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.79, True
   .EndScene
   '////////
   .BeginScene

@@ -23,6 +23,38 @@ Private m_bLockCamera As Boolean
 
 Private nOldX As Long, nOldY As Long
 
+Friend Sub Move(ByVal dx As Single, ByVal dy As Single, ByVal dz As Single)
+m_tViewPos.x = m_tViewPos.x + dx
+m_tViewPos.y = m_tViewPos.y + dy
+m_tViewPos.z = m_tViewPos.z + dz
+m_tViewAt.x = m_tViewAt.x + dx
+m_tViewAt.y = m_tViewAt.y + dy
+m_tViewAt.z = m_tViewAt.z + dz
+End Sub
+
+Friend Sub MoveByLocalCoordinatesLH(ByVal dx As Single, ByVal dy As Single, ByVal dz As Single)
+Dim xx As D3DVECTOR, yy As D3DVECTOR, zz As D3DVECTOR
+Dim x1 As Single, y1 As Single, z1 As Single
+'///
+zz.x = m_tViewAt.x - m_tViewPos.x
+zz.y = m_tViewAt.y - m_tViewPos.y
+zz.z = m_tViewAt.z - m_tViewPos.z
+D3DXVec3Normalize zz, zz
+D3DXVec3Normalize xx, D3DXVec3Cross(m_tViewUp, zz)
+yy = D3DXVec3Cross(zz, xx)
+'///
+x1 = dx * xx.x + dy * yy.x + dz * zz.x
+y1 = dx * xx.y + dy * yy.y + dz * zz.y
+z1 = dx * xx.z + dy * yy.z + dz * zz.z
+'///
+m_tViewPos.x = m_tViewPos.x + x1
+m_tViewPos.y = m_tViewPos.y + y1
+m_tViewPos.z = m_tViewPos.z + z1
+m_tViewAt.x = m_tViewAt.x + x1
+m_tViewAt.y = m_tViewAt.y + y1
+m_tViewAt.z = m_tViewAt.z + z1
+End Sub
+
 Friend Property Get Distance() As Single
 Distance = m_fDist
 End Property

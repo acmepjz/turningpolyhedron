@@ -968,13 +968,13 @@ Case 7 'textbox
  kk = 164 - (bEnabled And 40&)
  FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
  '////////scrollbar and text
- r.X1 = nLeft + m_tClientMargin.Left
- r.Y1 = nTop + m_tClientMargin.Top
+ r.x1 = nLeft + m_tClientMargin.Left
+ r.y1 = nTop + m_tClientMargin.Top
  r.x2 = nRight - m_tClientMargin.Right
  r.Y2 = nBottom - m_tClientMargin.Bottom
  If m_objTextBox.MultiLine Then pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
- i = r.x2 - r.X1
- j = r.Y2 - r.Y1
+ i = r.x2 - r.x1
+ j = r.Y2 - r.y1
  If i > 4 And j > 4 Then 'size limit ???
   m_objTextBox.Width = i
   m_objTextBox.Height = j
@@ -1020,8 +1020,8 @@ Case 7 'textbox
   End If
   '///
   d3dd9.GetScissorRect r0
-  If r.X1 < r0.X1 Then r.X1 = r0.X1
-  If r.Y1 < r0.Y1 Then r.Y1 = r0.Y1
+  If r.x1 < r0.x1 Then r.x1 = r0.x1
+  If r.y1 < r0.y1 Then r.y1 = r0.y1
   If r.x2 > r0.x2 Then r.x2 = r0.x2
   If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
   d3dd9.SetScissorRect r
@@ -1036,13 +1036,13 @@ Case 8 'listview
  kk = 164 - (bEnabled And 40&)
  FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
  '////////scrollbar
- r.X1 = nLeft + m_tClientMargin.Left
- r.Y1 = nTop + m_tClientMargin.Top
+ r.x1 = nLeft + m_tClientMargin.Left
+ r.y1 = nTop + m_tClientMargin.Top
  r.x2 = nRight - m_tClientMargin.Right
  r.Y2 = nBottom - m_tClientMargin.Bottom
  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
- i = r.x2 - r.X1
- j = r.Y2 - r.Y1
+ i = r.x2 - r.x1
+ j = r.Y2 - r.y1
  If i > 4 And j > 4 Then 'size limit ???
   m_objListView.Width = i
   m_objListView.Height = j
@@ -1086,8 +1086,8 @@ Case 8 'listview
   End With
   '///
   d3dd9.GetScissorRect r0
-  If r.X1 < r0.X1 Then r.X1 = r0.X1
-  If r.Y1 < r0.Y1 Then r.Y1 = r0.Y1
+  If r.x1 < r0.x1 Then r.x1 = r0.x1
+  If r.y1 < r0.y1 Then r.y1 = r0.y1
   If r.x2 > r0.x2 Then r.x2 = r0.x2
   If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
   d3dd9.SetScissorRect r
@@ -1102,12 +1102,12 @@ End Select
 If m_nChildrenCount > 0 And Not bNoChild Then
  '///new:clip rect
  d3dd9.GetScissorRect r0
- r.X1 = nLeft
- r.Y1 = nTop
+ r.x1 = nLeft
+ r.y1 = nTop
  r.x2 = nRight
  r.Y2 = nBottom
- If r.X1 < r0.X1 Then r.X1 = r0.X1
- If r.Y1 < r0.Y1 Then r.Y1 = r0.Y1
+ If r.x1 < r0.x1 Then r.x1 = r0.x1
+ If r.y1 < r0.y1 Then r.y1 = r0.y1
  If r.x2 > r0.x2 Then r.x2 = r0.x2
  If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
  d3dd9.SetScissorRect r
@@ -1416,7 +1416,12 @@ pButtonHighlight_1 = i
 End Function
 
 Private Sub pSetFocus()
-If m_nStyle And &H1000000 Then FakeDXUIFocus = m_nIndex
+If m_nStyle And &H1000000 Then
+ FakeDXUIFocus = m_nIndex
+ If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
+  FakeDXUIControls(FakeDXUIActiveWindow).Focus = m_nIndex
+ End If
+End If
 End Sub
 
 Private Sub pButtonClick()
@@ -1471,9 +1476,6 @@ Case 1 'form
    m_nAnimVal(15) = 0 '???
    '///change active window and focus
    If FakeDXUIActiveWindow <> m_nIndex Then
-    If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
-     FakeDXUIControls(FakeDXUIActiveWindow).Focus = FakeDXUIFocus
-    End If
     FakeDXUIActiveWindow = m_nIndex
     FakeDXUIFocus = m_idxFocus
    End If
