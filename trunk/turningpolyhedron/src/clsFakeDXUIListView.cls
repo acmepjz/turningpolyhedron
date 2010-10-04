@@ -1623,10 +1623,10 @@ If m_bHeader Then
       End If
      ElseIf .nFlags And 64& Then
       If i = (m_nSortIndex And &HFFFFFF) Then
-       GetTextExtentPoint32W FakeDXUIDefaultFont.objFont.GetDC, ByVal StrPtr(.sCaption), -1, r3
+       GetTextExtentPoint32W FakeDXUIDefaultFont.objFont.GetDC, ByVal StrPtr(.sCaption), Len(.sCaption), r3
        r.Right = r3.Left \ 2
        If r.Right >= w - 14 Then r.Right = w - 14
-       FakeDXGDIDrawText FakeDXUIDefaultFont, .sCaption, r.Left + 2, r.Top, w - 14, m_nItemHeight, DT_VCENTER Or DT_SINGLELINE Or DT_CENTER, clr, , , , , , , , True
+       FakeDXGDIDrawText FakeDXUIDefaultFont, .sCaption, r.Left + 2, r.Top, w - 14, m_nItemHeight, 0.5, DT_VCENTER Or DT_SINGLELINE Or DT_CENTER, clr, , , , , , , True
        pDrawArrow r.Left + (w + r.Right) \ 2, r.Top + m_nItemHeight \ 2, nOpacity, m_bEnabled, m_nSortIndex And &H1000000
       Else
        FakeDXGDIDrawText FakeDXUIDefaultFont, .sCaption, r.Left + 2, r.Top, w - 4, m_nItemHeight, 0.5, DT_VCENTER Or DT_SINGLELINE Or DT_CENTER, clr, , , , , , , True

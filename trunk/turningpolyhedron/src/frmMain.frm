@@ -352,8 +352,8 @@ With FakeDXUIControls(1)
      .ColumnHeader = True
      .GridLines = True
      .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
-     .AddColumn "he2", , , efcfSizable Or efcfSortable, 48
-     .AddColumn "he3", , , efcfSizable Or efcfSortable, 48
+     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 48
+     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight, 48
      .AddColumn "A", , efctCheck, , 16
      .AddColumn "B", , efctCheck3State, , 16
      For i = 1 To 1000
