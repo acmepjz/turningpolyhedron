@@ -248,7 +248,7 @@ Set objTest = pTest
 '///
 pCreateUI
 '///
-objRenderTest.Create
+objRenderTest.Create True
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
 objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
 'objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
@@ -578,8 +578,8 @@ If bReset Then
  '///
 End If
 '///
-D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objTexture
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, objNormalTexture
+D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objTexture
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objNormalTexture
 '///
 Dim obj As Direct3DTexture9
 Dim obj2 As Direct3DTexture9
@@ -600,10 +600,8 @@ objDrawTest.ProcessTextureEx obj, obj2, "process_smoothstep", 0, 0, 0, 0, Vec4(-
 Set obj = Nothing
 '///
 objDrawTest.ProcessTextureEx obj2, objTexture, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
-objDrawTest.GenerateMipSubLevels objTexture
 '///
 objDrawTest.ProcessTextureEx obj2, objNormalTexture, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 1), Vec4, Vec4, Vec4
-objDrawTest.GenerateMipSubLevels objNormalTexture
 Set obj2 = Nothing
 '///
 bInit = True
@@ -680,14 +678,15 @@ With d3dd9
   D3DXMatrixMultiply mat, mat1, mat
   .SetTransform D3DTS_WORLD, mat
   objCamera.Apply objRenderTest
-  '///
+  '///shadow map
   objRenderTest.BeginRenderShadowMap
   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
   .BeginScene
   objTest.DrawSubset 0
   .EndScene
   objRenderTest.EndRenderShadowMap
-  '///
+  '///draw cube with effects
+  objRenderTest.BeginRenderToPostProcessTarget
   objRenderTest.SetTexture objTexture
   objRenderTest.SetNormalTexture objNormalTexture
   objRenderTest.BeginRender
@@ -703,6 +702,9 @@ With d3dd9
   objLand.Render objRenderTest, objCamera
   .EndScene
   .SetTransform D3DTS_WORLD, mat
+  '////////perform post process
+  objRenderTest.EndRenderToPostProcessTarget
+  objRenderTest.PerformPostProcess objDrawTest
   '////////draw text test
   .BeginScene
   s = "FPS:" + Format(objTiming.FPS, "0.0")
