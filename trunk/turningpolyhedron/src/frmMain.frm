@@ -286,8 +286,14 @@ Private Sub pCreateUI()
 Dim i As Long
 FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
 With FakeDXUIControls(1)
- .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, FCS_CanGetFocus, , , , "Exit", , "cmdExit", , 1, , 1
- .AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FBS_CheckBox Or FBS_Graphical Or FCS_CanGetFocus, , , , "Fullscreen", , "chkFullscreen", , 1, , 1
+ .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1
+ .AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FBS_CheckBox Or FBS_Graphical, , , , "Fullscreen", , "chkFullscreen", , 1, , 1
+ .AddNewChildren FakeCtl_Button, 88, -72, 192, -56, FBS_CheckBox Or FBS_Graphical, , , , "Post process", , "chkPost", , 1, , 1, 1
+ .AddNewChildren FakeCtl_Button, 88, -48, 200, -32, , False, , , "HDR Blur Quality:", , , , 1, , 1
+ .AddNewChildren FakeCtl_Button, 88, -24, 120, -8, FBS_OptionButton Or FBS_Graphical, , , , "Low", , "0", , 1, , 1, 1, "optHDRQ"
+ .AddNewChildren FakeCtl_Button, 128, -24, 160, -8, FBS_OptionButton Or FBS_Graphical, , , , "Mid", , "1", , 1, , 1, , "optHDRQ"
+ .AddNewChildren FakeCtl_Button, 168, -24, 200, -8, FBS_OptionButton Or FBS_Graphical, , , , "High", , "2", , 1, , 1, , "optHDRQ"
+ #If 0 Then
  With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFFFFFF, , , , "Form1234°¡°¢")
   .AddNewChildren FakeCtl_Button, 0, 0, 78, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
@@ -367,6 +373,7 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
   .AddNewChildren FakeCtl_Button, 80, 28, 140, 48, FBS_Default Or FBS_Cancel Or FCS_CanGetFocus, , , , "Close", , "cmdClose"
  End With
+ #End If
 End With
 '///
 Set FakeDXUIEvent = Me
@@ -504,6 +511,13 @@ Case "Check1"
  If i Then FakeDXUIControls(i).Enabled = obj.Value
  i = FakeDXUIFindControl("cmdClose")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
+Case "chkPost"
+ objRenderTest.PostProcessEnabled = obj.Value
+Case Else
+ Select Case obj.GroupName
+ Case "optHDRQ"
+  objRenderTest.HDRBlurQuality = Val(obj.Name)
+ End Select
 End Select
 End Sub
 

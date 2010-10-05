@@ -13,6 +13,8 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+Private Const m_nFormat1 = D3DFMT_A8R8G8B8 'D3DFMT_A32B32G32R32F
+
 Private objEffect As D3DXEffect
 
 Private m_tLightDir As D3DXVECTOR4, m_tLightPos As D3DXVECTOR4, m_tViewPos As D3DXVECTOR4
@@ -27,12 +29,14 @@ Private m_bShadowEnabled As Boolean
 Private m_tLightViewProj As D3DMATRIX
 Private m_nShadowMapSize As Long
 
-'///post process
+'////////post process
 
 Private m_bPostProcessEnabled As Boolean
 Private objPostProcessTarget(7) As Direct3DTexture9
+'HDR
+Private m_nHDRBlurQuality As Long
 
-'///
+'////////
 
 Private m_fParam(3) As D3DXVECTOR4
 
@@ -47,7 +51,10 @@ PostProcessEnabled = m_bPostProcessEnabled
 End Property
 
 Friend Property Let PostProcessEnabled(ByVal b As Boolean)
-If Not objPostProcessTarget(0) Is Nothing Then m_bPostProcessEnabled = b
+If m_bPostProcessEnabled <> b Then
+ m_bPostProcessEnabled = b
+ CreatePostProcessTarget
+End If
 End Property
 
 Friend Sub Create(Optional ByVal bPostProcessEnabled As Boolean)
@@ -61,24 +68,38 @@ m_bPostProcessEnabled = bPostProcessEnabled
 CreatePostProcessTarget
 End Sub
 
+Friend Property Get HDRBlurQuality(Optional ByVal bForceRefresh As Boolean) As Long
+HDRBlurQuality = m_nHDRBlurQuality
+End Property
+
+Friend Property Let HDRBlurQuality(Optional ByVal bForceRefresh As Boolean, ByVal n As Long)
+Dim k As Long
+If m_nHDRBlurQuality <> n Or bForceRefresh Then
+ m_nHDRBlurQuality = n
+ Set objPostProcessTarget(1) = Nothing
+ Set objPostProcessTarget(4) = Nothing
+ If m_bPostProcessEnabled Then
+  If n <= 0 Then k = 8 _
+  Else If n = 1 Then k = 4 _
+  Else k = 2
+  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(1)
+  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(4)
+ End If
+End If
+End Property
+
 Friend Sub CreatePostProcessTarget()
-Dim f As D3DFORMAT
+Erase objPostProcessTarget
 If m_bPostProcessEnabled Then
- f = D3DFMT_A8B8G8R8
- 'f = D3DFMT_A32B32G32R32F
- '///
  'main render target
- D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, f, D3DPOOL_DEFAULT, objPostProcessTarget(0)
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(0)
  'bright-pass
- D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ 4, d3dpp.BackBufferHeight \ 4, 1, D3DUSAGE_RENDERTARGET, f, D3DPOOL_DEFAULT, objPostProcessTarget(1)
- D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ 4, d3dpp.BackBufferHeight \ 4, 1, D3DUSAGE_RENDERTARGET, f, D3DPOOL_DEFAULT, objPostProcessTarget(4)
- '///
- f = D3DFMT_R32F
+ HDRBlurQuality(True) = m_nHDRBlurQuality
  '///
  'luminance
- D3DXCreateTexture d3dd9, 128, 128, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, f, D3DPOOL_DEFAULT, objPostProcessTarget(2)
+ D3DXCreateTexture d3dd9, 128, 128, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_R32F, D3DPOOL_DEFAULT, objPostProcessTarget(2)
  'average luminance
- D3DXCreateTexture d3dd9, 128, 128, 1, D3DUSAGE_RENDERTARGET, f, D3DPOOL_DEFAULT, objPostProcessTarget(3)
+ D3DXCreateTexture d3dd9, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, D3DPOOL_DEFAULT, objPostProcessTarget(3)
 End If
 End Sub
 
@@ -239,27 +260,31 @@ End If
 End Sub
 
 Friend Sub PerformPostProcess(ByVal objDraw As clsRenderTexture)
-Dim i As Long
+Dim i As Long, j As Long
 Dim f As Single
 Dim v As D3DXVECTOR4
 '///
 If Not m_bPostProcessEnabled Then Exit Sub
 '///
-f = 1 / 256
+f = 1
 'v = Vec4(0.275591!, 0.220472!, 0.110236!, 0.0314961!) 'bimonial8
 v = Vec4(0.251497!, 0.209581!, 0.11976!, 0.0449102!) 'bimonial10
 '///
-objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(2), "grayscale_log", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
-objDraw.ProcessTextureEx objPostProcessTarget(2), objPostProcessTarget(3), "grayscale_exp_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 8), Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(2), "fx_to_luminance", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(2), objPostProcessTarget(3), "fx_from_luminance_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 16), Vec4, Vec4, Vec4
 objDraw.ProcessTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), objPostProcessTarget(1), _
 "simple_brightpass", 0, 0, 0, 0, Vec4(1), Vec4, Vec4, Vec4
-'///
-objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
-objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
-objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 2
-objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 2
-objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 4
-objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 4
+'///blur - see documentation
+i = m_nHDRBlurQuality
+If i <= 0 Then j = &H502& _
+Else If i = 1 Then j = &H90301 _
+Else j = &H110502
+For i = 0 To 2
+ objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
+ objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
+ j = j \ &H100&
+ If j <= 0 Then Exit For
+Next i
 '///
 '...TODO:
 '///
