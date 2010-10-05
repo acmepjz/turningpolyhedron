@@ -25,6 +25,14 @@ MagFilter=LINEAR;
 AddressU=CLAMP;
 AddressV=CLAMP;
 };
+sampler sampM=sampler_state{
+Texture=<tex>;
+MipFilter=LINEAR;
+MinFilter=LINEAR;
+MagFilter=LINEAR;
+AddressU=CLAMP;
+AddressV=CLAMP;
+};
 
 texture tex2;
 sampler samp2=sampler_state{
@@ -190,9 +198,10 @@ PixelShader=compile ps_3_0 ps_func_simplexnoise(1);}
 ////////generate mipmap
 
 float4 mipmap4_func(float2 t:TEXCOORD0):COLOR0{
-return (tex2D(samp,t)+tex2D(samp,float2(t.x+pixelSize.x,t.y))
-+tex2D(samp,float2(t.x,t.y+pixelSize.y))
-+tex2D(samp,float2(t.x+pixelSize.x,t.y+pixelSize.y)))/4.0f;
+return (tex2D(samp,float4(t.x,t.y,0,0))
++tex2D(samp,float4(t.x+pixelSize.x,t.y,0,0))
++tex2D(samp,float4(t.x,t.y+pixelSize.y,0,0))
++tex2D(samp,float4(t.x+pixelSize.x,t.y+pixelSize.y,0,0)))/4.0f;
 }
 
 technique mipmap4{
@@ -343,4 +352,79 @@ return lerp(_fParam[0],_fParam[1],tex2D(samp,t).x);
 
 technique process_lerp{
 pass{PixelShader=compile ps_2_0 ps_lerp();}
+}
+
+float4 ps_linear(float2 t:TEXCOORD0):COLOR0{
+return _fParam[0]+tex2D(samp,t)*_fParam[1];
+}
+
+technique process_linear{
+pass{PixelShader=compile ps_2_0 ps_linear();}
+}
+
+float4 ps_convolve_h_symmetric4(float2 t:TEXCOORD0):COLOR0{
+	return mul(_fParam[0],float4x4(tex2D(samp,t)
+	,tex2D(samp,float2(t.x-pixelSize.x,t.y))+tex2D(samp,float2(t.x+pixelSize.x,t.y))
+	,tex2D(samp,float2(t.x-pixelSize.x*2.0f,t.y))+tex2D(samp,float2(t.x+pixelSize.x*2.0f,t.y))
+	,tex2D(samp,float2(t.x-pixelSize.x*3.0f,t.y))+tex2D(samp,float2(t.x+pixelSize.x*3.0f,t.y))
+	));
+}
+
+technique convolve_h_symmetric4{
+pass{PixelShader=compile ps_2_0 ps_convolve_h_symmetric4();}
+}
+
+float4 ps_convolve_v_symmetric4(float2 t:TEXCOORD0):COLOR0{
+	return mul(_fParam[0],float4x4(tex2D(samp,t)
+	,tex2D(samp,float2(t.x,t.y-pixelSize.y))+tex2D(samp,float2(t.x,t.y+pixelSize.y))
+	,tex2D(samp,float2(t.x,t.y-pixelSize.y*2.0f))+tex2D(samp,float2(t.x,t.y+pixelSize.y*2.0f))
+	,tex2D(samp,float2(t.x,t.y-pixelSize.y*3.0f))+tex2D(samp,float2(t.x,t.y+pixelSize.y*3.0f))
+	));
+}
+
+technique convolve_v_symmetric4{
+pass{PixelShader=compile ps_2_0 ps_convolve_v_symmetric4();}
+}
+
+////////////////////////////////////////
+//
+// post effects
+//
+////////////////////////////////////////
+
+float4 grayscale_log_func(float2 t:TEXCOORD0):COLOR0{
+float f=log(_fParam[0].x+dot(tex2D(samp,t),float4(0.222,0.707,0.071,0)))*0.125f+1.0f;
+return float4(f,f,f,1);
+}
+
+technique grayscale_log{
+pass{PixelShader=compile ps_2_0 grayscale_log_func();}
+}
+
+float4 grayscale_exp_bias_func(float2 t:TEXCOORD0):COLOR0{
+	float f=exp(tex2Dbias(sampM,float4(t.x,t.y,0,_fParam[0].w)).x*8.0f-8.0f)-_fParam[0].x;
+	return float4(f,f,f,1);
+}
+
+technique grayscale_exp_bias{
+pass{PixelShader=compile ps_2_0 grayscale_exp_bias_func();}
+}
+
+float4 simple_tonemapping_func(float2 t:TEXCOORD0):COLOR0{
+	float3 f=_fParam[0].x*tex2D(samp,t).xyz;
+	return float4(f/(tex2D(samp2,t).xxx+f)*_fParam[0].y,1);
+}
+
+technique simple_tonemapping{
+pass{PixelShader=compile ps_2_0 simple_tonemapping_func();}
+}
+
+float4 simple_brightpass_func(float2 t:TEXCOORD0):COLOR0{
+	float3 clr=tex2D(samp,t).xyz;
+	float f=max(dot(clr,float3(0.222,0.707,0.071))-tex2D(samp2,t).x-_fParam[0].y,0.0f);
+	return float4(clr*f*_fParam[0].x,1);
+}
+
+technique simple_brightpass{
+pass{PixelShader=compile ps_2_0 simple_brightpass_func();}
 }

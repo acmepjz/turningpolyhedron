@@ -218,7 +218,7 @@ float4 h=normalize(lightVec+viewVec); //TODO:can we use "reflect"?
 //TEST
 l*=lit(dot(n.xyz,lightVec.xyz),dot(n.xyz,h.xyz),_fParam[1].x);
 //
-float4 diffuse=d.c*clr_tex*min(_fParam[0]+l.y,1.0f);
+float4 diffuse=d.c*clr_tex*(_fParam[0]+l.y); //min(_fParam[0]+l.y,1.0f);
 float4 specular=d.c1*l.z;
 return diffuse+specular;
 }

@@ -13,21 +13,6 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-'    像素光照
-'    Ambient
-'    Diffuse
-'    Specular (Specular map?)
-'    (Emission?)
-'    Bump map
-'    Normal map
-'    (Parallax map?)
-'    阴影贴图（平行光）（点光源？？）
-'    Displacement(Height map)
-'    Soft shadow?
-'    冰面反光（冰方块反光？？代码太长，可能运行得太慢）
-'    HDR（山寨HDR）
-'    Motion blur, radial blur
-
 Private objEffect As D3DXEffect
 
 Private m_tLightDir As D3DXVECTOR4, m_tLightPos As D3DXVECTOR4, m_tViewPos As D3DXVECTOR4
@@ -42,6 +27,13 @@ Private m_bShadowEnabled As Boolean
 Private m_tLightViewProj As D3DMATRIX
 Private m_nShadowMapSize As Long
 
+'///post process
+
+Private m_bPostProcessEnabled As Boolean
+Private objPostProcessTarget(7) As Direct3DTexture9
+
+'///
+
 Private m_fParam(3) As D3DXVECTOR4
 
 Private m_fovy As Single, m_fAspect As Single, m_zn As Single, m_zf As Single
@@ -50,12 +42,44 @@ Friend Property Get Effect() As D3DXEffect
 Set Effect = objEffect
 End Property
 
-Friend Sub Create()
+Friend Property Get PostProcessEnabled() As Boolean
+PostProcessEnabled = m_bPostProcessEnabled
+End Property
+
+Friend Property Let PostProcessEnabled(ByVal b As Boolean)
+If Not objPostProcessTarget(0) Is Nothing Then m_bPostProcessEnabled = b
+End Property
+
+Friend Sub Create(Optional ByVal bPostProcessEnabled As Boolean)
 '///
 'test
 CreateEffect CStr(App.Path) + "\data\shader\pstest.txt", objEffect, , True
 '///???
 D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\data\gfx\noise.bmp", texNoise
+'///
+m_bPostProcessEnabled = bPostProcessEnabled
+CreatePostProcessTarget
+End Sub
+
+Friend Sub CreatePostProcessTarget()
+Dim f As D3DFORMAT
+If m_bPostProcessEnabled Then
+ f = D3DFMT_A8B8G8R8
+ 'f = D3DFMT_A32B32G32R32F
+ '///
+ 'main render target
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, f, D3DPOOL_DEFAULT, objPostProcessTarget(0)
+ 'bright-pass
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ 4, d3dpp.BackBufferHeight \ 4, 1, D3DUSAGE_RENDERTARGET, f, D3DPOOL_DEFAULT, objPostProcessTarget(1)
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ 4, d3dpp.BackBufferHeight \ 4, 1, D3DUSAGE_RENDERTARGET, f, D3DPOOL_DEFAULT, objPostProcessTarget(4)
+ '///
+ f = D3DFMT_R32F
+ '///
+ 'luminance
+ D3DXCreateTexture d3dd9, 128, 128, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, f, D3DPOOL_DEFAULT, objPostProcessTarget(2)
+ 'average luminance
+ D3DXCreateTexture d3dd9, 128, 128, 1, D3DUSAGE_RENDERTARGET, f, D3DPOOL_DEFAULT, objPostProcessTarget(3)
+End If
 End Sub
 
 Friend Sub SetLightDirection(d As D3DXVECTOR4, Optional ByVal bNormalize As Boolean)
@@ -108,6 +132,7 @@ Set objOldTarget = Nothing
 Set objOldStencil = Nothing
 Set objShadowMap = Nothing
 Set objShadowStencil = Nothing
+Erase objPostProcessTarget
 '///
 objEffect.OnLostDevice
 End Sub
@@ -119,6 +144,7 @@ If m_nShadowMapSize > 0 Then
 End If
 '///
 objEffect.OnResetDevice
+CreatePostProcessTarget
 'TODO:etc.
 End Sub
 
@@ -198,6 +224,62 @@ objEffect.EndPass
 objEffect.End
 End Sub
 
+Friend Sub BeginRenderToPostProcessTarget()
+If m_bPostProcessEnabled Then
+ Set objOldTarget = d3dd9.GetRenderTarget(0)
+ d3dd9.SetRenderTarget 0, objPostProcessTarget(0).GetSurfaceLevel(0)
+End If
+End Sub
+
+Friend Sub EndRenderToPostProcessTarget()
+If m_bPostProcessEnabled Then
+ d3dd9.SetRenderTarget 0, objOldTarget
+ Set objOldTarget = Nothing
+End If
+End Sub
+
+Friend Sub PerformPostProcess(ByVal objDraw As clsRenderTexture)
+Dim i As Long
+Dim f As Single
+Dim v As D3DXVECTOR4
+'///
+If Not m_bPostProcessEnabled Then Exit Sub
+'///
+f = 1 / 256
+'v = Vec4(0.275591!, 0.220472!, 0.110236!, 0.0314961!) 'bimonial8
+v = Vec4(0.251497!, 0.209581!, 0.11976!, 0.0449102!) 'bimonial10
+'///
+objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(2), "grayscale_log", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(2), objPostProcessTarget(3), "grayscale_exp_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 8), Vec4, Vec4, Vec4
+objDraw.ProcessTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), objPostProcessTarget(1), _
+"simple_brightpass", 0, 0, 0, 0, Vec4(1), Vec4, Vec4, Vec4
+'///
+objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 2
+objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 2
+objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 4
+objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 4
+'///
+'...TODO:
+'///
+i = d3dd9.GetRenderState(D3DRS_ALPHABLENDENABLE)
+d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, 1
+d3dd9.SetRenderState D3DRS_SRCBLEND, D3DBLEND_ONE
+d3dd9.SetRenderState D3DRS_DESTBLEND, D3DBLEND_ONE
+d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
+d3dd9.BeginScene
+'///
+objDraw.DrawTextureEx objPostProcessTarget(0), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
+'objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.25, 1), Vec4, Vec4, Vec4 'ugly
+objDraw.DrawTextureEx objPostProcessTarget(1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
+'///
+d3dd9.EndScene
+d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, i
+d3dd9.SetRenderState D3DRS_SRCBLEND, D3DBLEND_SRCALPHA
+d3dd9.SetRenderState D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA
+End Sub
+
 Friend Property Get AmbientColor() As D3DXVECTOR4
 AmbientColor = m_fParam(0)
 End Property
@@ -243,6 +325,7 @@ objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0),
 End Sub
 
 Private Sub Class_Terminate()
+Erase objPostProcessTarget
 Set objShadowMap = Nothing
 Set objShadowStencil = Nothing
 Set texNoise = Nothing
