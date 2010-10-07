@@ -18,6 +18,9 @@ Public FakeDXUIMousePointer As MousePointerConstants
 
 Public FakeDXUI_IME As New clsFakeDXUI_IME
 
+Public FakeDXUIPopup_ComboBox As Long, FakeDXUIPopup_ComboBox_Rect As typeFakeDXUIRect, _
+FakeDXUIPopup_ComboBox_State As Long '&h1000000-onmouseevent
+
 Public Type typeFakeDXUIPosition 'a+b*w
  a As Single
  b As Single
@@ -129,6 +132,12 @@ Public Enum enumFakeDXUIControlStyle
  FBS_Graphical = 8
  FBS_Default = 16
  FBS_Cancel = 32
+ '///combobox
+ FCBS_DropdownList = 0
+ FCBS_DropdownCombo = 1 'currently unsupported
+ FCBS_SimpleCombo = 2 'currently unsupported
+ FCBS_FixedText = 8
+ FCBS_NoAutoClose = 16
 End Enum
 
 Public Enum enumFakeDXUIControlState
@@ -273,6 +282,9 @@ If Not FakeDXUITexture Is Nothing Then
  Set FakeDXUIEvent = Nothing '?
  FakeDXUI_IME.Destroy
  '///
+ FakeDXUIPopup_ComboBox = 0
+ FakeDXUIPopup_ComboBox_State = 0
+ '///
  Erase FakeDXUIMessageQueue
  FakeDXUIMessageQueueHead = 0
  FakeDXUIMessageQueueTail = 0
@@ -298,6 +310,18 @@ If FakeDXUIControlCount > 0 Then
  '///
  FakeDXUIControls(1).Render
  FakeDXUI_IME.Render
+ '///combobox dropdown
+ If FakeDXUIPopup_ComboBox > 0 And FakeDXUIPopup_ComboBox <= FakeDXUIControlCount Then
+  If FakeDXUIControls(FakeDXUIPopup_ComboBox).ControlType = FakeCtl_ComboBox Then
+   'TODO:animation
+   FakeDXUIControls(FakeDXUIPopup_ComboBox).RenderListView FakeDXUIPopup_ComboBox_Rect.Left, FakeDXUIPopup_ComboBox_Rect.Top, _
+   FakeDXUIPopup_ComboBox_Rect.Right, FakeDXUIPopup_ComboBox_Rect.Bottom
+  End If
+ End If
+ '///
+ 'TODO:menu
+ '///
+ 'TODO:tooltiptext
  '///
  d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, i
  d3dd9.SetRenderState D3DRS_SCISSORTESTENABLE, 0
@@ -346,6 +370,7 @@ End Function
 
 Public Function FakeDXUIOnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long) As Boolean
 Dim i As Long, b As Boolean
+Dim bReset As Boolean
 Dim obj As clsFakeDXUI
 If FakeDXUIControlCount <= 0 Or FakeDXUISetCapture < 0 Then Exit Function
 FakeDXUIMousePointer = 0
@@ -356,10 +381,7 @@ If FakeDXUISetCapture > 0 And FakeDXUISetCapture <= FakeDXUIControlCount Then
 End If
 If obj Is Nothing Then
  Set obj = FakeDXUIControls(1)
- If nEventType = 1 Then
-  FakeDXUIActiveWindow = 0 '????????
-  FakeDXUIFocus = 0 '????????
- End If
+ If nEventType = 1 Then bReset = True
 End If
 '///???
 If nEventType = 0 Then
@@ -369,8 +391,18 @@ If nEventType = 0 Then
  Next i
 End If
 '///
+'TODO:menu
+'///
+'TODO:combobox dropdown
+'///
 b = FakeDXUI_IME.OnMouseEvent(Button, Shift, x, y, nEventType)
-If Not b Then b = obj.OnMouseEvent(Button, Shift, x, y, nEventType)
+If Not b Then
+ If bReset Then
+  FakeDXUIActiveWindow = 0 '????????
+  FakeDXUIFocus = 0 '????????
+ End If
+ b = obj.OnMouseEvent(Button, Shift, x, y, nEventType)
+End If
 FakeDXUIOnMouseEvent = b
 '///???
 frmMain.MousePointer = FakeDXUIMousePointer
