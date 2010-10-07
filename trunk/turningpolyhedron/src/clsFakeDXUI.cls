@@ -60,7 +60,9 @@ Private m_tScrollBar(1) As typeFakeDXUIScrollBar
 '////////controls
 
 Private m_objTextBox As clsFakeDXUITextBox
-Private m_objListView As clsFakeDXUIListView
+Private m_nComboBoxPrimaryCol As Long, WithEvents m_objListView As clsFakeDXUIListView
+Attribute m_nComboBoxPrimaryCol.VB_VarHelpID = -1
+Attribute m_objListView.VB_VarHelpID = -1
 
 Friend Property Get ListViewObject() As clsFakeDXUIListView
 Set ListViewObject = m_objListView
@@ -539,6 +541,8 @@ Case 7
  m_objTextBox.FontZoom = m_nFontZoom
 Case 8
  Set m_objListView = New clsFakeDXUIListView
+Case 9
+ Set m_objListView = New clsFakeDXUIListView
 End Select
 '///TODO:
 End Property
@@ -571,6 +575,7 @@ m_nValue = 0
 m_nClosing = 0
 m_nScrollBars = 0
 m_idxFocus = 0
+m_nComboBoxPrimaryCol = 1
 Set m_objTextBox = Nothing
 Set m_objListView = Nothing
 Erase m_nAnimVal
@@ -689,6 +694,78 @@ If i > 0 Then
 End If
 End Sub
 
+Friend Sub RenderListView(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True)
+Dim i As Long, j As Long, kk As Long
+Dim r0 As D3DRECT, r As D3DRECT
+If m_objListView Is Nothing Then Exit Sub
+'////////border
+i = 255 * nOpacity
+i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+kk = 164 - (bEnabled And 40&)
+FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
+'////////scrollbar
+r.x1 = nLeft + m_tClientMargin.Left
+r.y1 = nTop + m_tClientMargin.Top
+r.x2 = nRight - m_tClientMargin.Right
+r.Y2 = nBottom - m_tClientMargin.Bottom
+'////////
+pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
+i = r.x2 - r.x1
+j = r.Y2 - r.y1
+If i > 4 And j > 4 Then 'size limit ???
+ m_objListView.Width = i
+ m_objListView.Height = j
+ '///add:autoscroll
+ If m_objListView.ScrollChanged Then
+  m_tScrollBar(0).nValue = m_objListView.ScrollValue(0)
+  m_tScrollBar(1).nValue = m_objListView.ScrollValue(1)
+  m_tScrollBar(0).nSmallChange = m_objListView.SmallChange(0)
+  m_tScrollBar(1).nSmallChange = m_objListView.SmallChange(1)
+  m_objListView.ScrollChanged = False
+ End If
+ '///
+ With m_tScrollBar(0)
+  .nLargeChange = i
+  .nMax = m_objListView.TotalWidth - .nLargeChange
+  If .nMax > 0 Then
+   .bEnabled = True
+   m_nScrollBars = m_nScrollBars Or vbHorizontal
+  Else
+   .bEnabled = False
+   m_nScrollBars = m_nScrollBars And Not vbHorizontal
+   .nMax = 0
+  End If
+  If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+  m_objListView.ScrollValue(0) = .nValue
+ End With
+ With m_tScrollBar(1)
+  .nLargeChange = j
+  If m_objListView.ColumnHeader Then .nLargeChange = .nLargeChange - m_objListView.RowHeight
+  .nMax = m_objListView.TotalHeight - .nLargeChange
+  If .nMax > 0 Then
+   .bEnabled = True
+   m_nScrollBars = m_nScrollBars Or vbVertical
+  Else
+   .bEnabled = False
+   m_nScrollBars = m_nScrollBars And Not vbVertical
+   .nMax = 0
+  End If
+  If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+  m_objListView.ScrollValue(1) = .nValue
+ End With
+ '///
+ d3dd9.GetScissorRect r0
+ If r.x1 < r0.x1 Then r.x1 = r0.x1
+ If r.y1 < r0.y1 Then r.y1 = r0.y1
+ If r.x2 > r0.x2 Then r.x2 = r0.x2
+ If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
+ d3dd9.SetScissorRect r
+ m_objListView.Render nLeft + 4, nTop + 4, nOpacity
+ '///
+ d3dd9.SetScissorRect r0
+End If
+End Sub
+
 'TODO:forecolor,etc.
 Friend Sub Render(Optional ByVal nParentClientLeft As Single, Optional ByVal nParentClientTop As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True)
 Dim i As Long, j As Long, jj As Long, k As Long, kk As Long
@@ -698,6 +775,7 @@ Dim w As Single, h As Single
 Dim f As Single
 Dim r0 As D3DRECT, r As D3DRECT
 Dim bNoChild As Boolean
+Dim s As String
 '////////
 bEnabled = bEnabled And m_bEnabled
 '////////adjust window opacity???
@@ -716,7 +794,6 @@ If m_nClosing Then
 End If
 '////////
 If m_nType < 0 Or Not m_bVisible Then Exit Sub
-'If m_bSizeDirty Then RefreshSize
 RefreshSize True
 '////////
 nLeft = nParentClientLeft + m_tRect.Left
@@ -1030,71 +1107,60 @@ Case 7 'textbox
   d3dd9.SetScissorRect r0
  End If
 Case 8 'listview
- '////////border
+ RenderListView nLeft, nTop, nRight, nBottom, nOpacity, bEnabled
+Case 9 'combobox
+ '///border
  i = 255 * nOpacity
- i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
  kk = 164 - (bEnabled And 40&)
- FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
- '////////scrollbar
- r.x1 = nLeft + m_tClientMargin.Left
- r.y1 = nTop + m_tClientMargin.Top
- r.x2 = nRight - m_tClientMargin.Right
- r.Y2 = nBottom - m_tClientMargin.Bottom
- pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
- i = r.x2 - r.x1
- j = r.Y2 - r.y1
- If i > 4 And j > 4 Then 'size limit ???
-  m_objListView.Width = i
-  m_objListView.Height = j
-  '///add:autoscroll
-  If m_objListView.ScrollChanged Then
-   m_tScrollBar(0).nValue = m_objListView.ScrollValue(0)
-   m_tScrollBar(1).nValue = m_objListView.ScrollValue(1)
-   m_tScrollBar(0).nSmallChange = m_objListView.SmallChange(0)
-   m_tScrollBar(1).nSmallChange = m_objListView.SmallChange(1)
-   m_objListView.ScrollChanged = False
+ If bEnabled Then
+  j = m_nAnimVal(14)
+  If FakeDXUIFocus = m_nIndex Then
+   If j < 255 Then j = j + 51
+  Else
+   If j > 0 Then j = j - 51
   End If
-  '///
-  With m_tScrollBar(0)
-   .nLargeChange = i
-   .nMax = m_objListView.TotalWidth - .nLargeChange
-   If .nMax > 0 Then
-    .bEnabled = True
-    m_nScrollBars = m_nScrollBars Or vbHorizontal
-   Else
-    .bEnabled = False
-    m_nScrollBars = m_nScrollBars And Not vbHorizontal
-    .nMax = 0
-   End If
-   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
-   m_objListView.ScrollValue(0) = .nValue
-  End With
-  With m_tScrollBar(1)
-   .nLargeChange = j
-   If m_objListView.ColumnHeader Then .nLargeChange = .nLargeChange - m_objListView.RowHeight
-   .nMax = m_objListView.TotalHeight - .nLargeChange
-   If .nMax > 0 Then
-    .bEnabled = True
-    m_nScrollBars = m_nScrollBars Or vbVertical
-   Else
-    .bEnabled = False
-    m_nScrollBars = m_nScrollBars And Not vbVertical
-    .nMax = 0
-   End If
-   If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
-   m_objListView.ScrollValue(1) = .nValue
-  End With
-  '///
-  d3dd9.GetScissorRect r0
-  If r.x1 < r0.x1 Then r.x1 = r0.x1
-  If r.y1 < r0.y1 Then r.y1 = r0.y1
-  If r.x2 > r0.x2 Then r.x2 = r0.x2
-  If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
-  d3dd9.SetScissorRect r
-  m_objListView.Render nLeft + m_tClientMargin.Left, nTop + m_tClientMargin.Top, nOpacity
-  '///
-  d3dd9.SetScissorRect r0
+  m_nAnimVal(14) = j
+  FakeDXGDIStretchBltExBlended nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 124, 324, 164, 364, 8, 8, 8, 8, 512, 124, 284, 255 - j, i Or &HFFFFFF
+ Else
+  m_nAnimVal(14) = 0
+  FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 164, 324, 204, 364, 8, 8, 8, 8, 512, i Or &HFFFFFF
  End If
+ '///text
+ If m_nStyle And 15& Then
+  s = m_sText
+ Else
+  With m_objListView
+   If .SelectedRow > 0 And .SelectedRow <= .RowCount Then _
+   If m_nComboBoxPrimaryCol > 0 And m_nComboBoxPrimaryCol <= .ColumnCount Then _
+   s = .List(.SelectedRow, m_nComboBoxPrimaryCol)
+  End With
+ End If
+ FakeDXGDIDrawText FakeDXUIDefaultFont, s, nLeft + 4, nTop, nRight - nLeft - 20, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, i Or (&H666666 And Not bEnabled), , , , , , , True
+ '///dropdown button
+ kk = 96& And Not bEnabled
+ FakeDXGDIStretchBltExColored nRight - 16, nTop, nRight, nBottom, kk, 416, kk + 32, 448, 4, 4, 4, 4, 512, i Or &HFFFFFF
+ j = m_nAnimVal(1)
+ k = m_nAnimVal(4)
+ If j < k Then j = j + 51 Else _
+ If j > k Then j = j - 51
+ m_nAnimVal(1) = j
+ jj = m_nAnimVal(2)
+ k = (k And m_nValue <> 0) Or m_nAnimVal(5)
+ If jj < k Then jj = jj + 51 Else _
+ If jj > k Then jj = jj - 51
+ m_nAnimVal(2) = jj
+ If j > 0 Then
+  j = j * nOpacity
+  j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
+  FakeDXGDIStretchBltExBlended nRight - 16, nTop, nRight, nBottom, 32, 416, 64, 448, 4, 4, 4, 4, 512, 64, 416, 255 - jj, j
+ End If
+ kk = 384& - (bEnabled And 16&)
+ f = (nTop + nBottom) / 2
+ FakeDXGDIStretchBltColored nRight - 16, f - 8, nRight, f + 8, 176, kk, 192, kk + 16, 512, i Or &HFFFFFF
+ '///
+ 'TODO:dropdown
+ '///
 Case Else
  'TODO:
 End Select
@@ -1164,7 +1230,7 @@ If m_bSizeDirty Or bForce Then
   t.Bottom = 4
   If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
   If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
- Case 6, 7, 8 'picturebox,textbox,listview
+ Case 6, 7, 8, 9 'picturebox,textbox,listview,combobox(?)
   t.Left = 4
   t.Top = 4
   t.Right = 4
@@ -1353,6 +1419,7 @@ Private Sub Class_Initialize()
 m_nType = -1
 m_bEnabled = True
 m_bVisible = True
+m_nComboBoxPrimaryCol = 1
 With m_tScrollBar(0)
  .nSmallChange = 1
  .nLargeChange = 1
@@ -1445,11 +1512,48 @@ End Select
 FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
 End Sub
 
+'TODO:animation
+Friend Sub ShowDropDown(Optional ByVal x As Long = &H80000000, Optional ByVal y As Long = &H80000000, Optional ByVal bShow As VbTriState = vbUseDefault)
+Dim w As Long, h As Long
+If bShow = vbUseDefault Then bShow = FakeDXUIPopup_ComboBox <> m_nIndex
+If bShow Then
+ w = m_tRectScreen.Right - m_tRectScreen.Left 'TODO:customize
+ h = 130& 'TODO:customize
+ '///
+ If x = &H80000000 Or y = &H80000000 Then
+  x = m_tRectScreen.Left
+  If m_tRectScreen.Bottom + h > d3dpp.BackBufferHeight Then
+   y = m_tRectScreen.Top - h
+   If y < 0 Then y = 0
+  Else
+   y = m_tRectScreen.Bottom
+  End If
+ Else
+  If y + h > d3dpp.BackBufferHeight Then
+   y = y - h
+   If y < 0 Then y = 0
+  End If
+ End If
+ '///
+ With FakeDXUIPopup_ComboBox_Rect
+  .Left = x - 4
+  .Top = y - 4
+  .Right = x + w + 4
+  .Bottom = y + h + 4
+ End With
+ '///
+ FakeDXUIPopup_ComboBox = m_nIndex
+Else
+ FakeDXUIPopup_ComboBox = 0
+End If
+End Sub
+
 Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long, Optional ByVal bChildrenProcessed As Boolean) As Boolean
 Dim i As Long
 Dim b As Boolean, b1 As Boolean
 Dim w As Single, h As Single, f As Single
 Dim bInControl As Boolean
+Dim bNoReleaseCapture As Boolean
 '///
 Dim bNoChild As Boolean
 '///
@@ -1585,6 +1689,39 @@ Case 8 'listview
   b = b Or m_objListView.OnMouseEvent(Button, Shift, x - m_tClientToScreenOffset.x, y - m_tClientToScreenOffset.y, nEventType)
  End If
  '///
+Case 9 'combobox
+ '///process dropdown mouse event
+ If FakeDXUIPopup_ComboBox = m_nIndex Then
+  If m_nScrollBars And vbHorizontal Then
+   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
+  End If
+  If m_nScrollBars And vbVertical Then
+   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
+  End If
+  FakeDXUIPopup_ComboBox_State = FakeDXUIPopup_ComboBox_State Or &H1000000
+  b = b Or m_objListView.OnMouseEvent(Button, Shift, x - FakeDXUIPopup_ComboBox_Rect.Left - 4, y - FakeDXUIPopup_ComboBox_Rect.Top - 4, nEventType)
+  FakeDXUIPopup_ComboBox_State = FakeDXUIPopup_ComboBox_State And Not &H1000000
+  '///
+  If nEventType = 1 And Not b Then ShowDropDown , , vbFalse
+  '///
+  b = True
+  bNoReleaseCapture = True
+ End If
+ '///
+ If bInControl Then
+  If nEventType = 1 Then pSetFocus
+  i = pButtonHighlight_1(1, Button, nEventType)
+  If i > 255 Then
+   m_nAnimVal(4) = 255
+   m_nAnimVal(5) = 255
+   If nEventType = 1 And Not b Then ShowDropDown
+  Else
+   m_nAnimVal(4) = i
+   m_nAnimVal(5) = 0
+  End If
+  b = True
+ End If
+ '///
 Case Else
  'TODO:
 End Select
@@ -1706,7 +1843,7 @@ If Button = 1 And Not bChildrenProcessed Then
    m_tDragFirst = m_tDragLast
    b1 = True
   ElseIf nEventType = 2 Then
-   FakeDXUISetCapture = 0
+   If Not bNoReleaseCapture Then FakeDXUISetCapture = 0
   ElseIf nEventType = 4 And bInControl Then
    '///double click event
    i = m_nAnimVal(15)
@@ -1871,10 +2008,10 @@ End Select
 OnKeyEvent = b
 End Function
 
-Friend Function OnMouseWheel(ByVal nDelta As Long, ByVal Shift As Long) As Boolean
+Friend Function OnMouseWheel(ByVal nDelta As Long, ByVal Shift As Long, Optional ByVal bDropDown As Boolean) As Boolean
 Dim idx As Long
 Dim i As Long
-Dim b As Boolean
+Dim b As Boolean, b1 As Boolean
 '///
 If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit Function
 '///
@@ -1883,14 +2020,19 @@ If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit F
 idx = -1
 Select Case m_nType
 Case 1, 3, 6, 7, 8, 10
+ b1 = True
+Case 9 'combobox
+ b1 = FakeDXUIPopup_ComboBox = m_nIndex
+Case 5
+ idx = 0
+End Select
+If b1 Then
  If (m_nScrollBars And vbVertical) <> 0 And (Shift And vbShiftMask) = 0 Then
   idx = 1
  ElseIf m_nScrollBars And vbHorizontal Then
   idx = 0
  End If
-Case 5
- idx = 0
-End Select
+End If
 '///
 If idx >= 0 Then
  With m_tScrollBar(idx)
@@ -1908,3 +2050,13 @@ End If
 '///
 OnMouseWheel = b
 End Function
+
+Private Sub m_objListView_Click(ByVal nRow As Long, ByVal nColumn As Long)
+If m_nType = 9 And FakeDXUIPopup_ComboBox = m_nIndex Then
+ If FakeDXUIPopup_ComboBox_State And &H1000000 Then
+  If (m_nStyle And 16&) = 0 Then ShowDropDown , , vbFalse
+ End If
+End If
+End Sub
+
+
