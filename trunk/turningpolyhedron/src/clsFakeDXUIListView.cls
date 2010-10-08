@@ -255,7 +255,7 @@ k = 384 - (bEnabled And 16&)
 FakeDXGDIStretchBltColored x - 8, y - 8, x + 8, y + 8, j, k, j + 16, k + 16, 512, i
 End Sub
 
-'TODO:enabled and animation
+'TODO:enabled
 Private Sub pDrawCheck(ByVal nOpacity As Single, ByVal x As Long, ByVal y As Long, ByVal nValue As Long, ByVal nState As Long)
 Dim i As Long, j As Long
 i = nOpacity * 255
@@ -1233,59 +1233,37 @@ m_bScrollChanged = True
 End Sub
 
 Friend Sub Refresh()
-Dim i As Long, j As Long
+Dim i As Long
 Dim w As Long, h As Long
 Dim ww As Long, hh As Long
 '///
-'For j = 1 To 2 '????????
- ww = m_nWidth
- hh = m_nHeight
- '///calc width
- w = 0
- For i = 1 To m_nColumns
-  With m_tHdr(i)
-   .nLeft = w
-   If (.nFlags And 8&) = 0 Then
-    If .nWidth = 0 Then
-     If i = m_nColumns Then
-      If w + m_nMinSize >= ww Then w = w + m_nMinSize Else w = ww - 1
-     Else
-      w = w + m_nMinSize
-     End If
+ww = m_nWidth
+hh = m_nHeight
+'///calc width
+w = 0
+For i = 1 To m_nColumns
+ With m_tHdr(i)
+  .nLeft = w
+  If (.nFlags And 8&) = 0 Then
+   If .nWidth = 0 Then
+    If i = m_nColumns Then
+     If w + m_nMinSize >= ww Then w = w + m_nMinSize Else w = ww - 1
     Else
-     w = w + .nWidth
+     w = w + m_nMinSize
     End If
+   Else
+    w = w + .nWidth
    End If
-  End With
- Next i
- '///calc height :-3
- h = m_nRows * m_nItemHeight
- '///??
- w = w + 1
- h = h + 1
- m_nTotalWidth = w
- m_nTotalHeight = h
- '/// TODO:
-' i = (w > ww Xor sb1.Enabled(efsHorizontal)) Or (h > hh Xor sb1.Enabled(efsVertical))
-' If w > ww Then
-'  sb1.Enabled(efsHorizontal) = True
-'  sb1.Max(efsHorizontal) = w - ww
-'  sb1.LargeChange(efsHorizontal) = ww
-' Else
-'  sb1.Enabled(efsHorizontal) = False
-'  sb1.Max(efsHorizontal) = 0
-' End If
-' If h > hh Then
-'  sb1.Enabled(efsVertical) = True
-'  sb1.Max(efsVertical) = h - hh
-'  sb1.LargeChange(efsVertical) = hh
-' Else
-'  sb1.Enabled(efsVertical) = False
-'  sb1.Max(efsVertical) = 0
-' End If
-' If i = 0 Then Exit For
-'Next j
-'///
+  End If
+ End With
+Next i
+'///calc height :-3
+h = m_nRows * m_nItemHeight
+'///??
+w = w + 1
+h = h + 1
+m_nTotalWidth = w
+m_nTotalHeight = h
 End Sub
 
 Friend Sub pDrawGridLine(Optional ByVal nLeft As Single, Optional ByVal nTop As Single, Optional ByVal nOpacity As Single = 1)
@@ -1657,10 +1635,126 @@ End If
 End Sub
 
 Friend Function OnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean
+Dim i As Long, h As Long
 If Not m_bEnabled Then Exit Function
 Select Case nEventType
 Case 0 'keypress
 Case 1 'keydown
+ '///standard key event processing TODO:selection,etc.
+ If m_nRows > 0 And m_nColumns > 0 Then
+  If m_bLocked Then
+   Select Case KeyCode
+   Case vbKeyUp
+    m_nScrollValue(1) = m_nScrollValue(1) - m_nItemHeight
+    m_bScrollChanged = True
+   Case vbKeyDown
+    m_nScrollValue(1) = m_nScrollValue(1) + m_nItemHeight
+    m_bScrollChanged = True
+   Case vbKeyLeft
+    m_nScrollValue(0) = m_nScrollValue(0) - 16
+    m_bScrollChanged = True
+   Case vbKeyRight
+    m_nScrollValue(0) = m_nScrollValue(0) + 16
+    m_bScrollChanged = True
+   Case vbKeyPageUp
+    h = m_nHeight
+    If m_bHeader Then h = h - m_nItemHeight
+    m_nScrollValue(1) = m_nScrollValue(1) - h
+    m_bScrollChanged = True
+   Case vbKeyPageDown
+    h = m_nHeight
+    If m_bHeader Then h = h - m_nItemHeight
+    m_nScrollValue(1) = m_nScrollValue(1) + h
+    m_bScrollChanged = True
+   Case vbKeyHome
+    m_nScrollValue(1) = 0
+    m_bScrollChanged = True
+   Case vbKeyEnd
+    m_nScrollValue(1) = m_nRows * m_nItemHeight
+    m_bScrollChanged = True
+   End Select
+  Else
+   Select Case KeyCode
+   Case vbKeyUp
+    i = m_nSelRow
+    If i > 1 And i <= m_nRows Then i = i - 1 Else i = 1
+    If m_nSelRow <> i Then
+     SelectedRow = i
+     EnsureVisible
+     RaiseEvent Click(m_nSelRow, m_nSelColumn)
+    End If
+   Case vbKeyDown
+    i = m_nSelRow
+    If i >= 1 And i < m_nRows Then i = i + 1 Else If i <> m_nRows Then i = 1
+    If m_nSelRow <> i Then
+     SelectedRow = i
+     EnsureVisible
+     RaiseEvent Click(m_nSelRow, m_nSelColumn)
+    End If
+   Case vbKeyLeft
+    If Not m_bRowMode Then
+     i = m_nSelColumn
+     If i > 1 And i <= m_nColumns Then i = i - 1 Else i = 1
+     If m_nSelColumn <> i Then
+      SelectedColumn = i
+      EnsureVisible
+      RaiseEvent Click(m_nSelColumn, m_nSelColumn)
+     End If
+    End If
+   Case vbKeyRight
+    If Not m_bRowMode Then
+     i = m_nSelColumn
+     If i >= 1 And i < m_nColumns Then i = i + 1 Else If i <> m_nColumns Then i = 1
+     If m_nSelColumn <> i Then
+      SelectedColumn = i
+      EnsureVisible
+      RaiseEvent Click(m_nSelColumn, m_nSelColumn)
+     End If
+    End If
+   Case vbKeyPageUp
+    h = m_nHeight
+    If m_bHeader Then h = h - m_nItemHeight
+    i = h \ m_nItemHeight
+    If i <= 0 Then i = 1
+    i = m_nSelRow - i
+    If i < 1 Then i = 1 Else If i > m_nRows Then i = m_nRows
+    If m_nSelRow <> i Then
+     SelectedRow = i
+     m_nScrollValue(1) = m_nScrollValue(1) - h
+     m_bScrollChanged = True
+     EnsureVisible
+     RaiseEvent Click(m_nSelRow, m_nSelColumn)
+    End If
+   Case vbKeyPageDown
+    h = m_nHeight
+    If m_bHeader Then h = h - m_nItemHeight
+    i = h \ m_nItemHeight
+    If i <= 0 Then i = 1
+    i = m_nSelRow + i
+    If i < 1 Then i = 1 Else If i > m_nRows Then i = m_nRows
+    If m_nSelRow <> i Then
+     SelectedRow = i
+     m_nScrollValue(1) = m_nScrollValue(1) + h
+     m_bScrollChanged = True
+     EnsureVisible
+     RaiseEvent Click(m_nSelRow, m_nSelColumn)
+    End If
+   Case vbKeyHome
+    If m_nSelRow <> 1 Then
+     SelectedRow = 1
+     EnsureVisible
+     RaiseEvent Click(m_nSelColumn, m_nSelColumn)
+    End If
+   Case vbKeyEnd
+    If m_nSelRow <> m_nRows Then
+     SelectedRow = m_nRows
+     EnsureVisible
+     RaiseEvent Click(m_nSelColumn, m_nSelColumn)
+    End If
+   End Select
+  End If
+ End If
+ '///
  RaiseEvent KeyDown(KeyCode, Shift)
 Case 2 'keyup
  RaiseEvent KeyUp(KeyCode, Shift)

@@ -18,8 +18,14 @@ Public FakeDXUIMousePointer As MousePointerConstants
 
 Public FakeDXUI_IME As New clsFakeDXUI_IME
 
-Public FakeDXUIPopup_ComboBox As Long, FakeDXUIPopup_ComboBox_Rect As typeFakeDXUIRect, _
-FakeDXUIPopup_ComboBox_State As Long '&h1000000-onmouseevent
+'////////
+
+Public FakeDXUIPopup_ComboBox As Long, FakeDXUIPopup_ComboBox_Rect As typeFakeDXUIRect
+Public FakeDXUIPopup_ComboBox_State As Long
+'bit 0-7:0 closed 1-4 opening 5 opened 6-9 closing
+'&h1000000-onmouseevent
+
+'////////
 
 Public Type typeFakeDXUIPosition 'a+b*w
  a As Single
@@ -297,33 +303,52 @@ End Sub
 
 'inefficient when drawing a lot of controls (50+)
 Public Sub FakeDXUIRender()
-Dim i As Long
+Dim nOldState As Long
 Dim r As D3DRECT
+Dim i As Long, b As Boolean
 If FakeDXUIControlCount > 0 Then
  d3dd9.SetTexture 0, FakeDXUITexture
- i = d3dd9.GetRenderState(D3DRS_ALPHABLENDENABLE)
+ nOldState = d3dd9.GetRenderState(D3DRS_ALPHABLENDENABLE)
  d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, 1
  d3dd9.SetRenderState D3DRS_SCISSORTESTENABLE, 1
  r.x2 = d3dpp.BackBufferWidth
  r.Y2 = d3dpp.BackBufferHeight
  d3dd9.SetScissorRect r
- '///
+ '///render main
  FakeDXUIControls(1).Render
+ '///render IME
  FakeDXUI_IME.Render
  '///combobox dropdown
+ b = False
  If FakeDXUIPopup_ComboBox > 0 And FakeDXUIPopup_ComboBox <= FakeDXUIControlCount Then
   If FakeDXUIControls(FakeDXUIPopup_ComboBox).ControlType = FakeCtl_ComboBox Then
-   'TODO:animation
-   FakeDXUIControls(FakeDXUIPopup_ComboBox).RenderListView FakeDXUIPopup_ComboBox_Rect.Left, FakeDXUIPopup_ComboBox_Rect.Top, _
-   FakeDXUIPopup_ComboBox_Rect.Right, FakeDXUIPopup_ComboBox_Rect.Bottom
+   i = FakeDXUIPopup_ComboBox_State And &HFF&
+   If i > 0 Then
+    If i < 5 Then
+     FakeDXUIPopup_ComboBox_State = FakeDXUIPopup_ComboBox_State + 1
+     b = i = 1
+    ElseIf i > 5 Then
+     FakeDXUIPopup_ComboBox_State = FakeDXUIPopup_ComboBox_State + 1
+     i = 10 - i
+    End If
+    If i > 0 Then
+     FakeDXUIControls(FakeDXUIPopup_ComboBox).RenderListView FakeDXUIPopup_ComboBox_Rect.Left, FakeDXUIPopup_ComboBox_Rect.Top, _
+     FakeDXUIPopup_ComboBox_Rect.Right, FakeDXUIPopup_ComboBox_Rect.Bottom, i * 0.18, , b
+     b = True
+    End If
+   End If
   End If
+ End If
+ If Not b Then
+  FakeDXUIPopup_ComboBox = 0
+  FakeDXUIPopup_ComboBox_State = 0
  End If
  '///
  'TODO:menu
  '///
  'TODO:tooltiptext
  '///
- d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, i
+ d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, nOldState
  d3dd9.SetRenderState D3DRS_SCISSORTESTENABLE, 0
  '///???
  FakeDXUIDoEvents

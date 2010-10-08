@@ -30,7 +30,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
@@ -333,28 +333,33 @@ With FakeDXUIControls(1)
    .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   End With
   '////////
-  With .AddNewChildren(FakeCtl_ComboBox, 4, 88, 256, 108, &H3000018, , , , , "HEHE").ListViewObject
+  With .AddNewChildren(FakeCtl_ComboBox, 4, 88, 256, 108, &H3000018, , , , , "Dropdown CheckListBox")
+   .ComboBoxDropdownHeight = 16
+   With .ListViewObject
      .FullRowSelect = True
      .ColumnHeader = True
      .GridLines = True
-     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
-     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 48
-     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight, 48
      .AddColumn "A", , efctCheck, , 16
      .AddColumn "B", , efctCheck3State, , 16
+     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
+     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 64
+     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight, 80
+     For i = 1 To 1000
+      .AddItem "", , , Array(, CStr(i), CStr(i * i), CStr(i * i * i))
+     Next i
+   End With
+  End With
+  With .AddNewChildren(FakeCtl_ComboBox, 4, 112, 256, 132, &H3000000, , , , , "HEHE")
+   With .ListViewObject
+     .FullRowSelect = True
+     .ColumnHeader = False
+     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
+     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 64
+     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight
      For i = 1 To 1000
       .AddItem CStr(i), , , Array(CStr(i * i), CStr(i * i * i))
      Next i
-  End With
-  With .AddNewChildren(FakeCtl_ComboBox, 4, 112, 256, 132, &H3000000, , , , , "HEHE").ListViewObject
-     .FullRowSelect = True
-     .ColumnHeader = True
-     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
-     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 48
-     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight, 48
-     For i = 1 To 7
-      .AddItem CStr(i), , , Array(CStr(i * i), CStr(i * i * i))
-     Next i
+   End With
   End With
  End With
  #If 0 Then

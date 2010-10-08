@@ -60,9 +60,33 @@ Private m_tScrollBar(1) As typeFakeDXUIScrollBar
 '////////controls
 
 Private m_objTextBox As clsFakeDXUITextBox
-Private m_nComboBoxPrimaryCol As Long, WithEvents m_objListView As clsFakeDXUIListView
-Attribute m_nComboBoxPrimaryCol.VB_VarHelpID = -1
+Private m_nComboBoxPrimaryCol As Long, m_nComboBoxDropdownWidth As Long, m_nComboBoxDropdownHeight As Long, _
+WithEvents m_objListView As clsFakeDXUIListView
 Attribute m_objListView.VB_VarHelpID = -1
+
+Friend Property Get ComboBoxPrimaryColumn() As Long
+ComboBoxPrimaryColumn = m_nComboBoxPrimaryCol
+End Property
+
+Friend Property Let ComboBoxPrimaryColumn(ByVal n As Long)
+m_nComboBoxPrimaryCol = n
+End Property
+
+Friend Property Get ComboBoxDropdownWidth() As Long
+ComboBoxDropdownWidth = m_nComboBoxDropdownWidth
+End Property
+
+Friend Property Let ComboBoxDropdownWidth(ByVal n As Long)
+m_nComboBoxDropdownWidth = n
+End Property
+
+Friend Property Get ComboBoxDropdownHeight() As Long
+ComboBoxDropdownHeight = m_nComboBoxDropdownHeight
+End Property
+
+Friend Property Let ComboBoxDropdownHeight(ByVal n As Long)
+m_nComboBoxDropdownHeight = n
+End Property
 
 Friend Property Get ListViewObject() As clsFakeDXUIListView
 Set ListViewObject = m_objListView
@@ -694,7 +718,7 @@ If i > 0 Then
 End If
 End Sub
 
-Friend Sub RenderListView(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True)
+Friend Sub RenderListView(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True, Optional ByVal bEnsureVisibleSelected As Boolean)
 Dim i As Long, j As Long, kk As Long
 Dim r0 As D3DRECT, r As D3DRECT
 If m_objListView Is Nothing Then Exit Sub
@@ -715,6 +739,7 @@ j = r.Y2 - r.y1
 If i > 4 And j > 4 Then 'size limit ???
  m_objListView.Width = i
  m_objListView.Height = j
+ If bEnsureVisibleSelected Then m_objListView.EnsureVisible
  '///add:autoscroll
  If m_objListView.ScrollChanged Then
   m_tScrollBar(0).nValue = m_objListView.ScrollValue(0)
@@ -1512,16 +1537,29 @@ End Select
 FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
 End Sub
 
-'TODO:animation
 Friend Sub ShowDropDown(Optional ByVal x As Long = &H80000000, Optional ByVal y As Long = &H80000000, Optional ByVal bShow As VbTriState = vbUseDefault)
 Dim w As Long, h As Long
+Dim i As Long
+If m_objListView Is Nothing Then Exit Sub
 If bShow = vbUseDefault Then bShow = FakeDXUIPopup_ComboBox <> m_nIndex
 If bShow Then
- w = m_tRectScreen.Right - m_tRectScreen.Left 'TODO:customize
- h = 130& 'TODO:customize
+ '///
+ If m_nComboBoxDropdownWidth > 0 Then w = m_nComboBoxDropdownWidth _
+ Else w = m_tRectScreen.Right - m_tRectScreen.Left
+ If w < 32 Then w = 32
+ If m_nComboBoxDropdownHeight > 0 Then h = m_nComboBoxDropdownHeight Else h = 8
+ i = m_objListView.RowCount
+ If h > i Then h = i
+ If h < 0 Then h = 1
+ h = h * m_objListView.RowHeight + 1
  '///
  If x = &H80000000 Or y = &H80000000 Then
-  x = m_tRectScreen.Left
+  If m_tRectScreen.Left + w > d3dpp.BackBufferWidth Then
+   x = m_tRectScreen.Right - w
+   If x < 0 Then x = 0
+  Else
+   x = m_tRectScreen.Left
+  End If
   If m_tRectScreen.Bottom + h > d3dpp.BackBufferHeight Then
    y = m_tRectScreen.Top - h
    If y < 0 Then y = 0
@@ -1529,6 +1567,10 @@ If bShow Then
    y = m_tRectScreen.Bottom
   End If
  Else
+  If x + w > d3dpp.BackBufferWidth Then
+   x = x - w
+   If x < 0 Then x = 0
+  End If
   If y + h > d3dpp.BackBufferHeight Then
    y = y - h
    If y < 0 Then y = 0
@@ -1542,9 +1584,16 @@ If bShow Then
   .Bottom = y + h + 4
  End With
  '///
- FakeDXUIPopup_ComboBox = m_nIndex
+ If FakeDXUIPopup_ComboBox <> m_nIndex Then
+  FakeDXUIPopup_ComboBox = m_nIndex
+  FakeDXUIPopup_ComboBox_State = (FakeDXUIPopup_ComboBox_State And &HFFFFFF00) Or 1&
+ End If
 Else
- FakeDXUIPopup_ComboBox = 0
+ If FakeDXUIPopup_ComboBox = m_nIndex Then
+  i = FakeDXUIPopup_ComboBox_State And &HFF&
+  If i > 0 And i <= 5 Then _
+  FakeDXUIPopup_ComboBox_State = (FakeDXUIPopup_ComboBox_State And &HFFFFFF00) Or 6&
+ End If
 End If
 End Sub
 
@@ -1691,7 +1740,8 @@ Case 8 'listview
  '///
 Case 9 'combobox
  '///process dropdown mouse event
- If FakeDXUIPopup_ComboBox = m_nIndex Then
+ i = FakeDXUIPopup_ComboBox_State And &HFF&
+ If FakeDXUIPopup_ComboBox = m_nIndex And i <= 5& Then
   If m_nScrollBars And vbHorizontal Then
    b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
   End If
@@ -1967,7 +2017,7 @@ OnMouseEvent = b Or b1 Or bChildrenProcessed
 End Function
 
 Friend Function OnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean
-Dim i As Long
+Dim i As Long, m As Long
 Dim b As Boolean
 '///
 If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit Function
@@ -1979,6 +2029,50 @@ Case 7 'textbox
  b = m_objTextBox.OnKeyEvent(KeyCode, Shift, nEventType)
 Case 8 'listview
  b = m_objListView.OnKeyEvent(KeyCode, Shift, nEventType)
+Case 9 'combobox
+ If FakeDXUIPopup_ComboBox = m_nIndex Then
+  b = m_objListView.OnKeyEvent(KeyCode, Shift, nEventType)
+ ElseIf nEventType = 1 Then
+  Select Case KeyCode
+  Case vbKeySpace, vbKeyReturn
+   ShowDropDown
+  Case vbKeyUp, vbKeyLeft, vbKeyPageUp
+   If m_objListView.RowCount > 0 Then
+    i = m_objListView.SelectedRow - 1
+    If i <= 1 Then i = 1
+    If m_objListView.SelectedRow <> i Then
+     m_objListView.SelectedRow = i
+     FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
+    End If
+   End If
+  Case vbKeyDown, vbKeyRight, vbKeyPageDown
+   m = m_objListView.RowCount
+   If m > 0 Then
+    i = m_objListView.SelectedRow + 1
+    If i > m Then i = m
+    If m_objListView.SelectedRow <> i Then
+     m_objListView.SelectedRow = i
+     FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
+    End If
+   End If
+  Case vbKeyHome
+   If m_objListView.RowCount > 0 Then
+    If m_objListView.SelectedRow <> 1 Then
+     m_objListView.SelectedRow = 1
+     FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
+    End If
+   End If
+  Case vbKeyEnd
+   m = m_objListView.RowCount
+   If m > 0 Then
+    If m_objListView.SelectedRow <> m Then
+     m_objListView.SelectedRow = m
+     FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
+    End If
+   End If
+  End Select
+  b = True
+ End If
 End Select
 '///
 Select Case nEventType
@@ -2010,7 +2104,7 @@ End Function
 
 Friend Function OnMouseWheel(ByVal nDelta As Long, ByVal Shift As Long, Optional ByVal bDropDown As Boolean) As Boolean
 Dim idx As Long
-Dim i As Long
+Dim i As Long, m As Long
 Dim b As Boolean, b1 As Boolean
 '///
 If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit Function
@@ -2022,7 +2116,21 @@ Select Case m_nType
 Case 1, 3, 6, 7, 8, 10
  b1 = True
 Case 9 'combobox
- b1 = FakeDXUIPopup_ComboBox = m_nIndex
+ If FakeDXUIPopup_ComboBox = m_nIndex Then
+  b1 = (FakeDXUIPopup_ComboBox_State And &HFF&) = 5&
+ Else
+  m = m_objListView.RowCount
+  If m > 0 Then
+   i = m_objListView.SelectedRow - nDelta
+   If i <= 1 Then i = 1 Else _
+   If i > m Then i = m
+   If m_objListView.SelectedRow <> i Then
+    m_objListView.SelectedRow = i
+    FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
+   End If
+  End If
+ End If
+ b = True
 Case 5
  idx = 0
 End Select
@@ -2057,6 +2165,7 @@ If m_nType = 9 And FakeDXUIPopup_ComboBox = m_nIndex Then
   If (m_nStyle And 16&) = 0 Then ShowDropDown , , vbFalse
  End If
 End If
+FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
 End Sub
 
 

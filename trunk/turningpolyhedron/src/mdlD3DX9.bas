@@ -98,6 +98,12 @@ CopyMemory i, n, 4&
 SingleToLong = i
 End Function
 
+Public Function LongToSingle(ByVal n As Long) As Single
+Dim i As Single
+CopyMemory i, n, 4&
+LongToSingle = i
+End Function
+
 '//===========================================================================
 '//
 '// Inline functions
