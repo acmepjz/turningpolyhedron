@@ -1,6 +1,6 @@
 Type=Exe
 Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#D:\WINDOWS\system32\STDOLE2.TLB#OLE Automation
-Reference=*\G{2684085F-5C59-4214-890B-3E393C5970B1}#0.0#0#tlb\dx9vbtest.tlb#Direct3D9 VB6 Type Library (Test Only!!!)
+Reference=*\G{2684085F-5C59-4214-890B-3E393C5970B1}#0.0#0#tlb\dx9vbtest.tlb
 Form=src\frmMain.frm
 Class=clsGNUGetText; src\clsGNUGetText.cls
 Module=mdlMain; src\mdlMain.bas
@@ -21,6 +21,8 @@ Class=ISort2; src\ISort2.cls
 Module=mdlLibMini; src\mdlLibMini.bas
 Class=clsRenderLandscape; src\clsRenderLandscape.cls
 Module=mdlRenderLandscape; src\mdlRenderLandscape.bas
+Class=clsSimpleTarFile; src\clsSimpleTarFile.cls
+Module=mdlLZMA_DLL; src\mdlLZMA_DLL.bas
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""
