@@ -445,3 +445,15 @@ float4 simple_brightpass_func(float2 t:TEXCOORD0):COLOR0{
 technique simple_brightpass{
 pass{PixelShader=compile ps_2_0 simple_brightpass_func();}
 }
+
+float4 simple_radial_blur5_func(float2 t:TEXCOORD0):COLOR0{
+	float2 t1=t-0.5f;
+	return (tex2D(samp,t)+tex2D(samp,t1*_fParam[0].x+0.5f)
+	+tex2D(samp,t1*_fParam[0].y+0.5f)
+	+tex2D(samp,t1*_fParam[0].z+0.5f)
+	+tex2D(samp,t1*_fParam[0].w+0.5f))*0.2f;
+}
+
+technique simple_radial_blur5{
+pass{PixelShader=compile ps_2_0 simple_radial_blur5_func();}
+}
