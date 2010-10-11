@@ -99,7 +99,7 @@ If m_bPostProcessEnabled Then
  'luminance
  D3DXCreateTexture d3dd9, 128, 128, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_R32F, D3DPOOL_DEFAULT, objPostProcessTarget(2)
  'average luminance
- D3DXCreateTexture d3dd9, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, D3DPOOL_DEFAULT, objPostProcessTarget(3)
+ D3DXCreateTexture d3dd9, 1, 1, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, D3DPOOL_DEFAULT, objPostProcessTarget(3)
 End If
 End Sub
 
@@ -262,29 +262,40 @@ End Sub
 Friend Sub PerformPostProcess(ByVal objDraw As clsRenderTexture)
 Dim i As Long, j As Long
 Dim f As Single
-Dim v As D3DXVECTOR4
+Dim v As D3DXVECTOR4, v2 As D3DXVECTOR4
 '///
 If Not m_bPostProcessEnabled Then Exit Sub
 '///
 f = 1
 'v = Vec4(0.275591!, 0.220472!, 0.110236!, 0.0314961!) 'bimonial8
 v = Vec4(0.251497!, 0.209581!, 0.11976!, 0.0449102!) 'bimonial10
-'///
+'///calc luminance
 objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(2), "fx_to_luminance", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
 objDraw.ProcessTextureEx objPostProcessTarget(2), objPostProcessTarget(3), "fx_from_luminance_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 16), Vec4, Vec4, Vec4
+'///bright pass
 objDraw.ProcessTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), objPostProcessTarget(1), _
-"simple_brightpass", 0, 0, 0, 0, Vec4(1), Vec4, Vec4, Vec4
+"simple_brightpass", 0, 0, 0, 0, Vec4(5), Vec4, Vec4, Vec4  'Vec4(1, 0.25)
 '///blur - see documentation
 i = m_nHDRBlurQuality
 If i <= 0 Then j = &H502& _
 Else If i = 1 Then j = &H90301 _
 Else j = &H110502
+j = 1 'test
 For i = 0 To 2
  objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
  objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
  j = j \ &H100&
  If j <= 0 Then Exit For
 Next i
+'///test - radial blur
+'the coefficients:
+'Table[ToString[(ToString[#]<>"!")&/@N[z^-Table[n*t/5,{n,4}]/.{t->5^-k,z->10},10]],{k,0,3}]
+objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.6309574!, 0.3981072!, 0.2511886!, 0.1584893!), Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9120108!, 0.8317637!, 0.7585776!, 0.691831!), Vec4, Vec4, Vec4
+If m_nHDRBlurQuality > 1 Then
+ objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9817479!, 0.963829!, 0.9462371!, 0.9289664!), Vec4, Vec4, Vec4
+ objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9963226!, 0.9926588!, 0.9890084!, 0.9853715!), Vec4, Vec4, Vec4
+End If
 '///
 '...TODO:
 '///
