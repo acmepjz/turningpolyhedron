@@ -29,6 +29,8 @@ Private Declare Function GetTextExtentPoint32W Lib "gdi32.dll" ( _
   ByVal c As Long, _
   ByRef lpSize As Any) As Long
 
+Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+
 Private Const GCP_MAXEXTENT As Long = &H100000
 
 Private Type GCP_RESULTS
@@ -42,6 +44,8 @@ Private Type GCP_RESULTS
   nGlyphs As Long
   nMaxFit As Long
 End Type
+
+Private m_nStyle As Long
 
 Private m_nFontZoom As Single
 Private m_bMultiLine As Boolean
@@ -65,6 +69,59 @@ Private m_nTextHeight As Long
 
 Private m_nScrollValue(1) As Long, m_bScrollChanged As Boolean
 Private m_bCapture As Boolean
+
+Friend Function ProcessTextUsingStyle(ByVal s As String) As String
+Dim b As Boolean
+Dim d() As Integer
+Dim i As Long, j As Long, k As Long, m As Long, n As Long
+n = m_nStyle
+If n And &HFF& Then
+ m = Len(s)
+ If m > 0 Then
+  If (n And 3&) = 1 Then s = LCase$(s) _
+  Else If (n And 3&) = 2 Then s = UCase$(s)
+  '///
+  ReDim d(m - 1)
+  CopyMemory d(0), ByVal StrPtr(s), m + m
+  '///
+  For i = 0 To m - 1
+   k = d(i)
+   b = ((n And 1&) <> 0 And k >= &H61& And k <= &H7A&) Or _
+   ((n And 2&) <> 0 And k >= &H41& And k <= &H5A&) Or _
+   ((n And 4&) <> 0 And k >= &H30& And k <= &H39&) Or _
+   k = 13 Or k = 10
+   If Not b Then
+    j = j + 1
+   ElseIf j > 0 Then
+    d(i - j) = d(i)
+   End If
+  Next i
+  '///
+  If j > 0 Then
+   m = m - j
+   If m > 0 Then CopyMemory ByVal StrPtr(s), d(0), m + m
+   s = Left$(s, m)
+  End If
+  Erase d
+ End If
+End If
+ProcessTextUsingStyle = s
+End Function
+
+Friend Property Get Style() As enumFakeDXUIControlStyle
+Style = m_nStyle
+End Property
+
+Friend Property Let Style(ByVal n As enumFakeDXUIControlStyle)
+Dim i As Long
+i = m_nStyle
+m_nStyle = n
+If n And &HFF& Then
+ If (i Xor n) And &HFF& Then
+  Text = ProcessTextUsingStyle(Text)
+ End If
+End If
+End Property
 
 Friend Property Get ScrollValue(Optional ByVal nIndex As Long) As Long
 ScrollValue = m_nScrollValue(nIndex)
@@ -181,7 +238,7 @@ End Property
 
 Friend Property Let Text(ByRef s As String)
 If m_bMultiLine Then
- m_sLines = Split(s, vbCrLf)
+ m_sLines = Split(ProcessTextUsingStyle(s), vbCrLf)
  m_nLineMax = UBound(m_sLines) + 1
  If m_nLineMax <= 0 Then
   m_nLineMax = 1
@@ -195,7 +252,7 @@ Else
   ReDim m_sLines(0), m_tLineData(0)
  End If
  m_nLineCount = 1
- m_sLines(0) = s
+ m_sLines(0) = ProcessTextUsingStyle(s)
 End If
 '///
 m_tCaret.nRow = 0
@@ -249,6 +306,9 @@ Dim bSelection As Boolean
 Dim tSelStart As typeFakeDXUITextBoxPos, tSelEnd As typeFakeDXUITextBoxPos
 Dim nNewCount As Long
 Dim i As Long, j As Long, k As Long
+'///preprocess
+s = ProcessTextUsingStyle(s)
+'///
 If m_nLineCount > 0 Then
  '///calc SelText data
  If Not m_bMultiLine Then s = Replace(s, vbCrLf, "")
@@ -420,7 +480,7 @@ m_nFontZoom = f
 End Property
 
 Friend Function OnKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long) As Boolean
-Dim i As Long
+Dim i As Long, j As Long
 Dim s As String
 '///
 'TODO:other
@@ -490,14 +550,31 @@ Case 0 'keypress
     End If
    End If
 '  Case 9 'tab
-'   If m_bLocked Then Beep Else SelText(m_bInsertMode) = vbTab '???
+'   If m_bLocked Then Beep Else SelText(m_bInsertMode) = vbTab '??? doesn't display
   Case 10, 13 'enter
    If m_bLocked Or Not m_bMultiLine Then Beep Else SelText = vbCrLf
   End Select
   KeyCode = 0
  End If
  If KeyCode Then
-  If m_bLocked Then Beep Else SelText(m_bInsertMode) = Chr(KeyCode)
+  If m_bLocked Then
+   Beep
+  Else
+   '///new:preprocess
+   i = m_nStyle And &HFF&
+   If i Then
+    If (i And 3&) = 1 And KeyCode >= &H41& And KeyCode <= &H5A& Then KeyCode = KeyCode + &H20& _
+    Else If (i And 3&) = 2 And KeyCode >= &H61& And KeyCode <= &H7A& Then KeyCode = KeyCode - &H20&
+    '///
+    If ((i And 1&) <> 0 And KeyCode >= &H61& And KeyCode <= &H7A&) Or _
+    ((i And 2&) <> 0 And KeyCode >= &H41& And KeyCode <= &H5A&) Or _
+    ((i And 4&) <> 0 And KeyCode >= &H30& And KeyCode <= &H39&) Then j = KeyCode
+   Else
+    j = KeyCode
+   End If
+   '///
+   If j = 0 Then Beep Else SelText(m_bInsertMode) = Chr(j)
+  End If
  End If
 Case 1 'keydown
  If Shift And vbCtrlMask Then
@@ -685,8 +762,8 @@ If m_nLineCount > 0 Then
       k = nStartLine - i
       If k < 0 Then k = 0 Else i = nStartLine
       Do While k < m And i <= nEndLine
-       r.Y1 = i * m_nLineHeight
-       r.Y2 = r.Y1 + m_nLineHeight
+       r.y1 = i * m_nLineHeight
+       r.Y2 = r.y1 + m_nLineHeight
        '///selection
        If bSelection Then
         If j >= tSelStart.nRow And j <= tSelEnd.nRow Then
@@ -717,7 +794,7 @@ If m_nLineCount > 0 Then
          If jj >= 0 Then
           jj = nLeft + jj
           jjj = nLeft + jjj
-          kk = nTop + (r.Y1 - m_nScrollValue(1)) * m_nFontZoom
+          kk = nTop + (r.y1 - m_nScrollValue(1)) * m_nFontZoom
           FakeDXGDIFillRect jj, kk, jjj, kk + m_nLineHeight * m_nFontZoom, clr Or &H5987D6
          End If
         End If
@@ -735,8 +812,8 @@ If m_nLineCount > 0 Then
    If nStartLine < 0 Then nStartLine = 0
    If nEndLine >= m_nLineCount Then nEndLine = m_nLineCount - 1
    For i = nStartLine To nEndLine
-    r.Y1 = i * m_nLineHeight
-    r.Y2 = r.Y1 + m_nLineHeight
+    r.y1 = i * m_nLineHeight
+    r.Y2 = r.y1 + m_nLineHeight
     '///selection
     If bSelection Then
      If i >= tSelStart.nRow And i <= tSelEnd.nRow Then
@@ -746,7 +823,7 @@ If m_nLineCount > 0 Then
       Else jjj = m_tLineData(i).nLineWidth + 16
       jj = nLeft + (jj - m_nScrollValue(0)) * m_nFontZoom
       jjj = nLeft + (jjj - m_nScrollValue(0)) * m_nFontZoom
-      kk = nTop + (r.Y1 - m_nScrollValue(1)) * m_nFontZoom
+      kk = nTop + (r.y1 - m_nScrollValue(1)) * m_nFontZoom
       FakeDXGDIFillRect jj, kk, jjj, kk + m_nLineHeight * m_nFontZoom, clr Or &H5987D6
      End If
     End If

@@ -99,19 +99,19 @@ Set objOldTarget = Nothing
 Set objOldStencil = Nothing
 End Sub
 
-Friend Sub ProcessTexture(ByVal objSrc As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String)
-ProcessTwoTextureEx objSrc, Nothing, objDest, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4
+Friend Sub ProcessTexture(ByVal objSrc As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean = True)
+ProcessTwoTextureEx objSrc, Nothing, objDest, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4, fPixelSizeScale, bErase
 End Sub
 
-Friend Sub ProcessTwoTexture(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String)
-ProcessTwoTextureEx objSrc, objSrc2, objDest, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4
+Friend Sub ProcessTwoTexture(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean = True)
+ProcessTwoTextureEx objSrc, objSrc2, objDest, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4, fPixelSizeScale, bErase
 End Sub
 
-Friend Sub ProcessTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1)
-ProcessTwoTextureEx objSrc, Nothing, objDest, sEffect, iParam1, iParam2, iParam3, iParam4, fParam1, fParam2, fParam3, fParam4, fPixelSizeScale
+Friend Sub ProcessTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean = True)
+ProcessTwoTextureEx objSrc, Nothing, objDest, sEffect, iParam1, iParam2, iParam3, iParam4, fParam1, fParam2, fParam3, fParam4, fPixelSizeScale, bErase
 End Sub
 
-Friend Sub ProcessTwoTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1)
+Friend Sub ProcessTwoTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean = True)
 Dim t As D3DSURFACE_DESC
 Dim v As D3DXVECTOR4
 Dim p(23) As Single
@@ -151,7 +151,7 @@ objEffect.SetTechnique StrPtr(StrConv(sEffect, vbFromUnicode))
 objEffect.Begin 0, 0
 objEffect.BeginPass 0
 '////////
-d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
+If bErase Then d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
 d3dd9.BeginScene
 d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_TEX1
 d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, p(0), 24&
@@ -165,19 +165,19 @@ Set objOldTarget = Nothing
 Set objOldStencil = Nothing
 End Sub
 
-Friend Sub DrawTexture(ByVal objSrc As Direct3DTexture9, ByVal sEffect As String)
-DrawTwoTextureEx objSrc, Nothing, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4
+Friend Sub DrawTexture(ByVal objSrc As Direct3DTexture9, ByVal sEffect As String, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean)
+DrawTwoTextureEx objSrc, Nothing, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4, fPixelSizeScale, bErase
 End Sub
 
-Friend Sub DrawTwoTexture(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal sEffect As String)
-DrawTwoTextureEx objSrc, objSrc2, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4
+Friend Sub DrawTwoTexture(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal sEffect As String, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean)
+DrawTwoTextureEx objSrc, objSrc2, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4, fPixelSizeScale, bErase
 End Sub
 
-Friend Sub DrawTextureEx(ByVal objSrc As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1)
-DrawTwoTextureEx objSrc, Nothing, sEffect, iParam1, iParam2, iParam3, iParam4, fParam1, fParam2, fParam3, fParam4, fPixelSizeScale
+Friend Sub DrawTextureEx(ByVal objSrc As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean)
+DrawTwoTextureEx objSrc, Nothing, sEffect, iParam1, iParam2, iParam3, iParam4, fParam1, fParam2, fParam3, fParam4, fPixelSizeScale, bErase
 End Sub
 
-Friend Sub DrawTwoTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1)
+Friend Sub DrawTwoTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean)
 Dim t As D3DSURFACE_DESC
 Dim v As D3DXVECTOR4
 Dim p(23) As Single
@@ -211,6 +211,7 @@ objEffect.SetTechnique StrPtr(StrConv(sEffect, vbFromUnicode))
 objEffect.Begin 0, 0
 objEffect.BeginPass 0
 '////////
+If bErase Then d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
 d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_TEX1
 d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, p(0), 24&
 '////////

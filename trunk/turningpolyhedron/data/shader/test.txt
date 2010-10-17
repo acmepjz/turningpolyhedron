@@ -403,6 +403,22 @@ technique convolve_v_symmetric4_border{
 pass{PixelShader=compile ps_2_0 ps_convolve_v_symmetric4(sampBorder);}
 }
 
+float4 ps_convolve_directional_symmetric4(float2 t:TEXCOORD0,uniform sampler s):COLOR0{
+	return mul(_fParam[0],float4x4(tex2D(s,t)
+	,tex2D(s,t-_fParam[1].xy)+tex2D(s,t+_fParam[1].xy)
+	,tex2D(s,t-_fParam[1].xy*2.0f)+tex2D(s,t+_fParam[1].xy*2.0f)
+	,tex2D(s,t-_fParam[1].xy*3.0f)+tex2D(s,t+_fParam[1].xy*3.0f)
+	));
+}
+
+technique convolve_directional_symmetric4{
+pass{PixelShader=compile ps_2_0 ps_convolve_directional_symmetric4(samp);}
+}
+
+technique convolve_directional_symmetric4_border{
+pass{PixelShader=compile ps_2_0 ps_convolve_directional_symmetric4(sampBorder);}
+}
+
 ////////////////////////////////////////
 //
 // post effects
@@ -428,8 +444,11 @@ pass{PixelShader=compile ps_2_0 ps_from_luminance_bias();}
 }
 
 float4 simple_tonemapping_func(float2 t:TEXCOORD0):COLOR0{
-	float3 f=_fParam[0].x*tex2D(samp,t).xyz;
-	return float4(f/(tex2D(samp2,t).xxx+f)*_fParam[0].y,1);
+	float3 clr=tex2D(samp,t).xyz;
+	//float3 f=_fParam[0].x*tex2D(samp,t).xyz;
+	float f=tex2D(samp2,t).x/_fParam[0].x+dot(clr,float3(0.222,0.707,0.071));
+	return float4(clr/f*_fParam[0].y,1);
+	//return float4(tex2D(samp,t).xyz-tex2D(samp2,t).x,1);
 }
 
 technique simple_tonemapping{

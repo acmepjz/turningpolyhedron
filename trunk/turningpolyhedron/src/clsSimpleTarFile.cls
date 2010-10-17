@@ -37,7 +37,12 @@ Private Type TIME_ZONE_INFORMATION
     DaylightBias As Long
 End Type
 
+'////////
 'a simple tar reader/writer, supports the most basic features only
+'documents about tar file can be found at:
+'http://en.wikipedia.org/wiki/Tar_(file_format)
+'http://www.gnu.org/software/automake/manual/tar/Standard.html
+'////////
 
 '/* tar Header Block, from POSIX 1003.1-1990.  */
 '
@@ -63,6 +68,19 @@ End Type
 '  char prefix[155];             /* 345 */
 '                                /* 500 */
 '};
+'/* Values used in typeflag field.  */
+'#define REGTYPE  '0'            /* regular file */
+'#define AREGTYPE '\0'           /* regular file */
+'#define LNKTYPE  '1'            /* link */
+'#define SYMTYPE  '2'            /* reserved */
+'#define CHRTYPE  '3'            /* character special */
+'#define BLKTYPE  '4'            /* block special */
+'#define DIRTYPE  '5'            /* directory */
+'#define FIFOTYPE '6'            /* FIFO special */
+'#define CONTTYPE '7'            /* reserved */
+'#define XHDTYPE  'x'            /* Extended header referring to the
+'                                   next file in the archive */
+'#define XGLTYPE  'g'            /* Global extended header */
 
 Private Type typeTarHeader
  sName(99) As Byte 'UTF-8? GB18030?

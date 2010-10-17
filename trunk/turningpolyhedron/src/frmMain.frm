@@ -298,7 +298,7 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   '////////tab debug
-  .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 80, &H3000000, , , , , "Single line text box blah blah blah 가가가 blah blah"
+  .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 80, &H3000007, , , , , "Single line text box blah blah blah 가가가 blah blah"
   With .AddNewChildren(FakeCtl_Frame, 120, 144, 240, 256, FCS_CanGetFocus, , , , "Form1234가각")
    .ScrollBars = vbBoth
    .Min = -50
@@ -732,7 +732,7 @@ With d3dd9
   objRenderTest.SetTexture objTexture
   objRenderTest.SetNormalTexture objNormalTexture
   objRenderTest.BeginRender
-  .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
+  .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000010, 1, 0
   .BeginScene
   objTest.DrawSubset 0
   .EndScene

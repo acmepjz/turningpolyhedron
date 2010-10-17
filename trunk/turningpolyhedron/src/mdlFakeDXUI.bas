@@ -138,6 +138,11 @@ Public Enum enumFakeDXUIControlStyle
  FBS_Graphical = 8
  FBS_Default = 16
  FBS_Cancel = 32
+ '///textbox
+ FTS_LowerCaseOnly = 1
+ FTS_UpperCaseOnly = 2
+ FTS_NumberOnly = 4
+ FTS_UpDown = &H10000
  '///combobox
  FCBS_DropdownList = 0
  FCBS_DropdownCombo = 1 'currently unsupported
