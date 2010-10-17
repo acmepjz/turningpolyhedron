@@ -32,15 +32,25 @@ Private m_nShadowMapSize As Long
 '////////post process
 
 Private m_bPostProcessEnabled As Boolean
-Private objPostProcessTarget(7) As Direct3DTexture9
+Private objPostProcessTarget(15) As Direct3DTexture9
 'HDR
 Private m_nHDRBlurQuality As Long
+'radial blur
+Private m_bRadialBlur As Boolean
 
 '////////
 
 Private m_fParam(3) As D3DXVECTOR4
 
 Private m_fovy As Single, m_fAspect As Single, m_zn As Single, m_zf As Single
+
+Friend Property Get RadialBlurEnabled() As Boolean
+RadialBlurEnabled = m_bRadialBlur
+End Property
+
+Friend Property Let RadialBlurEnabled(ByVal b As Boolean)
+m_bRadialBlur = b
+End Property
 
 Friend Property Get Effect() As D3DXEffect
 Set Effect = objEffect
@@ -78,12 +88,14 @@ If m_nHDRBlurQuality <> n Or bForceRefresh Then
  m_nHDRBlurQuality = n
  Set objPostProcessTarget(1) = Nothing
  Set objPostProcessTarget(4) = Nothing
+ Set objPostProcessTarget(5) = Nothing
  If m_bPostProcessEnabled Then
   If n <= 0 Then k = 8 _
   Else If n = 1 Then k = 4 _
   Else k = 2
   D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(1)
   D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(4)
+  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(5)
  End If
 End If
 End Property
@@ -260,13 +272,20 @@ End If
 End Sub
 
 Friend Sub PerformPostProcess(ByVal objDraw As clsRenderTexture)
+Dim nOldState As Long
 Dim i As Long, j As Long
 Dim f As Single
-Dim v As D3DXVECTOR4, v2 As D3DXVECTOR4
+Dim v As D3DXVECTOR4, v2 As D3DXVECTOR4, v3 As D3DXVECTOR4
+Dim tDesc As D3DSURFACE_DESC
 '///
 If Not m_bPostProcessEnabled Then Exit Sub
 '///
-f = 1
+nOldState = d3dd9.GetRenderState(D3DRS_ALPHABLENDENABLE)
+d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, 1
+d3dd9.SetRenderState D3DRS_SRCBLEND, D3DBLEND_ONE
+d3dd9.SetRenderState D3DRS_DESTBLEND, D3DBLEND_ONE
+'///
+f = 8
 'v = Vec4(0.275591!, 0.220472!, 0.110236!, 0.0314961!) 'bimonial8
 v = Vec4(0.251497!, 0.209581!, 0.11976!, 0.0449102!) 'bimonial10
 '///calc luminance
@@ -274,44 +293,66 @@ objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(2), "fx_t
 objDraw.ProcessTextureEx objPostProcessTarget(2), objPostProcessTarget(3), "fx_from_luminance_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 16), Vec4, Vec4, Vec4
 '///bright pass
 objDraw.ProcessTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), objPostProcessTarget(1), _
-"simple_brightpass", 0, 0, 0, 0, Vec4(5), Vec4, Vec4, Vec4  'Vec4(1, 0.25)
+"simple_brightpass", 0, 0, 0, 0, Vec4(1), Vec4, Vec4, Vec4  'Vec4(1, 0.25)
 '///blur - see documentation
-i = m_nHDRBlurQuality
-If i <= 0 Then j = &H502& _
-Else If i = 1 Then j = &H90301 _
-Else j = &H110502
-j = 1 'test
+If m_bRadialBlur Then
+ j = 1
+Else
+ i = m_nHDRBlurQuality
+ If i <= 0 Then j = &H502& _
+ Else If i = 1 Then j = &H90301 _
+ Else j = &H110502
+End If
 For i = 0 To 2
  objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
  objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
  j = j \ &H100&
  If j <= 0 Then Exit For
 Next i
+''///test - star glow
+''ugly!!!
+'objPostProcessTarget(1).GetLevelDesc 0, tDesc
+'v2.x = 5 / tDesc.Width
+'v2.y = 5 / tDesc.Height
+'v3.x = v2.x * 2.25!
+'v3.y = v2.y * 2.25!
+'objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4
+'objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(5), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4
+'v2.x = 5 * -0.3660255! / tDesc.Width
+'v2.y = 5 * 1.366025! / tDesc.Height
+'v3.x = v2.x * 2.25!
+'v3.y = v2.y * 2.25!
+'objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4
+'objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(5), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4, , False
+'v2.x = 5 * -1.366025! / tDesc.Width
+'v2.y = 5 * 0.3660255! / tDesc.Height
+'v3.x = v2.x * 2.25!
+'v3.y = v2.y * 2.25!
+'objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4
+'objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(5), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4, , False
 '///test - radial blur
 'the coefficients:
 'Table[ToString[(ToString[#]<>"!")&/@N[z^-Table[n*t/5,{n,4}]/.{t->5^-k,z->10},10]],{k,0,3}]
-objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.6309574!, 0.3981072!, 0.2511886!, 0.1584893!), Vec4, Vec4, Vec4
-objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9120108!, 0.8317637!, 0.7585776!, 0.691831!), Vec4, Vec4, Vec4
-If m_nHDRBlurQuality > 1 Then
- objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9817479!, 0.963829!, 0.9462371!, 0.9289664!), Vec4, Vec4, Vec4
- objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9963226!, 0.9926588!, 0.9890084!, 0.9853715!), Vec4, Vec4, Vec4
+If m_bRadialBlur Then
+ objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.6309574!, 0.3981072!, 0.2511886!, 0.1584893!), Vec4, Vec4, Vec4
+ objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9120108!, 0.8317637!, 0.7585776!, 0.691831!), Vec4, Vec4, Vec4
+ If m_nHDRBlurQuality > 1 Then
+  objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9817479!, 0.963829!, 0.9462371!, 0.9289664!), Vec4, Vec4, Vec4
+  objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9963226!, 0.9926588!, 0.9890084!, 0.9853715!), Vec4, Vec4, Vec4
+ End If
 End If
 '///
 '...TODO:
 '///
-i = d3dd9.GetRenderState(D3DRS_ALPHABLENDENABLE)
-d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, 1
-d3dd9.SetRenderState D3DRS_SRCBLEND, D3DBLEND_ONE
-d3dd9.SetRenderState D3DRS_DESTBLEND, D3DBLEND_ONE
 d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
 d3dd9.BeginScene
 '///
 objDraw.DrawTextureEx objPostProcessTarget(0), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
-'objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.25, 1), Vec4, Vec4, Vec4 'ugly
+'objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.1, 3), Vec4, Vec4, Vec4 'ugly
 objDraw.DrawTextureEx objPostProcessTarget(1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 '///
 d3dd9.EndScene
-d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, i
+d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, nOldState
 d3dd9.SetRenderState D3DRS_SRCBLEND, D3DBLEND_SRCALPHA
 d3dd9.SetRenderState D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA
 End Sub

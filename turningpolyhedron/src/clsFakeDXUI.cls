@@ -452,7 +452,7 @@ End Property
 
 Friend Property Let Style(ByVal n As enumFakeDXUIControlStyle)
 m_nStyle = n
-'TODO:
+If Not m_objTextBox Is Nothing Then m_objTextBox.Style = n
 End Property
 
 Friend Sub Minimize()
