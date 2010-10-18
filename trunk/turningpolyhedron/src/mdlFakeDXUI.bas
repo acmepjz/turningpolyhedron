@@ -555,6 +555,7 @@ Else 'horizontal
  f = t.tRect.Left + 16
  f2 = t.tRect.Right - 16 - f
 End If
+If t.nLargeChange <= 0 Then f2 = -1 '?
 If f2 > 0 Then
  t.fValuePerPixel = (t.nMax - t.nMin + t.nLargeChange) / f2
  If t.fValuePerPixel > 0.0001 Then f1 = t.nLargeChange / t.fValuePerPixel

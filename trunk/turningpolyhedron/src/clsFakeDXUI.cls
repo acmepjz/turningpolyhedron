@@ -55,7 +55,7 @@ Private m_idxFocus As Long 'focus control on form
 
 '////////scroll bar
 
-Private m_tScrollBar(1) As typeFakeDXUIScrollBar
+Private m_tScrollBar(2) As typeFakeDXUIScrollBar
 
 '////////controls
 
@@ -164,14 +164,21 @@ Case 1, 3, 5, 6, 10
 End Select
 End Property
 
-Friend Property Get SmallChange(Optional ByVal nIndex As Long) As Long
-SmallChange = m_tScrollBar(nIndex).nSmallChange
+Friend Property Get SmallChange(Optional ByVal nIndex As Long) As Double
+If m_nType = 7 And (m_nStyle And &H10000) <> 0 Then
+ SmallChange = m_tScrollBar(2).fStartDragPos
+Else
+ SmallChange = m_tScrollBar(nIndex).nSmallChange
+End If
 End Property
 
-Friend Property Let SmallChange(Optional ByVal nIndex As Long, ByVal n As Long)
-If n < 0 Then Exit Property
-m_tScrollBar(nIndex).nSmallChange = n
-'TODO:
+Friend Property Let SmallChange(Optional ByVal nIndex As Long, ByVal n As Double)
+If m_nType = 7 And (m_nStyle And &H10000) <> 0 Then
+ m_tScrollBar(2).fStartDragPos = n
+Else
+ If n < 0 Then Exit Property
+ m_tScrollBar(nIndex).nSmallChange = n
+End If
 End Property
 
 Friend Property Get LargeChange(Optional ByVal nIndex As Long) As Long
@@ -1068,7 +1075,31 @@ Case 7 'textbox
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
  kk = 164 - (bEnabled And 40&)
- FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
+ FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4 - (16& And (m_nStyle And &H10000) <> 0), nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
+ '////////up-down control
+ If m_nStyle And &H10000 Then
+  With m_tScrollBar(2)
+   With .tRect
+    .Left = nRight - 16
+    .Top = nTop
+    .Right = nRight
+    .Bottom = nBottom
+   End With
+   .nMin = -1
+   .nMax = 1
+   .nValue = 0
+   .nSmallChange = 1
+   .nLargeChange = 0
+   .nOrientation = 1
+   .bEnabled = True
+  End With
+  FakeDXUIRenderScrollBar m_tScrollBar(2), nOpacity, bEnabled
+  i = m_tScrollBar(2).nValue
+  On Error Resume Next
+  If i Then m_objTextBox.Text = CStr(Val(m_objTextBox.Text) - i * m_tScrollBar(2).fStartDragPos)
+  On Error GoTo 0
+  m_tScrollBar(2).nValue = 0
+ End If
  '////////scrollbar and text
  r.x1 = nLeft + m_tClientMargin.Left
  r.y1 = nTop + m_tClientMargin.Top
@@ -1183,9 +1214,6 @@ Case 9 'combobox
  kk = 384& - (bEnabled And 16&)
  f = (nTop + nBottom) / 2
  FakeDXGDIStretchBltColored nRight - 16, f - 8, nRight, f + 8, 176, kk, 192, kk + 16, 512, i Or &HFFFFFF
- '///
- 'TODO:dropdown
- '///
 Case Else
  'TODO:
 End Select
@@ -1261,6 +1289,7 @@ If m_bSizeDirty Or bForce Then
   t.Right = 4
   t.Bottom = 4
   If m_objTextBox Is Nothing Then b = True Else b = m_objTextBox.MultiLine
+  If m_nType = 7 And (m_nStyle And &H10000) <> 0 Then t.Right = t.Right + 16
   If b Then
    If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
    If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
@@ -1467,23 +1496,27 @@ Friend Sub BeforeMouseEvent()
 '///
 'Select Case m_nType
 'Case 1, 4
- m_nAnimVal(4) = 0
- m_nAnimVal(5) = 0
- m_nAnimVal(6) = 0
- With m_tScrollBar(0)
-  .nAnimVal(11) = 0
-  .nAnimVal(12) = 0
-  .nAnimVal(13) = 0
-  .nAnimVal(14) = 0
-  .nAnimVal(15) = 0
- End With
- With m_tScrollBar(1)
-  .nAnimVal(11) = 0
-  .nAnimVal(12) = 0
-  .nAnimVal(13) = 0
-  .nAnimVal(14) = 0
-  .nAnimVal(15) = 0
- End With
+m_nAnimVal(4) = 0
+m_nAnimVal(5) = 0
+m_nAnimVal(6) = 0
+With m_tScrollBar(0)
+ .nAnimVal(11) = 0
+ .nAnimVal(12) = 0
+ .nAnimVal(13) = 0
+ .nAnimVal(14) = 0
+ .nAnimVal(15) = 0
+End With
+With m_tScrollBar(1)
+ .nAnimVal(11) = 0
+ .nAnimVal(12) = 0
+ .nAnimVal(13) = 0
+ .nAnimVal(14) = 0
+ .nAnimVal(15) = 0
+End With
+With m_tScrollBar(2)
+ .nAnimVal(11) = 0
+ .nAnimVal(15) = 0
+End With
 If Not m_objListView Is Nothing Then m_objListView.BeforeMouseEvent
 'End Select
 '///
@@ -1718,6 +1751,24 @@ Case 7 'textbox
   If m_nScrollBars And vbVertical Then
    b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
   End If
+ End If
+ '///up-down control
+ If m_nStyle And &H10000 Then
+  With m_tScrollBar(2)
+   .nMin = -1
+   .nMax = 1
+   .nValue = 0
+   .nSmallChange = 1
+   .nLargeChange = 0
+   .nOrientation = 1
+   .bEnabled = True
+  End With
+  b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(2))
+  i = m_tScrollBar(2).nValue
+  On Error Resume Next
+  If i Then m_objTextBox.Text = CStr(Val(m_objTextBox.Text) - i * m_tScrollBar(2).fStartDragPos)
+  On Error GoTo 0
+  m_tScrollBar(2).nValue = 0
  End If
  '///
  If bInControl Or FakeDXUISetCapture = m_nIndex Then
@@ -2026,7 +2077,19 @@ If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit F
 '///
 Select Case m_nType
 Case 7 'textbox
- b = m_objTextBox.OnKeyEvent(KeyCode, Shift, nEventType)
+ If m_nStyle And &H10000 Then
+  If nEventType = 1 Then
+   If KeyCode = vbKeyUp Then i = 1 Else _
+   If KeyCode = vbKeyDown Then i = -1
+  End If
+  If i Then
+   On Error Resume Next
+   m_objTextBox.Text = CStr(Val(m_objTextBox.Text) + i * m_tScrollBar(2).fStartDragPos)
+   On Error GoTo 0
+   b = True
+  End If
+ End If
+ If Not b Then b = m_objTextBox.OnKeyEvent(KeyCode, Shift, nEventType)
 Case 8 'listview
  b = m_objListView.OnKeyEvent(KeyCode, Shift, nEventType)
 Case 9 'combobox
@@ -2114,7 +2177,14 @@ If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit F
 idx = -1
 Select Case m_nType
 Case 1, 3, 6, 7, 8, 10
- b1 = True
+ If m_nType = 7 And (m_nStyle And &H10000) <> 0 Then
+  On Error Resume Next
+  If nDelta Then m_objTextBox.Text = CStr(Val(m_objTextBox.Text) + nDelta * m_tScrollBar(2).fStartDragPos)
+  On Error GoTo 0
+  b = True
+ Else
+  b1 = True
+ End If
 Case 9 'combobox
  If FakeDXUIPopup_ComboBox = m_nIndex Then
   b1 = (FakeDXUIPopup_ComboBox_State And &HFF&) = 5&
