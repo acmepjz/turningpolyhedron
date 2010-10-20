@@ -38,7 +38,7 @@ Private Type TIME_ZONE_INFORMATION
 End Type
 
 '////////
-'a simple tar reader/writer, supports the most basic features only
+'a simple and buggy tar reader/writer, supports the most basic features only
 'documents about tar file can be found at:
 'http://en.wikipedia.org/wiki/Tar_(file_format)
 'http://www.gnu.org/software/automake/manual/tar/Standard.html
@@ -109,7 +109,7 @@ Private Type typeTarFileData
  bData() As Byte
 End Type
 
-Private m_tFiles() As typeTarFileData
+Private m_tFiles() As typeTarFileData '1-based
 Private m_nFileCount As Long
 Private m_nFirstUnusedFile As Long
 
@@ -130,6 +130,40 @@ If Err.Number <> 0 Or m <= 0 Then m = 0
 If m > 0 Then lps = VarPtr(b(lps))
 '///
 AddFile = AddFileEx(sName, lps, m)
+End Function
+
+Friend Function AddFileFromFile(ByRef sName As String, ByRef sFileName As String) As Long
+On Error Resume Next
+Dim nIndex As Long, m As Long
+'///
+If m_nFirstUnusedFile > 0 Then
+ nIndex = m_nFirstUnusedFile
+ m_nFirstUnusedFile = m_tFiles(nIndex).nSize Xor &H80000000
+Else
+ m_nFileCount = m_nFileCount + 1
+ ReDim Preserve m_tFiles(1 To m_nFileCount)
+ nIndex = m_nFileCount
+End If
+'///
+Err.Clear
+Open sFileName For Binary Access Read As #1
+If Err.Number Then 'err! just remove it
+ m_tFiles(nIndex).nSize = m_nFirstUnusedFile Xor &H80000000
+ m_nFirstUnusedFile = nIndex
+ nIndex = 0
+Else
+ m = LOF(1)
+ m_tFiles(nIndex).sName = sName
+ m_tFiles(nIndex).nSize = m
+ If m > 0 Then
+  m_tFiles(nIndex).nMaxSize = m
+  ReDim m_tFiles(nIndex).bData(m - 1)
+  Get #1, 1, m_tFiles(nIndex).bData
+ End If
+End If
+Close
+'///
+AddFileFromFile = nIndex
 End Function
 
 Friend Function AddFileEx(ByRef sName As String, ByVal lpBuffer As Long, ByVal nSize As Long) As Long
@@ -352,6 +386,46 @@ For i = 0 To 127
  If d(i) Then Exit Function
 Next i
 IsHeaderEmpty = True
+End Function
+
+'no sanity check :-3
+Friend Function LoadTarLzmaFile(ByRef sFileName As String) As Boolean
+On Error GoTo a
+Dim b() As Byte, b2() As Byte
+Dim m As Long
+'///
+Destroy
+'///
+Open sFileName For Binary Access Read As #1
+m = LOF(1)
+If m > 0 Then
+ ReDim b2(m - 1)
+ Get #1, 1, b2
+End If
+Close
+If m > 0 Then
+ If LZMADecompress_Correct_Simple(b2, b) Then
+  LoadFromByteArray b
+  LoadTarLzmaFile = True
+ End If
+End If
+a:
+Close
+End Function
+
+Friend Function SaveTarLzmaFile(ByRef sFileName As String) As Boolean
+On Error GoTo a
+Dim b() As Byte, b2() As Byte
+SaveToByteArray b
+If Not LZMACompress_Correct_Simple(b, b2, 0) Then Exit Function
+Open sFileName For Output As #1
+Close
+Open sFileName For Binary As #1
+Put #1, 1, b2
+Close
+SaveTarLzmaFile = True
+a:
+Close
 End Function
 
 'no sanity check :-3
