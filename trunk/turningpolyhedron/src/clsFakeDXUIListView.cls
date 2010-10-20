@@ -1698,7 +1698,7 @@ Case 1 'keydown
      If m_nSelColumn <> i Then
       SelectedColumn = i
       EnsureVisible
-      RaiseEvent Click(m_nSelColumn, m_nSelColumn)
+      RaiseEvent Click(m_nSelRow, m_nSelColumn)
      End If
     End If
    Case vbKeyRight
@@ -1708,7 +1708,7 @@ Case 1 'keydown
      If m_nSelColumn <> i Then
       SelectedColumn = i
       EnsureVisible
-      RaiseEvent Click(m_nSelColumn, m_nSelColumn)
+      RaiseEvent Click(m_nSelRow, m_nSelColumn)
      End If
     End If
    Case vbKeyPageUp
@@ -1743,13 +1743,13 @@ Case 1 'keydown
     If m_nSelRow <> 1 Then
      SelectedRow = 1
      EnsureVisible
-     RaiseEvent Click(m_nSelColumn, m_nSelColumn)
+     RaiseEvent Click(m_nSelRow, m_nSelColumn)
     End If
    Case vbKeyEnd
     If m_nSelRow <> m_nRows Then
      SelectedRow = m_nRows
      EnsureVisible
-     RaiseEvent Click(m_nSelColumn, m_nSelColumn)
+     RaiseEvent Click(m_nSelRow, m_nSelColumn)
     End If
    End Select
   End If
@@ -1759,7 +1759,7 @@ Case 1 'keydown
 Case 2 'keyup
  RaiseEvent KeyUp(KeyCode, Shift)
 End Select
-OnKeyEvent = True
+OnKeyEvent = nEventType >= 0 And nEventType <= 2
 End Function
 
 Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal xClient As Single, ByVal yClient As Single, ByVal nEventType As Long) As Boolean

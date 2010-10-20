@@ -143,12 +143,14 @@ Public Enum enumFakeDXUIControlStyle
  FTS_UpperCaseOnly = 2
  FTS_NumberOnly = 4
  FTS_UpDown = &H10000
+ FTS_AutoSelect = &H20000
  '///combobox
  FCBS_DropdownList = 0
  FCBS_DropdownCombo = 1 'currently unsupported
  FCBS_SimpleCombo = 2 'currently unsupported
  FCBS_FixedText = 8
  FCBS_NoAutoClose = 16
+ FCBS_AutoSelect = &H20000
 End Enum
 
 Public Enum enumFakeDXUIControlState
@@ -161,9 +163,11 @@ Public Enum enumFakeDXUIMessage
  FakeCtl_Msg_Close = 16 'param1=ctlindex
  '///
  FakeCtl_Msg_ZOrder = 65001 'param1=ctlindex param2=HWND_TOP(0) HWND_BOTTOM(1) HWND_TOPMOST(-1) HWND_NOTOPMOST(-2)
- FakeCtl_Msg_Click = 65002 'param1=ctlindex
- FakeCtl_Msg_Change = 65003 'param1=ctlindex
- FakeCtl_Msg_ScrollChange = 65004 'param1=ctlindex
+ FakeCtl_Msg_Click 'param1=ctlindex
+ FakeCtl_Msg_Change 'param1=ctlindex
+ FakeCtl_Msg_ScrollChange 'param1=ctlindex
+ FakeCtl_Msg_GetFocus 'param1=ctlindex
+ FakeCtl_Msg_LostFocus 'param1=ctlindex
 End Enum
 
 Public FakeDXUIMessageQueue() As typeFakeDXUIMessage
@@ -249,6 +253,10 @@ Case FakeCtl_Msg_ZOrder
    .Style = .Style And Not FCS_TopMost
   End With
  End Select
+Case FakeCtl_Msg_GetFocus
+ FakeDXUIControls(t.nParam1).OnGetFocus
+Case FakeCtl_Msg_LostFocus
+ FakeDXUIControls(t.nParam1).OnLostFocus
 End Select
 End Sub
 
@@ -458,6 +466,7 @@ Do
  If KeyCode = vbKeyReturn And Shift = 0 And nEventType = 1 Then
   If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
    If FakeDXUIControls(FakeDXUIActiveWindow).OnKeyEvent(0, 0, 101) Then
+    '???? some control doesn't process this event but return true
     FakeDXUIOnKeyEvent = True
     Exit Do
    End If
@@ -919,7 +928,13 @@ If i > 0 And i <= FakeDXUIControlCount Then
    Loop
   End If
  Loop Until i <= 0 Or i = idxOld
- If i < 0 Then FakeDXUIFocus = idx
+ If i < 0 Then
+  If FakeDXUIFocus <> idx Then
+   If FakeDXUIFocus > 0 And FakeDXUIFocus <= FakeDXUIControlCount Then FakeDXUIPostMessage FakeCtl_Msg_LostFocus, FakeDXUIFocus
+   FakeDXUIFocus = idx
+   If idx > 0 And idx <= FakeDXUIControlCount Then FakeDXUIPostMessage FakeCtl_Msg_GetFocus, idx
+  End If
+ End If
 End If
 End Sub
 
@@ -964,7 +979,13 @@ If i > 0 And i <= FakeDXUIControlCount Then
   'parent
   If i = 0 Then i = j
  Loop Until i <= 0 Or i = idxOld
- If i < 0 Then FakeDXUIFocus = idx
+ If i < 0 Then
+  If FakeDXUIFocus <> idx Then
+   If FakeDXUIFocus > 0 And FakeDXUIFocus <= FakeDXUIControlCount Then FakeDXUIPostMessage FakeCtl_Msg_LostFocus, FakeDXUIFocus
+   FakeDXUIFocus = idx
+   If idx > 0 And idx <= FakeDXUIControlCount Then FakeDXUIPostMessage FakeCtl_Msg_GetFocus, idx
+  End If
+ End If
 End If
 End Sub
 

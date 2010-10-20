@@ -70,6 +70,18 @@ Private m_nTextHeight As Long
 Private m_nScrollValue(1) As Long, m_bScrollChanged As Boolean
 Private m_bCapture As Boolean
 
+'TODO:change event
+
+Friend Sub SelectAll()
+If m_nLineCount > 0 Then
+ With m_tSelStart
+  .nRow = 0
+  .nPosition = 0
+ End With
+ ChangeCaretPos m_nLineCount - 1, Len(m_sLines(m_nLineCount - 1)), True, True
+End If
+End Sub
+
 Friend Function ProcessTextUsingStyle(ByVal s As String) As String
 Dim b As Boolean
 Dim d() As Integer
@@ -490,13 +502,7 @@ Case 0 'keypress
  If KeyCode >= 0 And KeyCode < 32 Then 'control code
   Select Case KeyCode
   Case 1 'Ctrl+A
-   If m_nLineCount > 0 Then
-    With m_tSelStart
-     .nRow = 0
-     .nPosition = 0
-    End With
-    ChangeCaretPos m_nLineCount - 1, Len(m_sLines(m_nLineCount - 1)), True, True
-   End If
+   SelectAll
   Case 24 'Ctrl+X
    If m_bLocked Then
     Beep
@@ -648,7 +654,7 @@ Case 1 'keydown
  End If
 End Select
 '///
-OnKeyEvent = True '?
+OnKeyEvent = nEventType >= 0 And nEventType <= 2
 End Function
 
 Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal xClient As Single, ByVal yClient As Single, ByVal nEventType As Long) As Boolean

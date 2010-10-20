@@ -298,14 +298,14 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   '////////tab debug
-  .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 76, &H3000000, , , , , "Single line text box blah blah blah 가가가 blah blah"
-  .AddNewChildren(FakeCtl_TextBox, 132, 52, 196, 76, &H3010004, , , , , "528").SmallChange = 1
-  .AddNewChildren(FakeCtl_TextBox, 200, 52, 296, 76, &H3010000, , , , , "528").SmallChange = 0.0625
+  .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 76, &H3020000, , , , , "Single line text box blah blah blah 가가가 blah blah"
+  .AddNewChildren(FakeCtl_TextBox, 132, 52, 196, 76, &H3030004, , , , , "528").SmallChange = 1
+  .AddNewChildren(FakeCtl_TextBox, 200, 52, 296, 76, &H3030000, , , , , "528").SmallChange = 0.0625
   With .AddNewChildren(FakeCtl_Frame, 120, 144, 240, 256, FCS_CanGetFocus, , , , "Form1234가각")
    .ScrollBars = vbBoth
    .Min = -50
    .Max = 50
-   .LargeChange = 0
+   .LargeChange = 10
    .Min(1) = -50
    .Max(1) = 50
    .LargeChange(1) = 10
@@ -352,6 +352,18 @@ With FakeDXUIControls(1)
    End With
   End With
   With .AddNewChildren(FakeCtl_ComboBox, 4, 112, 256, 132, &H3000000, , , , , "HEHE")
+   With .ListViewObject
+     .FullRowSelect = True
+     .ColumnHeader = False
+     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
+     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 64
+     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight
+     For i = 1 To 1000
+      .AddItem CStr(i), , , Array(CStr(i * i), CStr(i * i * i))
+     Next i
+   End With
+  End With
+  With .AddNewChildren(FakeCtl_ComboBox, 4, 136, 256, 156, &H3000001, , , , , "HEHE 2")
    With .ListViewObject
      .FullRowSelect = True
      .ColumnHeader = False
