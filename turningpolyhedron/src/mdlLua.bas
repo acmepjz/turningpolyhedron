@@ -1,13 +1,27 @@
 Attribute VB_Name = "mdlLua"
 Option Explicit
 
+Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+
+Public Const LUA_IDSIZE As Long = 60
+
+Public Const LUAI_GCPAUSE As Long = 200
+Public Const LUAI_GCMUL As Long = 200
+Public Const LUAI_BITSINT As Long = 32
+Public Const LUAI_MAXCALLS As Long = 20000
+Public Const LUAI_MAXCSTACK As Long = 8000
+Public Const LUAI_MAXCCALLS As Long = 200
+Public Const LUAI_MAXVARS As Long = 200
+Public Const LUAI_MAXUPVALUES As Long = 60
+Public Const LUAL_BUFFERSIZE As Long = 512
+
 Public Const LUA_MULTRET As Long = (-1)
 
 Public Const LUA_REGISTRYINDEX As Long = (-10000)
 Public Const LUA_ENVIRONINDEX As Long = (-10001)
 Public Const LUA_GLOBALSINDEX As Long = (-10002)
 
-Public Const lua_yield As Long = 1
+Public Const LUA_YIELD_ As Long = 1
 Public Const LUA_ERRRUN As Long = 2
 Public Const LUA_ERRSYNTAX As Long = 3
 Public Const LUA_ERRMEM As Long = 4
@@ -174,104 +188,50 @@ Public Declare Function lua_concat Lib "lua5.1.dll" (ByVal hState As Long, ByVal
 Public Declare Function lua_getallocf Lib "lua5.1.dll" (ByVal hState As Long, ByRef lpUserData As Long) As Long
 Public Declare Function lua_setallocf Lib "lua5.1.dll" (ByVal hState As Long, ByVal lpfnAlloc As Long, ByVal nUserData As Long) As Long
 
-'/*
-'** ===============================================================
-'** some useful macros
-'** ===============================================================
-'*/
-
-'#define lua_pop(L,n)        lua_settop(L, -(n)-1)
-'
-'#define lua_newtable(L)     lua_createtable(L, 0, 0)
-'
-'#define lua_register(L,n,f) (lua_pushcfunction(L, (f)), lua_setglobal(L, (n)))
-'
-'#define lua_pushcfunction(L,f)  lua_pushcclosure(L, (f), 0)
-'
-'#define lua_strlen(L,i)     lua_objlen(L, (i))
-'
-'#define lua_isfunction(L,n) (lua_type(L, (n)) == LUA_TFUNCTION)
-'#define lua_istable(L,n)    (lua_type(L, (n)) == LUA_TTABLE)
-'#define lua_islightuserdata(L,n)    (lua_type(L, (n)) == LUA_TLIGHTUSERDATA)
-'#define lua_isnil(L,n)      (lua_type(L, (n)) == LUA_TNIL)
-'#define lua_isboolean(L,n)  (lua_type(L, (n)) == LUA_TBOOLEAN)
-'#define lua_isthread(L,n)   (lua_type(L, (n)) == LUA_TTHREAD)
-'#define lua_isnone(L,n)     (lua_type(L, (n)) == LUA_TNONE)
-'#define lua_isnoneornil(L, n)   (lua_type(L, (n)) <= 0)
-'
-'#define lua_pushliteral(L, s)   \
-'    lua_pushlstring(L, "" s, (sizeof(s)/sizeof(char))-1)
-'
-'#define lua_setglobal(L,s)  lua_setfield(L, LUA_GLOBALSINDEX, (s))
-'#define lua_getglobal(L,s)  lua_getfield(L, LUA_GLOBALSINDEX, (s))
-'
-'#define lua_tostring(L,i)   lua_tolstring(L, (i), NULL)
-'
-'
-'
-'/*
-'** compatibility macros and functions
-'*/
-'
-'#define lua_open()  luaL_newstate()
-'
-'#define lua_getregistry(L)  lua_pushvalue(L, LUA_REGISTRYINDEX)
-'
-'#define lua_getgccount(L)   lua_gc(L, LUA_GCCOUNT, 0)
-'
-'#define lua_Chunkreader     lua_Reader
-'#define lua_Chunkwriter     lua_Writer
-'
-'
 '/* hack */
-'LUA_API void lua_setlevel   (lua_State *from, lua_State *to);
-'
-'
+Public Declare Function lua_setlevel Lib "lua5.1.dll" (ByVal hStateFrom As Long, ByVal hStateTo As Long) As Long
+
 '/*
 '** {======================================================================
 '** Debug API
 '** =======================================================================
 '*/
-'
-'
+
 '/*
 '** Event codes
 '*/
-'#define LUA_HOOKCALL    0
-'#define LUA_HOOKRET 1
-'#define LUA_HOOKLINE    2
-'#define LUA_HOOKCOUNT   3
-'#define LUA_HOOKTAILRET 4
-'
-'
+Public Const LUA_HOOKCALL As Long = 0
+Public Const LUA_HOOKRET As Long = 1
+Public Const LUA_HOOKLINE As Long = 2
+Public Const LUA_HOOKCOUNT As Long = 3
+Public Const LUA_HOOKTAILRET As Long = 4
+
 '/*
 '** Event masks
 '*/
-'#define LUA_MASKCALL    (1 << LUA_HOOKCALL)
-'#define LUA_MASKRET (1 << LUA_HOOKRET)
-'#define LUA_MASKLINE    (1 << LUA_HOOKLINE)
-'#define LUA_MASKCOUNT   (1 << LUA_HOOKCOUNT)
+Public Const LUA_MASKCALL As Long = (2 ^ LUA_HOOKCALL)
+Public Const LUA_MASKRET As Long = (2 ^ LUA_HOOKRET)
+Public Const LUA_MASKLINE As Long = (2 ^ LUA_HOOKLINE)
+Public Const LUA_MASKCOUNT As Long = (2 ^ LUA_HOOKCOUNT)
 '
 'typedef struct lua_Debug lua_Debug;  /* activation record */
 '
 '
 '/* Functions to be called by the debuger in specific events */
 'typedef void (*lua_Hook) (lua_State *L, lua_Debug *ar);
-'
-'
-'LUA_API int lua_getstack (lua_State *L, int level, lua_Debug *ar);
-'LUA_API int lua_getinfo (lua_State *L, const char *what, lua_Debug *ar);
-'LUA_API const char *lua_getlocal (lua_State *L, const lua_Debug *ar, int n);
-'LUA_API const char *lua_setlocal (lua_State *L, const lua_Debug *ar, int n);
-'LUA_API const char *lua_getupvalue (lua_State *L, int funcindex, int n);
-'LUA_API const char *lua_setupvalue (lua_State *L, int funcindex, int n);
-'
-'LUA_API int lua_sethook (lua_State *L, lua_Hook func, int mask, int count);
-'LUA_API lua_Hook lua_gethook (lua_State *L);
-'LUA_API int lua_gethookmask (lua_State *L);
-'LUA_API int lua_gethookcount (lua_State *L);
-'
-'
+
+Public Declare Function lua_getstack Lib "lua5.1.dll" (ByVal hState As Long, ByVal nLevel As Long, ByRef ar As lua_Debug) As Long
+Public Declare Function lua_getinfo Lib "lua5.1.dll" (ByVal hState As Long, ByVal sWhat As String, ByRef ar As lua_Debug) As Long
+Public Declare Function lua_getlocal Lib "lua5.1.dll" (ByVal hState As Long, ByRef ar As lua_Debug, ByVal n As Long) As Long
+Public Declare Function lua_setlocal Lib "lua5.1.dll" (ByVal hState As Long, ByRef ar As lua_Debug, ByVal n As Long) As Long
+Public Declare Function lua_getupvalue Lib "lua5.1.dll" (ByVal hState As Long, ByVal nFuncIndex As Long, ByVal n As Long) As Long
+Public Declare Function lua_setupvalue Lib "lua5.1.dll" (ByVal hState As Long, ByVal nFuncIndex As Long, ByVal n As Long) As Long
+
+Public Declare Function lua_sethook Lib "lua5.1.dll" (ByVal hState As Long, ByVal lpfnHook As Long, ByVal nMask As Long, ByVal nCount As Long) As Long
+Public Declare Function lua_gethook Lib "lua5.1.dll" (ByVal hState As Long) As Long
+Public Declare Function lua_gethookmask Lib "lua5.1.dll" (ByVal hState As Long) As Long
+Public Declare Function lua_gethookcount Lib "lua5.1.dll" (ByVal hState As Long) As Long
+
 'struct lua_Debug {
 '  int event;
 '  const char *name; /* (n) */
@@ -287,6 +247,20 @@ Public Declare Function lua_setallocf Lib "lua5.1.dll" (ByVal hState As Long, By
 '  int i_ci;  /* active function */
 '};
 
+Public Type lua_Debug
+ nEvent As Long
+ lpstrName As String
+ lpstrNameWhat As String
+ lpstrWhat As String
+ lpstrSource As String
+ nCurrentLine As Long
+ nups As Long
+ nLineDefined As Long
+ nLastLineDefined As Long
+ short_src(LUA_IDSIZE - 1) As Byte
+ i_ci As Long
+End Type
+
 Public Declare Function luaopen_base Lib "lua5.1.dll" (ByVal hState As Long) As Long
 Public Declare Function luaopen_table Lib "lua5.1.dll" (ByVal hState As Long) As Long
 Public Declare Function luaopen_io Lib "lua5.1.dll" (ByVal hState As Long) As Long
@@ -297,8 +271,255 @@ Public Declare Function luaopen_debug Lib "lua5.1.dll" (ByVal hState As Long) As
 Public Declare Function luaopen_package Lib "lua5.1.dll" (ByVal hState As Long) As Long
 Public Declare Function luaL_openlibs Lib "lua5.1.dll" (ByVal hState As Long) As Long
 
+'/* extra error code for `luaL_load' */
+Public Const LUA_ERRFILE As Long = (LUA_ERRERR + 1)
+
+Public Type luaL_Reg
+ lpstrName As Long
+ lpFunc As Long
+End Type
+
+Public Declare Function luaL_openlib Lib "lua5.1.dll" (ByVal hState As Long, ByVal sLibName As String, ByRef l As luaL_Reg, ByVal nup As Long) As Long
+Public Declare Function luaL_register Lib "lua5.1.dll" (ByVal hState As Long, ByVal sLibName As String, ByRef l As luaL_Reg) As Long
+Public Declare Function luaL_getmetafield Lib "lua5.1.dll" (ByVal hState As Long, ByVal obj As Long, ByVal e As String) As Long
+Public Declare Function luaL_callmeta Lib "lua5.1.dll" (ByVal hState As Long, ByVal obj As Long, ByVal e As String) As Long
+Public Declare Function luaL_typerror Lib "lua5.1.dll" (ByVal hState As Long, ByVal nArg As Long, ByVal tname As String) As Long
+Public Declare Function luaL_argerror Lib "lua5.1.dll" (ByVal hState As Long, ByVal numArg As Long, ByVal extramsg As String) As Long
+Public Declare Function luaL_checklstring Lib "lua5.1.dll" (ByVal hState As Long, ByVal numArg As Long, ByRef l As Long) As Long
+Public Declare Function luaL_optlstring Lib "lua5.1.dll" (ByVal hState As Long, ByVal numArg As Long, ByVal def As String, ByRef l As Long) As Long
+Public Declare Function luaL_checknumber Lib "lua5.1.dll" (ByVal hState As Long, ByVal numArg As Long) As Double
+Public Declare Function luaL_optnumber Lib "lua5.1.dll" (ByVal hState As Long, ByVal nArg As Long, ByVal def As Double) As Double
+Public Declare Function luaL_checkinteger Lib "lua5.1.dll" (ByVal hState As Long, ByVal numArg As Long) As Long
+Public Declare Function luaL_optinteger Lib "lua5.1.dll" (ByVal hState As Long, ByVal nArg As Long, ByVal def As Long) As Long
+
+Public Declare Function luaL_checkstack Lib "lua5.1.dll" (ByVal hState As Long, ByVal sz As Long, ByVal sMsg As String) As Long
+Public Declare Function luaL_checktype Lib "lua5.1.dll" (ByVal hState As Long, ByVal nArg As Long, ByVal t As Long) As Long
+Public Declare Function luaL_checkany Lib "lua5.1.dll" (ByVal hState As Long, ByVal nArg As Long) As Long
+
+Public Declare Function luaL_newmetatable Lib "lua5.1.dll" (ByVal hState As Long, ByVal tname As String) As Long
+Public Declare Function luaL_checkudata Lib "lua5.1.dll" (ByVal hState As Long, ByVal ud As Long, ByVal tname As String) As Long
+
+Public Declare Function luaL_where Lib "lua5.1.dll" (ByVal hState As Long, ByVal nLevel As Long) As Long
+'LUALIB_API int (luaL_error) (lua_State *L, const char *fmt, ...);
+Public Declare Function luaL_error_1 Lib "lua5.1.dll" (ByVal hState As Long, ByVal s As String) As Long
+
+Public Declare Function luaL_checkoption Lib "lua5.1.dll" (ByVal hState As Long, ByVal nArg As Long, ByVal def As String, ByRef lst As Any) As Long
+
+Public Declare Function luaL_ref Lib "lua5.1.dll" (ByVal hState As Long, ByVal t As Long) As Long
+Public Declare Function luaL_unref Lib "lua5.1.dll" (ByVal hState As Long, ByVal t As Long, ByVal ref As Long) As Long
+
+Public Declare Function luaL_loadfile Lib "lua5.1.dll" (ByVal hState As Long, ByVal sFileName As String) As Long
+Public Declare Function luaL_loadbuffer Lib "lua5.1.dll" (ByVal hState As Long, ByRef lpBuffer As Any, ByVal sz As Long, ByVal sName As String) As Long
+Public Declare Function luaL_loadstring Lib "lua5.1.dll" (ByVal hState As Long, ByVal s As String) As Long
+
+Public Declare Function luaL_newstate Lib "lua5.1.dll" () As Long
+
+Public Declare Function luaL_gsub Lib "lua5.1.dll" (ByVal hState As Long, ByVal s As String, ByVal p As String, ByVal r As String) As Long
+Public Declare Function luaL_findtable Lib "lua5.1.dll" (ByVal hState As Long, ByVal nIndex As Long, ByVal fname As String, ByVal szHint As Long) As Long
+
+'/*
+'** {======================================================
+'** Generic Buffer manipulation
+'** =======================================================
+'*/
+
+Public Type luaL_Buffer
+ p As Long '       /* current position in buffer */
+ nLevel As Long '  /* number of strings in the stack (level) */
+ hState As Long
+ bBuffer(LUAL_BUFFERSIZE - 1) As Long
+End Type
+
+Public Declare Function luaL_buffinit Lib "lua5.1.dll" (ByVal hState As Long, ByRef b As luaL_Buffer) As Long
+Public Declare Function luaL_prepbuffer Lib "lua5.1.dll" (ByRef b As luaL_Buffer) As Long
+Public Declare Function luaL_addlstring Lib "lua5.1.dll" (ByRef b As luaL_Buffer, ByVal s As String, ByVal l As Long) As Long
+Public Declare Function luaL_addstring Lib "lua5.1.dll" (ByRef b As luaL_Buffer, ByVal s As String) As Long
+Public Declare Function luaL_addvalue Lib "lua5.1.dll" (ByRef b As luaL_Buffer) As Long
+Public Declare Function luaL_pushresult Lib "lua5.1.dll" (ByRef b As luaL_Buffer) As Long
+
+'/* }====================================================== */
+
+'/* compatibility with ref system */
+'
+'/* pre-defined references */
+Public Const LUA_NOREF As Long = (-2)
+Public Const LUA_REFNIL As Long = (-1)
+
+'#define luaL_reg    luaL_Reg
+
 Public Function lua_upvalueindex(ByVal i As Long) As Long
 lua_upvalueindex = (LUA_GLOBALSINDEX - (i))
 End Function
 
+'/*
+'** ===============================================================
+'** some useful macros
+'** ===============================================================
+'*/
 
+Public Function lua_pop(ByVal hState As Long, ByVal n As Long) As Long
+lua_pop = lua_settop(hState, -n - 1)
+End Function
+
+Public Function lua_newtable(ByVal hState As Long) As Long
+lua_newtable = lua_createtable(hState, 0, 0)
+End Function
+
+Public Function lua_register(ByVal hState As Long, ByRef s As String, ByVal lpfn As Long) As Long
+lua_pushcfunction hState, lpfn
+lua_register = lua_setglobal(hState, s)
+End Function
+
+Public Function lua_pushcfunction(ByVal hState As Long, ByVal lpfn As Long) As Long
+lua_pushcfunction = lua_pushcclosure(hState, lpfn, 0)
+End Function
+
+Public Function lua_strlen(ByVal hState As Long, ByVal nIndex As Long) As Long
+lua_strlen = lua_objlen(hState, nIndex)
+End Function
+
+Public Function lua_isfunction(ByVal hState As Long, ByVal nIndex As Long) As Boolean
+lua_isfunction = lua_type(hState, nIndex) = LUA_TFUNCTION
+End Function
+
+Public Function lua_istable(ByVal hState As Long, ByVal nIndex As Long) As Boolean
+lua_istable = lua_type(hState, nIndex) = LUA_TTABLE
+End Function
+
+Public Function lua_islightuserdata(ByVal hState As Long, ByVal nIndex As Long) As Boolean
+lua_islightuserdata = lua_type(hState, nIndex) = LUA_TLIGHTUSERDATA
+End Function
+
+Public Function lua_isnil(ByVal hState As Long, ByVal nIndex As Long) As Boolean
+lua_isnil = lua_type(hState, nIndex) = LUA_TNIL
+End Function
+
+Public Function lua_isboolean(ByVal hState As Long, ByVal nIndex As Long) As Boolean
+lua_isboolean = lua_type(hState, nIndex) = LUA_TBOOLEAN
+End Function
+
+Public Function lua_isthread(ByVal hState As Long, ByVal nIndex As Long) As Boolean
+lua_isthread = lua_type(hState, nIndex) = LUA_TTHREAD
+End Function
+
+Public Function lua_isnone(ByVal hState As Long, ByVal nIndex As Long) As Boolean
+lua_isnone = lua_type(hState, nIndex) = LUA_TNONE
+End Function
+
+Public Function lua_isnoneornil(ByVal hState As Long, ByVal nIndex As Long) As Boolean
+lua_isnoneornil = lua_type(hState, nIndex) <= 0
+End Function
+
+'#define lua_pushliteral(L, s)   \
+'    lua_pushlstring(L, "" s, (sizeof(s)/sizeof(char))-1)
+
+Public Function lua_setglobal(ByVal hState As Long, ByRef s As String) As Long
+lua_setglobal = lua_setfield(hState, LUA_GLOBALSINDEX, s)
+End Function
+
+Public Function lua_getglobal(ByVal hState As Long, ByRef s As String) As Long
+lua_getglobal = lua_getfield(hState, LUA_GLOBALSINDEX, s)
+End Function
+
+Public Function lua_tostring(ByVal hState As Long, ByVal nIndex As Long) As String
+Dim lp As Long, m As Long
+Dim b() As Byte
+lp = lua_tolstring(hState, nIndex, m)
+If m > 0 Then
+ ReDim b(m - 1)
+ CopyMemory b(0), ByVal lp, m
+ lua_tostring = StrConv(b, vbUnicode)
+End If
+End Function
+
+'/*
+'** compatibility macros and functions
+'*/
+
+Public Function lua_open() As Long
+lua_open = luaL_newstate
+End Function
+
+Public Function lua_getregistry(ByVal hState As Long) As Long
+lua_getregistry = lua_pushvalue(hState, LUA_REGISTRYINDEX)
+End Function
+
+Public Function lua_getgccount(ByVal hState As Long) As Long
+lua_getgccount = lua_gc(hState, LUA_GCCOUNT, 0)
+End Function
+
+'#define lua_Chunkreader     lua_Reader
+'#define lua_Chunkwriter     lua_Writer
+
+'/*
+'** ===============================================================
+'** some useful macros
+'** ===============================================================
+'*/
+'
+'#define luaL_argcheck(L, cond,numarg,extramsg)  \
+'        ((void)((cond) || luaL_argerror(L, (numarg), (extramsg))))
+
+Public Function luaL_checkstring(ByVal hState As Long, ByVal n As Long) As Long
+luaL_checkstring = luaL_checklstring(hState, n, ByVal 0)
+End Function
+
+Public Function luaL_optstring(ByVal hState As Long, ByVal n As Long, ByRef d As String) As Long
+luaL_optstring = luaL_optlstring(hState, n, d, ByVal 0)
+End Function
+
+Public Function luaL_typename(ByVal hState As Long, ByVal i As Long) As String
+Dim lp As Long
+Dim s As String
+lp = lua_typename(hState, lua_type(hState, i))
+s = Space(1024)
+CopyMemory ByVal StrPtr(s), lp, 2048&
+lp = InStrB(1, s, ChrB(0))
+If lp > 0 Then s = LeftB(s, lp - 1)
+luaL_typename = StrConv(s, vbUnicode)
+End Function
+
+Public Function luaL_dofile(ByVal hState As Long, ByRef fn As String) As Boolean
+luaL_dofile = luaL_loadfile(hState, fn)
+If Not luaL_dofile Then luaL_dofile = lua_pcall(hState, 0, LUA_MULTRET, 0)
+End Function
+
+Public Function luaL_dostring(ByVal hState As Long, ByRef s As String) As Boolean
+luaL_dostring = luaL_loadstring(hState, s)
+If Not luaL_dostring Then luaL_dostring = lua_pcall(hState, 0, LUA_MULTRET, 0)
+End Function
+
+Public Function luaL_getmetatable(ByVal hState As Long, ByRef n As String) As Long
+luaL_getmetatable = lua_getfield(hState, LUA_REGISTRYINDEX, n)
+End Function
+
+'#define luaL_opt(L,f,n,d)   (lua_isnoneornil(L,(n)) ? (d) : f(L,(n)))
+
+Public Function luaL_addchar(ByRef b As luaL_Buffer, ByVal c As Byte) As Long
+Dim lp As Long
+lp = VarPtr(b.bBuffer(0))
+If b.p >= lp + LUAL_BUFFERSIZE Then luaL_prepbuffer b
+b.bBuffer(b.p - lp) = c
+b.p = b.p + 1
+luaL_addchar = c
+End Function
+
+'/* compatibility only */
+'#define luaL_putchar(B,c)   luaL_addchar(B,c)
+
+Public Function luaL_addsize(ByRef b As luaL_Buffer, ByVal n As Long) As Long
+b.p = b.p + n
+luaL_addsize = b.p
+End Function
+
+Public Function lua_ref(ByVal hState As Long) As Long
+lua_ref = luaL_ref(hState, LUA_REGISTRYINDEX)
+End Function
+
+Public Function lua_unref(ByVal hState As Long, ByVal ref As Long) As Long
+lua_unref = luaL_unref(hState, LUA_REGISTRYINDEX, ref)
+End Function
+
+Public Function lua_getref(ByVal hState As Long, ByVal ref As Long) As Long
+lua_getref = lua_rawgeti(hState, LUA_REGISTRYINDEX, ref)
+End Function
