@@ -50,10 +50,11 @@ With MyMini_Vertices(MyMini_VertexCount)
  .p.x = MyMini_Scale.x * i + MyMini_Offset.x
  .p.y = MyMini_Scale.y * j + MyMini_Offset.y
  .p.z = MyMini_Scale.z * y + MyMini_Offset.z
-' '///normal (???)
-' Mini_GetNormalByCoordinates i, j, .n.x, .n.y
-' .n.y = -.n.y
-' .n.z = 1 '???
+ '///normal (???)
+ 'Mini_GetNormalByCoordinates i, j, .n.x, .n.y 'doesn't work, always 0
+ Mini_GetNormalByPosition .p.x, -.p.y, .n.x, .n.z, .n.y
+ .n.y = -.n.y
+ '.n.z = 1 '???
  '///
  'TODO:other
  .clr1 = -1

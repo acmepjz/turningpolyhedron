@@ -14,7 +14,8 @@ struct VS_OUTPUT{
 float4 _p:POSITION;
 float4 c:COLOR0;
 float4 c1:COLOR1;
-float4 t:TEXCOORD0;//TEXCOORD0_centroid;
+float4 t:TEXCOORD0;//texture coord and z,w of camrea-space position
+	//TEXCOORD0_centroid;
 float4 p:TEXCOORD1;//pos
 float4 n:TEXCOORD2;//normal
 float4 b:TEXCOORD3;//binormal
@@ -50,6 +51,10 @@ int lightType;
 //0---ambient
 //1---x:hardness y:parallax offset z:parallax scale
 float4 _fParam[4];
+
+////////other
+
+float4 zData; //(c1,c2,0,0) such that z=1/(c1+c2*z')
 
 ////////
 
@@ -104,10 +109,11 @@ AddressV=WRAP;
 
 VS_OUTPUT vs_func(VS_INPUT d0){
 VS_OUTPUT d;
-d._p=mul(d0.p,mat);
+float4 p=mul(d0.p,mat);
+d._p=p;
 d.c=d0.c; //1
 d.c1=d0.c1; //1
-d.t=d0.t;
+d.t=float4(d0.t.xy,p.zw);
 d.p=mul(d0.p,matWorld);
 d.n=mul(d0.n,matWorld1);
 d.b=mul(d0.b,matWorld1);
@@ -123,6 +129,9 @@ return d;
 
 //test
 float4 ps_func(VS_OUTPUT d):COLOR0{
+	
+	float depth=1.0f/(zData.x+zData.y*d.t.z/d.t.w);
+	//float depth=length(d.p.xyz-viewPos.xyz);
 
 float4 viewVec=normalize(viewPos-d.p);
 
@@ -220,7 +229,7 @@ l*=lit(dot(n.xyz,lightVec.xyz),dot(n.xyz,h.xyz),_fParam[1].x);
 //
 float4 diffuse=d.c*clr_tex*(_fParam[0]+l.y); //min(_fParam[0]+l.y,1.0f);
 float4 specular=d.c1*l.z;
-return diffuse+specular;
+return float4((diffuse+specular).xyz,depth);
 }
 
 technique test{
