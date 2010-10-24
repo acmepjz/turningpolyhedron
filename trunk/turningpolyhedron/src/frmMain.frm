@@ -217,8 +217,8 @@ With d3dpp
  .hDeviceWindow = Me.hwnd
  .EnableAutoDepthStencil = 1
  .AutoDepthStencilFormat = D3DFMT_D24S8
- '.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
- .PresentationInterval = D3DPRESENT_INTERVAL_ONE 'D3DPRESENT_INTERVAL_TWO 'Fullscreen only
+ .PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
+ '.PresentationInterval = D3DPRESENT_INTERVAL_ONE 'D3DPRESENT_INTERVAL_TWO 'Fullscreen only
  '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES
 End With
 'create device
@@ -238,26 +238,26 @@ With FakeDXUIDefaultFont
  Set .objSprite = objFontSprite
 End With
 'CreateEffect CStr(App.Path) + "\data\shader\texteffect.txt", objFontEffect, , True
+objDrawTest.Create
+objRenderTest.Create
 '///vertex declaration test
 CreateVertexDeclaration
 '///
 pSetRenderState
 '////////test
-objDrawTest.Create
 Set objTest = pTest
 '///
 pCreateUI
 '///
-objRenderTest.Create
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
 objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
 'objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
 objRenderTest.SetLightType D3DLIGHT_POINT
-objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1)
-'objCamera.SetCamrea Vec3(1, 0, 8), Vec3, Vec3(, , 1)
-objRenderTest.CreateShadowMap 1024 'new
+'objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1)
+objCamera.SetCamrea Vec3(6, 6, 1), Vec3, Vec3(, , 1)
+'objRenderTest.CreateShadowMap 1024 'new
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
-objRenderTest.SetShadowState True, 16, -100, 100  'directional
+'objRenderTest.SetShadowState True, 16, -100, 100  'directional
 objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 30, -0.5, 0.02
 '////////new:subclass
 #If UseSubclass Then
@@ -275,7 +275,7 @@ If App.LogMode = 1 Then
 End If
 '////////test
 Dim t As D3DXIMAGE_INFO
-objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , -15
+objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15
 D3DXCreateTextureFromFileExW d3dd9, App.Path + "\test0.png", D3DX_DEFAULT, D3DX_DEFAULT, 1, 0, D3DFMT_FROM_FILE, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, t, ByVal 0, objLandTexture
 '////////
 Me.Caption = objText.GetText("Turning Polyhedron")
@@ -422,8 +422,8 @@ Set FakeDXUIEvent = Me
 End Sub
 
 Private Sub pSetRenderState()
-'test only
-objRenderTest.SetProjection_PerspectiveFovLH Atn(1), Me.ScaleWidth / Me.ScaleHeight, 0.1, 200
+'zFar can be very big and there's still small error, but zNear can't be very small
+objRenderTest.SetProjection_PerspectiveFovLH Atn(1.732), Me.ScaleWidth / Me.ScaleHeight, 0.1, 1000
 With d3dd9
  .SetRenderState D3DRS_LIGHTING, 0
  .SetSamplerState 0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
@@ -735,12 +735,12 @@ With d3dd9
   .SetTransform D3DTS_WORLD, mat
   objCamera.Apply objRenderTest
   '///shadow map
-  objRenderTest.BeginRenderShadowMap
-  .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
-  .BeginScene
-  objTest.DrawSubset 0
-  .EndScene
-  objRenderTest.EndRenderShadowMap
+'  objRenderTest.BeginRenderShadowMap
+'  .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
+'  .BeginScene
+'  objTest.DrawSubset 0
+'  .EndScene
+'  objRenderTest.EndRenderShadowMap
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
   objRenderTest.SetTexture objTexture
@@ -749,15 +749,15 @@ With d3dd9
   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000010, 1, 0
   .BeginScene
   objTest.DrawSubset 0
+  '////////draw landscape test (new and buggy)
+  objRenderTest.SetTexture objLandTexture
+  .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
+  objRenderTest.UpdateRenderState
+  objLand.Render objRenderTest, objCamera
+  .SetTransform D3DTS_WORLD, mat
+  '////////
   .EndScene
   objRenderTest.EndRender
-  '////////draw landscape test
-  .SetTexture 0, objLandTexture
-  .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
-  .BeginScene
-  objLand.Render objRenderTest, objCamera
-  .EndScene
-  .SetTransform D3DTS_WORLD, mat
   '////////perform post process
   objRenderTest.EndRenderToPostProcessTarget
   objRenderTest.PerformPostProcess objDrawTest

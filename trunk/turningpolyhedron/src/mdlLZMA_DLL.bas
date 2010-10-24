@@ -214,3 +214,70 @@ ret = LzmaUncompress(TheDataOut(0), nSize, ByVal (lpData + 5), nOldSize, p, 5)
 LZMADecompress_Simple2 = ret = 0
 End Function
 
+Public Function LZMACompress_Correct_Simple(TheData() As Byte, TheDataOut() As Byte, ByRef nSize As Long, Optional ByVal nLevel As Long = -1) As Boolean
+Dim lps As Long, m As Long
+On Error Resume Next
+Err.Clear
+lps = LBound(TheData)
+m = UBound(TheData) - lps + 1
+lps = VarPtr(TheData(lps))
+On Error GoTo 0
+If Err.Number <> 0 Or m <= 0 Then lps = 0
+'/////
+LZMACompress_Correct_Simple = LZMACompress_Correct_Simple2(lps, m, TheDataOut, nSize, nLevel)
+End Function
+
+Public Function LZMACompress_Correct_Simple2(ByVal lpData As Long, ByVal nOldSize As Long, TheDataOut() As Byte, ByRef nSize As Long, Optional ByVal nLevel As Long = -1) As Boolean
+Dim p As typeLZMApropsEncoded
+Dim ret As Long
+If lpData = 0 Or nOldSize <= 0 Then
+ nSize = 0
+ Erase TheDataOut
+ LZMACompress_Correct_Simple2 = True
+ Exit Function
+End If
+'/////
+nSize = nOldSize + nOldSize \ 16 + 4096&
+ReDim TheDataOut(nSize + 12)
+ret = LzmaCompress(TheDataOut(13), nSize, ByVal lpData, nOldSize, p, 5, nLevel)
+nSize = nSize + 13
+ReDim Preserve TheDataOut(nSize - 1)
+CopyMemory TheDataOut(0), p, 5
+CopyMemory TheDataOut(5), nOldSize, 4
+LZMACompress_Correct_Simple2 = ret = 0
+End Function
+
+Public Function LZMADecompress_Correct_Simple(TheData() As Byte, TheDataOut() As Byte) As Boolean
+Dim lps As Long, m As Long
+On Error Resume Next
+Err.Clear
+lps = LBound(TheData)
+m = UBound(TheData) - lps + 1
+lps = VarPtr(TheData(lps))
+On Error GoTo 0
+If Err.Number <> 0 Or m <= 5 Then lps = 0
+'/////
+LZMADecompress_Correct_Simple = LZMADecompress_Correct_Simple2(lps, m, TheDataOut)
+End Function
+
+Public Function LZMADecompress_Correct_Simple2(ByVal lpData As Long, ByVal nOldSize As Long, TheDataOut() As Byte) As Boolean
+Dim p As typeLZMApropsEncoded
+Dim ret As Long
+Dim nSize As Long
+If lpData <> 0 And nOldSize >= 13 Then
+ CopyMemory nSize, ByVal lpData + 5, 4&
+End If
+If nSize <= 0 Then
+ Erase TheDataOut
+ LZMADecompress_Correct_Simple2 = True
+ Exit Function
+End If
+'/////
+CopyMemory p, ByVal lpData, 5
+nOldSize = nOldSize - 13
+ReDim TheDataOut(nSize - 1)
+ret = LzmaUncompress(TheDataOut(0), nSize, ByVal (lpData + 13), nOldSize, p, 5)
+LZMADecompress_Correct_Simple2 = ret = 0
+End Function
+
+

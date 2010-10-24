@@ -323,6 +323,8 @@ If FakeDXUIControlCount > 0 Then
  d3dd9.SetTexture 0, FakeDXUITexture
  nOldState = d3dd9.GetRenderState(D3DRS_ALPHABLENDENABLE)
  d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, 1
+ d3dd9.SetRenderState D3DRS_SRCBLEND, D3DBLEND_SRCALPHA
+ d3dd9.SetRenderState D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA
  d3dd9.SetRenderState D3DRS_SCISSORTESTENABLE, 1
  r.x2 = d3dpp.BackBufferWidth
  r.Y2 = d3dpp.BackBufferHeight

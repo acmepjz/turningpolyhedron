@@ -476,3 +476,23 @@ float4 simple_radial_blur5_func(float2 t:TEXCOORD0):COLOR0{
 technique simple_radial_blur5{
 pass{PixelShader=compile ps_2_0 simple_radial_blur5_func();}
 }
+
+//0:fogcolor
+//1:input color scale
+//2:x=near y=far z=maxdensity
+//3:xy=distance correction coefficient
+float4 ps_linear_with_fog(float2 t:TEXCOORD0):COLOR0{
+	float4 clr=tex2D(samp,t);
+	float fogvalue=clr.w;
+	//distance correction (!!!! it works !!!!)
+	fogvalue*=length(float3((t-0.5f)*_fParam[3].xy,1.0f));
+	//===
+	fogvalue=smoothstep(_fParam[2].x,_fParam[2].y,fogvalue)*_fParam[2].z;
+	//fogvalue=saturate((fogvalue-_fParam[2].x)/(_fParam[2].y-_fParam[2].x))*_fParam[2].z;
+	return lerp(clr*_fParam[1],_fParam[0],fogvalue);
+}
+
+technique fx_linear_with_fog{
+pass{PixelShader=compile ps_2_0 ps_linear_with_fog();}
+}
+

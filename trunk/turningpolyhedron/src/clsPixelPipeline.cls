@@ -43,6 +43,7 @@ Private m_bRadialBlur As Boolean
 Private m_fParam(3) As D3DXVECTOR4
 
 Private m_fovy As Single, m_fAspect As Single, m_zn As Single, m_zf As Single
+Private m_vDistCorrection As D3DXVECTOR4
 
 Friend Property Get RadialBlurEnabled() As Boolean
 RadialBlurEnabled = m_bRadialBlur
@@ -104,7 +105,7 @@ Friend Sub CreatePostProcessTarget()
 Erase objPostProcessTarget
 If m_bPostProcessEnabled Then
  'main render target
- D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(0)
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(0)
  'bright-pass
  HDRBlurQuality(True) = m_nHDRBlurQuality
  '///
@@ -230,9 +231,8 @@ Set objOldTarget = Nothing
 Set objOldStencil = Nothing
 End Sub
 
-Friend Sub BeginRender()
+Friend Sub UpdateRenderState()
 Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
-Dim obj As Direct3DTexture9
 d3dd9.GetTransform D3DTS_WORLD, mat1
 objEffect.SetMatrix StrPtr(StrConv("matWorld", vbFromUnicode)), mat1
 d3dd9.GetTransform D3DTS_VIEW, mat2
@@ -241,12 +241,19 @@ D3DXMatrixMultiply mat, mat1, mat2
 D3DXMatrixMultiply mat, mat, mat3
 D3DXMatrixInverse mat2, 0, mat1 '[out] pDeterminant
 objEffect.SetMatrixTranspose StrPtr(StrConv("matWorld1", vbFromUnicode)), mat2
+objEffect.SetMatrix StrPtr(StrConv("mat", vbFromUnicode)), mat
+'///
+objEffect.CommitChanges
+End Sub
+
+Friend Sub BeginRender()
+Dim obj As Direct3DTexture9
+UpdateRenderState
 '///
 If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
 objEffect.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
 objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
 '///
-objEffect.SetMatrix StrPtr(StrConv("mat", vbFromUnicode)), mat
 objEffect.SetTechnique StrPtr(StrConv("test", vbFromUnicode))
 objEffect.Begin 0, 0
 objEffect.BeginPass 0
@@ -347,7 +354,9 @@ End If
 d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
 d3dd9.BeginScene
 '///
-objDraw.DrawTextureEx objPostProcessTarget(0), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
+'objDraw.DrawTextureEx objPostProcessTarget(0), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
+'fog test
+objDraw.DrawTextureEx objPostProcessTarget(0), "fx_linear_with_fog", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4(99, 100, 1), m_vDistCorrection
 'objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.1, 3), Vec4, Vec4, Vec4 'ugly
 objDraw.DrawTextureEx objPostProcessTarget(1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 '///
@@ -418,6 +427,14 @@ m_zn = zn
 m_zf = zf
 D3DXMatrixPerspectiveFovLH mat, m_fovy, Aspect, zn, zf
 d3dd9.SetTransform D3DTS_PROJECTION, mat
+'///
+m_vDistCorrection.y = Tan(fovy / 2) * 2
+m_vDistCorrection.x = m_vDistCorrection.y * Aspect
+'///
+Dim v As D3DXVECTOR4
+v.x = 1 / zn
+v.y = 1 / zf - v.x
+objEffect.SetVector StrPtr(StrConv("zData", vbFromUnicode)), v
 End Sub
 
 Friend Sub GetProjection_PerspectiveFovLH(ByRef fovy As Single, ByRef Aspect As Single, ByRef zn As Single, ByRef zf As Single)
