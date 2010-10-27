@@ -9,6 +9,7 @@ Public d3d9 As Direct3D9
 Public d3dd9 As Direct3DDevice9
 
 Public d3dpp As D3DPRESENT_PARAMETERS
+Public d3dc9 As D3DCAPS9
 
 Public Type typeVertex
  p As D3DVECTOR
@@ -444,8 +445,8 @@ nWidth = nWidth / nZoom
 nHeight = nHeight / nZoom
 tFont.objSprite.SetTransform mat
 If nShadowColor Then
- p.X1 = nShadowOffsetX
- p.Y1 = nShadowOffsetY
+ p.x1 = nShadowOffsetX
+ p.y1 = nShadowOffsetY
  p.x2 = nWidth + nShadowOffsetX
  p.Y2 = nHeight + nShadowOffsetY
  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nShadowLODBias)
@@ -453,8 +454,8 @@ If nShadowColor Then
  tFont.objSprite.Flush
 End If
 If nColor Then
- p.X1 = 0
- p.Y1 = 0
+ p.x1 = 0
+ p.y1 = 0
  p.x2 = nWidth
  p.Y2 = nHeight
  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nTextLODBias)
