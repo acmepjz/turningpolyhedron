@@ -221,8 +221,13 @@ With d3dpp
  '.PresentationInterval = D3DPRESENT_INTERVAL_ONE 'D3DPRESENT_INTERVAL_TWO 'Fullscreen only
  '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES
 End With
-'create device
-Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, Me.hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, d3dpp)
+'///get device caps
+d3d9.GetDeviceCaps 0, D3DDEVTYPE_HAL, d3dc9
+If d3dc9.DevCaps And D3DDEVCAPS_HWTRANSFORMANDLIGHT Then i = D3DCREATE_HARDWARE_VERTEXPROCESSING _
+Else i = D3DCREATE_SOFTWARE_VERTEXPROCESSING
+'TODO:shader version, etc.
+'///create device
+Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, Me.hwnd, i, d3dpp)
 If d3dd9 Is Nothing Then
  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
  Form_Unload 0
