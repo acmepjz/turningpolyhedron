@@ -13,9 +13,16 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+Private m_bAnimationEnabled As Boolean
+Private m_fDamping As Single
+
 Private m_tViewPos As D3DVECTOR
 Private m_tViewAt As D3DVECTOR
 Private m_tViewUp As D3DVECTOR
+
+Private m_tViewPos_1 As D3DVECTOR
+Private m_tViewAt_1 As D3DVECTOR
+Private m_tViewUp_1 As D3DVECTOR
 
 Private m_fDist As Single, m_fAngle As Single
 
@@ -23,16 +30,49 @@ Private m_bLockCamera As Boolean
 
 Private nOldX As Long, nOldY As Long
 
-Friend Sub Move(ByVal dx As Single, ByVal dy As Single, ByVal dz As Single)
+'TODO:calc camera velocity, etc.
+'TODO:linear damping looks buggy when rotation
+
+Friend Property Get AnimationEnabled() As Boolean
+AnimationEnabled = m_bAnimationEnabled
+End Property
+
+Friend Property Let AnimationEnabled(ByVal b As Boolean)
+If m_bAnimationEnabled <> b Then
+ m_bAnimationEnabled = b
+ If Not b Then
+  'TODO:
+  StopAnimation '???
+ End If
+End If
+End Property
+
+Friend Property Get LinearDamping() As Single
+LinearDamping = m_fDamping
+End Property
+
+Friend Property Let LinearDamping(ByVal f As Single)
+m_fDamping = f
+End Property
+
+Friend Sub StopAnimation()
+m_tViewPos_1 = m_tViewPos
+m_tViewAt_1 = m_tViewAt
+m_tViewUp_1 = m_tViewUp
+'TODO:
+End Sub
+
+Friend Sub Move(ByVal dx As Single, ByVal dy As Single, ByVal dz As Single, Optional ByVal bStopAnimation As Boolean)
 m_tViewPos.x = m_tViewPos.x + dx
 m_tViewPos.y = m_tViewPos.y + dy
 m_tViewPos.z = m_tViewPos.z + dz
 m_tViewAt.x = m_tViewAt.x + dx
 m_tViewAt.y = m_tViewAt.y + dy
 m_tViewAt.z = m_tViewAt.z + dz
+If bStopAnimation Then StopAnimation '???
 End Sub
 
-Friend Sub MoveByLocalCoordinatesLH(ByVal dx As Single, ByVal dy As Single, ByVal dz As Single)
+Friend Sub MoveByLocalCoordinatesLH(ByVal dx As Single, ByVal dy As Single, ByVal dz As Single, Optional ByVal bStopAnimation As Boolean)
 Dim xx As D3DVECTOR, yy As D3DVECTOR, zz As D3DVECTOR
 Dim x1 As Single, y1 As Single, z1 As Single
 '///
@@ -53,13 +93,14 @@ m_tViewPos.z = m_tViewPos.z + z1
 m_tViewAt.x = m_tViewAt.x + x1
 m_tViewAt.y = m_tViewAt.y + y1
 m_tViewAt.z = m_tViewAt.z + z1
+If bStopAnimation Then StopAnimation '???
 End Sub
 
-Friend Property Get Distance() As Single
+Friend Property Get Distance(Optional ByVal bStopAnimation As Boolean) As Single
 Distance = m_fDist
 End Property
 
-Friend Property Let Distance(ByVal f As Single)
+Friend Property Let Distance(Optional ByVal bStopAnimation As Boolean, ByVal f As Single)
 On Error Resume Next
 Dim t As D3DVECTOR
 Dim f1 As Single
@@ -82,9 +123,10 @@ Else
  m_tViewPos.y = m_tViewAt.y + t.y * f1
  m_tViewPos.z = m_tViewAt.z + t.z * f1
 End If
+If bStopAnimation Then StopAnimation '???
 End Property
 
-Friend Sub Zoom(ByVal nAmount As Single)
+Friend Sub Zoom(ByVal nAmount As Single, Optional ByVal bStopAnimation As Boolean)
 On Error Resume Next
 Dim t As D3DVECTOR
 t.x = m_tViewPos.x - m_tViewAt.x
@@ -105,6 +147,7 @@ Else
  m_tViewPos.y = m_tViewAt.y + t.y * nAmount
  m_tViewPos.z = m_tViewAt.z + t.z * nAmount
 End If
+If bStopAnimation Then StopAnimation '???
 End Sub
 
 Friend Property Get LockCamera() As Boolean
@@ -115,32 +158,47 @@ Friend Property Let LockCamera(ByVal b As Boolean)
 m_bLockCamera = b
 End Property
 
-Friend Property Get CameraPosition() As D3DVECTOR
+Friend Property Get CameraPosition(Optional ByVal bStopAnimation As Boolean) As D3DVECTOR
 CameraPosition = m_tViewPos
 End Property
 
-Friend Property Let CameraPosition(ByRef v As D3DVECTOR)
+Friend Property Let CameraPosition(Optional ByVal bStopAnimation As Boolean, ByRef v As D3DVECTOR)
 m_tViewPos = v
 pCalcAngle
+If bStopAnimation Then StopAnimation '???
 End Property
 
-Friend Property Get ViewTarget() As D3DVECTOR
+Friend Property Get ViewTarget(Optional ByVal bStopAnimation As Boolean) As D3DVECTOR
 ViewTarget = m_tViewAt
 End Property
 
-Friend Property Let ViewTarget(ByRef v As D3DVECTOR)
+Friend Property Let ViewTarget(Optional ByVal bStopAnimation As Boolean, ByRef v As D3DVECTOR)
 m_tViewAt = v
 pCalcAngle
+If bStopAnimation Then StopAnimation '???
 End Property
 
-Friend Property Get ViewUp() As D3DVECTOR
+Friend Property Get ViewUp(Optional ByVal bStopAnimation As Boolean) As D3DVECTOR
 ViewUp = m_tViewUp
 End Property
 
-Friend Property Let ViewUp(ByRef v As D3DVECTOR)
+Friend Property Let ViewUp(Optional ByVal bStopAnimation As Boolean, ByRef v As D3DVECTOR)
 m_tViewUp = v
 pCalcAngle
+If bStopAnimation Then StopAnimation '???
 End Property
+
+Friend Sub GetCamera(pEye As D3DVECTOR, pAt As D3DVECTOR, pUp As D3DVECTOR)
+pEye = m_tViewPos
+pAt = m_tViewAt
+pUp = m_tViewUp
+End Sub
+
+Friend Sub GetRealCamera(pEye As D3DVECTOR, pAt As D3DVECTOR, pUp As D3DVECTOR)
+pEye = m_tViewPos_1
+pAt = m_tViewAt_1
+pUp = m_tViewUp_1
+End Sub
 
 Private Sub pCalcAngle()
 On Error Resume Next
@@ -154,14 +212,15 @@ f = D3DXVec3Dot(t, m_tViewUp) / (m_fDist * D3DXVec3Length(m_tViewUp)) 'cos
 m_fAngle = Atn((1 - f) / Sqr(1 - f * f)) * 2
 End Sub
 
-Friend Sub SetCamrea(pEye As D3DVECTOR, pAt As D3DVECTOR, pUp As D3DVECTOR)
+Friend Sub SetCamrea(pEye As D3DVECTOR, pAt As D3DVECTOR, pUp As D3DVECTOR, Optional ByVal bStopAnimation As Boolean)
 m_tViewPos = pEye
 m_tViewAt = pAt
 m_tViewUp = pUp
 pCalcAngle
+If bStopAnimation Then StopAnimation '???
 End Sub
 
-Friend Sub Rotate(ByVal dx As Single, ByVal dy As Single)
+Friend Sub Rotate(ByVal dx As Single, ByVal dy As Single, Optional ByVal bStopAnimation As Boolean)
 On Error Resume Next
 Dim mat As D3DMATRIX
 Dim t As D3DVECTOR
@@ -186,6 +245,7 @@ Else
  m_tViewPos.y = m_tViewAt.y + t.y
  m_tViewPos.z = m_tViewAt.z + t.z
 End If
+If bStopAnimation Then StopAnimation '???
 End Sub
 
 Friend Sub BeginDrag(ByVal x As Long, ByVal y As Long)
@@ -193,15 +253,22 @@ nOldX = x
 nOldY = y
 End Sub
 
-Friend Sub Drag(ByVal x As Long, ByVal y As Long, ByVal nAmount As Single)
-Rotate (x - nOldX) * nAmount, (nOldY - y) * nAmount
+Friend Sub Drag(ByVal x As Long, ByVal y As Long, ByVal nAmount As Single, Optional ByVal bStopAnimation As Boolean)
+Rotate (x - nOldX) * nAmount, (nOldY - y) * nAmount, bStopAnimation
 nOldX = x
 nOldY = y
 End Sub
 
 Friend Sub Apply(ByVal objRender As clsRenderPipeline)
 Dim mat As D3DMATRIX
-D3DXMatrixLookAtLH mat, m_tViewPos, m_tViewAt, m_tViewUp
+If Not m_bAnimationEnabled Then
+ StopAnimation
+Else
+ m_tViewPos_1 = D3DXVec3Lerp(m_tViewPos, m_tViewPos_1, m_fDamping)
+ m_tViewAt_1 = D3DXVec3Lerp(m_tViewAt, m_tViewAt_1, m_fDamping)
+ m_tViewUp_1 = D3DXVec3Lerp(m_tViewUp, m_tViewUp_1, m_fDamping)
+End If
+D3DXMatrixLookAtLH mat, m_tViewPos_1, m_tViewAt_1, m_tViewUp_1
 d3dd9.SetTransform D3DTS_VIEW, mat
-objRender.SetViewPosition Vec4(m_tViewPos.x, m_tViewPos.y, m_tViewPos.z, 0)
+objRender.SetViewPosition Vec4(m_tViewPos_1.x, m_tViewPos_1.y, m_tViewPos_1.z, 0)
 End Sub

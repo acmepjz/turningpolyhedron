@@ -172,14 +172,14 @@ Private Sub pKeyEvent()
 Dim dx As Single, dz As Single
 If GetActiveWindow = Me.hwnd And FakeDXUIActiveWindow = 0 Then
  If GetAsyncKeyState(vbKeyA) And &H8000& Then
-  dx = -0.1
+  dx = -0.5
  ElseIf GetAsyncKeyState(vbKeyD) And &H8000& Then
-  dx = 0.1
+  dx = 0.5
  End If
  If GetAsyncKeyState(vbKeyS) And &H8000& Then
-  dz = -0.1
+  dz = -0.5
  ElseIf GetAsyncKeyState(vbKeyW) And &H8000& Then
-  dz = 0.1
+  dz = 0.5
  End If
  If dx <> 0 Or dz <> 0 Then objCamera.MoveByLocalCoordinatesLH dx, 0, dz
 End If
@@ -258,8 +258,10 @@ objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
 objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
 'objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
 objRenderTest.SetLightType D3DLIGHT_POINT
-'objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1)
-objCamera.SetCamrea Vec3(6, 6, 1), Vec3, Vec3(, , 1)
+'objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1), True
+objCamera.SetCamrea Vec3(6, 6, 1), Vec3, Vec3(, , 1), True
+objCamera.AnimationEnabled = True
+objCamera.LinearDamping = 0.75
 'objRenderTest.CreateShadowMap 1024 'new
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
 'objRenderTest.SetShadowState True, 16, -100, 100  'directional

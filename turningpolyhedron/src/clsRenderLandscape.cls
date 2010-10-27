@@ -54,9 +54,7 @@ MyMini_Offset.y = m_fDim * (1 - m_nSize) / 2 - m_tCenter.z
 MyMini_Offset.z = m_tCenter.y
 '///
 objRender.GetProjection_PerspectiveFovLH fovy, Aspect, zn, zf
-tEye = objCamera.CameraPosition
-tAt = objCamera.ViewTarget
-tUp = objCamera.ViewUp
+objCamera.GetRealCamera tEye, tAt, tUp
 '///
 MiniStub_Draw m_hStub, fResolution, tEye.x, tEye.z, -tEye.y, tAt.x - tEye.x, tAt.z - tEye.z, tEye.y - tAt.y, tUp.x, tUp.z, -tUp.y, fovy * 57.29578!, Aspect, zn, zf
 '///
