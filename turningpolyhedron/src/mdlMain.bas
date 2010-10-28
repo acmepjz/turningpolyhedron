@@ -21,7 +21,10 @@ Public Type typeVertex
  t As D3DXVECTOR2
 End Type
 
-'Public Const m_nDefaultFVF = D3DFVF_XYZ Or D3DFVF_NORMAL Or D3DFVF_DIFFUSE Or D3DFVF_SPECULAR Or D3DFVF_TEX1
+Public Type typeVertex_XYZ_Diffuse
+ p As D3DVECTOR
+ clr1 As Long
+End Type
 
 Public m_tDefVertexDecl() As D3DVERTEXELEMENT9
 

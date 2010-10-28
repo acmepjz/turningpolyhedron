@@ -14,6 +14,18 @@ Public MyMini_FanCount As Long, MyMini_Vertex0 As Long, MyMini_Vertex1 As Long
 Public MyMini_Scale As D3DVECTOR
 Public MyMini_Offset As D3DVECTOR
 
+'////////new:fog
+Public MyMini_FogVertices() As typeVertex_XYZ_Diffuse
+Public MyMini_FogVertexCount As Long, MyMini_FogVertexMax As Long
+
+Public MyMini_FogIndices() As Long
+Public MyMini_FogIndexCount As Long, MyMini_FogIndexMax As Long
+
+Public MyMini_FogPrismState As Long
+
+Public MyMini_FogEnabled As Boolean
+'////////
+
 Public Sub MyMiniCallback_ErrorHandler(ByVal lpstrFile As Long, ByVal nLine As Long, ByVal nFatal As Long)
 Dim s As String, i As Long
 s = Space(1024)
@@ -75,6 +87,59 @@ MyMini_VertexCount = MyMini_VertexCount + 1
 End Sub
 
 Public Sub MyMiniCallback_PrismEdge(ByVal x As Single, ByVal y As Single, ByVal yf As Single, ByVal z As Single)
-'TODO:
+'completely unusable
+''TODO:
+'If Not MyMini_FogEnabled Then Exit Sub
+''///add vertex
+'If MyMini_FogVertexCount + 2 > MyMini_FogVertexMax Then
+' MyMini_FogVertexMax = MyMini_FogVertexMax + 8192&
+' ReDim Preserve MyMini_FogVertices(MyMini_FogVertexMax - 1)
+'End If
+'With MyMini_FogVertices(MyMini_FogVertexCount)
+' .p.x = x
+' .p.y = -z
+' .p.z = y
+' .clr1 = -1 'useless
+'End With
+'With MyMini_FogVertices(MyMini_FogVertexCount + 1)
+' .p.x = x
+' .p.y = -z
+' .p.z = yf
+' .clr1 = -1 'useless
+'End With
+'MyMini_FogVertexCount = MyMini_FogVertexCount + 2
+''///add index
+'MyMini_FogPrismState = MyMini_FogPrismState + 1
+'If MyMini_FogPrismState >= 2 Then
+' If MyMini_FogIndexCount + 18 > MyMini_FogIndexMax Then
+'  MyMini_FogIndexMax = MyMini_FogIndexMax + 8192&
+'  ReDim Preserve MyMini_FogIndices(MyMini_FogIndexMax - 1)
+' End If
+' '///
+' MyMini_FogIndices(MyMini_FogIndexCount) = MyMini_FogVertexCount - 4
+' MyMini_FogIndices(MyMini_FogIndexCount + 1) = MyMini_FogVertexCount - 2
+' MyMini_FogIndices(MyMini_FogIndexCount + 2) = MyMini_FogVertexCount - 3
+' MyMini_FogIndices(MyMini_FogIndexCount + 3) = MyMini_FogVertexCount - 1
+' MyMini_FogIndices(MyMini_FogIndexCount + 4) = MyMini_FogVertexCount - 3
+' MyMini_FogIndices(MyMini_FogIndexCount + 5) = MyMini_FogVertexCount - 2
+' MyMini_FogIndexCount = MyMini_FogIndexCount + 6
+' If MyMini_FogPrismState >= 3 Then
+'  MyMini_FogIndices(MyMini_FogIndexCount) = MyMini_FogVertexCount - 2
+'  MyMini_FogIndices(MyMini_FogIndexCount + 1) = MyMini_FogVertexCount - 6
+'  MyMini_FogIndices(MyMini_FogIndexCount + 2) = MyMini_FogVertexCount - 1
+'  MyMini_FogIndices(MyMini_FogIndexCount + 3) = MyMini_FogVertexCount - 5
+'  MyMini_FogIndices(MyMini_FogIndexCount + 4) = MyMini_FogVertexCount - 1
+'  MyMini_FogIndices(MyMini_FogIndexCount + 5) = MyMini_FogVertexCount - 6
+'  MyMini_FogIndexCount = MyMini_FogIndexCount + 6
+'  MyMini_FogIndices(MyMini_FogIndexCount) = MyMini_FogVertexCount - 5
+'  MyMini_FogIndices(MyMini_FogIndexCount + 1) = MyMini_FogVertexCount - 3
+'  MyMini_FogIndices(MyMini_FogIndexCount + 2) = MyMini_FogVertexCount - 1
+'  MyMini_FogIndices(MyMini_FogIndexCount + 3) = MyMini_FogVertexCount - 2
+'  MyMini_FogIndices(MyMini_FogIndexCount + 4) = MyMini_FogVertexCount - 4
+'  MyMini_FogIndices(MyMini_FogIndexCount + 5) = MyMini_FogVertexCount - 6
+'  MyMini_FogIndexCount = MyMini_FogIndexCount + 6
+'  MyMini_FogPrismState = 0
+' End If
+'End If
 End Sub
 

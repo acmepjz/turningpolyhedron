@@ -163,7 +163,7 @@ Do Until d3dd9 Is Nothing
  pKeyEvent
  '///
  objTiming.WaitForNextFrame
- Timer1_Timer
+ pRender
  DoEvents
 Loop
 End Sub
@@ -217,8 +217,8 @@ With d3dpp
  .hDeviceWindow = Me.hwnd
  .EnableAutoDepthStencil = 1
  .AutoDepthStencilFormat = D3DFMT_D24S8
- .PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
- '.PresentationInterval = D3DPRESENT_INTERVAL_ONE 'D3DPRESENT_INTERVAL_TWO 'Fullscreen only
+ '.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
+ .PresentationInterval = D3DPRESENT_INTERVAL_ONE
  '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES
 End With
 '///get device caps
@@ -250,14 +250,14 @@ CreateVertexDeclaration
 '///
 pSetRenderState
 '////////test
-Set objTest = pTest
+Set objTest = pLoasMeshTest
 '///
 pCreateUI
 '///
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
 objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
-'objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
-objRenderTest.SetLightType D3DLIGHT_POINT
+objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
+'objRenderTest.SetLightType D3DLIGHT_POINT
 'objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1), True
 objCamera.SetCamrea Vec3(6, 6, 1), Vec3, Vec3(, , 1), True
 objCamera.AnimationEnabled = True
@@ -282,7 +282,9 @@ If App.LogMode = 1 Then
 End If
 '////////test
 Dim t As D3DXIMAGE_INFO
-objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15
+objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
+'objLand.CreateFromFile App.Path + "\heightmap_test.png", 3, 5, 0.05, , , -15, App.Path + "\fogmap_test.png", 3, 0.05, 2
+'objLand.FogEnabled = True
 D3DXCreateTextureFromFileExW d3dd9, App.Path + "\test0.png", D3DX_DEFAULT, D3DX_DEFAULT, 1, 0, D3DFMT_FROM_FILE, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, t, ByVal 0, objLandTexture
 '////////
 Me.Caption = objText.GetText("Turning Polyhedron")
@@ -505,7 +507,7 @@ Set d3dd9 = Nothing
 Set d3d9 = Nothing
 End Sub
 
-Private Function pTest() As D3DXMesh
+Private Function pLoasMeshTest() As D3DXMesh
 Dim obj As D3DXMesh
 Dim objAdjacency As D3DXBuffer
 Dim i As Long, j As Long, lp As Long
@@ -529,7 +531,7 @@ For i = 48 To tDesc.Size - 1 Step 64
 Next i
 obj.UnlockVertexBuffer
 '///
-Set pTest = obj
+Set pLoasMeshTest = obj
 End Function
 
 Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
@@ -709,7 +711,7 @@ Else
 End If
 End Sub
 
-Private Sub Timer1_Timer()
+Private Sub pRender()
 On Error Resume Next
 Dim i As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
@@ -753,7 +755,6 @@ With d3dd9
   objRenderTest.SetTexture objTexture
   objRenderTest.SetNormalTexture objNormalTexture
   objRenderTest.BeginRender
-  .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000010, 1, 0
   .BeginScene
   objTest.DrawSubset 0
   '////////draw landscape test (new and buggy)
@@ -772,7 +773,8 @@ With d3dd9
   .BeginScene
   s = "FPS:" + Format(objTiming.FPS, "0.0")
   FakeDXGDIDrawText FakeDXUIDefaultFont, s, 32, 32, 128, 32, 0.75, DT_NOCLIP, -1, , &HFF000000, , , , , True
-  FakeDXGDIDrawText FakeDXUIDefaultFont, "Landscape" + vbCrLf + "Triangles:" + CStr(MyMini_IndexCount), 48, 256, 128, 32, 1, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.79, True
+  FakeDXGDIDrawText FakeDXUIDefaultFont, "Landscape Triangles:" + CStr(MyMini_IndexCount) + vbCrLf + "Fog Triangles:" + CStr(MyMini_FogIndexCount), _
+  48, 256, 128, 32, 0.75, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.2, True
   .EndScene
   '////////
   .BeginScene
