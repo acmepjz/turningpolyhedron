@@ -269,6 +269,7 @@ If m_bPostProcessEnabled Then
  Set objOldTarget = d3dd9.GetRenderTarget(0)
  d3dd9.SetRenderTarget 0, objPostProcessTarget(0).GetSurfaceLevel(0)
 End If
+d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000010, 1, 0 '??? TODO:backcolor,etc.
 End Sub
 
 Friend Sub EndRenderToPostProcessTarget()
@@ -316,27 +317,6 @@ For i = 0 To 2
  j = j \ &H100&
  If j <= 0 Then Exit For
 Next i
-''///test - star glow
-''ugly!!!
-'objPostProcessTarget(1).GetLevelDesc 0, tDesc
-'v2.x = 5 / tDesc.Width
-'v2.y = 5 / tDesc.Height
-'v3.x = v2.x * 2.25!
-'v3.y = v2.y * 2.25!
-'objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4
-'objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(5), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4
-'v2.x = 5 * -0.3660255! / tDesc.Width
-'v2.y = 5 * 1.366025! / tDesc.Height
-'v3.x = v2.x * 2.25!
-'v3.y = v2.y * 2.25!
-'objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4
-'objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(5), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4, , False
-'v2.x = 5 * -1.366025! / tDesc.Width
-'v2.y = 5 * 0.3660255! / tDesc.Height
-'v3.x = v2.x * 2.25!
-'v3.y = v2.y * 2.25!
-'objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4
-'objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(5), "convolve_directional_symmetric4", 0, 0, 0, 0, v, v2, Vec4, Vec4, , False
 '///test - radial blur
 'the coefficients:
 'Table[ToString[(ToString[#]<>"!")&/@N[z^-Table[n*t/5,{n,4}]/.{t->5^-k,z->10},10]],{k,0,3}]
@@ -356,7 +336,7 @@ d3dd9.BeginScene
 '///
 'objDraw.DrawTextureEx objPostProcessTarget(0), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 'fog test
-objDraw.DrawTextureEx objPostProcessTarget(0), "fx_linear_with_fog", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4(99, 100, 1), m_vDistCorrection
+objDraw.DrawTextureEx objPostProcessTarget(0), "fx_linear_with_fog", 0, 0, 0, 0, Vec4(1, 1, 1, 1), Vec4, Vec4(0, 200, 1), m_vDistCorrection
 'objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.1, 3), Vec4, Vec4, Vec4 'ugly
 objDraw.DrawTextureEx objPostProcessTarget(1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 '///
@@ -428,12 +408,13 @@ m_zf = zf
 D3DXMatrixPerspectiveFovLH mat, m_fovy, Aspect, zn, zf
 d3dd9.SetTransform D3DTS_PROJECTION, mat
 '///
-m_vDistCorrection.y = Tan(fovy / 2) * 2
+m_vDistCorrection.y = Tan(fovy / 2) * 2 * zf
 m_vDistCorrection.x = m_vDistCorrection.y * Aspect
+m_vDistCorrection.z = zf
 '///
 Dim v As D3DXVECTOR4
-v.x = 1 / zn
-v.y = 1 / zf - v.x
+v.x = zf / zn
+v.y = 1 - v.x
 objEffect.SetVector StrPtr(StrConv("zData", vbFromUnicode)), v
 End Sub
 

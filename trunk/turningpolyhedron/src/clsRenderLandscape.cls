@@ -34,6 +34,15 @@ Private m_nSize As Long, m_fDim As Single, m_fScale As Single
 Private m_tCenter As D3DVECTOR
 
 Private m_nFogSize As Long, m_fFogScale As Single, m_fFogDisplace As Single
+Private m_bFogEnabled As Boolean
+
+Friend Property Get FogEnabled() As Boolean
+FogEnabled = m_bFogEnabled
+End Property
+
+Friend Property Let FogEnabled(ByVal b As Boolean)
+m_bFogEnabled = b
+End Property
 
 Friend Sub Render(ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera, Optional ByVal fResolution As Single = 1000)
 Dim tEye As D3DVECTOR
@@ -45,6 +54,11 @@ If m_hStub = 0 Then Exit Sub
 MyMini_VertexCount = 0
 MyMini_IndexCount = 0
 MyMini_FanCount = 0
+'///
+MyMini_FogEnabled = m_bFogEnabled
+MyMini_FogVertexCount = 0
+MyMini_FogIndexCount = 0
+MyMini_FogPrismState = 0
 '///
 MyMini_Scale.x = m_fDim
 MyMini_Scale.y = m_fDim
@@ -69,6 +83,19 @@ If MyMini_IndexCount > 0 Then
 ' d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
 ' d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
 ' d3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_SOLID
+End If
+If MyMini_FogIndexCount > 0 Then
+ MyMini_FogIndexCount = MyMini_FogIndexCount \ 3
+ If MyMini_FogEnabled Then
+  d3dd9.SetFVF D3DFVF_XYZ Or D3DFVF_DIFFUSE
+  d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
+  d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
+  'd3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_WIREFRAME
+  d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, MyMini_FogVertexCount, MyMini_FogIndexCount, MyMini_FogIndices(0), D3DFMT_INDEX32, MyMini_FogVertices(0), 16&
+  d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+  d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+  'd3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_SOLID
+ End If
 End If
 End Sub
 
@@ -162,7 +189,7 @@ If nSize > 1 Then
 End If
 End Function
 
-Friend Function CreateFromFile(ByVal fnImage As String, Optional ByVal nSize As Long, Optional ByVal fDim As Single = 1, Optional ByVal fScale As Single = 1, Optional ByVal nCenterX As Single, Optional ByVal nCenterY As Single, Optional ByVal nCenterZ As Single, Optional ByVal fnFogImage As String, Optional ByVal nFogSize As Long, Optional ByVal fFogScale As Single, Optional ByVal fFogDisplace As Single) As Boolean
+Friend Function CreateFromFile(ByVal fnImage As String, Optional ByVal nSize As Long, Optional ByVal fDim As Single = 1, Optional ByVal fScale As Single = 1, Optional ByVal nCenterX As Single, Optional ByVal nCenterY As Single, Optional ByVal nCenterZ As Single, Optional ByVal fnFogImage As String, Optional ByVal nFogSize As Long, Optional ByVal fFogScale As Single, Optional ByVal fFogDisplace As Single, Optional ByVal fAttenuation As Single = 1) As Boolean
 Dim d() As Integer
 Dim dFog() As Integer
 Dim lpFogImage As Long
@@ -185,7 +212,7 @@ m_fFogScale = fFogScale
 m_fFogDisplace = fFogDisplace
 '///
 m_hStub = MiniStub_Create(d(0), m_nSize, m_fDim, m_fScale, 1, m_tCenter.x, m_tCenter.y, m_tCenter.z, _
-AddressOf MyMiniCallback_BeginFan, AddressOf MyMiniCallback_FanVertex, 0, 0, 0, ByVal lpFogImage, m_nFogSize, m_fFogScale, m_fFogDisplace, 1, _
+AddressOf MyMiniCallback_BeginFan, AddressOf MyMiniCallback_FanVertex, 0, 0, 0, ByVal lpFogImage, m_nFogSize, m_fFogScale, m_fFogDisplace, fAttenuation, _
 AddressOf MyMiniCallback_PrismEdge, ByVal 0, ByVal 0, 0, 0, 0, 0, 0, 0, 0)
 '///
 CreateFromFile = m_hStub <> 0
