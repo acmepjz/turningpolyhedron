@@ -266,6 +266,7 @@ objCamera.LinearDamping = 0.75
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
 'objRenderTest.SetShadowState True, 16, -100, 100  'directional
 objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 30, -0.5, 0.02
+objRenderTest.VolumetricFogEnabled = True
 '////////new:subclass
 #If UseSubclass Then
 If True Then
@@ -714,7 +715,7 @@ End Sub
 Private Sub pRender()
 On Error Resume Next
 Dim i As Long
-Dim mat As D3DMATRIX, mat1 As D3DMATRIX
+Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
 Dim r(3) As Long
 Dim f(3) As Single
 Dim s As String
@@ -766,6 +767,19 @@ With d3dd9
   '////////
   .EndScene
   objRenderTest.EndRender
+  '////////volumetric fog test
+  If objRenderTest.PostProcessEnabled And objRenderTest.VolumetricFogEnabled Then
+   D3DXMatrixScaling mat1, 5, 5, 5
+   D3DXMatrixMultiply mat2, mat1, mat
+   .SetTransform D3DTS_WORLD, mat2
+   objRenderTest.BeginRender RenderPass_FogVolume
+   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
+   .BeginScene
+   objTest.DrawSubset 0
+   .EndScene
+   objRenderTest.EndRender
+   .SetTransform D3DTS_WORLD, mat
+  End If
   '////////perform post process
   objRenderTest.EndRenderToPostProcessTarget
   objRenderTest.PerformPostProcess objDrawTest

@@ -28,6 +28,13 @@ float4 _p:POSITION;
 float4 c:TEXCOORD0; //fix color out of range bug (old:COLOR0)
 };
 
+struct VS_OUTPUT_VOLUMEFOG{
+	float4 _p:POSITION;
+	float4 c:COLOR0;//reserved
+	float4 c1:COLOR1;//reserved
+	float4 t:TEXCOORD0;//z,w of camrea-space position
+};
+
 //world matrix
 float4x4 matWorld;
 
@@ -125,6 +132,16 @@ d.pShadow=mul(d0.p,matShadow);
 //d.pShadow.xy+=0.5f;
 ////
 return d;
+}
+
+VS_OUTPUT_VOLUMEFOG vs_func_volumefog(VS_INPUT d0){
+	VS_OUTPUT_VOLUMEFOG d;
+	float4 p=mul(d0.p,mat);
+	d._p=p;
+	d.c=d0.c; //1
+	d.c1=d0.c1; //1
+	d.t=p;
+	return d;
 }
 
 //test
@@ -258,5 +275,27 @@ technique test_shadow{
 pass{
 VertexShader=compile vs_2_0 vs_func_shadow();
 PixelShader=compile ps_2_0 ps_func_shadow();
+}
+}
+
+//TODO:density, etc.
+//TODO:VFACE unsupported in ps2.0
+// -- render volume in 2 steps CULL_CCW and CULL_CW :-3
+float4 ps_func_volumefog(VS_OUTPUT_VOLUMEFOG d,float vf:VFACE):COLOR0{
+	d.t.xyz/=d.t.w;
+	float depth=1.0f/(zData.x+zData.y*d.t.z);
+	//===z-test
+	float4 clr_back=tex2D(samp,d.t.xy*float2(0.5f,-0.5f)+float2(0.5f,0.5f));
+	depth=min(depth,clr_back.w);
+	//===*/
+	float4 clr=float4(depth,0,0,0)+step(vf,0)*float4(-depth,depth,0,0);
+	return clr;
+}
+
+technique test_volumefog{
+pass{
+VertexShader=compile vs_3_0 vs_func_volumefog();
+PixelShader=compile ps_3_0 ps_func_volumefog();
+ZENABLE=0;ALPHABLENDENABLE=1;CULLMODE=NONE;SRCBLEND=ONE;DESTBLEND=ONE;
 }
 }
