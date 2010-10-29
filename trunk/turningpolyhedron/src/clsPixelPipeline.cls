@@ -21,6 +21,7 @@ Private m_tLightDir As D3DXVECTOR4, m_tLightPos As D3DXVECTOR4, m_tViewPos As D3
 Private m_nLightType As Long
 
 Private objOldTarget As Direct3DSurface9
+Private objOldTarget_1 As Direct3DSurface9
 Private objOldStencil As Direct3DSurface9
 
 Private texNoise As Direct3DTexture9
@@ -28,6 +29,12 @@ Private objShadowMap As Direct3DTexture9, objShadowStencil As Direct3DSurface9
 Private m_bShadowEnabled As Boolean
 Private m_tLightViewProj As D3DMATRIX
 Private m_nShadowMapSize As Long
+
+Public Enum enumRenderPassType
+ RenderPass_Main = 0
+ RenderPass_FogVolume = 10
+End Enum
+Private m_nLastType As Long
 
 '////////post process
 
@@ -37,6 +44,8 @@ Private objPostProcessTarget(15) As Direct3DTexture9
 Private m_nHDRBlurQuality As Long
 'radial blur
 Private m_bRadialBlur As Boolean
+'volumetric fog
+Private m_bVolumeFog As Boolean
 
 '////////
 
@@ -51,6 +60,20 @@ End Property
 
 Friend Property Let RadialBlurEnabled(ByVal b As Boolean)
 m_bRadialBlur = b
+End Property
+
+Friend Property Get VolumetricFogEnabled() As Boolean
+VolumetricFogEnabled = m_bVolumeFog
+End Property
+
+Friend Property Let VolumetricFogEnabled(ByVal b As Boolean)
+m_bVolumeFog = b
+If m_bPostProcessEnabled And b Then
+ If objPostProcessTarget(6) Is Nothing Then
+  '6=volumetric fog target GR=fog far/fog near
+  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(6)
+ End If
+End If
 End Property
 
 Friend Property Get Effect() As D3DXEffect
@@ -104,14 +127,16 @@ End Property
 Friend Sub CreatePostProcessTarget()
 Erase objPostProcessTarget
 If m_bPostProcessEnabled Then
- 'main render target
+ '0=main render target BGR=color A=depth (0=0 zf=1)
  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(0)
- 'bright-pass
+ '6=volumetric fog target
+ VolumetricFogEnabled = m_bVolumeFog
+ 'bright-pass (1,4,5)
  HDRBlurQuality(True) = m_nHDRBlurQuality
  '///
- 'luminance
+ '2=luminance
  D3DXCreateTexture d3dd9, 128, 128, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_R32F, D3DPOOL_DEFAULT, objPostProcessTarget(2)
- 'average luminance
+ '3=average luminance
  D3DXCreateTexture d3dd9, 1, 1, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, D3DPOOL_DEFAULT, objPostProcessTarget(3)
 End If
 End Sub
@@ -163,6 +188,7 @@ End Sub
 
 Friend Sub OnLostDevice()
 Set objOldTarget = Nothing
+Set objOldTarget_1 = Nothing
 Set objOldStencil = Nothing
 Set objShadowMap = Nothing
 Set objShadowStencil = Nothing
@@ -246,22 +272,44 @@ objEffect.SetMatrix StrPtr(StrConv("mat", vbFromUnicode)), mat
 objEffect.CommitChanges
 End Sub
 
-Friend Sub BeginRender()
+Friend Sub BeginRender(Optional ByVal nType As enumRenderPassType)
 Dim obj As Direct3DTexture9
+Dim s As String
 UpdateRenderState
 '///
-If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
-objEffect.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
-objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
+Select Case nType
+Case RenderPass_FogVolume
+ If m_bPostProcessEnabled And m_bVolumeFog Then
+  Set objOldTarget_1 = d3dd9.GetRenderTarget(0)
+  d3dd9.SetRenderTarget 0, objPostProcessTarget(6).GetSurfaceLevel(0)
+  objEffect.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), objPostProcessTarget(0)
+  s = "test_volumefog"
+ Else 'err!
+  Exit Sub
+ End If
+Case Else
+ If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
+ objEffect.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
+ objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
+ s = "test"
+End Select
+m_nLastType = nType 'unused
 '///
-objEffect.SetTechnique StrPtr(StrConv("test", vbFromUnicode))
+objEffect.SetTechnique StrPtr(StrConv(s, vbFromUnicode))
 objEffect.Begin 0, 0
 objEffect.BeginPass 0
 End Sub
 
 Friend Sub EndRender()
+On Error Resume Next
 objEffect.EndPass
 objEffect.End
+If Not objOldTarget_1 Is Nothing Then
+ d3dd9.SetRenderTarget 0, objOldTarget_1
+ Set objOldTarget_1 = Nothing
+End If
+'///
+m_nLastType = 0
 End Sub
 
 Friend Sub BeginRenderToPostProcessTarget()
@@ -336,7 +384,11 @@ d3dd9.BeginScene
 '///
 'objDraw.DrawTextureEx objPostProcessTarget(0), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 'fog test
-objDraw.DrawTextureEx objPostProcessTarget(0), "fx_linear_with_fog", 0, 0, 0, 0, Vec4(1, 1, 1, 1), Vec4, Vec4(0, 200, 1), m_vDistCorrection
+If m_bVolumeFog And Not objPostProcessTarget(6) Is Nothing Then
+ objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(6), "fx_linear_with_volume_fog", 0, 0, 0, 0, Vec4(1, 1, 1, 1), Vec4, Vec4(0, 200, 1), m_vDistCorrection
+Else
+ objDraw.DrawTextureEx objPostProcessTarget(0), "fx_linear_with_fog", 0, 0, 0, 0, Vec4(1, 1, 1, 1), Vec4, Vec4(0, 200, 1), m_vDistCorrection
+End If
 'objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.1, 3), Vec4, Vec4, Vec4 'ugly
 objDraw.DrawTextureEx objPostProcessTarget(1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 '///

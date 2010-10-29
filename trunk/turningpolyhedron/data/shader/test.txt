@@ -481,9 +481,13 @@ pass{PixelShader=compile ps_2_0 simple_radial_blur5_func();}
 //1:input color scale
 //2:x=near y=far z=maxdensity
 //3:xy=(distance correction coefficient)*zfar z=zfar
-float4 ps_linear_with_fog(float2 t:TEXCOORD0):COLOR0{
+float4 ps_linear_with_fog(float2 t:TEXCOORD0,uniform bool bVolumeFog):COLOR0{
 	float4 clr=tex2D(samp,t);
 	float fogvalue=clr.w;
+	if(bVolumeFog){
+		float4 clr2=tex2D(samp2,t);
+		fogvalue+=(clr2.y-clr2.x)*10.0f;
+	}
 	//distance correction (!!!! it works !!!!)
 	fogvalue*=length(float3(t-0.5f,1.0f)*_fParam[3].xyz);
 	//===
@@ -493,6 +497,9 @@ float4 ps_linear_with_fog(float2 t:TEXCOORD0):COLOR0{
 }
 
 technique fx_linear_with_fog{
-pass{PixelShader=compile ps_2_0 ps_linear_with_fog();}
+pass{PixelShader=compile ps_2_0 ps_linear_with_fog(false);}
 }
 
+technique fx_linear_with_volume_fog{
+pass{PixelShader=compile ps_2_0 ps_linear_with_fog(true);}
+}
