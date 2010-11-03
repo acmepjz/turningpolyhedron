@@ -744,6 +744,8 @@ With d3dd9
   D3DXMatrixMultiply mat, mat1, mat
   .SetTransform D3DTS_WORLD, mat
   objCamera.Apply objRenderTest
+  '///
+  objRenderTest.SetDepthOfFieldParams objCamera.RealDistance, 0.01, 0.1, 40
   '///shadow map
 '  objRenderTest.BeginRenderShadowMap
 '  .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0

@@ -15,9 +15,11 @@ Option Explicit
 
 Private Declare Function QueryPerformanceCounter Lib "kernel32.dll" (ByRef lpPerformanceCount As Currency) As Long
 Private Declare Function QueryPerformanceFrequency Lib "kernel32.dll" (ByRef lpFrequency As Currency) As Long
+Private Declare Function GetTickCount Lib "kernel32.dll" () As Long
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 
 Private t1 As Currency, t2 As Currency
+Private t1_1 As Long, t2_1 As Long
 Private nFreq As Currency
 Private bRun As Boolean
 
@@ -29,13 +31,14 @@ FPS = m_nFPS
 End Property
 
 Friend Sub WaitForNextFrame()
-Dim a As Currency
+Dim a As Currency, a_1 As Long
 Dim f As Double
 Dim i As Long
 If m_nMinPeriod <= 0 Then Exit Sub
 If bRun Then
  Do
   QueryPerformanceCounter a
+'  a_1 = GetTickCount
   f = (a - t2) / nFreq * 1000
   i = (m_nMinPeriod - f) / 2
   If i <= 1 Then Exit Do
@@ -49,8 +52,10 @@ If bRun Then
 '  Loop
 ' End If
 ' '///
- m_nFPS = (1000 / f + m_nFPS * 15) / 16
+ m_nFPS = (1000 / f + m_nFPS * 7) / 8
+' m_nFPS = (1000 / (a_1 - t2_1 + 1) + m_nFPS * 7) / 8
  t2 = a
+' t2_1 = a_1
 Else
  QueryPerformanceCounter t2
  bRun = True

@@ -419,6 +419,42 @@ technique convolve_directional_symmetric4_border{
 pass{PixelShader=compile ps_2_0 ps_convolve_directional_symmetric4(sampBorder);}
 }
 
+float4 ps_convolve_h_symmetric4_ex(float2 t:TEXCOORD0,uniform sampler s):COLOR0{
+	float4 clr0=tex2D(s,t);
+	float size=pixelSize.x*clr0.w;
+	return float4(mul(_fParam[0],float4x4(clr0
+	,tex2D(s,float2(t.x-size,t.y))+tex2D(s,float2(t.x+size,t.y))
+	,tex2D(s,float2(t.x-size*2.0f,t.y))+tex2D(s,float2(t.x+size*2.0f,t.y))
+	,tex2D(s,float2(t.x-size*3.0f,t.y))+tex2D(s,float2(t.x+size*3.0f,t.y))
+	)).xyz,clr0.w);
+}
+
+technique convolve_h_symmetric4_ex{
+pass{PixelShader=compile ps_2_0 ps_convolve_h_symmetric4_ex(samp);}
+}
+
+technique convolve_h_symmetric4_ex_border{
+pass{PixelShader=compile ps_2_0 ps_convolve_h_symmetric4_ex(sampBorder);}
+}
+
+float4 ps_convolve_v_symmetric4_ex(float2 t:TEXCOORD0,uniform sampler s):COLOR0{
+	float4 clr0=tex2D(s,t);
+	float size=pixelSize.y*clr0.w;
+	return float4(mul(_fParam[0],float4x4(clr0
+	,tex2D(s,float2(t.x,t.y-size))+tex2D(s,float2(t.x,t.y+size))
+	,tex2D(s,float2(t.x,t.y-size*2.0f))+tex2D(s,float2(t.x,t.y+size*2.0f))
+	,tex2D(s,float2(t.x,t.y-size*3.0f))+tex2D(s,float2(t.x,t.y+size*3.0f))
+	)).xyz,clr0.w);
+}
+
+technique convolve_v_symmetric4_ex{
+pass{PixelShader=compile ps_2_0 ps_convolve_v_symmetric4_ex(samp);}
+}
+
+technique convolve_v_symmetric4_ex_border{
+pass{PixelShader=compile ps_2_0 ps_convolve_v_symmetric4_ex(sampBorder);}
+}
+
 ////////////////////////////////////////
 //
 // post effects
@@ -478,12 +514,15 @@ pass{PixelShader=compile ps_2_0 simple_radial_blur5_func();}
 }
 
 //0:fogcolor
-//1:input color scale
+//1:xy=depth of field coefficient : r=abs(x+y/depth) (blah blah blah)
 //2:x=near y=far z=maxdensity
 //3:xy=(distance correction coefficient)*zfar z=zfar
 float4 ps_linear_with_fog(float2 t:TEXCOORD0,uniform bool bVolumeFog):COLOR0{
 	float4 clr=tex2D(samp,t);
 	float fogvalue=clr.w;
+	//depth of field
+	float dof_value=abs(_fParam[1].x+_fParam[1].y/fogvalue);
+	//
 	if(bVolumeFog){
 		float4 clr2=tex2D(samp2,t);
 		fogvalue+=(clr2.y-clr2.x)*10.0f;
@@ -493,7 +532,7 @@ float4 ps_linear_with_fog(float2 t:TEXCOORD0,uniform bool bVolumeFog):COLOR0{
 	//===
 	fogvalue=smoothstep(_fParam[2].x,_fParam[2].y,fogvalue)*_fParam[2].z;
 	//fogvalue=saturate((fogvalue-_fParam[2].x)/(_fParam[2].y-_fParam[2].x))*_fParam[2].z;
-	return lerp(clr/* *_fParam[1]*/,_fParam[0],fogvalue);
+	return float4(lerp(clr,_fParam[0],fogvalue).xyz,dof_value);
 }
 
 technique fx_linear_with_fog{

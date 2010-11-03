@@ -23,6 +23,7 @@ Private m_tViewUp As D3DVECTOR
 Private m_tViewPos_1 As D3DVECTOR
 Private m_tViewAt_1 As D3DVECTOR
 Private m_tViewUp_1 As D3DVECTOR
+Private m_fDist_1 As Single
 
 Private m_fDist As Single, m_fAngle As Single
 
@@ -124,6 +125,10 @@ Else
  m_tViewPos.z = m_tViewAt.z + t.z * f1
 End If
 If bStopAnimation Then StopAnimation '???
+End Property
+
+Friend Property Get RealDistance() As Single
+RealDistance = m_fDist_1
 End Property
 
 Friend Sub Zoom(ByVal nAmount As Single, Optional ByVal bStopAnimation As Boolean)
@@ -267,6 +272,7 @@ Else
  m_tViewPos_1 = D3DXVec3Lerp(m_tViewPos, m_tViewPos_1, m_fDamping)
  m_tViewAt_1 = D3DXVec3Lerp(m_tViewAt, m_tViewAt_1, m_fDamping)
  m_tViewUp_1 = D3DXVec3Lerp(m_tViewUp, m_tViewUp_1, m_fDamping)
+ m_fDist_1 = D3DXVec3Length(D3DXVec3Subtract(m_tViewPos_1, m_tViewAt_1))
 End If
 D3DXMatrixLookAtLH mat, m_tViewPos_1, m_tViewAt_1, m_tViewUp_1
 d3dd9.SetTransform D3DTS_VIEW, mat
