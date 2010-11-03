@@ -53,6 +53,13 @@ Private m_fParam(3) As D3DXVECTOR4
 
 Private m_fovy As Single, m_fAspect As Single, m_zn As Single, m_zf As Single
 Private m_vDistCorrection As D3DXVECTOR4
+Private m_vDepthOfField As D3DXVECTOR4
+
+Friend Sub SetDepthOfFieldParams(ByVal u0 As Single, ByVal v0 As Single, ByVal f As Single, ByVal r0 As Single)
+'current method is fixed f, move v0
+m_vDepthOfField.x = r0 * f / (u0 - f)
+m_vDepthOfField.y = -u0 * m_vDepthOfField.x
+End Sub
 
 Friend Property Get RadialBlurEnabled() As Boolean
 RadialBlurEnabled = m_bRadialBlur
@@ -68,12 +75,12 @@ End Property
 
 Friend Property Let VolumetricFogEnabled(ByVal b As Boolean)
 m_bVolumeFog = b
-If m_bPostProcessEnabled And b Then
- If objPostProcessTarget(6) Is Nothing Then
-  '6=volumetric fog target GR=fog far/fog near
-  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(6)
- End If
-End If
+'If m_bPostProcessEnabled And b Then
+' If objPostProcessTarget(6) Is Nothing Then
+'  '6=volumetric fog target GR=fog far/fog near
+'  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(6)
+' End If
+'End If
 End Property
 
 Friend Property Get Effect() As D3DXEffect
@@ -126,11 +133,15 @@ End Property
 
 Friend Sub CreatePostProcessTarget()
 Erase objPostProcessTarget
+'/!\ we need 30M video memory if 1024x768, 80M if 1920x1080 :-3
 If m_bPostProcessEnabled Then
  '0=main render target BGR=color A=depth (0=0 zf=1)
  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(0)
  '6=volumetric fog target
- VolumetricFogEnabled = m_bVolumeFog
+ 'VolumetricFogEnabled = m_bVolumeFog
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(6)
+ '7=auxiliary render target (for volumetric fog+HDR and depth of field)
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(7)
  'bright-pass (1,4,5)
  HDRBlurQuality(True) = m_nHDRBlurQuality
  '///
@@ -333,6 +344,9 @@ Dim i As Long, j As Long
 Dim f As Single
 Dim v As D3DXVECTOR4, v2 As D3DXVECTOR4, v3 As D3DXVECTOR4
 Dim tDesc As D3DSURFACE_DESC
+'///convolve kernel
+'v = Vec4(0.275591!, 0.220472!, 0.110236!, 0.0314961!) 'bimonial8
+v = Vec4(0.251497!, 0.209581!, 0.11976!, 0.0449102!) 'bimonial10
 '///
 If Not m_bPostProcessEnabled Then Exit Sub
 '///
@@ -340,16 +354,31 @@ nOldState = d3dd9.GetRenderState(D3DRS_ALPHABLENDENABLE)
 d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, 1
 d3dd9.SetRenderState D3DRS_SRCBLEND, D3DBLEND_ONE
 d3dd9.SetRenderState D3DRS_DESTBLEND, D3DBLEND_ONE
-'///
-f = 8
-'v = Vec4(0.275591!, 0.220472!, 0.110236!, 0.0314961!) 'bimonial8
-v = Vec4(0.251497!, 0.209581!, 0.11976!, 0.0449102!) 'bimonial10
+'///changed:render fog first
+v2 = m_vDepthOfField
+v2.y = v2.y / m_zf
+'fog test
+If m_bVolumeFog And Not objPostProcessTarget(6) Is Nothing Then
+ objDraw.ProcessTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(6), objPostProcessTarget(7), _
+ "fx_linear_with_volume_fog", 0, 0, 0, 0, Vec4, v2, Vec4(0, 200, 1), m_vDistCorrection
+Else
+ objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), _
+ "fx_linear_with_fog", 0, 0, 0, 0, Vec4, v2, Vec4(0, 200, 1), m_vDistCorrection
+End If
+'///depth of field test
+objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(0), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(0), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
+objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
+'////////////////HDR
+f = 4 '8
 '///calc luminance
-objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(2), "fx_to_luminance", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(2), "fx_to_luminance", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
 objDraw.ProcessTextureEx objPostProcessTarget(2), objPostProcessTarget(3), "fx_from_luminance_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 16), Vec4, Vec4, Vec4
 '///bright pass
-objDraw.ProcessTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), objPostProcessTarget(1), _
+objDraw.ProcessTwoTextureEx objPostProcessTarget(7), objPostProcessTarget(3), objPostProcessTarget(1), _
 "simple_brightpass", 0, 0, 0, 0, Vec4(1), Vec4, Vec4, Vec4  'Vec4(1, 0.25)
+'////////////////
 '///blur - see documentation
 If m_bRadialBlur Then
  j = 1
@@ -376,19 +405,13 @@ If m_bRadialBlur Then
   objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9963226!, 0.9926588!, 0.9890084!, 0.9853715!), Vec4, Vec4, Vec4
  End If
 End If
-'///
+'////////////////
 '...TODO:
 '///
 d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
 d3dd9.BeginScene
 '///
-'objDraw.DrawTextureEx objPostProcessTarget(0), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
-'fog test
-If m_bVolumeFog And Not objPostProcessTarget(6) Is Nothing Then
- objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(6), "fx_linear_with_volume_fog", 0, 0, 0, 0, Vec4(1, 1, 1, 1), Vec4, Vec4(0, 200, 1), m_vDistCorrection
-Else
- objDraw.DrawTextureEx objPostProcessTarget(0), "fx_linear_with_fog", 0, 0, 0, 0, Vec4(1, 1, 1, 1), Vec4, Vec4(0, 200, 1), m_vDistCorrection
-End If
+objDraw.DrawTextureEx objPostProcessTarget(7), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 'objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.1, 3), Vec4, Vec4, Vec4 'ugly
 objDraw.DrawTextureEx objPostProcessTarget(1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 '///
