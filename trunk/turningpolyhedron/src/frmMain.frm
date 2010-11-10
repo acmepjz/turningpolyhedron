@@ -747,34 +747,37 @@ With d3dd9
   '///
   objRenderTest.SetDepthOfFieldParams objCamera.RealDistance, 0.01, 0.1, 40
   '///shadow map
-'  objRenderTest.BeginRenderShadowMap
-'  .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
-'  .BeginScene
-'  objTest.DrawSubset 0
-'  .EndScene
-'  objRenderTest.EndRenderShadowMap
+  If objRenderTest.BeginRender(RenderPass_ShadowMap) Then
+   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
+   .BeginScene
+   objTest.DrawSubset 0
+   .EndScene
+   objRenderTest.EndRender
+  End If
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
   objRenderTest.SetTexture objTexture
   objRenderTest.SetNormalTexture objNormalTexture
-  objRenderTest.BeginRender
-  .BeginScene
-  objTest.DrawSubset 0
-  '////////draw landscape test (new and buggy)
-  objRenderTest.SetTexture objLandTexture
-  .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
-  objRenderTest.UpdateRenderState
-  objLand.Render objRenderTest, objCamera
-  .SetTransform D3DTS_WORLD, mat
-  '////////
-  .EndScene
-  objRenderTest.EndRender
+  If objRenderTest.BeginRender(RenderPass_Main) Then
+   .BeginScene
+   objTest.DrawSubset 0
+   '////////draw landscape test (new and buggy)
+   objRenderTest.SetTexture objLandTexture
+   .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
+   objRenderTest.UpdateRenderState
+   objLand.Render objRenderTest, objCamera
+   .SetTransform D3DTS_WORLD, mat
+   '////////
+   .EndScene
+   objRenderTest.EndRender
+  End If
+  objRenderTest.EndRenderToPostProcessTarget
   '////////volumetric fog test
-  If objRenderTest.PostProcessEnabled And objRenderTest.VolumetricFogEnabled Then
+  If objRenderTest.BeginRender(RenderPass_FogVolume) Then
    D3DXMatrixScaling mat1, 5, 5, 5
    D3DXMatrixMultiply mat2, mat1, mat
    .SetTransform D3DTS_WORLD, mat2
-   objRenderTest.BeginRender RenderPass_FogVolume
+   objRenderTest.UpdateRenderState '???
    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
    .BeginScene
    objTest.DrawSubset 0
@@ -783,7 +786,6 @@ With d3dd9
    .SetTransform D3DTS_WORLD, mat
   End If
   '////////perform post process
-  objRenderTest.EndRenderToPostProcessTarget
   objRenderTest.PerformPostProcess objDrawTest
   '////////draw text test
   .BeginScene

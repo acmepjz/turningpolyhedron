@@ -36,6 +36,10 @@ Private m_tCenter As D3DVECTOR
 Private m_nFogSize As Long, m_fFogScale As Single, m_fFogDisplace As Single
 Private m_bFogEnabled As Boolean
 
+Private m_fResolution As Single
+
+Implements IRenderableObject
+
 Friend Property Get FogEnabled() As Boolean
 FogEnabled = m_bFogEnabled
 End Property
@@ -44,7 +48,15 @@ Friend Property Let FogEnabled(ByVal b As Boolean)
 m_bFogEnabled = b
 End Property
 
-Friend Sub Render(ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera, Optional ByVal fResolution As Single = 1000)
+Friend Property Get LandscapeResolution() As Single
+LandscapeResolution = m_fResolution
+End Property
+
+Friend Property Let LandscapeResolution(ByVal f As Single)
+m_fResolution = f
+End Property
+
+Friend Sub Render(ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera)
 Dim tEye As D3DVECTOR
 Dim tAt As D3DVECTOR
 Dim tUp As D3DVECTOR
@@ -70,7 +82,7 @@ MyMini_Offset.z = m_tCenter.y
 objRender.GetProjection_PerspectiveFovLH fovy, Aspect, zn, zf
 objCamera.GetRealCamera tEye, tAt, tUp
 '///
-MiniStub_Draw m_hStub, fResolution, tEye.x, tEye.z, -tEye.y, tAt.x - tEye.x, tAt.z - tEye.z, tEye.y - tAt.y, tUp.x, tUp.z, -tUp.y, fovy * 57.29578!, Aspect, zn, zf
+MiniStub_Draw m_hStub, m_fResolution, tEye.x, tEye.z, -tEye.y, tAt.x - tEye.x, tAt.z - tEye.z, tEye.y - tAt.y, tUp.x, tUp.z, -tUp.y, fovy * 57.29578!, Aspect, zn, zf
 '///
 'TODO:
 If MyMini_IndexCount > 0 Then
@@ -84,19 +96,20 @@ If MyMini_IndexCount > 0 Then
 ' d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
 ' d3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_SOLID
 End If
-If MyMini_FogIndexCount > 0 Then
- MyMini_FogIndexCount = MyMini_FogIndexCount \ 3
- If MyMini_FogEnabled Then
-  d3dd9.SetFVF D3DFVF_XYZ Or D3DFVF_DIFFUSE
-  d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
-  d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
-  'd3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_WIREFRAME
-  d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, MyMini_FogVertexCount, MyMini_FogIndexCount, MyMini_FogIndices(0), D3DFMT_INDEX32, MyMini_FogVertices(0), 16&
-  d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
-  d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
-  'd3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_SOLID
- End If
-End If
+''completely unusable
+'If MyMini_FogIndexCount > 0 Then
+' MyMini_FogIndexCount = MyMini_FogIndexCount \ 3
+' If MyMini_FogEnabled Then
+'  d3dd9.SetFVF D3DFVF_XYZ Or D3DFVF_DIFFUSE
+'  d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
+'  d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
+'  'd3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_WIREFRAME
+'  d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, MyMini_FogVertexCount, MyMini_FogIndexCount, MyMini_FogIndices(0), D3DFMT_INDEX32, MyMini_FogVertices(0), 16&
+'  d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+'  d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
+'  'd3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_SOLID
+' End If
+'End If
 End Sub
 
 Friend Property Get Handle() As Long
@@ -225,8 +238,16 @@ End Sub
 
 Private Sub Class_Initialize()
 SetMiniErrorHandler AddressOf MyMiniCallback_ErrorHandler
+'///
+m_fResolution = 1000
 End Sub
 
 Private Sub Class_Terminate()
 Destroy
+End Sub
+
+Private Sub IRenderableObject_Render(ByVal nType As enumRenderPassType, ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera)
+If nType = RenderPass_Main Then
+ Render objRender, objCamera
+End If
 End Sub
