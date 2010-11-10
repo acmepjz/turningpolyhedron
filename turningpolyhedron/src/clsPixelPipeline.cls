@@ -31,8 +31,10 @@ Private m_tLightViewProj As D3DMATRIX
 Private m_nShadowMapSize As Long
 
 Public Enum enumRenderPassType
- RenderPass_Main = 0
- RenderPass_FogVolume = 10
+ RenderPass_Nothing = 0
+ RenderPass_Main = 1
+ RenderPass_ShadowMap = 100
+ RenderPass_FogVolume = 200
 End Enum
 Private m_nLastType As Long
 
@@ -241,33 +243,6 @@ If bEnabled Then
 End If
 End Sub
 
-Friend Sub BeginRenderShadowMap()
-Dim mat As D3DMATRIX
-If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Then Exit Sub
-'///
-Set objOldTarget = d3dd9.GetRenderTarget(0)
-Set objOldStencil = d3dd9.GetDepthStencilSurface
-d3dd9.SetRenderTarget 0, objShadowMap.GetSurfaceLevel(0)
-d3dd9.SetDepthStencilSurface objShadowStencil
-'///
-d3dd9.GetTransform D3DTS_WORLD, mat
-D3DXMatrixMultiply mat, mat, m_tLightViewProj
-objEffect.SetMatrix StrPtr(StrConv("matShadow", vbFromUnicode)), mat
-objEffect.SetTechnique StrPtr(StrConv("test_shadow", vbFromUnicode))
-objEffect.Begin 0, 0
-objEffect.BeginPass 0
-End Sub
-
-Friend Sub EndRenderShadowMap()
-If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Then Exit Sub
-objEffect.EndPass
-objEffect.End
-d3dd9.SetRenderTarget 0, objOldTarget
-d3dd9.SetDepthStencilSurface objOldStencil
-Set objOldTarget = Nothing
-Set objOldStencil = Nothing
-End Sub
-
 Friend Sub UpdateRenderState()
 Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
 d3dd9.GetTransform D3DTS_WORLD, mat1
@@ -283,44 +258,74 @@ objEffect.SetMatrix StrPtr(StrConv("mat", vbFromUnicode)), mat
 objEffect.CommitChanges
 End Sub
 
-Friend Sub BeginRender(Optional ByVal nType As enumRenderPassType)
+Friend Function BeginRender(ByVal nType As enumRenderPassType) As Boolean
+On Error Resume Next
 Dim obj As Direct3DTexture9
+Dim mat As D3DMATRIX
 Dim s As String
-UpdateRenderState
 '///
 Select Case nType
+Case RenderPass_ShadowMap
+ If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Then Exit Function
+ '///
+ Set objOldTarget = d3dd9.GetRenderTarget(0)
+ Set objOldStencil = d3dd9.GetDepthStencilSurface
+ d3dd9.SetRenderTarget 0, objShadowMap.GetSurfaceLevel(0)
+ d3dd9.SetDepthStencilSurface objShadowStencil
+ '///
+ d3dd9.GetTransform D3DTS_WORLD, mat
+ D3DXMatrixMultiply mat, mat, m_tLightViewProj
+ objEffect.SetMatrix StrPtr(StrConv("matShadow", vbFromUnicode)), mat
+ '///
+ s = "test_shadow"
 Case RenderPass_FogVolume
- If m_bPostProcessEnabled And m_bVolumeFog Then
-  Set objOldTarget_1 = d3dd9.GetRenderTarget(0)
-  d3dd9.SetRenderTarget 0, objPostProcessTarget(6).GetSurfaceLevel(0)
-  objEffect.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), objPostProcessTarget(0)
-  s = "test_volumefog"
- Else 'err!
-  Exit Sub
- End If
-Case Else
+ If Not m_bPostProcessEnabled Or Not m_bVolumeFog Then Exit Function
+ Set objOldTarget_1 = d3dd9.GetRenderTarget(0)
+ d3dd9.SetRenderTarget 0, objPostProcessTarget(6).GetSurfaceLevel(0)
+ objEffect.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), objPostProcessTarget(0)
+ '///
+ s = "test_volumefog"
+Case RenderPass_Main
  If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
  objEffect.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
  objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
  s = "test"
+Case Else
+ Exit Function
 End Select
-m_nLastType = nType 'unused
+'///
+BeginRender = True
+m_nLastType = nType
+'///
+UpdateRenderState
 '///
 objEffect.SetTechnique StrPtr(StrConv(s, vbFromUnicode))
 objEffect.Begin 0, 0
 objEffect.BeginPass 0
-End Sub
+End Function
 
 Friend Sub EndRender()
 On Error Resume Next
+Dim nType As Long
+'///
+nType = m_nLastType
+If nType = 0 Then Exit Sub
+m_nLastType = 0
+'///
 objEffect.EndPass
 objEffect.End
-If Not objOldTarget_1 Is Nothing Then
+'///
+Select Case nType
+Case RenderPass_ShadowMap
+ If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Then Exit Sub
+ d3dd9.SetRenderTarget 0, objOldTarget
+ d3dd9.SetDepthStencilSurface objOldStencil
+ Set objOldTarget = Nothing
+ Set objOldStencil = Nothing
+Case RenderPass_FogVolume
  d3dd9.SetRenderTarget 0, objOldTarget_1
  Set objOldTarget_1 = Nothing
-End If
-'///
-m_nLastType = 0
+End Select
 End Sub
 
 Friend Sub BeginRenderToPostProcessTarget()

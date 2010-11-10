@@ -87,8 +87,7 @@ MyMini_VertexCount = MyMini_VertexCount + 1
 End Sub
 
 Public Sub MyMiniCallback_PrismEdge(ByVal x As Single, ByVal y As Single, ByVal yf As Single, ByVal z As Single)
-'completely unusable
-''TODO:
+''completely unusable
 'If Not MyMini_FogEnabled Then Exit Sub
 ''///add vertex
 'If MyMini_FogVertexCount + 2 > MyMini_FogVertexMax Then
