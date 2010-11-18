@@ -492,6 +492,9 @@ End Property
 
 Friend Property Let State(ByVal n As enumFakeDXUIControlState)
 Dim i As Long, iOld As Long
+Dim w As Single, h As Single
+Dim x As Single, y As Single
+'///
 iOld = m_nState And 3&
 i = n And 3&
 m_nState = n
@@ -499,7 +502,42 @@ m_nState = n
 If i <> iOld Then
  Select Case i
  Case 0
-  m_tRectEx = m_tRectEx_Backup
+  If iOld = 2 Then 'use minimized size?
+   If m_idxParent > 0 And m_idxParent <= FakeDXUIControlCount Then
+    With FakeDXUIControls(m_idxParent)
+     w = .ScaleWidth
+     h = .ScaleHeight
+    End With
+   Else
+    w = d3dpp.BackBufferWidth
+    h = d3dpp.BackBufferHeight
+   End If
+   With m_tRectEx
+    .Right.a = m_tRectEx_Backup.Right.a - m_tRectEx_Backup.Left.a + .Left.a
+    .Right.b = m_tRectEx_Backup.Right.b
+    .Bottom.a = m_tRectEx_Backup.Bottom.a - m_tRectEx_Backup.Top.a + .Top.a
+    .Bottom.b = m_tRectEx_Backup.Bottom.b
+   End With
+   RefreshSize True
+   With m_tRect
+    If .Left < 0 Then x = -.Left _
+    Else If .Right > w Then x = w - .Right
+    If .Top < 0 Then y = -.Top _
+    Else If .Bottom > h Then y = h - .Bottom
+    .Left = .Left + x
+    .Top = .Top + y
+    .Right = .Right + x
+    .Bottom = .Bottom + y
+   End With
+   With m_tRectEx
+    .Left.a = .Left.a + x
+    .Top.a = .Top.a + y
+    .Right.a = .Right.a + x
+    .Bottom.a = .Bottom.a + y
+   End With
+  Else
+   m_tRectEx = m_tRectEx_Backup
+  End If
   m_bSizeDirty = True
  Case 1 'maximized
   If iOld = 0 Then m_tRectEx_Backup = m_tRectEx
@@ -596,9 +634,20 @@ End Select
 '///TODO:
 End Property
 
+Friend Sub Show(Optional ByVal Modal As Long, Optional ByVal OwnerForm As Long)
+If m_nClosing = 0 And Not m_bVisible Then
+ m_bVisible = True
+ m_nClosing = &H21&
+End If
+'///TODO:
+End Sub
+
+Friend Sub Hide()
+If m_nClosing = 0 And m_bVisible Then m_nClosing = &H11&
+End Sub
+
 Friend Sub Unload()
 m_nClosing = 1
-'///TODO:
 End Sub
 
 Friend Sub Destroy()
@@ -834,13 +883,26 @@ If m_nType = 1 Then
  If nOpacity > 1 Then nOpacity = 1
 End If
 '////////
-If m_nClosing Then
+If m_nClosing > 0 And m_nClosing <= &H10& Then
  nOpacity = nOpacity * (1 - m_nClosing * 0.2)
  m_nClosing = m_nClosing + 1
  If m_nClosing > 5 Then
+  m_nClosing = 0
   Destroy
   Exit Sub
  End If
+ElseIf m_nClosing > &H10 And m_nClosing <= &H20& Then
+ nOpacity = nOpacity * (1 - (m_nClosing And &HF&) * 0.2)
+ m_nClosing = m_nClosing + 1
+ If m_nClosing > &H15& Then
+  m_nClosing = 0
+  m_bVisible = False
+  Exit Sub
+ End If
+ElseIf m_nClosing > &H20 And m_nClosing <= &H30& Then
+ nOpacity = nOpacity * ((m_nClosing And &HF&) * 0.2)
+ m_nClosing = m_nClosing + 1
+ If m_nClosing > &H25& Then m_nClosing = 0
 End If
 '////////
 If m_nType < 0 Or Not m_bVisible Then Exit Sub

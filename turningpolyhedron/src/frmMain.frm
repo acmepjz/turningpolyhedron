@@ -303,7 +303,8 @@ With FakeDXUIControls(1)
  .AddNewChildren FakeCtl_Button, 88, -24, 120, -8, FBS_OptionButton Or FBS_Graphical, , , , "Low", , "0", , 1, , 1, 1, "optHDRQ"
  .AddNewChildren FakeCtl_Button, 128, -24, 160, -8, FBS_OptionButton Or FBS_Graphical, , , , "Mid", , "1", , 1, , 1, , "optHDRQ"
  .AddNewChildren FakeCtl_Button, 168, -24, 200, -8, FBS_OptionButton Or FBS_Graphical, , , , "High", , "2", , 1, , 1, , "optHDRQ"
- With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFFFFFF, , , , "Form1234가각")
+ With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFFFFFF, , False, , "Form1234가각")
+  .Show
   .AddNewChildren FakeCtl_Button, 0, 0, 78, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
