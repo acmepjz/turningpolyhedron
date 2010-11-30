@@ -23,6 +23,7 @@ Class=clsRenderLandscape; src\clsRenderLandscape.cls
 Module=mdlRenderLandscape; src\mdlRenderLandscape.bas
 Class=clsSimpleTarFile; src\clsSimpleTarFile.cls
 Module=mdlLZMA_DLL; src\mdlLZMA_DLL.bas
+Class=IRenderableObject; src\IRenderableObject.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""
