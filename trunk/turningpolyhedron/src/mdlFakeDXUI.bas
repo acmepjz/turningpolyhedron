@@ -18,6 +18,11 @@ Public FakeDXUIMousePointer As MousePointerConstants
 
 Public FakeDXUI_IME As New clsFakeDXUI_IME
 
+'////////modal form
+
+Public FakeDXUIModalStack() As Long '1-based
+Public FakeDXUIModalStackCount As Long, FakeDXUIModalStackMax As Long
+
 '////////
 
 Public FakeDXUIPopup_ComboBox As Long, FakeDXUIPopup_ComboBox_Rect As typeFakeDXUIRect
@@ -170,12 +175,12 @@ Public Enum enumFakeDXUIMessage
  FakeCtl_Msg_LostFocus 'param1=ctlindex
 End Enum
 
-Public FakeDXUIMessageQueue() As typeFakeDXUIMessage
+Public FakeDXUIMessageQueue() As typeFakeDXUIMessage '0-based
 Public FakeDXUIMessageQueueHead As Long
 Public FakeDXUIMessageQueueTail As Long
 Public FakeDXUIMessageQueueMax As Long
 
-'///NOTE: different from GDI coloes
+'///NOTE: different from GDI colors
 
 Public Const d_Bar1 = &HD0E2FA
 Public Const d_Bar2 = &H81A9E2
@@ -185,6 +190,36 @@ Public Const d_Checked1 = &HFADD7D
 Public Const d_Checked2 = &HF5BC4E
 Public Const d_Pressed1 = &HF88655
 Public Const d_Pressed2 = &HD2370A
+
+Public Sub FakeDXUIPushModalWindow(ByVal nIndex As Long)
+FakeDXUIModalStackCount = FakeDXUIModalStackCount + 1
+If FakeDXUIModalStackCount > FakeDXUIModalStackMax Then
+ FakeDXUIModalStackMax = FakeDXUIModalStackMax + 64
+ ReDim Preserve FakeDXUIModalStack(1 To FakeDXUIModalStackMax)
+End If
+FakeDXUIModalStack(FakeDXUIModalStackCount) = nIndex
+End Sub
+
+Public Function FakeDXUIPopModalWindow() As Long
+If FakeDXUIModalStackCount > 0 Then
+ FakeDXUIPopModalWindow = FakeDXUIModalStack(FakeDXUIModalStackCount)
+ FakeDXUIModalStackCount = FakeDXUIModalStackCount - 1
+End If
+End Function
+
+Public Sub FakeDXUIRemoveModalWindow(ByVal nIndex As Long)
+Dim i As Long
+If nIndex = 0 Then '?
+ FakeDXUIModalStackCount = 0
+Else
+ For i = 1 To FakeDXUIModalStackCount
+  If FakeDXUIModalStack(i) = nIndex Then
+   FakeDXUIModalStackCount = i - 1
+   Exit For
+  End If
+ Next i
+End If
+End Sub
 
 Public Sub FakeDXUICreate(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single)
 Dim t As D3DXIMAGE_INFO
@@ -202,6 +237,10 @@ With FakeDXUIControls(1)
  .SetBottomEx nBottom, 0
 End With
 FakeDXUI_IME.Create frmMain.hwnd '?
+'///
+ReDim FakeDXUIModalStack(1 To 64)
+FakeDXUIModalStackCount = 0
+FakeDXUIModalStackMax = 64
 '///
 'TODO:FakeDXUIDefaultFont
 '///
@@ -309,8 +348,11 @@ If Not FakeDXUITexture Is Nothing Then
  FakeDXUIMessageQueueTail = 0
  FakeDXUIMessageQueueMax = 0
  '///
- Set FakeDXUITexture = Nothing '?
- 'TODO:
+ Erase FakeDXUIModalStack
+ FakeDXUIModalStackCount = 0
+ FakeDXUIModalStackMax = 0
+ '///
+ Set FakeDXUITexture = Nothing
 End If
 End Sub
 
@@ -411,19 +453,34 @@ End Function
 Public Function FakeDXUIOnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long) As Boolean
 Dim i As Long, b As Boolean
 Dim bReset As Boolean
-Dim obj As clsFakeDXUI
+Dim obj As clsFakeDXUI, obj1 As clsFakeDXUI
 If FakeDXUIControlCount <= 0 Or FakeDXUISetCapture < 0 Then Exit Function
 FakeDXUIMousePointer = 0
-'///
+'///mouse capture
 If FakeDXUISetCapture > 0 And FakeDXUISetCapture <= FakeDXUIControlCount Then
  Set obj = FakeDXUIControls(FakeDXUISetCapture)
  If obj.ControlType < 0 Then Set obj = Nothing
 End If
+'///modal forms
+If obj Is Nothing Then
+ Do While FakeDXUIModalStackCount > 0
+  i = FakeDXUIModalStack(FakeDXUIModalStackCount)
+  If i > 0 And i <= FakeDXUIControlCount Then
+   Set obj1 = FakeDXUIControls(i)
+   If obj1.ControlType >= 0 And obj1.Visible Then
+    Set obj = obj1
+    Exit Do
+   End If
+  End If
+  FakeDXUIModalStackCount = FakeDXUIModalStackCount - 1
+ Loop
+End If
+'///get desktop
 If obj Is Nothing Then
  Set obj = FakeDXUIControls(1)
  If nEventType = 1 Then bReset = True
 End If
-'///???
+'///BeforeMouseEvent (???)
 If nEventType = 0 Then
  FakeDXUI_IME.BeforeMouseEvent
  For i = 1 To FakeDXUIControlCount
@@ -433,8 +490,6 @@ End If
 '///
 'TODO:menu
 '///
-'TODO:combobox dropdown
-'///
 b = FakeDXUI_IME.OnMouseEvent(Button, Shift, x, y, nEventType)
 If Not b Then
  If bReset Then
@@ -442,6 +497,13 @@ If Not b Then
   FakeDXUIFocus = 0 '????????
  End If
  b = obj.OnMouseEvent(Button, Shift, x, y, nEventType)
+ If FakeDXUIModalStackCount > 0 And Not b Then
+  If nEventType = 1 Then
+   Beep
+   obj.FlashWindow
+  End If
+  b = True
+ End If
 End If
 FakeDXUIOnMouseEvent = b
 '///???

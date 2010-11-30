@@ -304,7 +304,7 @@ With FakeDXUIControls(1)
  .AddNewChildren FakeCtl_Button, 128, -24, 160, -8, FBS_OptionButton Or FBS_Graphical, , , , "Mid", , "1", , 1, , 1, , "optHDRQ"
  .AddNewChildren FakeCtl_Button, 168, -24, 200, -8, FBS_OptionButton Or FBS_Graphical, , , , "High", , "2", , 1, , 1, , "optHDRQ"
  With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFFFFFF, , False, , "Form1234°¡°¢")
-  .Show
+  .Show 1
   .AddNewChildren FakeCtl_Button, 0, 0, 78, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
@@ -387,8 +387,8 @@ With FakeDXUIControls(1)
    End With
   End With
  End With
- #If 0 Then
- With .AddNewChildren(FakeCtl_Form, 160, 120, 600, 400, &HFFFFFF, , , , "É½Õ¯MDIForm1")
+ #If 1 Then
+ With .AddNewChildren(FakeCtl_Form, 160, 120, 600, 400, &HFFFFFF, , False, , "É½Õ¯MDIForm1")
   .ScrollBars = vbBoth
   .Min = -50
   .Max = 50
@@ -398,8 +398,9 @@ With FakeDXUIControls(1)
   .LargeChange(1) = 10
   '///
   .AddNewChildren FakeCtl_Label, 8, 8, 128, 32, , , , , , , "Label1"
+  .Show 1
   With .AddNewChildren(FakeCtl_Form, 0, 0, 320, 240, _
-  3& Or FFS_TitleBar Or FFS_CloseButton Or FFS_MaxButton Or FFS_MinButton, , , , "Form2")
+  3& Or FFS_TitleBar Or FFS_CloseButton Or FFS_MaxButton Or FFS_MinButton, , False, , "Form2")
    With .AddNewChildren(FakeCtl_TextBox, 0, 0, 0, 0, &H3000000, , , , , _
    Replace(Space(100), " ", "Text2 blah blah blah °¡°¡°¡°¡°¡°¡°¢°¡°¡°¡°¡°¡°¡°¡°¡°¡°¡°¡°¡ blah blah blah" + vbCrLf), , , , 0.5, 1)
     .ScrollBars = vbVertical
@@ -420,11 +421,13 @@ With FakeDXUIControls(1)
      Next i
     End With
    End With
+   .Show 1
   End With
  End With
- With .AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 2& Or FCS_TopMost, , , , , , "frmTopmost")
+ With .AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 2& Or FCS_TopMost, , False, , , , "frmTopmost")
   .AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
   .AddNewChildren FakeCtl_Button, 80, 28, 140, 48, FBS_Default Or FBS_Cancel Or FCS_CanGetFocus, , , , "Close", , "cmdClose"
+  .Show 1
  End With
  #End If
 End With

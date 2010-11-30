@@ -36,6 +36,12 @@ Private m_tRectScreen As typeFakeDXUIRect
 Private m_tClientMargin As typeFakeDXUIRect
 
 Private m_nClosing As Long
+'0=nothing
+'1-&h10=closing
+'&h11-&h20=hiding
+'&h21-&h30=showing
+'&h31-&h40=flashing
+
 Private m_nAnimVal(31) As Integer
 '0=window is active? (0-255)
 '1-3=current(0-255-510)
@@ -63,6 +69,12 @@ Private m_objTextBox As clsFakeDXUITextBox
 Private m_nComboBoxPrimaryColumn As Long, m_nComboBoxDropdownWidth As Long, m_nComboBoxDropdownHeight As Long, _
 WithEvents m_objListView As clsFakeDXUIListView
 Attribute m_objListView.VB_VarHelpID = -1
+
+Friend Sub FlashWindow()
+If m_nClosing = 0 And m_bVisible Then
+ m_nClosing = &H31&
+End If
+End Sub
 
 Friend Property Get ComboBoxPrimaryColumn() As Long
 ComboBoxPrimaryColumn = m_nComboBoxPrimaryColumn
@@ -593,7 +605,11 @@ End Property
 
 Friend Property Let Visible(ByVal b As Boolean)
 m_bVisible = b
-If Not b Then Erase m_nAnimVal '??
+If b Then
+Else
+ Erase m_nAnimVal '??
+ FakeDXUIRemoveModalWindow m_nIndex
+End If
 End Property
 
 Friend Property Get Locked() As Boolean
@@ -638,12 +654,23 @@ Friend Sub Show(Optional ByVal Modal As Long, Optional ByVal OwnerForm As Long)
 If m_nClosing = 0 And Not m_bVisible Then
  m_bVisible = True
  m_nClosing = &H21&
+ '///modal form (???)
+ If Modal Then FakeDXUIPushModalWindow m_nIndex
+ '///
+ If FakeDXUIActiveWindow <> m_nIndex Then
+  FakeDXUIActiveWindow = m_nIndex
+  FakeDXUIFocus = m_idxFocus
+ End If
+ '///
+ FakeDXUIPostMessage FakeCtl_Msg_ZOrder, m_nIndex, 0
 End If
-'///TODO:
 End Sub
 
 Friend Sub Hide()
-If m_nClosing = 0 And m_bVisible Then m_nClosing = &H11&
+If m_nClosing = 0 And m_bVisible Then
+ m_nClosing = &H11&
+ FakeDXUIRemoveModalWindow m_nIndex
+End If
 End Sub
 
 Friend Sub Unload()
@@ -707,31 +734,32 @@ Erase m_idxChildren
 m_nChildrenCount = 0
 m_nChildIndex = 0
 '///
+FakeDXUIRemoveModalWindow m_nIndex
 '///
 'TODO:etc.
 End Sub
 
 Private Sub pRenderWindowButtonHighlight(ByVal nIndex1 As Long, ByVal nIndex2 As Long, ByVal nLeft As Single, ByVal nTop As Single, Optional ByVal nOpacity As Single = 1)
 Dim j As Long, k As Long
-    j = m_nAnimVal(nIndex1)
-    k = m_nAnimVal(nIndex2)
-    If j < k Then j = j + 51 Else _
-    If j > k Then j = j - 51
-    m_nAnimVal(nIndex1) = j
-    If j <= 0 Then
-    ElseIf j <= 255 Then
-     j = j * nOpacity
-     j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
-     FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 232, 24, 248, 40, 512, j Or &HFFFFFF
-    ElseIf j < 510 Then
-     k = nOpacity * 255
-     k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
-     FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, 232, 24, j - 255, k Or &HFFFFFF
-    Else
-     k = nOpacity * 255
-     k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
-     FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, k Or &HFFFFFF
-    End If
+j = m_nAnimVal(nIndex1)
+k = m_nAnimVal(nIndex2)
+If j < k Then j = j + 51 Else _
+If j > k Then j = j - 51
+m_nAnimVal(nIndex1) = j
+If j <= 0 Then
+ElseIf j <= 255 Then
+ j = j * nOpacity
+ j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
+ FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 232, 24, 248, 40, 512, j Or &HFFFFFF
+ElseIf j < 510 Then
+ k = nOpacity * 255
+ k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
+ FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, 232, 24, j - 255, k Or &HFFFFFF
+Else
+ k = nOpacity * 255
+ k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
+ FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, k Or &HFFFFFF
+End If
 End Sub
 
 Private Sub pRenderScrollBars(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bDrawResizeGripper As Boolean, Optional ByVal bRaiseEvent As Boolean, Optional ByVal bEnabled As Boolean = True)
@@ -903,6 +931,9 @@ ElseIf m_nClosing > &H20 And m_nClosing <= &H30& Then
  nOpacity = nOpacity * ((m_nClosing And &HF&) * 0.2)
  m_nClosing = m_nClosing + 1
  If m_nClosing > &H25& Then m_nClosing = 0
+ElseIf m_nClosing > &H30 And m_nClosing <= &H40& Then
+ m_nClosing = m_nClosing + 1
+ If m_nClosing > &H38& Then m_nClosing = 0
 End If
 '////////
 If m_nType < 0 Or Not m_bVisible Then Exit Sub
@@ -923,7 +954,11 @@ Case 1 'form
   If i > 0 Then i = i - 51
  End If
  m_nAnimVal(0) = i
- 'ignore nOpacity (?)
+ '///flash window?
+ If m_nClosing > &H30 And m_nClosing <= &H40& Then
+  i = (((m_nClosing - 1&) And 2&) = 2&) And 255&
+ End If
+ '///ignore nOpacity (?)
  f = 0.2 - i / 2550
  k = nOpacity * 255
  k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000) Or &HFFFFFF
