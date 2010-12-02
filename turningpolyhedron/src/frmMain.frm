@@ -30,7 +30,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = True
+#Const UseSubclass = False
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
@@ -207,14 +207,13 @@ If d3d9 Is Nothing Then
  End
 End If
 With d3dpp
+ .Windowed = 1
  .hDeviceWindow = Me.hwnd
  .SwapEffect = D3DSWAPEFFECT_DISCARD
  .BackBufferCount = 1
  .BackBufferFormat = D3DFMT_X8R8G8B8
  .BackBufferWidth = 640
  .BackBufferHeight = 480
- .Windowed = 1
- .hDeviceWindow = Me.hwnd
  .EnableAutoDepthStencil = 1
  .AutoDepthStencilFormat = D3DFMT_D24S8
  '.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
@@ -261,7 +260,7 @@ objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
 'objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1), True
 objCamera.SetCamrea Vec3(6, 6, 1), Vec3, Vec3(, , 1), True
 objCamera.AnimationEnabled = True
-objCamera.LinearDamping = 0.75
+objCamera.LinearDamping = 0.5
 'objRenderTest.CreateShadowMap 1024 'new
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
 'objRenderTest.SetShadowState True, 16, -100, 100  'directional
@@ -296,15 +295,15 @@ Private Sub pCreateUI()
 Dim i As Long
 FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
 With FakeDXUIControls(1)
- .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1
- .AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FBS_CheckBox Or FBS_Graphical, , , , "Fullscreen", , "chkFullscreen", , 1, , 1
- .AddNewChildren FakeCtl_Button, 88, -72, 192, -56, FBS_CheckBox Or FBS_Graphical, , , , "Post process", , "chkPost", , 1, , 1
+ .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1, , , "Exit the program."
+ .AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FBS_CheckBox Or FBS_Graphical, , , , "Fullscreen", , "chkFullscreen", , 1, , 1, , , "Determines whether the program should run in full screen mode."
+ .AddNewChildren FakeCtl_Button, 88, -72, 192, -56, FBS_CheckBox Or FBS_Graphical, , , , "Post process", , "chkPost", , 1, , 1, , , "Enables post process effects."
  .AddNewChildren FakeCtl_Button, 88, -48, 200, -32, , False, , , "HDR Blur Quality:", , , , 1, , 1
  .AddNewChildren FakeCtl_Button, 88, -24, 120, -8, FBS_OptionButton Or FBS_Graphical, , , , "Low", , "0", , 1, , 1, 1, "optHDRQ"
  .AddNewChildren FakeCtl_Button, 128, -24, 160, -8, FBS_OptionButton Or FBS_Graphical, , , , "Mid", , "1", , 1, , 1, , "optHDRQ"
  .AddNewChildren FakeCtl_Button, 168, -24, 200, -8, FBS_OptionButton Or FBS_Graphical, , , , "High", , "2", , 1, , 1, , "optHDRQ"
- With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFFFFFF, , False, , "Form1234°¡°¢")
-  .Show 1
+ With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFFFFFF, , False, , "Form1234°¡°¢", , , , , , , , , "Test only!!!" + vbCrLf + "Don't touch!!!")
+  .Show
   .AddNewChildren FakeCtl_Button, 0, 0, 78, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
@@ -387,7 +386,7 @@ With FakeDXUIControls(1)
    End With
   End With
  End With
- #If 1 Then
+ #If 0 Then
  With .AddNewChildren(FakeCtl_Form, 160, 120, 600, 400, &HFFFFFF, , False, , "É½Õ¯MDIForm1")
   .ScrollBars = vbBoth
   .Min = -50

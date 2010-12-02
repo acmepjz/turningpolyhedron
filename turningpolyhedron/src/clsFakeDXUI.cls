@@ -22,7 +22,7 @@ Private m_sName As String
 Private m_nStyle As Long
 Private m_nState As Long
 
-Private m_sCaption As String, m_sText As String, m_sGroupName As String
+Private m_sCaption As String, m_sText As String, m_sGroupName As String, m_sToolTipText As String
 Private m_bEnabled As Boolean, m_bVisible As Boolean
 Private m_nValue As Long
 Private m_nScrollBars As ScrollBarConstants
@@ -69,6 +69,28 @@ Private m_objTextBox As clsFakeDXUITextBox
 Private m_nComboBoxPrimaryColumn As Long, m_nComboBoxDropdownWidth As Long, m_nComboBoxDropdownHeight As Long, _
 WithEvents m_objListView As clsFakeDXUIListView
 Attribute m_objListView.VB_VarHelpID = -1
+
+Friend Property Get ToolTipText() As String
+ToolTipText = m_sToolTipText
+End Property
+
+Friend Property Let ToolTipText(ByVal s As String)
+m_sToolTipText = s
+'///update
+If FakeDXUIPopup_ToolTipText = m_nIndex Then
+ If s <> "" Then
+  FakeDXUIShowToolTipText m_nIndex, s
+ Else
+  FakeDXUIHideToolTipText
+ End If
+End If
+End Property
+
+Friend Sub ShowToolTipText(Optional ByVal x As Single = -1, Optional ByVal y As Single = -1)
+If m_sToolTipText <> "" Then
+ FakeDXUIShowToolTipText m_nIndex, m_sToolTipText, x, y
+End If
+End Sub
 
 Friend Sub FlashWindow()
 If m_nClosing = 0 And m_bVisible Then
@@ -370,7 +392,7 @@ If i > 1 And i <= m_nChildrenCount Then
 End If
 End Sub
 
-Friend Function AddNewChildren(ByVal nType As enumFakeDXUIControlType, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nStyle As enumFakeDXUIControlStyle, Optional ByVal bEnabled As Boolean = True, Optional ByVal bVisible As Boolean = True, Optional ByVal bLocked As Boolean = False, Optional ByVal sCaption As String, Optional ByVal sText As String, Optional ByVal sName As String, Optional ByVal nLeft2 As Single, Optional ByVal nTop2 As Single, Optional ByVal nRight2 As Single, Optional ByVal nBottom2 As Single, Optional ByVal nValue As Long, Optional ByVal sGroupName As String) As clsFakeDXUI
+Friend Function AddNewChildren(ByVal nType As enumFakeDXUIControlType, ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, Optional ByVal nStyle As enumFakeDXUIControlStyle, Optional ByVal bEnabled As Boolean = True, Optional ByVal bVisible As Boolean = True, Optional ByVal bLocked As Boolean = False, Optional ByVal sCaption As String, Optional ByVal sText As String, Optional ByVal sName As String, Optional ByVal nLeft2 As Single, Optional ByVal nTop2 As Single, Optional ByVal nRight2 As Single, Optional ByVal nBottom2 As Single, Optional ByVal nValue As Long, Optional ByVal sGroupName As String, Optional ByVal sToolTipText As String) As clsFakeDXUI
 Dim i As Long
 i = FakeDXUIGetEmptyControl
 With FakeDXUIControls(i)
@@ -388,6 +410,7 @@ With FakeDXUIControls(i)
  .Name = sName
  .Value = nValue
  .GroupName = sGroupName
+ .ToolTipText = sToolTipText
  '///
  .Parent = m_nIndex
 End With
@@ -1776,8 +1799,9 @@ Else
 End If
 End Sub
 
-Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long, Optional ByVal bChildrenProcessed As Boolean) As Boolean
-Dim i As Long
+'return value=which control processed this event
+Friend Function OnMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long, Optional ByVal bChildrenProcessed As Boolean) As Long
+Dim i As Long, ret As Long
 Dim b As Boolean, b1 As Boolean
 Dim w As Single, h As Single, f As Single
 Dim bInControl As Boolean
@@ -1888,7 +1912,11 @@ Case 6 'picturebox
   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
  End If
 Case 7 'textbox
- If bInControl And nEventType = 1 Then pSetFocus
+ 'If bInControl And nEventType = 1 Then pSetFocus '???
+ If bInControl Then
+  If nEventType = 1 Then pSetFocus
+  b = True
+ End If
  '///scrollbar
  If m_objTextBox.MultiLine Then
   If m_nScrollBars And vbHorizontal Then
@@ -1997,7 +2025,9 @@ If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
   If bChildrenProcessed Then Exit For '???
   With FakeDXUIControls(m_idxChildren(i))
    If .Style And FCS_TopMost Then
-    If .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed) Then
+    ret = .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed)
+    If ret Then
+     If ret > 0 Then OnMouseEvent = ret
      bChildrenProcessed = True
     End If
    End If
@@ -2007,7 +2037,9 @@ If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
   If bChildrenProcessed Then Exit For '???
   With FakeDXUIControls(m_idxChildren(i))
    If (.Style And FCS_TopMost) = 0 Then
-    If .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed) Then
+    ret = .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed)
+    If ret Then
+     If ret > 0 Then OnMouseEvent = ret
      bChildrenProcessed = True
     End If
    End If
@@ -2227,7 +2259,10 @@ If Button = 1 And Not bChildrenProcessed Then
 End If
 'TODO:
 '////////
-OnMouseEvent = b Or b1 Or bChildrenProcessed
+If OnMouseEvent = 0 Then
+ If b Or b1 Then OnMouseEvent = m_nIndex _
+ Else If bChildrenProcessed Then OnMouseEvent = -1
+End If
 End Function
 
 Friend Sub OnGetFocus()

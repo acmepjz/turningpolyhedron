@@ -434,43 +434,62 @@ Optional ByVal nColor As Long = -1, Optional ByVal nTextLODBias As Single = -0.5
 Dim mat As D3DMATRIX
 Dim p As D3DRECT
 Dim obj As Direct3DDevice9
-If bSingle Then tFont.objSprite.Begin D3DXSPRITE_ALPHABLEND
-Set obj = tFont.objSprite.GetDevice
-mat.m11 = nZoom * Cos(nAngle)
-mat.m12 = nZoom * Sin(nAngle)
-mat.m21 = -mat.m12
-mat.m22 = mat.m11
-mat.m33 = 1
-mat.m41 = nLeft
-mat.m42 = nTop
-mat.m44 = 1
-nWidth = nWidth / nZoom
-nHeight = nHeight / nZoom
-tFont.objSprite.SetTransform mat
-If nShadowColor Then
- p.x1 = nShadowOffsetX
- p.y1 = nShadowOffsetY
- p.x2 = nWidth + nShadowOffsetX
- p.Y2 = nHeight + nShadowOffsetY
- obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nShadowLODBias)
- tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nShadowColor
- tFont.objSprite.Flush
-End If
-If nColor Then
- p.x1 = 0
- p.y1 = 0
- p.x2 = nWidth
- p.Y2 = nHeight
- obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nTextLODBias)
+Dim bNoDraw As Boolean
+'///
+bNoDraw = nShadowColor = 0 And nColor = 0
+If Not bNoDraw Then
+ If bSingle Then tFont.objSprite.Begin D3DXSPRITE_ALPHABLEND
+ '///
+ Set obj = tFont.objSprite.GetDevice
+ mat.m11 = nZoom * Cos(nAngle)
+ mat.m12 = nZoom * Sin(nAngle)
+ mat.m21 = -mat.m12
+ mat.m22 = mat.m11
+ mat.m33 = 1
+ mat.m41 = nLeft
+ mat.m42 = nTop
+ mat.m44 = 1
+ nWidth = nWidth / nZoom
+ nHeight = nHeight / nZoom
+ tFont.objSprite.SetTransform mat
+ '///
+ If nShadowColor Then
+  p.x1 = nShadowOffsetX
+  p.y1 = nShadowOffsetY
+  p.x2 = nWidth + nShadowOffsetX
+  p.Y2 = nHeight + nShadowOffsetY
+  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nShadowLODBias)
+  tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nShadowColor
+  tFont.objSprite.Flush
+ End If
+ If nColor Then
+  p.x1 = 0
+  p.y1 = 0
+  p.x2 = nWidth
+  p.Y2 = nHeight
+  obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nTextLODBias)
+  If wFormat And DT_CALCRECT Then
+   tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat, nColor
+   nWidthReturn = p.x2 * nZoom
+   nHeightReturn = p.Y2 * nZoom
+  End If
+  tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nColor
+  tFont.objSprite.Flush
+ End If
+ '///
+ If bSingle Then tFont.objSprite.End
+Else
+ '///
  If wFormat And DT_CALCRECT Then
-  tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat, nColor
+  p.x1 = 0
+  p.y1 = 0
+  p.x2 = nWidth / nZoom
+  p.Y2 = nHeight / nZoom
+  tFont.objFont.DrawTextW Nothing, ByVal StrPtr(lpStr), -1, p, wFormat, 0 'Nothing??? it works :D
   nWidthReturn = p.x2 * nZoom
   nHeightReturn = p.Y2 * nZoom
  End If
- tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nColor
- tFont.objSprite.Flush
 End If
-If bSingle Then tFont.objSprite.End
 End Sub
 
 'Public Sub FakeDXGDIMaskBltExEx(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, _
