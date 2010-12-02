@@ -1,6 +1,13 @@
 Attribute VB_Name = "mdlFakeDXUI"
 Option Explicit
 
+Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Type POINTAPI
+    x As Long
+    y As Long
+End Type
+
 Public FakeDXUIControls() As New clsFakeDXUI '1-based
 Public FakeDXUIControlCount As Long
 
@@ -23,7 +30,19 @@ Public FakeDXUI_IME As New clsFakeDXUI_IME
 Public FakeDXUIModalStack() As Long '1-based
 Public FakeDXUIModalStackCount As Long, FakeDXUIModalStackMax As Long
 
-'////////
+'////////mouse hover
+
+Public FakeDXUIMouseHover As Long 'control index
+Public FakeDXUIMouseHoverTime As Long
+
+'////////tool tip text
+
+Public FakeDXUIPopup_ToolTipText As Long 'control index
+Public FakeDXUIPopup_ToolTipText_State As Long '0-5=hide-show
+Public FakeDXUIPopup_ToolTipText_Pos As typeFakeDXUIRect
+Public FakeDXUIPopup_ToolTipText_Caption As String
+
+'////////combobox drop down box
 
 Public FakeDXUIPopup_ComboBox As Long, FakeDXUIPopup_ComboBox_Rect As typeFakeDXUIRect
 Public FakeDXUIPopup_ComboBox_State As Long
@@ -352,8 +371,59 @@ If Not FakeDXUITexture Is Nothing Then
  FakeDXUIModalStackCount = 0
  FakeDXUIModalStackMax = 0
  '///
+ FakeDXUIPopup_ToolTipText = 0
+ FakeDXUIPopup_ToolTipText_State = 0
+ '///
+ FakeDXUIMouseHover = 0
+ FakeDXUIMouseHoverTime = 0
+ '///
  Set FakeDXUITexture = Nothing
 End If
+End Sub
+
+Public Sub FakeDXUIShowToolTipText(Optional ByVal nIndex As Long, Optional ByVal s As String, Optional ByVal x As Single = -1, Optional ByVal y As Single = -1)
+Dim w As Single, h As Single
+Dim p As POINTAPI
+'///
+If nIndex = 0 Then nIndex = FakeDXUIMouseHover
+If nIndex = 0 Then Exit Sub
+'///
+FakeDXUIPopup_ToolTipText = nIndex
+FakeDXUIPopup_ToolTipText_Caption = s
+'///
+If x < 0 Or y < 0 Then
+ GetCursorPos p
+ ScreenToClient frmMain.hwnd, p
+ x = p.x
+ y = p.y
+End If
+'///
+FakeDXGDIDrawText FakeDXUIDefaultFont, s, 0, 0, , , 0.5, DT_CALCRECT, 0, , , , , , , , w, h
+w = w + 8
+h = h + 8
+'///
+p.x = d3dpp.BackBufferWidth - 4
+If x + w > p.x Then
+ x = p.x - w
+ If x < 0 Then x = 0
+End If
+If y + h + 28 > d3dpp.BackBufferHeight Then
+ y = y - h - 8
+ If x < 0 Then y = 0
+Else
+ y = y + 24
+End If
+'///
+With FakeDXUIPopup_ToolTipText_Pos
+ .Left = x
+ .Top = y
+ .Right = x + w
+ .Bottom = y + h
+End With
+End Sub
+
+Public Sub FakeDXUIHideToolTipText()
+FakeDXUIPopup_ToolTipText = 0
 End Sub
 
 'inefficient when drawing a lot of controls (50+)
@@ -402,8 +472,32 @@ If FakeDXUIControlCount > 0 Then
  End If
  '///
  'TODO:menu
- '///
- 'TODO:tooltiptext
+ '///mousehover
+ FakeDXUIMouseHoverTime = FakeDXUIMouseHoverTime + 1
+ If FakeDXUIPopup_ToolTipText > 0 Then
+  If FakeDXUIPopup_ToolTipText <> FakeDXUIMouseHover Then _
+  FakeDXUIPopup_ToolTipText = 0
+ Else
+  If FakeDXUIMouseHover > 0 And FakeDXUIMouseHover <= FakeDXUIControlCount Then
+   If FakeDXUIMouseHoverTime = &H10& Then
+    FakeDXUIControls(FakeDXUIMouseHover).ShowToolTipText
+   End If
+  End If
+ End If
+ '///tooltiptext
+ If FakeDXUIPopup_ToolTipText > 0 Then
+  If FakeDXUIPopup_ToolTipText_State < 5 Then FakeDXUIPopup_ToolTipText_State = FakeDXUIPopup_ToolTipText_State + 1
+ Else
+  If FakeDXUIPopup_ToolTipText_State > 0 Then FakeDXUIPopup_ToolTipText_State = FakeDXUIPopup_ToolTipText_State - 1
+ End If
+ If FakeDXUIPopup_ToolTipText_State > 0 Then
+  With FakeDXUIPopup_ToolTipText_Pos
+   i = FakeDXUIPopup_ToolTipText_State * 51&
+   i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
+   FakeDXGDIStretchBltExColored .Left - 8, .Top - 8, .Right + 16, .Bottom + 16, 0, 176, 112, 240, 16, 16, 24, 24, 512, i Or &HFFFFFF
+   FakeDXGDIDrawText FakeDXUIDefaultFont, FakeDXUIPopup_ToolTipText_Caption, .Left + 4, .Top + 4, , , 0.5, DT_NOCLIP, i, , , , , , , True
+  End With
+ End If
  '///
  d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, nOldState
  d3dd9.SetRenderState D3DRS_SCISSORTESTENABLE, 0
@@ -496,7 +590,13 @@ If Not b Then
   FakeDXUIActiveWindow = 0 '????????
   FakeDXUIFocus = 0 '????????
  End If
- b = obj.OnMouseEvent(Button, Shift, x, y, nEventType)
+ i = obj.OnMouseEvent(Button, Shift, x, y, nEventType)
+ b = i
+ If Button <> 0 Or nEventType <> 0 Then i = 0
+ If i <> FakeDXUIMouseHover Then
+  FakeDXUIMouseHover = i
+  FakeDXUIMouseHoverTime = 0
+ End If
  If FakeDXUIModalStackCount > 0 And Not b Then
   If nEventType = 1 Then
    Beep
