@@ -66,9 +66,11 @@ Private m_tScrollBar(2) As typeFakeDXUIScrollBar
 '////////controls
 
 Private m_objTextBox As clsFakeDXUITextBox
-Private m_nComboBoxPrimaryColumn As Long, m_nComboBoxDropdownWidth As Long, m_nComboBoxDropdownHeight As Long, _
-WithEvents m_objListView As clsFakeDXUIListView
+Private m_nComboBoxPrimaryColumn As Long, m_nComboBoxDropdownWidth As Long, m_nComboBoxDropdownHeight As Long
+Private WithEvents m_objListView As clsFakeDXUIListView
 Attribute m_objListView.VB_VarHelpID = -1
+Private WithEvents m_objTab As clsFakeDXUITab
+Attribute m_objTab.VB_VarHelpID = -1
 
 Friend Property Get ToolTipText() As String
 ToolTipText = m_sToolTipText
@@ -124,6 +126,10 @@ End Property
 
 Friend Property Get ListViewObject() As clsFakeDXUIListView
 Set ListViewObject = m_objListView
+End Property
+
+Friend Property Get TabObject() As clsFakeDXUITab
+Set TabObject = m_objTab
 End Property
 
 Friend Property Get Focus() As Long
@@ -612,6 +618,7 @@ Case 5
  m_tScrollBar(0).bEnabled = b
 End Select
 If Not m_objListView Is Nothing Then m_objListView.Enabled = b
+If Not m_objTab Is Nothing Then m_objTab.Enabled = b
 End Property
 
 Friend Property Get ScrollBarEnabled(Optional ByVal nIndex As Long) As Boolean
@@ -655,6 +662,7 @@ m_bSizeDirty = True
 '///
 Set m_objTextBox = Nothing
 Set m_objListView = Nothing
+Set m_objTab = Nothing
 Select Case n
 Case 5
  m_tScrollBar(0).bEnabled = m_bEnabled
@@ -669,6 +677,8 @@ Case 9
   Set m_objTextBox = New clsFakeDXUITextBox
   m_objTextBox.FontZoom = m_nFontZoom
  End If
+Case 10
+ Set m_objTab = New clsFakeDXUITab
 End Select
 '///TODO:
 End Property
@@ -726,6 +736,7 @@ m_idxFocus = 0
 m_nComboBoxPrimaryColumn = 1
 Set m_objTextBox = Nothing
 Set m_objListView = Nothing
+Set m_objTab = Nothing
 Erase m_nAnimVal
 Erase m_tScrollBar
 With m_tScrollBar(0)
@@ -1375,6 +1386,18 @@ Case 9 'combobox
  kk = 384& - (bEnabled And 16&)
  f = (nTop + nBottom) / 2
  FakeDXGDIStretchBltColored nRight - 16, f - 8, nRight, f + 8, 176, kk, 192, kk + 16, 512, i Or &HFFFFFF
+Case 10 'tab strip
+ i = 255 * nOpacity
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
+ '///
+ FakeDXGDIStretchBltExColored nLeft - 4, nTop + 13, nRight + 4, nBottom + 4, 196, 420, 292, 468, 8, 8, 8, 8, 512, i Or &HFFFFFF
+ '///
+ With m_objTab
+  .Width = nRight - nLeft
+  .Height = 18
+  .Render nLeft, nTop, nOpacity
+ End With
+ 'TODO:draw other
 Case Else
  'TODO:
 End Select
@@ -1657,10 +1680,6 @@ Destroy
 End Sub
 
 Friend Sub BeforeMouseEvent()
-'m_bMouseIn = False
-'///
-'Select Case m_nType
-'Case 1, 4
 m_nAnimVal(4) = 0
 m_nAnimVal(5) = 0
 m_nAnimVal(6) = 0
@@ -1683,7 +1702,7 @@ With m_tScrollBar(2)
  .nAnimVal(15) = 0
 End With
 If Not m_objListView Is Nothing Then m_objListView.BeforeMouseEvent
-'End Select
+If Not m_objTab Is Nothing Then m_objTab.BeforeMouseEvent
 '///
 'TODO:
 End Sub
@@ -2013,6 +2032,14 @@ Case 9 'combobox
   End If
   b = True
  End If
+ '///
+Case 10 'tab strip
+ If bInControl And nEventType = 1 Then pSetFocus
+ '///tab header
+ If bInControl Or FakeDXUISetCapture = m_nIndex Then
+  b = b Or m_objTab.OnMouseEvent(Button, Shift, x - m_tClientToScreenOffset.x, y - m_tClientToScreenOffset.y, nEventType)
+ End If
+ 'TODO:other
  '///
 Case Else
  'TODO:

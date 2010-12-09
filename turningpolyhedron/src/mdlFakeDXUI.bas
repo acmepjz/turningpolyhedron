@@ -485,6 +485,9 @@ If FakeDXUIControlCount > 0 Then
   End If
  End If
  '///tooltiptext
+ 'TODO:combobox dropdown tooltiptext
+ If FakeDXUIPopup_ComboBox > 0 Then FakeDXUIPopup_ToolTipText = 0
+ '///
  If FakeDXUIPopup_ToolTipText > 0 Then
   If FakeDXUIPopup_ToolTipText_State < 5 Then FakeDXUIPopup_ToolTipText_State = FakeDXUIPopup_ToolTipText_State + 1
  Else

@@ -34,6 +34,7 @@ Public Type typeFakeDXGDILogFont
 End Type
 
 Public objText As New clsGNUGetText
+Public frmSettings As New frmSettings
 
 Public Sub CreateVertexDeclaration()
 ReDim m_tDefVertexDecl(0 To 7)
