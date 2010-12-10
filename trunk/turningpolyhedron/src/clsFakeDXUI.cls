@@ -777,22 +777,25 @@ Private Sub pRenderWindowButtonHighlight(ByVal nIndex1 As Long, ByVal nIndex2 As
 Dim j As Long, k As Long
 j = m_nAnimVal(nIndex1)
 k = m_nAnimVal(nIndex2)
-If j < k Then j = j + 51 Else _
-If j > k Then j = j - 51
-m_nAnimVal(nIndex1) = j
-If j <= 0 Then
-ElseIf j <= 255 Then
- j = j * nOpacity
- j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000)
- FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 232, 24, 248, 40, 512, j Or &HFFFFFF
-ElseIf j < 510 Then
- k = nOpacity * 255
- k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
- FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, 232, 24, j - 255, k Or &HFFFFFF
+'///
+If k > 255 Then
+ If j < &H50& Then j = j + &H10&
+ If (j And &HF&) < &H5& Then j = j + 1&
 Else
- k = nOpacity * 255
- k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000)
- FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, k Or &HFFFFFF
+ If j >= &H10& Then j = j - &H10&
+ If k > 0 Then
+  If (j And &HF&) < &H5& Then j = j + 1&
+ Else
+  If (j And &HF&) > 0 Then j = j - 1&
+ End If
+End If
+'///
+m_nAnimVal(nIndex1) = j
+k = j And &H7&
+If k > 0 Then
+ k = nOpacity * k * 51
+ k = ((k And &H7F&) * &H1000000) Or ((k > &H7F&) And &H80000000) Or &HFFFFFF
+ FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, 232, 24, ((j And &HF0&) \ &H10&) * 51, k Or &HFFFFFF
 End If
 End Sub
 
@@ -1153,25 +1156,41 @@ Case 4 'button
    FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft - 16, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
    i, , , , , , , True
   Else
+   '///base
    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk + 48, 368, kk + 64, 384, 512, i Or &HFFFFFF
-   Select Case m_nValue
-   Case 1
-    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk + 16, 384, kk + 32, 400, 512, i Or &HFFFFFF
-   Case 2
-    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 48, 384, 64, 400, 512, i Or &HFFFFFF
-   End Select
+   '///checked
+   j = m_nAnimVal(3)
+   k = (m_nValue = 1) And 255&
+   If j < k Then j = j + 51 Else _
+   If j > k Then j = j - 51
+   m_nAnimVal(3) = j
+   jj = m_nAnimVal(7)
+   k = (m_nValue = 2) And 255&
+   If jj < k Then jj = jj + 51 Else _
+   If jj > k Then jj = jj - 51
+   m_nAnimVal(7) = jj
+   If j > 0 Then
+    j = j * nOpacity
+    j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
+    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk + 16, 384, kk + 32, 400, 512, j
+   End If
+   If jj > 0 And kk = 0 Then
+    j = jj * nOpacity
+    j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
+    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, 48, 384, 64, 400, 512, j
+   End If
    '///caption
    FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft - 16, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
    i Or &H666666, , , , , , , True
   End If
  Case Else 'button
+  j = m_nAnimVal(3)
+  k = (m_nValue <> 0) And 255&
+  If j < k Then j = j + 51 Else _
+  If j > k Then j = j - 51
+  m_nAnimVal(3) = j
   If bEnabled Then
    '///base
-   j = m_nAnimVal(3)
-   k = (m_nValue <> 0) And 255&
-   If j < k Then j = j + 51 Else _
-   If j > k Then j = j - 51
-   m_nAnimVal(3) = j
    kk = 284 + (((m_nStyle And 16&) <> 0) And 40&)
    FakeDXGDIStretchBltExBlended nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 44, kk, 84, kk + 40, 8, 8, 8, 8, 512, 124, 284, 255 - j, i Or &HFFFFFF
    '///highlight and pressed
@@ -1195,7 +1214,9 @@ Case 4 'button
    '///caption
    FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, i, , , , , , , True
   Else
-   FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 84, 324, 124, 364, 8, 8, 8, 8, 512, i Or &HFFFFFF
+   '///base
+   FakeDXGDIStretchBltExBlended nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 164, 324, 204, 364, 8, 8, 8, 8, 512, 84, 324, j, i Or &HFFFFFF
+   '///caption
    FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, _
    i Or &H666666, , , , , , , True
   End If

@@ -25,23 +25,29 @@ End Type
 Private Type typeTab
  Caption As String
  Tag As String
- nFlags As Long
+ w As Long
+ nFlags As Byte
  '1-enabled
  '2-closable
- w As Long
+ '///FakeDXUI new
+ bAnimVal1 As Byte 'tab
+ bAnimVal2 As Byte 'tab selected?
+ bAnimVal3 As Byte 'close button
 End Type
 
 Private bShowClose As Boolean
 
 Private tabs() As typeTab, tabc As Long
 Private tsld As Long, thl As Long, tleft As Long, pr As Boolean
-Private thl2 As Boolean
+Private thl2 As Boolean 'close button highlight?
 Private t As Long
 
 'left button and right button
 Private btn1 As Boolean, btn2 As Boolean, bhl As Long
 'btn1 is visible!!!
 Private btn3 As Boolean 'close button
+
+Private m_bAnimVal(7) As Byte
 
 Private thl_old As Long, thl2_old As Boolean, bhl_old As Long
 
@@ -315,7 +321,7 @@ End Select
 End Function
 
 Friend Sub Render(Optional ByVal nLeft As Single, Optional ByVal nTop As Single, Optional ByVal nOpacity As Single = 1)
-Dim i As Long, x As Long
+Dim i As Long, j As Long, x As Long
 Dim r As RECT
 Dim r2 As RECT
 Dim clr0 As Long, clr As Long
@@ -334,7 +340,37 @@ clr0 = ((clr0 And &H7F&) * &H1000000) Or ((clr0 > &H7F&) And &H80000000)
 clr = clr0 Or &HFFFFFF
 '///check btn1 and btn3
 For i = 1 To tabc
- x = x + tabs(i).w
+ With tabs(i)
+  x = x + .w
+  '///update animation
+  If thl = i And (.nFlags And 1&) <> 0 And Not thl2 Then
+   If (.bAnimVal1 And &HF&) < 5 Then .bAnimVal1 = .bAnimVal1 + 1
+   If pr Or tsld = i Then
+    If .bAnimVal1 < &H50& Then .bAnimVal1 = .bAnimVal1 + &H10&
+   Else
+    If .bAnimVal1 >= &H10& Then .bAnimVal1 = .bAnimVal1 - &H10&
+   End If
+  Else
+   If (.bAnimVal1 And &HF&) > 0 Then .bAnimVal1 = .bAnimVal1 - 1
+   If .bAnimVal1 >= &H10& Then .bAnimVal1 = .bAnimVal1 - &H10&
+  End If
+  If tsld = i Then
+   If (.bAnimVal2 And &HF&) < 5 Then .bAnimVal2 = .bAnimVal2 + 1
+  Else
+   If (.bAnimVal2 And &HF&) > 0 Then .bAnimVal2 = .bAnimVal2 - 1
+  End If
+  If thl = i And (.nFlags And 1&) <> 0 And thl2 Then
+   If (.bAnimVal3 And &HF&) < 5 Then .bAnimVal3 = .bAnimVal3 + 1
+   If pr Then
+    If .bAnimVal3 < &H50& Then .bAnimVal3 = .bAnimVal3 + &H10&
+   Else
+    If .bAnimVal3 >= &H10& Then .bAnimVal3 = .bAnimVal3 - &H10&
+   End If
+  Else
+   If (.bAnimVal3 And &HF&) > 0 Then .bAnimVal3 = .bAnimVal3 - 1
+   If .bAnimVal3 >= &H10& Then .bAnimVal3 = .bAnimVal3 - &H10&
+  End If
+ End With
 Next i
 btn3 = False
 If tsld > 0 And tsld <= tabc And Not bShowClose Then
@@ -361,75 +397,105 @@ Do
  End If
  r.Top = 0
  r.Bottom = m_nHeight
- 'bg
- If thl = i And (tabs(i).nFlags And 1&) <> 0 And Not thl2 Then
-  If pr Or tsld = i Then 'pressed
-   FakeDXGDIStretchBltExColored nLeft + r.Left - 4, nTop + r.Top - 4, nLeft + r.Right + 4, nTop + r.Bottom, 164, 284, 204, 312, 8, 8, 8, 0, 512, clr
-  Else 'highlight
-   FakeDXGDIStretchBltExColored nLeft + r.Left - 4, nTop + r.Top - 4, nLeft + r.Right + 4, nTop + r.Bottom, 84, 284, 124, 312, 8, 8, 8, 0, 512, clr
+ '///bg
+ If tabs(i).nFlags And 1& Then
+  FakeDXGDIStretchBltExBlended nLeft + r.Left - 4, nTop + r.Top - 4, nLeft + r.Right + 4, nTop + r.Bottom, 124, 284, 164, 312, 8, 8, 8, 0, 512, 44, 284, (tabs(i).bAnimVal2 And &HF&) * 51, clr
+  j = tabs(i).bAnimVal1 And &HF&
+  If j > 0 Then
+   j = nOpacity * j * 51
+   j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
+   FakeDXGDIStretchBltExBlended nLeft + r.Left - 4, nTop + r.Top - 4, nLeft + r.Right + 4, nTop + r.Bottom, 164, 284, 204, 312, 8, 8, 8, 0, 512, 84, 284, ((tabs(i).bAnimVal1 And &HF0&) \ &H10&) * 51, j
   End If
- ElseIf tsld = i Then 'checked
-  FakeDXGDIStretchBltExColored nLeft + r.Left - 4, nTop + r.Top - 4, nLeft + r.Right + 4, nTop + r.Bottom, 124, 284, 164, 312, 8, 8, 8, 0, 512, clr
- Else 'normal
-  FakeDXGDIStretchBltExColored nLeft + r.Left - 4, nTop + r.Top - 4, nLeft + r.Right + 4, nTop + r.Bottom, 44, 284, 84, 312, 8, 8, 8, 0, 512, clr
+ Else
+  FakeDXGDIStretchBltExBlended nLeft + r.Left - 4, nTop + r.Top - 4, nLeft + r.Right + 4, nTop + r.Bottom, 164, 324, 204, 352, 8, 8, 8, 0, 512, 84, 324, (tabs(i).bAnimVal2 And &HF&) * 51, clr
  End If
- 'text
+ '///text
  FakeDXGDIDrawText FakeDXUIDefaultFont, tabs(i).Caption, nLeft + r.Left + 2, nTop + r.Top, 0, m_nHeight, 0.5, DT_VCENTER Or DT_SINGLELINE Or DT_NOCLIP, clr0 Or (&H666666 And (tabs(i).nFlags And 1&) = 0), , , , , , , True
- 'close button
+ '///close button
  If (tabs(i).nFlags And 2&) <> 0 And bShowClose Then
   r2.Left = r.Right - 16
   r2.Top = r.Bottom \ 2 - 7
   r2.Right = r2.Left + 13
   r2.Bottom = r2.Top + 13
-  If thl = i And (tabs(i).nFlags And 1&) <> 0 And thl2 Then
-   If pr Then
-    FakeDXGDIStretchBltColored nLeft + r2.Left, nTop + r2.Top, nLeft + r2.Right, nTop + r2.Bottom, 288, 48, 301, 61, 512, clr
-   Else
-    FakeDXGDIStretchBltColored nLeft + r2.Left, nTop + r2.Top, nLeft + r2.Right, nTop + r2.Bottom, 272, 48, 285, 61, 512, clr
-   End If
+  j = tabs(i).bAnimVal3 And &HF&
+  If j > 0 Then
+   j = nOpacity * j * 51
+   j = ((j And &H7F&) * &H1000000) Or ((j > &H7F&) And &H80000000) Or &HFFFFFF
+   FakeDXGDIStretchBltBlended nLeft + r2.Left, nTop + r2.Top, nLeft + r2.Right, nTop + r2.Bottom, 288, 48, 301, 61, 512, 272, 48, ((tabs(i).bAnimVal3 And &HF0&) \ &H10&) * 51, j
   End If
-  FakeDXGDIStretchBltColored nLeft + r2.Left, nTop + r2.Top, nLeft + r2.Right, nTop + r2.Bottom, 256, 48, 269, 61, 512, clr
+  j = 64& - (tabs(i).nFlags And 1&) * 16&
+  FakeDXGDIStretchBltColored nLeft + r2.Left, nTop + r2.Top, nLeft + r2.Right, nTop + r2.Bottom, 256, j, 269, j + 13, 512, clr
  End If
  i = i + 1
 Loop
-'button
-If btn1 Then 'left button
+'///button
+If btn1 And tleft > 1 And bhl = 1 Then
+ If m_bAnimVal(0) < 255 Then m_bAnimVal(0) = m_bAnimVal(0) + 51
+ If pr Then
+  If m_bAnimVal(1) < 255 Then m_bAnimVal(1) = m_bAnimVal(1) + 51
+ Else
+  If m_bAnimVal(1) > 0 Then m_bAnimVal(1) = m_bAnimVal(1) - 51
+ End If
+Else
+ If m_bAnimVal(0) > 0 Then m_bAnimVal(0) = m_bAnimVal(0) - 51
+ If m_bAnimVal(1) > 0 Then m_bAnimVal(1) = m_bAnimVal(1) - 51
+End If
+If btn1 And btn2 And bhl = 2 Then
+ If m_bAnimVal(2) < 255 Then m_bAnimVal(2) = m_bAnimVal(2) + 51
+ If pr Then
+  If m_bAnimVal(3) < 255 Then m_bAnimVal(3) = m_bAnimVal(3) + 51
+ Else
+  If m_bAnimVal(3) > 0 Then m_bAnimVal(3) = m_bAnimVal(3) - 51
+ End If
+Else
+ If m_bAnimVal(2) > 0 Then m_bAnimVal(2) = m_bAnimVal(2) - 51
+ If m_bAnimVal(3) > 0 Then m_bAnimVal(3) = m_bAnimVal(3) - 51
+End If
+If btn3 And bhl = 3 Then
+ If m_bAnimVal(4) < 255 Then m_bAnimVal(4) = m_bAnimVal(4) + 51
+ If pr Then
+  If m_bAnimVal(5) < 255 Then m_bAnimVal(5) = m_bAnimVal(5) + 51
+ Else
+  If m_bAnimVal(5) > 0 Then m_bAnimVal(5) = m_bAnimVal(5) - 51
+ End If
+Else
+ If m_bAnimVal(4) > 0 Then m_bAnimVal(4) = m_bAnimVal(4) - 51
+ If m_bAnimVal(5) > 0 Then m_bAnimVal(5) = m_bAnimVal(5) - 51
+End If
+'///
+If btn1 Then
+ '///left button
+ If m_bAnimVal(0) > 0 Then
+  i = nOpacity * m_bAnimVal(0)
+  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+  FakeDXGDIStretchBltBlended nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, 232, 24, m_bAnimVal(1), i
+ End If
  If tleft > 1 Then
-  If bhl = 1 Then
-   If pr Then
-    FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 256, 24, 272, 40, 512, clr
-   Else
-    FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 232, 24, 248, 40, 512, clr
-   End If
-  End If
   FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 128, 368, 144, 384, 512, clr
  Else
   FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 16, nTop + 16, 128, 384, 144, 400, 512, clr
  End If
+ '///right button
  x = m_nWidth - 16
  If btn3 Then x = x - 16
- If btn2 Then 'right button
-  If bhl = 2 Then
-   If pr Then
-    FakeDXGDIStretchBltColored nLeft + x, nTop, nLeft + x + 16, nTop + 16, 256, 24, 272, 40, 512, clr
-   Else
-    FakeDXGDIStretchBltColored nLeft + x, nTop, nLeft + x + 16, nTop + 16, 232, 24, 248, 40, 512, clr
-   End If
-  End If
+ If m_bAnimVal(2) > 0 Then
+  i = nOpacity * m_bAnimVal(2)
+  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+  FakeDXGDIStretchBltBlended nLeft + x, nTop, nLeft + x + 16, nTop + 16, 256, 24, 272, 40, 512, 232, 24, m_bAnimVal(3), i
+ End If
+ If btn2 Then
   FakeDXGDIStretchBltColored nLeft + x, nTop, nLeft + x + 16, nTop + 16, 144, 368, 160, 384, 512, clr
  Else
   FakeDXGDIStretchBltColored nLeft + x, nTop, nLeft + x + 16, nTop + 16, 144, 384, 160, 400, 512, clr
  End If
 End If
-'close button
+'///close button
 If btn3 Then
  x = m_nWidth - 16
- If bhl = 3 Then
-  If pr Then
-   FakeDXGDIStretchBltColored nLeft + x, nTop, nLeft + x + 16, nTop + 16, 256, 24, 272, 40, 512, clr
-  Else
-   FakeDXGDIStretchBltColored nLeft + x, nTop, nLeft + x + 16, nTop + 16, 232, 24, 248, 40, 512, clr
-  End If
+ If m_bAnimVal(4) > 0 Then
+  i = nOpacity * m_bAnimVal(4)
+  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+  FakeDXGDIStretchBltBlended nLeft + x, nTop, nLeft + x + 16, nTop + 16, 256, 24, 272, 40, 512, 232, 24, m_bAnimVal(5), i
  End If
  FakeDXGDIStretchBltColored nLeft + x + 2, nTop + 2, nLeft + x + 15, nTop + 15, 256, 48, 269, 61, 512, clr
 End If
