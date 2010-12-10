@@ -347,10 +347,10 @@ With FakeDXUIControls(1)
    .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   End With
   '////////tabstrip test
-  With .AddNewChildren(FakeCtl_TabStrip, 120, 260, 480, 320, &H3000000).TabObject
+  With .AddNewChildren(FakeCtl_TabStrip, 20, 260, 480, 320, &H3000000).TabObject
    For i = 1 To 10
     .ShowCloseButtonOnTab = True
-    .AddTab "LKSCT TEST " + CStr(i) + " ONLY", , , , True
+    .AddTab "LKSCT TEST " + CStr(i) + " ONLY", , i And 1&, , True
    Next i
   End With
   '////////
@@ -773,13 +773,13 @@ With d3dd9
   If objRenderTest.BeginRender(RenderPass_Main) Then
    .BeginScene
    objTest.DrawSubset 0
-   '////////draw landscape test (new and buggy)
-   objRenderTest.SetTexture objLandTexture
-   .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
-   objRenderTest.UpdateRenderState
-   objLand.Render objRenderTest, objCamera
-   .SetTransform D3DTS_WORLD, mat
-   '////////
+'   '////////draw landscape test (new and buggy)
+'   objRenderTest.SetTexture objLandTexture
+'   .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
+'   objRenderTest.UpdateRenderState
+'   objLand.Render objRenderTest, objCamera
+'   .SetTransform D3DTS_WORLD, mat
+'   '////////
    .EndScene
    objRenderTest.EndRender
   End If
