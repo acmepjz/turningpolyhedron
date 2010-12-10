@@ -930,6 +930,68 @@ If i > 4 And j > 4 Then 'size limit ???
 End If
 End Sub
 
+Friend Sub RenderAutoScrollObject(ByRef r As D3DRECT, ByVal nChildIndex As Long, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True)
+Dim obj As clsFakeDXUI
+Dim r0 As D3DRECT, r1 As D3DRECT
+Dim w As Long, h As Long, r2 As typeFakeDXUIRectEx
+'///
+If nChildIndex <= 0 Or nChildIndex > m_nChildrenCount Then Exit Sub
+Set obj = FakeDXUIControls(m_idxChildren(nChildIndex))
+'///update scrollbar
+r1.x1 = r.x2 - r.x1
+r1.y1 = r.Y2 - r.y1
+w = obj.Width
+h = obj.Height
+r2 = obj.RectangleEx
+With m_tScrollBar(0)
+ .nSmallChange = 16
+ .nLargeChange = r1.x1
+ .nMin = 0
+ .nMax = w - r1.x1
+ If .nMax > 0 Then
+  .bEnabled = True
+  m_nScrollBars = m_nScrollBars Or vbHorizontal
+ Else
+  .bEnabled = False
+  m_nScrollBars = m_nScrollBars And Not vbHorizontal
+  .nMax = 0
+ End If
+ If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+ r2.Left.a = -.nValue
+End With
+With m_tScrollBar(1)
+ .nSmallChange = 16
+ .nLargeChange = r1.y1
+ .nMin = 0
+ .nMax = h - r1.y1
+ If .nMax > 0 Then
+  .bEnabled = True
+  m_nScrollBars = m_nScrollBars Or vbVertical
+ Else
+  .bEnabled = False
+  m_nScrollBars = m_nScrollBars And Not vbVertical
+  .nMax = 0
+ End If
+ If .nValue < .nMin Then .nValue = .nMin Else If .nValue > .nMax Then .nValue = .nMax
+ r2.Top.a = -.nValue
+End With
+r2.Right.a = r2.Left.a + w
+r2.Bottom.a = r2.Top.a + h
+obj.RectangleEx = r2
+'////////render
+d3dd9.GetScissorRect r0
+r1 = r
+If r1.x1 < r0.x1 Then r1.x1 = r0.x1
+If r1.y1 < r0.y1 Then r1.y1 = r0.y1
+If r1.x2 > r0.x2 Then r1.x2 = r0.x2
+If r1.Y2 > r0.Y2 Then r1.Y2 = r0.Y2
+d3dd9.SetScissorRect r1
+'///
+obj.Render r.x1, r.y1, nOpacity, bEnabled
+'///
+d3dd9.SetScissorRect r0
+End Sub
+
 'TODO:forecolor,etc.
 Friend Sub Render(Optional ByVal nParentClientLeft As Single, Optional ByVal nParentClientTop As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True)
 Dim i As Long, j As Long, jj As Long, k As Long, kk As Long
@@ -1240,6 +1302,15 @@ Case 6 'picturebox
  FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 324, kk + 40, 364, 8, 8, 8, 8, 512, i
  '///scrollbar
  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , True, bEnabled
+ '///new:auto scroll
+ If m_nStyle And &H2000& Then
+  r.x1 = nLeft + m_tClientMargin.Left
+  r.y1 = nTop + m_tClientMargin.Top
+  r.x2 = nRight - m_tClientMargin.Right
+  r.Y2 = nBottom - m_tClientMargin.Bottom
+  RenderAutoScrollObject r, 1, nOpacity, bEnabled
+  Exit Sub
+ End If
 Case 7 'textbox
  '////////border
  i = 255 * nOpacity
@@ -1951,8 +2022,13 @@ Case 6 'picturebox
  If m_nScrollBars And vbVertical Then
   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
  End If
+ If m_nStyle And &H2000& Then '???
+  bInControl = bInControl And x >= m_tRectScreen.Left + m_tClientMargin.Left And _
+  x < m_tRectScreen.Right - m_tClientMargin.Right And _
+  y >= m_tRectScreen.Top + m_tClientMargin.Top And _
+  y < m_tRectScreen.Bottom - m_tClientMargin.Bottom
+ End If
 Case 7 'textbox
- 'If bInControl And nEventType = 1 Then pSetFocus '???
  If bInControl Then
   If nEventType = 1 Then pSetFocus
   b = True
