@@ -1,0 +1,31 @@
+#summary Screenshots of work-in-progress TurningPolyhedron pre-pre-alpha
+
+Normal mapping and parallax mapping first cut (revision 58)
+
+http://turningpolyhedron.googlecode.com/svn/turningpolyhedron/media/screenshots/001.png
+
+http://turningpolyhedron.googlecode.com/svn/turningpolyhedron/media/screenshots/002.png
+
+Description missing
+
+http://turningpolyhedron.googlecode.com/svn/turningpolyhedron/media/screenshots/003.jpg
+
+Description missing
+
+http://turningpolyhedron.googlecode.com/svn/turningpolyhedron/media/screenshots/004.jpg
+
+Description missing
+
+http://turningpolyhedron.googlecode.com/svn/turningpolyhedron/media/screenshots/005.jpg
+
+Description missing
+
+http://turningpolyhedron.googlecode.com/svn/turningpolyhedron/media/screenshots/006.jpg
+
+Description missing
+
+http://turningpolyhedron.googlecode.com/svn/turningpolyhedron/media/screenshots/007.jpg
+
+Description missing
+
+http://turningpolyhedron.googlecode.com/svn/turningpolyhedron/media/screenshots/008.jpg
