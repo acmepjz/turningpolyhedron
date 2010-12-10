@@ -30,7 +30,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
@@ -328,26 +328,20 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 82, 0, 160, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 82, 16, 160, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 82, 32, 160, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
-  With .AddNewChildren(FakeCtl_Frame, 240, 144, 360, 256, , , , , "Form1234가각")
-   .Enabled = False
+  With .AddNewChildren(FakeCtl_Frame, 240, 144, 360, 256, , , , , "Form5678가각")
    .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
    .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
    .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   End With
-  With .AddNewChildren(FakeCtl_PictureBox, 360, 144, 480, 256, FCS_CanGetFocus)
-   .ScrollBars = vbBoth
-   .Min = -50
-   .Max = 50
-   .LargeChange = 10
-   .Min(1) = -50
-   .Max(1) = 50
-   .LargeChange(1) = 10
-   .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
-   .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
-   .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
+  With .AddNewChildren(FakeCtl_PictureBox, 360, 144, 480, 256, FCS_CanGetFocus Or FPS_AutoScroll)
+   With .AddNewChildren(FakeCtl_None, 0, 0, 320, 240)
+    .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
+    .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
+    .AddNewChildren FakeCtl_Button, 200, 200, 320, 240, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
+   End With
   End With
   '////////tabstrip test
-  With .AddNewChildren(FakeCtl_TabStrip, 20, 260, 480, 320, &H3000000).TabObject
+  With .AddNewChildren(FakeCtl_TabStrip, 8, 260, -8, -8, &H3000000, , , , , , , , , 1, 1).TabObject
    For i = 1 To 10
     .ShowCloseButtonOnTab = True
     .AddTab "LKSCT TEST " + CStr(i) + " ONLY", , i And 1&, , True
