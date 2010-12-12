@@ -147,6 +147,7 @@ Public Enum enumFakeDXUIControlStyle
  FCS_CanGetFocus = &H1000000
  FCS_TabStop = &H2000000
  FCS_TopMost = &H10000000
+ FCS_AutoScroll = &H2000&
  '///form
  FFS_Sizable = 1
  FFS_Moveable = 2
@@ -154,7 +155,6 @@ Public Enum enumFakeDXUIControlStyle
  FFS_MaxButton = 8
  FFS_CloseButton = 16
  FFS_TitleBar = 32
- FFS_AutoScroll = &H2000&
  '///button
  FBS_CheckBox = 1
  FBS_CheckBoxTristate = 2
@@ -176,11 +176,8 @@ Public Enum enumFakeDXUIControlStyle
  FCBS_FixedText = 8
  FCBS_NoAutoClose = 16
  FCBS_AutoSelect = &H20000
- '///picturebox
- FPS_AutoScroll = &H2000&
  '///tabstrip
  FTABS_AutoShow = &H1000&
- FTABS_AutoScroll = &H2000&
 End Enum
 
 Public Enum enumFakeDXUIControlState

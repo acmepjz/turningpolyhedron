@@ -304,8 +304,10 @@ With FakeDXUIControls(1)
  .AddNewChildren FakeCtl_Button, 88, -24, 120, -8, FBS_OptionButton Or FBS_Graphical, , , , "Low", , "0", , 1, , 1, 1, "optHDRQ"
  .AddNewChildren FakeCtl_Button, 128, -24, 160, -8, FBS_OptionButton Or FBS_Graphical, , , , "Mid", , "1", , 1, , 1, , "optHDRQ"
  .AddNewChildren FakeCtl_Button, 168, -24, 200, -8, FBS_OptionButton Or FBS_Graphical, , , , "High", , "2", , 1, , 1, , "optHDRQ"
- With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFFFFFF, , False, , "Form1234°¡°¢", , , , , , , , , "Test only!!!" + vbCrLf + "Don't touch!!!")
+ With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFF20FF, , False, , "Form1234°¡°¢", , , , , , , , , "Test only!!!" + vbCrLf + "Don't touch!!!")
   .Show
+  With .AddNewChildren(FakeCtl_None, 0, 0, 800, 600)
+  '///
   .AddNewChildren FakeCtl_Button, 0, 0, 78, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
@@ -328,12 +330,14 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 82, 0, 160, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 82, 16, 160, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 82, 32, 160, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
-  With .AddNewChildren(FakeCtl_Frame, 240, 144, 360, 256, , , , , "Form5678°¡°¢")
-   .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
-   .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
-   .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
+  With .AddNewChildren(FakeCtl_Frame, 240, 144, 360, 256, FCS_CanGetFocus Or FCS_AutoScroll, , , , "Form5678°¡°¢")
+   With .AddNewChildren(FakeCtl_None, 0, 0, 320, 240)
+    .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
+    .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
+    .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
+   End With
   End With
-  With .AddNewChildren(FakeCtl_PictureBox, 360, 144, 480, 256, FCS_CanGetFocus Or FPS_AutoScroll)
+  With .AddNewChildren(FakeCtl_PictureBox, 360, 144, 480, 256, FCS_CanGetFocus Or FCS_AutoScroll)
    With .AddNewChildren(FakeCtl_None, 0, 0, 320, 240)
     .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
     .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
@@ -341,10 +345,18 @@ With FakeDXUIControls(1)
    End With
   End With
   '////////tabstrip test
-  With .AddNewChildren(FakeCtl_TabStrip, 8, 260, -8, -8, &H3000000, , , , , , , , , 1, 1).TabObject
-   For i = 1 To 10
+  With .AddNewChildren(FakeCtl_TabStrip, 8, 260, -8, -8, &H3003000, , , , , , , , , 1, 1)
+   .ScrollBars = vbBoth
+   .Max(0) = 2048
+   .Max(1) = 2048
+   With .TabObject
     .ShowCloseButtonOnTab = True
-    .AddTab "LKSCT TEST " + CStr(i) + " ONLY", , i And 1&, , True
+    For i = 1 To 10
+     .AddTab "LKSCT TEST " + CStr(i) + " ONLY", , i And 1&, , True
+    Next i
+   End With
+   For i = 1 To 10
+    .AddNewChildren FakeCtl_Button, 0, 0, 128 * i, 64 * i, , , False, , "TEST" + CStr(i), , , , , , , , , "This is test " + CStr(i)
    Next i
   End With
   '////////
@@ -388,9 +400,11 @@ With FakeDXUIControls(1)
      Next i
    End With
   End With
+  '///
+  End With
  End With
  #If 0 Then
- With .AddNewChildren(FakeCtl_Form, 160, 120, 600, 400, &HFFFFFF, , False, , "É½Õ¯MDIForm1")
+ With .AddNewChildren(FakeCtl_Form, 160, 120, 600, 400, &HFF00FF, , False, , "É½Õ¯MDIForm1")
   .ScrollBars = vbBoth
   .Min = -50
   .Max = 50
