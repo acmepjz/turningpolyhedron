@@ -1002,6 +1002,7 @@ Dim f As Single
 Dim r0 As D3DRECT, r As D3DRECT
 Dim bNoChild As Boolean
 Dim s As String
+Dim idxAutoScrollControl As Long
 '////////
 bEnabled = bEnabled And m_bEnabled
 '////////adjust window opacity???
@@ -1098,7 +1099,6 @@ Case 1 'form
    '///close button
    If m_nStyle And &H10& Then
     pRenderWindowButtonHighlight 1, 4, nRight - 20, nTop + 4, nOpacity
-    'TODO:etc.
    End If
    j = i
    If (m_nStyle And &H10&) = 0 Then j = j \ 2
@@ -1108,7 +1108,6 @@ Case 1 'form
     '///maximize button
     If m_nStyle And &H8& Then
      pRenderWindowButtonHighlight 2, 5, nRight - 36, nTop + 4, nOpacity
-     'TODO:etc.
     End If
     j = i
     If (m_nStyle And &H8&) = 0 Then j = j \ 2
@@ -1118,7 +1117,6 @@ Case 1 'form
     '///minimize button
     If m_nStyle And &H4& Then
      pRenderWindowButtonHighlight 3, 6, nRight - 52, nTop + 4, nOpacity
-     'TODO:etc.
     End If
     j = i
     If (m_nStyle And &H4&) = 0 Then j = j \ 2
@@ -1146,6 +1144,8 @@ Case 1 'form
  '///new:scrollbar
  If Not bNoChild Then
   pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, (m_nState And 3&) = 0 And (m_nStyle And 1&) <> 0, True, bEnabled
+  '///new:auto scroll
+  If m_nStyle And &H2000& Then idxAutoScrollControl = 1
  End If
 Case 2 'label
  i = 255 * nOpacity
@@ -1164,6 +1164,8 @@ Case 3 'frame
  FakeDXGDIStretchBltExColored nLeft - 4, nTop + 12, nRight + 4, nBottom + 4, 4, 292, 44, 324, 8, 0, 8, 8, 512, i Or &HFFFFFF
  '///new:scrollbar
  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , True, bEnabled
+ '///new:auto scroll
+ If m_nStyle And &H2000& Then idxAutoScrollControl = 1
 Case 4 'button
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
@@ -1303,14 +1305,7 @@ Case 6 'picturebox
  '///scrollbar
  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , True, bEnabled
  '///new:auto scroll
- If m_nStyle And &H2000& Then
-  r.x1 = nLeft + m_tClientMargin.Left
-  r.y1 = nTop + m_tClientMargin.Top
-  r.x2 = nRight - m_tClientMargin.Right
-  r.Y2 = nBottom - m_tClientMargin.Bottom
-  RenderAutoScrollObject r, 1, nOpacity, bEnabled
-  Exit Sub
- End If
+ If m_nStyle And &H2000& Then idxAutoScrollControl = 1
 Case 7 'textbox
  '////////border
  i = 255 * nOpacity
@@ -1489,10 +1484,22 @@ Case 10 'tab strip
   .Height = 18
   .Render nLeft, nTop, nOpacity
  End With
- 'TODO:draw other
+ '///scrollbar
+ pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , True, bEnabled
+ '///auto scroll
+ If m_nStyle And &H2000& Then idxAutoScrollControl = m_objTab.SelectedTab
 Case Else
  'TODO:
 End Select
+'///new:auto scroll object
+If idxAutoScrollControl > 0 Then
+ r.x1 = nLeft + m_tClientMargin.Left
+ r.y1 = nTop + m_tClientMargin.Top
+ r.x2 = nRight - m_tClientMargin.Right
+ r.Y2 = nBottom - m_tClientMargin.Bottom
+ RenderAutoScrollObject r, idxAutoScrollControl, nOpacity, bEnabled
+ Exit Sub
+End If
 '////////
 If m_nChildrenCount > 0 And Not bNoChild Then
  '///new:clip rect
@@ -1574,6 +1581,13 @@ If m_bSizeDirty Or bForce Then
    If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
    If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
   End If
+ Case 10 'tabstrip
+  t.Left = 4
+  t.Top = 22
+  t.Right = 4
+  t.Bottom = 4
+  If m_nScrollBars And vbHorizontal Then t.Bottom = t.Bottom + 16
+  If m_nScrollBars And vbVertical Then t.Right = t.Right + 16
  End Select
  '///
  m_tClientMargin = t
@@ -1917,6 +1931,7 @@ Dim b As Boolean, b1 As Boolean
 Dim w As Single, h As Single, f As Single
 Dim bInControl As Boolean
 Dim bNoReleaseCapture As Boolean
+Dim idxAutoScrollControl As Long
 '///
 Dim bNoChild As Boolean
 '///
@@ -1983,6 +1998,8 @@ Case 1 'form
   b = True
  End If
  If m_nState And 2& Then bNoChild = True
+ '///new:auto scroll
+ If m_nStyle And &H2000& Then idxAutoScrollControl = 1
 Case 3 'frame
  '///focus(?)
  If bInControl And nEventType = 1 Then pSetFocus
@@ -1993,6 +2010,8 @@ Case 3 'frame
  If m_nScrollBars And vbVertical Then
   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
  End If
+ '///new:auto scroll
+ If m_nStyle And &H2000& Then idxAutoScrollControl = 1
 Case 4 'button
  If bInControl Then
   If nEventType = 1 Then pSetFocus
@@ -2022,12 +2041,8 @@ Case 6 'picturebox
  If m_nScrollBars And vbVertical Then
   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
  End If
- If m_nStyle And &H2000& Then '???
-  bInControl = bInControl And x >= m_tRectScreen.Left + m_tClientMargin.Left And _
-  x < m_tRectScreen.Right - m_tClientMargin.Right And _
-  y >= m_tRectScreen.Top + m_tClientMargin.Top And _
-  y < m_tRectScreen.Bottom - m_tClientMargin.Bottom
- End If
+ '///new:auto scroll
+ If m_nStyle And &H2000& Then idxAutoScrollControl = 1
 Case 7 'textbox
  If bInControl Then
   If nEventType = 1 Then pSetFocus
@@ -2134,40 +2149,62 @@ Case 10 'tab strip
  If bInControl And nEventType = 1 Then pSetFocus
  '///tab header
  If bInControl Or FakeDXUISetCapture = m_nIndex Then
-  b = b Or m_objTab.OnMouseEvent(Button, Shift, x - m_tClientToScreenOffset.x, y - m_tClientToScreenOffset.y, nEventType)
+  b = b Or m_objTab.OnMouseEvent(Button, Shift, x - m_tRectScreen.Left, y - m_tRectScreen.Top, nEventType)
  End If
- 'TODO:other
+ '///scrollbar
+ If m_nScrollBars And vbHorizontal Then
+  b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
+ End If
+ If m_nScrollBars And vbVertical Then
+  b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(1))
+ End If
+ '///auto scroll
+ If m_nStyle And &H2000& Then
+  idxAutoScrollControl = m_objTab.SelectedTab
+  If idxAutoScrollControl <= 0 Then idxAutoScrollControl = -1
+ End If
  '///
 Case Else
  'TODO:
 End Select
+'///new:auto scroll (???)
+If idxAutoScrollControl > 0 Then
+ bNoChild = bNoChild Or Not (x >= m_tRectScreen.Left + m_tClientMargin.Left And _
+ x < m_tRectScreen.Right - m_tClientMargin.Right And _
+ y >= m_tRectScreen.Top + m_tClientMargin.Top And _
+ y < m_tRectScreen.Bottom - m_tClientMargin.Bottom)
+End If
 '////////////////////////////////
 '//                            //
 '////////////////////////////////
 If bInControl And Not bNoChild And FakeDXUISetCapture <> m_nIndex Then '?
  For i = m_nChildrenCount To 1 Step -1
   If bChildrenProcessed Then Exit For '???
-  With FakeDXUIControls(m_idxChildren(i))
-   If .Style And FCS_TopMost Then
-    ret = .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed)
-    If ret Then
-     If ret > 0 Then OnMouseEvent = ret
-     bChildrenProcessed = True
+  If idxAutoScrollControl = 0 Or idxAutoScrollControl = i Then
+   With FakeDXUIControls(m_idxChildren(i))
+    If .Style And FCS_TopMost Then
+     ret = .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed)
+     If ret Then
+      If ret > 0 Then OnMouseEvent = ret
+      bChildrenProcessed = True
+     End If
     End If
-   End If
-  End With
+   End With
+  End If
  Next i
  For i = m_nChildrenCount To 1 Step -1
   If bChildrenProcessed Then Exit For '???
-  With FakeDXUIControls(m_idxChildren(i))
-   If (.Style And FCS_TopMost) = 0 Then
-    ret = .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed)
-    If ret Then
-     If ret > 0 Then OnMouseEvent = ret
-     bChildrenProcessed = True
+  If idxAutoScrollControl = 0 Or idxAutoScrollControl = i Then
+   With FakeDXUIControls(m_idxChildren(i))
+    If (.Style And FCS_TopMost) = 0 Then
+     ret = .OnMouseEvent(Button, Shift, x, y, nEventType, bChildrenProcessed)
+     If ret Then
+      If ret > 0 Then OnMouseEvent = ret
+      bChildrenProcessed = True
+     End If
     End If
-   End If
-  End With
+   End With
+  End If
  Next i
 End If
 '////////after
@@ -2590,6 +2627,24 @@ If m_nType = 9 And FakeDXUIPopup_ComboBox = m_nIndex Then
  If m_nStyle And 7& Then Text = m_objListView.List(nRow, m_nComboBoxPrimaryColumn)
 End If
 FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
+End Sub
+
+
+Private Sub m_objTab_TabClick(ByVal TabIndex As Long)
+Dim i As Long, idx As Long
+'TODO:when tab closed, order of children controls goes wrong
+If m_nStyle And &H3000& Then 'auto select
+ For i = 1 To m_nChildrenCount
+  idx = m_idxChildren(i)
+  If idx > 0 And idx <= FakeDXUIControlCount Then
+   With FakeDXUIControls(idx)
+    If .ControlType >= 0 Then
+     .Visible = i = TabIndex
+    End If
+   End With
+  End If
+ Next i
+End If
 End Sub
 
 
