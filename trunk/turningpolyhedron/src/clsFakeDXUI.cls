@@ -72,6 +72,10 @@ Attribute m_objListView.VB_VarHelpID = -1
 Private WithEvents m_objTab As clsFakeDXUITab
 Attribute m_objTab.VB_VarHelpID = -1
 
+'////////event object
+
+Private m_objEvent As IFakeDXUIEvent
+
 Friend Property Get ToolTipText() As String
 ToolTipText = m_sToolTipText
 End Property
@@ -737,6 +741,7 @@ m_nComboBoxPrimaryColumn = 1
 Set m_objTextBox = Nothing
 Set m_objListView = Nothing
 Set m_objTab = Nothing
+Set m_objEvent = Nothing
 Erase m_nAnimVal
 Erase m_tScrollBar
 With m_tScrollBar(0)
@@ -2629,7 +2634,6 @@ End If
 FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
 End Sub
 
-
 Private Sub m_objTab_TabClick(ByVal TabIndex As Long)
 Dim i As Long, idx As Long
 'TODO:when tab closed, order of children controls goes wrong
@@ -2647,4 +2651,34 @@ If m_nStyle And &H3000& Then 'auto select
 End If
 End Sub
 
+Friend Property Get EventObject() As IFakeDXUIEvent
+Set EventObject = m_objEvent
+End Property
 
+Friend Property Set EventObject(ByVal obj As IFakeDXUIEvent)
+Set m_objEvent = obj
+End Property
+
+'internal function!!!
+Friend Sub GetEventObject_1(ByRef obj As IFakeDXUIEvent, ByRef idx As Long)
+Set obj = m_objEvent
+idx = m_idxParent
+End Sub
+
+Friend Function GetEventObject() As IFakeDXUIEvent
+Dim obj As IFakeDXUIEvent
+Dim idx As Long
+If Not m_objEvent Is Nothing Then
+ Set GetEventObject = m_objEvent
+Else
+ idx = m_idxParent
+ Do While idx > 0 And idx <= FakeDXUIControlCount
+  FakeDXUIControls(idx).GetEventObject_1 obj, idx
+  If Not obj Is Nothing Then
+   Set GetEventObject = obj
+   Exit Function
+  End If
+ Loop
+ Set GetEventObject = FakeDXUIEvent
+End If
+End Function

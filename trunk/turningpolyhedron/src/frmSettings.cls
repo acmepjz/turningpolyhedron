@@ -14,12 +14,17 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private m_nAdapterModeCount As Long
-Private m_tAdapterModes() As D3DDISPLAYMODE
+Private m_tAdapterModes() As D3DDISPLAYMODE '0-based
 
 Private m_sFileName As String
 
+'dirty workaround for show in center of screen. TODO:
 Private m_tDefaultPos As typeFakeDXUIRectEx
-Private m_idx(31) As Long
+
+'control index
+Private m_idx(127) As Long
+
+Implements IFakeDXUIEvent
 
 Friend Function LoadFile(Optional ByVal sFileName As String) As Boolean
 'TODO:
@@ -49,35 +54,93 @@ GetAdapterModes
 '///
 With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
+ Set .EventObject = Me
  m_idx(0) = .Index
  m_tDefaultPos = .RectangleEx
- '///
- .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
- With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 198, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
-  m_idx(1) = .Index
-  With .ListViewObject
-   .FullRowSelect = True
-   .AddColumn ""
-   For i = 0 To m_nAdapterModeCount - 1
-    .AddItem CStr(m_tAdapterModes(i).Width) + "x" + CStr(m_tAdapterModes(i).Height)
-   Next i
+ '///tab control
+ With .AddNewChildren(FakeCtl_TabStrip, 8, 8, -8, -40, &H3003000, , , , , , , , , 1, 1)
+  '///graphics
+  With .AddNewChildren(FakeCtl_None, 0, 0, 320, 240, , , False)
+   'resolution
+   .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
+   With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
+    m_idx(1) = .Index
+    With .ListViewObject
+     .FullRowSelect = True
+     .AddColumn ""
+     For i = 0 To m_nAdapterModeCount - 1
+      .AddItem CStr(m_tAdapterModes(i).Width) + "x" + CStr(m_tAdapterModes(i).Height) + "," + CStr(m_tAdapterModes(i).RefreshRate) + "Hz"
+     Next i
+    End With
+   End With
+   'fullscreen?
+   With .AddNewChildren(FakeCtl_Button, 10, 30, 198, 48, FBS_CheckBox, , , , _
+   objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
+    m_idx(2) = .Index
+   End With
+   'post process?
+   With .AddNewChildren(FakeCtl_Button, 10, 60, 198, 78, FBS_CheckBox, , , , _
+   objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
+    m_idx(3) = .Index
+   End With
+   'HDR blur quality
+   .AddNewChildren FakeCtl_Label, 10, 80, 198, 98, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+   With .AddNewChildren(FakeCtl_ComboBox, 100, 80, 298, 98, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+    m_idx(4) = .Index
+    With .ListViewObject
+     .FullRowSelect = True
+     .AddColumn ""
+     .AddItem objText.GetText("Low")
+     .AddItem objText.GetText("Medium")
+     .AddItem objText.GetText("High")
+    End With
+   End With
+  End With
+  '///
+  With .TabObject
+   .AddTab objText.GetText("Graphics")
+   .AddTab objText.GetText("Game")
+   .SelectedTab = 1
   End With
  End With
- '///
- With .AddNewChildren(FakeCtl_Button, 10, 30, 198, 50, FBS_CheckBox, , , , _
- objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
-  m_idx(2) = .Index
- End With
+ '///buttons
+ .AddNewChildren FakeCtl_Button, -192, -32, -136, -8, FBS_Default Or &H3000000, , , , _
+ objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+ .AddNewChildren FakeCtl_Button, -128, -32, -72, -8, FBS_Cancel Or &H3000000, , , , _
+ objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
+ .AddNewChildren FakeCtl_Button, -64, -32, -8, -8, &H3000000, , , , _
+ objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
 End With
 '///
 'TODO:
 End Sub
 
-'TODO:
+'TODO:read current settings
 Friend Sub Show()
 Dim idx As Long
+Dim i As Long
+'///
+Dim b(7) As Boolean, n(7) As Long
+'///
 idx = m_idx(0)
 If idx > 0 Then
+ '///graphics
+ 'screen resolution
+ For i = 0 To m_nAdapterModeCount - 1
+  If d3dpp.BackBufferWidth = m_tAdapterModes(i).Width And d3dpp.BackBufferHeight = m_tAdapterModes(i).Height Then
+   If d3dpp.FullScreen_RefreshRateInHz = 0 Or d3dpp.FullScreen_RefreshRateInHz = m_tAdapterModes(i).RefreshRate Then
+    FakeDXUIControls(m_idx(1)).ListViewObject.SelectedRow = i + 1
+    Exit For
+   End If
+  End If
+ Next i
+ 'fullscreen?
+ FakeDXUIControls(m_idx(2)).Value = (d3dpp.Windowed = 0) And 1&
+ 'other
+ frmMain.pGetPostProcessSettings b(0), n(0)
+ FakeDXUIControls(m_idx(3)).Value = b(0) And 1&
+ FakeDXUIControls(m_idx(4)).ListViewObject.SelectedRow = n(0) + 1
+ '///over
  With FakeDXUIControls(idx)
   .RectangleEx = m_tDefaultPos
   .Show 1
@@ -94,4 +157,51 @@ If idx > 0 Then
   .Hide
  End With
 End If
+End Sub
+
+'TODO:
+Friend Sub Apply()
+Dim i As Long
+Dim w As Long, h As Long
+Dim nFull As Long
+'///graphics
+'resolution and fullscreen
+With FakeDXUIControls(m_idx(1)).ListViewObject
+ i = .SelectedRow
+ If i > 0 And i <= m_nAdapterModeCount Then
+  With m_tAdapterModes(i - 1)
+   w = .Width
+   h = .Height
+   'TODO:refresh rate
+  End With
+ End If
+End With
+nFull = FakeDXUIControls(m_idx(2)).Value
+If w > 0 And h > 0 Then
+ frmMain.pChangeResolution w, h, nFull
+End If
+'other
+frmMain.pSetPostProcessSettings FakeDXUIControls(m_idx(3)).Value, FakeDXUIControls(m_idx(4)).ListViewObject.SelectedRow - 1
+'///
+End Sub
+
+Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
+'
+End Sub
+
+Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
+Select Case obj.Name
+Case "cmdApply"
+ Apply
+Case "cmdOK"
+ Apply
+ Hide
+Case "cmdCancel"
+ Hide
+End Select
+End Sub
+
+Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
+obj.Hide
+Cancel = True
 End Sub

@@ -12,6 +12,7 @@ msgstr ""
 
 #.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
 #.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
+#. MsgBox "libmini error at " + s + " line " + CStr(nLine), vbCritical, objText.GetText("Fatal Error")
 msgid "Fatal Error"
 msgstr ""
 
@@ -19,12 +20,20 @@ msgstr ""
 msgid "Can't create device!!!"
 msgstr ""
 
-#. s = objText.GetText("DejaVu Sans;Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language.
-msgid "DejaVu Sans;Tahoma"
+#. s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
+msgid "Tahoma"
 msgstr ""
 
 #. Me.Caption = objText.GetText("Turning Polyhedron")
 msgid "Turning Polyhedron"
+msgstr ""
+
+#.  .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1, , , objText.GetText("Exit the program.")
+msgid "Exit the program."
+msgstr ""
+
+#.  .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , "Options", , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+msgid "Change the game settings."
 msgstr ""
 
 #.  s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
@@ -33,5 +42,85 @@ msgstr ""
 
 #.  MsgBox s2, vbExclamation, objText.GetText("Error")
 msgid "Error"
+msgstr ""
+
+#. 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
+msgid "Options"
+msgstr ""
+
+#.    .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
+msgid "Resolution"
+msgstr ""
+
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
+msgid "Change the screen resolution."
+msgstr ""
+
+#.    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
+msgid "Fullscreen"
+msgstr ""
+
+#.    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
+msgid "Determines whether the program should run in full screen mode."
+msgstr ""
+
+#.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
+msgid "Post process"
+msgstr ""
+
+#.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
+msgid "Enables post process effects."
+msgstr ""
+
+#.    .AddNewChildren FakeCtl_Label, 10, 80, 198, 98, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+msgid "HDR quality"
+msgstr ""
+
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 80, 298, 98, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+msgid "Set the quality of HDR blur."
+msgstr ""
+
+#.      .AddItem objText.GetText("Low")
+msgid "Low"
+msgstr ""
+
+#.      .AddItem objText.GetText("Medium")
+msgid "Medium"
+msgstr ""
+
+#.      .AddItem objText.GetText("High")
+msgid "High"
+msgstr ""
+
+#.    .AddTab objText.GetText("Graphics")
+msgid "Graphics"
+msgstr ""
+
+#.    .AddTab objText.GetText("Game")
+msgid "Game"
+msgstr ""
+
+#.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+msgid "OK"
+msgstr ""
+
+#.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+msgid "Apply changes and close dialog."
+msgstr ""
+
+#.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
+msgid "Cancel"
+msgstr ""
+
+#.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
+msgid "Discard changes and close dialog."
+msgstr ""
+
+#.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
+msgid "Apply"
+msgstr ""
+
+#.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
+msgid "Apply changes immediately."
 msgstr ""
 
