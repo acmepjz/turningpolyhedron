@@ -233,7 +233,7 @@ If d3dd9 Is Nothing Then
  End
 End If
 '///font test
-s = objText.GetText("DejaVu Sans;Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language.
+s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
 '///
 D3DXCreateSprite d3dd9, objFontSprite
 D3DXCreateFontW d3dd9, 32, 0, 0, 0, 0, 1, 0, 0, 0, pGetFontName(s), objFont
@@ -297,13 +297,10 @@ Private Sub pCreateUI()
 Dim i As Long
 FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
 With FakeDXUIControls(1)
- .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1, , , "Exit the program."
- .AddNewChildren FakeCtl_Button, 8, -48, 80, -32, FBS_CheckBox Or FBS_Graphical, , , , "Fullscreen", , "chkFullscreen", , 1, , 1, , , "Determines whether the program should run in full screen mode."
- .AddNewChildren FakeCtl_Button, 88, -72, 192, -56, FBS_CheckBox Or FBS_Graphical, , , , "Post process", , "chkPost", , 1, , 1, , , "Enables post process effects."
- .AddNewChildren FakeCtl_Button, 88, -48, 200, -32, , False, , , "HDR Blur Quality:", , , , 1, , 1
- .AddNewChildren FakeCtl_Button, 88, -24, 120, -8, FBS_OptionButton Or FBS_Graphical, , , , "Low", , "0", , 1, , 1, 1, "optHDRQ"
- .AddNewChildren FakeCtl_Button, 128, -24, 160, -8, FBS_OptionButton Or FBS_Graphical, , , , "Mid", , "1", , 1, , 1, , "optHDRQ"
- .AddNewChildren FakeCtl_Button, 168, -24, 200, -8, FBS_OptionButton Or FBS_Graphical, , , , "High", , "2", , 1, , 1, , "optHDRQ"
+ '///some buttons, including settings
+ .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1, , , objText.GetText("Exit the program.")
+ .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , "Options", , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+ '///
  With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFF20FF, , False, , "Form1234°¡°¢", , , , , , , , , "Test only!!!" + vbCrLf + "Don't touch!!!")
   .Show
   With .AddNewChildren(FakeCtl_None, 0, 0, 800, 600)
@@ -453,7 +450,7 @@ End Sub
 
 Private Sub pSetRenderState()
 'zFar can be very big and there's still small error, but zNear can't be very small
-objRenderTest.SetProjection_PerspectiveFovLH Atn(1.732), Me.ScaleWidth / Me.ScaleHeight, 0.1, 1000
+objRenderTest.SetProjection_PerspectiveFovLH Atn(1.732), d3dpp.BackBufferWidth / d3dpp.BackBufferHeight, 0.1, 1000
 With d3dd9
  .SetRenderState D3DRS_LIGHTING, 0
  .SetSamplerState 0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
@@ -576,21 +573,24 @@ Case "cmdDanger"
    .AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
   End With
  Next i
-Case "chkFullscreen"
- pChangeResolution 800, 600, obj.Value
 Case "Check1"
  i = FakeDXUIFindControl("Check2")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
  i = FakeDXUIFindControl("cmdClose")
  If i Then FakeDXUIControls(i).Enabled = obj.Value
-Case "chkPost"
- objRenderTest.PostProcessEnabled = obj.Value
-Case Else
- Select Case obj.GroupName
- Case "optHDRQ"
-  objRenderTest.HDRBlurQuality = Val(obj.Name)
- End Select
+Case "cmdOptions"
+ frmSettings.Show
 End Select
+End Sub
+
+Friend Sub pGetPostProcessSettings(ByRef bEnabled As Boolean, ByRef nHDRQuality As Long)
+bEnabled = objRenderTest.PostProcessEnabled
+nHDRQuality = objRenderTest.HDRBlurQuality
+End Sub
+
+Friend Sub pSetPostProcessSettings(ByVal bEnabled As Boolean, ByVal nHDRQuality As Long)
+objRenderTest.PostProcessEnabled = bEnabled
+objRenderTest.HDRBlurQuality = nHDRQuality
 End Sub
 
 Friend Sub pChangeResolution(Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal bFullscreen As VbTriState = vbUseDefault)

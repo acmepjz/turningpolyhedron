@@ -274,15 +274,19 @@ End Sub
 
 Public Sub FakeDXUIDispatchMessage(t As typeFakeDXUIMessage)
 Dim b As Boolean
+Dim obj As IFakeDXUIEvent
 Select Case t.iMsg
 Case FakeCtl_Msg_Click
- If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Click FakeDXUIControls(t.nParam1)
+ Set obj = FakeDXUIControls(t.nParam1).GetEventObject
+ If Not obj Is Nothing Then obj.Click FakeDXUIControls(t.nParam1)
 Case FakeCtl_Msg_Change
- If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Change FakeDXUIControls(t.nParam1)
+ Set obj = FakeDXUIControls(t.nParam1).GetEventObject
+ If Not obj Is Nothing Then obj.Change FakeDXUIControls(t.nParam1)
 Case FakeCtl_Msg_ScrollChange
  Select Case FakeDXUIControls(t.nParam1).ControlType
  Case 1, 3, 5, 6, 10
-  If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Change FakeDXUIControls(t.nParam1)
+  Set obj = FakeDXUIControls(t.nParam1).GetEventObject
+  If Not obj Is Nothing Then obj.Change FakeDXUIControls(t.nParam1)
  End Select
 Case FakeCtl_Msg_Size
  Select Case t.nParam2
@@ -294,7 +298,8 @@ Case FakeCtl_Msg_Size
 Case FakeCtl_Msg_Close
  Select Case t.nParam2
  Case 0
-  If Not FakeDXUIEvent Is Nothing Then FakeDXUIEvent.Unload FakeDXUIControls(t.nParam1), b
+  Set obj = FakeDXUIControls(t.nParam1).GetEventObject
+  If Not obj Is Nothing Then obj.Unload FakeDXUIControls(t.nParam1), b
   If Not b Then FakeDXUIControls(t.nParam1).Unload
  Case Else
   FakeDXUIControls(t.nParam1).Destroy

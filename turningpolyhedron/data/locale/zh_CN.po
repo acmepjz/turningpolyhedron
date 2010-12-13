@@ -21,6 +21,7 @@ msgstr "初始化D3D9失败!!!"
 
 #.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
 #.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
+#. MsgBox "libmini error at " + s + " line " + CStr(nLine), vbCritical, objText.GetText("Fatal Error")
 msgid "Fatal Error"
 msgstr "严重错误"
 
@@ -28,13 +29,21 @@ msgstr "严重错误"
 msgid "Can't create device!!!"
 msgstr "初始化D3D9设备失败!!!"
 
-#. s = objText.GetText("DejaVu Sans;Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language.
-msgid "DejaVu Sans;Tahoma"
-msgstr "文泉驿微米黑;文泉驿正黑;微软雅黑;黑体;宋体;Tahoma"
+#. s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
+msgid "Tahoma"
+msgstr "文泉驿微米黑;文泉驿正黑;微软雅黑;黑体;宋体"
 
 #. Me.Caption = objText.GetText("Turning Polyhedron")
 msgid "Turning Polyhedron"
 msgstr "摇立体"
+
+#.  .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1, , , objText.GetText("Exit the program.")
+msgid "Exit the program."
+msgstr "退出程序。"
+
+#.  .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , "Options", , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+msgid "Change the game settings."
+msgstr "修改游戏设置选项。"
 
 #.  s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
 msgid "Can't create D3DXEffect!! Error number: "
@@ -43,4 +52,87 @@ msgstr "初始化D3DXEffect失败!! 错误代码: "
 #.  MsgBox s2, vbExclamation, objText.GetText("Error")
 msgid "Error"
 msgstr "错误"
+
+#. 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
+msgid "Options"
+msgstr "选项"
+
+#.    .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
+msgid "Resolution"
+msgstr "分辨率"
+
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
+msgid "Change the screen resolution."
+msgstr "设置屏幕分辨率。"
+
+#.    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
+msgid "Fullscreen"
+msgstr "全屏幕"
+
+#.    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
+msgid "Determines whether the program should run in full screen mode."
+msgstr "设置程序是否以全屏模式运行。"
+
+#.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
+msgid "Post process"
+msgstr "后期处理"
+
+#.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
+msgid "Enables post process effects."
+msgstr "启用后期处理特效。"
+
+#.    .AddNewChildren FakeCtl_Label, 10, 80, 198, 98, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+msgid "HDR quality"
+msgstr "HDR质量"
+
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 80, 298, 98, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+msgid "Set the quality of HDR blur."
+msgstr "设置HDR模糊的质量。"
+
+#.      .AddItem objText.GetText("Low")
+msgid "Low"
+msgstr "低"
+
+#.      .AddItem objText.GetText("Medium")
+msgid "Medium"
+msgstr "中"
+
+#.      .AddItem objText.GetText("High")
+msgid "High"
+msgstr "高"
+
+#.    .AddTab objText.GetText("Graphics")
+msgid "Graphics"
+msgstr "图像"
+
+#.    .AddTab objText.GetText("Game")
+msgid "Game"
+msgstr "游戏"
+
+#.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+msgid "OK"
+msgstr "确定"
+
+#.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+msgid "Apply changes and close dialog."
+msgstr "应用变更并且关闭对话框。"
+
+#.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
+msgid "Cancel"
+msgstr "取消"
+
+#.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
+msgid "Discard changes and close dialog."
+msgstr "放弃变更并且关闭对话框。"
+
+#.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
+msgid "Apply"
+msgstr "应用"
+
+#.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
+msgid "Apply changes immediately."
+msgstr "立即应用选项变更。"
+
+#~ msgid "DejaVu Sans;Tahoma"
+#~ msgstr "文泉驿微米黑;文泉驿正黑;微软雅黑;黑体;宋体;Tahoma"
 
