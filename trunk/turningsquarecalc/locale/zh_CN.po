@@ -11,14 +11,14 @@ msgstr ""
 "X-Poedit-Language: Chinese\n"
 "X-Poedit-Country: CHINA\n"
 
-#.    DrawTextB bmG_Lv.hDC, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hDC, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Lv.hdc, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 #. GameMenuCaption(5) = objText.GetText("Random level")
 msgid "Random Level"
 msgstr "随机关卡"
 
-#.    DrawTextB bmG_Lv.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Lv.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Level %d"
 msgstr "第%d关"
 
@@ -90,45 +90,58 @@ msgstr "无解!"
 msgid "Error!"
 msgstr "出错了!"
 
-#. DrawTextB bmG.hDC, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Demo"
 msgstr "自动演示"
 
-#. DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#. DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Cancel"
 msgstr "取消"
 
-#. DrawTextB bmG.hDC, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Generate"
 msgstr "生成"
 
-#. DrawTextB bmG.hDC, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Random map mode:"
 msgstr "随机地图模式:"
 
-#. DrawTextB bmG.hDC, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hDC, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#. DrawTextB bmG.hdc, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Seed:"
 msgstr "种子:"
 
-#. 's = Replace(Replace(objText.GetText("#INSTRUCTIONS#"), "\n", vbLf), "\t", s1)
-#. s = Replace(objText.GetText("#INSTRUCTIONS#"), vbTab, Space(8))
-msgid "#INSTRUCTIONS#"
+#.  s = Space(8) + .GetText("Turning Square is a clone and enhancement to popular game Bloxorz. The aim of the game is to get the block to fall into the square hole at the end of each level. There are 33 levels in default level pack, and many levels in other level pack. You can make your own levels using level editor, or explore completely new levels using random level generator.")
+msgid "Turning Square is a clone and enhancement to popular game Bloxorz. The aim of the game is to get the block to fall into the square hole at the end of each level. There are 33 levels in default level pack, and many levels in other level pack. You can make your own levels using level editor, or explore completely new levels using random level generator."
+msgstr "“摇方块”是一款益智游戏，游戏的目标是控制方块落入每关最后的小洞。在默认关卡包中共有33关，还有更多附加关卡包。你也可以自己编辑关卡或者探索随机关卡。"
+
+#.  s = s + vbLf + Space(8) + .GetText("To move the block around the world, use the UP DOWN LEFT and RIGHT arrow keys. Be careful not to fall off the edges - the level will be restarted.")
+msgid "To move the block around the world, use the UP DOWN LEFT and RIGHT arrow keys. Be careful not to fall off the edges - the level will be restarted."
+msgstr "要移动方块，只需按下方向键。小心不要掉到边界以外——如果掉出去了，当前关卡就会重新开始。"
+
+#.  s = s + vbLf + Space(8) + .GetText("Bridges and switches are located in many levels. The switches are activated when they are pressed down by the block. You don't need to stay resting on the switch to keep bridges open. There are two types of switches: 'Heavy' X-shaped ones and 'Soft' round ones. Soft switches are activated when any part of your block presses it. Hard switches require much more pressure, so your block must be standing on its end to activate it. When activated, each switch may behave differently. Some will toggle the bridge state each time it is used. Some will only ever make certain bridges open, and activating it again will not make it close. Green or red colored squares will flash to indicate which bridges are being operated.")
+msgid "Bridges and switches are located in many levels. The switches are activated when they are pressed down by the block. You don't need to stay resting on the switch to keep bridges open. There are two types of switches: 'Heavy' X-shaped ones and 'Soft' round ones. Soft switches are activated when any part of your block presses it. Hard switches require much more pressure, so your block must be standing on its end to activate it. When activated, each switch may behave differently. Some will toggle the bridge state each time it is used. Some will only ever make certain bridges open, and activating it again will not make it close. Green or red colored squares will flash to indicate which bridges are being operated."
 msgstr ""
-"\t“摇方块”是一款益智游戏，游戏的目标是控制方块落入每关最后的小洞。在默认关卡包中共有33关，还有更多附加关卡包。你也可以自己编辑关卡或者探索随机关卡。要移动方块，只需按下方向键。小心不要掉到边界以外——如果掉出去了，当前关卡就会重新开始。\n"
-"\n"
-"\t桥梁和开关在很多关卡中出现。当开关被方块按下时就会被激活；你并不需要一直呆在开关上面以保持开关被按下。\n"
-"\n"
-"\t有两种类型的开关：“硬”的X型的开关和“软”的圆形的开关。当方块的任何部分按下“软”的开关时开关都会被激活；激活“硬”的开关需要更大的压力，所以方块必须“站”在上面。\n"
-"\n"
-"\t当开关被激活后，每个开关的行为可能不一样。有些开关每次按下时会切换特定桥梁的状态，另一些开关按下后会打开特定的桥梁，再次按下后不会关闭桥梁。当桥梁状态改变时，红色或绿色的方块会在桥梁上闪动，以提示桥梁的打开或关闭。\n"
-"\n"
-"\t橙色的砖块比其他的更易碎，不能承受太大的压力。如果方块“站”在上面，那么方块就会掉落。\n"
-"\n"
-"\t还有一种砖块上面有一个圆形的符号。当方块“站”在上面时方块将会被分成两小块，并被传送到不同的位置。两个小块可以独立控制，用空格键来切换。当两个小块靠到一起后就可以还原成原来的方块。小方块仍然可以按下“软”的开关，但是不能按下“硬”的开关。另外，小方块也不能落入终点，只有完整的方块才能落入终点。\n"
-"\n"
-"\t新版本中增加了几种砖块：突起的砖块、冰以及墙。方块“站”在突起的砖块上不太稳定，所以它会马上“摇”下来，除非有墙挡着。当方块完全处在冰上时就会滑动，一直到有部分离开冰或者撞墙。而墙作为一种障碍物，方块不能通过，但是可以斜着靠在上面，靠上去后仍可移动。(动画很丑陋)"
+"桥梁和开关在很多关卡中出现。当开关被方块按下时就会被激活；你并不需要一直呆在开关上面以保持开关被按下。\n"
+"        有两种类型的开关：“硬”的X型的开关和“软”的圆形的开关。当方块的任何部分按下“软”的开关时开关都会被激活；激活“硬”的开关需要更大的压力，所以方块必须“站”在上面。\n"
+"        当开关被激活后，每个开关的行为可能不一样。有些开关每次按下时会切换特定桥梁的状态，另一些开关按下后会打开特定的桥梁，再次按下后不会关闭桥梁。当桥梁状态改变时，红色或绿色的方块会在桥梁上闪动，以提示桥梁的打开或关闭。"
+
+#.  s = s + vbLf + Space(8) + .GetText("Orange tiles are more fragile than the rest of the land. If your block stands up vertically on an orange tile, the tile will give way and your block will fall.")
+msgid "Orange tiles are more fragile than the rest of the land. If your block stands up vertically on an orange tile, the tile will give way and your block will fall."
+msgstr "橙色的砖块比其他的更易碎，不能承受太大的压力。如果方块“站”在上面，那么方块就会掉落。"
+
+#.  s = s + vbLf + Space(8) + .GetText("The tile shaped like two brackets will teleports your block to different locations, splitting it into two smaller blocks at the same time. These can be controlled individually by pressing the SPACE BAR and will rejoin into a normal block when both are placed next to each other. Small blocks can still operate soft switches, but they're too small to activate heavy switches. Also small blocks can't go through the exit hole - only a complete block can finish the level.")
+msgid "The tile shaped like two brackets will teleports your block to different locations, splitting it into two smaller blocks at the same time. These can be controlled individually by pressing the SPACE BAR and will rejoin into a normal block when both are placed next to each other. Small blocks can still operate soft switches, but they're too small to activate heavy switches. Also small blocks can't go through the exit hole - only a complete block can finish the level."
+msgstr "还有一种砖块上面有一个圆形的符号。当方块“站”在上面时方块将会被分成两小块，并被传送到不同的位置。两个小块可以独立控制，用空格键来切换。当两个小块靠到一起后就可以还原成原来的方块。小方块仍然可以按下“软”的开关，但是不能按下“硬”的开关。另外，小方块也不能落入终点，只有完整的方块才能落入终点。"
+
+#.  s = s + vbLf + Space(8) + .GetText("There are some new tiles in Turning Square: pyramid, ice and wall. Your block is unstable when standing on the pyramid, so it will lie down immediately unless there is a wall next to your block. When the block is completely on the ice, it will slip until get off the ice or hit the wall. As an obstacle, your block can't pass through the wall, but it can recline on the wall and move around.")
+msgid "There are some new tiles in Turning Square: pyramid, ice and wall. Your block is unstable when standing on the pyramid, so it will lie down immediately unless there is a wall next to your block. When the block is completely on the ice, it will slip until get off the ice or hit the wall. As an obstacle, your block can't pass through the wall, but it can recline on the wall and move around."
+msgstr "新版本中增加了几种砖块：突起的砖块、冰以及墙。方块“站”在突起的砖块上不太稳定，所以它会马上“摇”下来，除非有墙挡着。当方块完全处在冰上时就会滑动，一直到有部分离开冰或者撞墙。而墙作为一种障碍物，方块不能通过，但是可以斜着靠在上面，靠上去后仍可移动。"
+
+#.  s = s + .GetText("(ANIMATION IS BROKEN)")
+msgid "(ANIMATION IS BROKEN)"
+msgstr "(动画很丑陋)"
 
 #.  s = objText.GetText("VB6 version, author: ") + "acme_pjz"
 msgid "VB6 version, author: "
@@ -142,27 +155,27 @@ msgstr "源代码下载地址:"
 msgid "Original version:"
 msgstr "要玩原版请登陆:"
 
-#.  .DrawTextXP bmG_Back.hDC, objText.GetText("OK"), 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.  .DrawTextXP bmG_Back.hdc, objText.GetText("OK"), 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "OK"
 msgstr "确定"
 
-#.    DrawTextB bmG_Back.hDC, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Copy"
 msgstr "复制"
 
-#.   DrawTextB bmG_Back.hDC, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hdc, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Moves"
 msgstr "本关移动"
 
-#.   DrawTextB bmG_Back.hDC, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hdc, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Time used"
 msgstr "本关用时"
 
-#.   DrawTextB bmG_Back.hDC, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hdc, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Retries"
 msgstr "本关重试"
 
-#.   DrawTextB bmG_Back.hDC, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hdc, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Menu"
 msgstr "菜单"
 
@@ -181,6 +194,12 @@ msgstr "选择关卡"
 #. GameMenuCaption(4) = objText.GetText("Open level file")
 msgid "Open level file"
 msgstr "打开文件"
+
+#.    DrawTextB bmG_Lv.hdc, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#. GameMenuCaption(5) = objText.GetText("Random level")
+msgid "Random level"
+msgstr "随机关卡"
 
 #. GameMenuCaption(6) = objText.GetText("Input solution")
 msgid "Input solution"
@@ -406,12 +425,12 @@ msgid "Edit"
 msgstr "编辑"
 
 #. Label1(2).Caption = objText.GetText("Pos2")
-#.     DrawTextB bmEdit.hDC, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.     DrawTextB bmEdit.hdc, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Pos2"
 msgstr "位置2"
 
 #. Label1(1).Caption = objText.GetText("Pos1")
-#.     DrawTextB bmEdit.hDC, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.     DrawTextB bmEdit.hdc, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Pos1"
 msgstr "位置1"
 
@@ -508,7 +527,7 @@ msgstr "水平翻转(&H)"
 msgid "Flip &Vertically"
 msgstr "竖直翻转(&H)"
 
-#. DrawTextB bmG.hDC, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Generating..."
 msgstr "正在生成……"
 
@@ -516,10 +535,40 @@ msgstr "正在生成……"
 msgid "(None)"
 msgstr "(无)"
 
-#.   DrawTextB bmEdit.hDC, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.   DrawTextB bmEdit.hdc, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Start"
 msgstr "起点"
 
+#~ msgid "#INSTRUCTIONS#"
+#~ msgstr ""
+#~ "\t“摇方块”是一款益智游戏，游戏的目标是控制方块落入每关最后的小洞。在默认关"
+#~ "卡包中共有33关，还有更多附加关卡包。你也可以自己编辑关卡或者探索随机关卡。"
+#~ "要移动方块，只需按下方向键。小心不要掉到边界以外——如果掉出去了，当前关卡就"
+#~ "会重新开始。\n"
+#~ "\n"
+#~ "\t桥梁和开关在很多关卡中出现。当开关被方块按下时就会被激活；你并不需要一直"
+#~ "呆在开关上面以保持开关被按下。\n"
+#~ "\n"
+#~ "\t有两种类型的开关：“硬”的X型的开关和“软”的圆形的开关。当方块的任何部分按"
+#~ "下“软”的开关时开关都会被激活；激活“硬”的开关需要更大的压力，所以方块必"
+#~ "须“站”在上面。\n"
+#~ "\n"
+#~ "\t当开关被激活后，每个开关的行为可能不一样。有些开关每次按下时会切换特定桥"
+#~ "梁的状态，另一些开关按下后会打开特定的桥梁，再次按下后不会关闭桥梁。当桥梁"
+#~ "状态改变时，红色或绿色的方块会在桥梁上闪动，以提示桥梁的打开或关闭。\n"
+#~ "\n"
+#~ "\t橙色的砖块比其他的更易碎，不能承受太大的压力。如果方块“站”在上面，那么方"
+#~ "块就会掉落。\n"
+#~ "\n"
+#~ "\t还有一种砖块上面有一个圆形的符号。当方块“站”在上面时方块将会被分成两小"
+#~ "块，并被传送到不同的位置。两个小块可以独立控制，用空格键来切换。当两个小块"
+#~ "靠到一起后就可以还原成原来的方块。小方块仍然可以按下“软”的开关，但是不能按"
+#~ "下“硬”的开关。另外，小方块也不能落入终点，只有完整的方块才能落入终点。\n"
+#~ "\n"
+#~ "\t新版本中增加了几种砖块：突起的砖块、冰以及墙。方块“站”在突起的砖块上不太"
+#~ "稳定，所以它会马上“摇”下来，除非有墙挡着。当方块完全处在冰上时就会滑动，一"
+#~ "直到有部分离开冰或者撞墙。而墙作为一种障碍物，方块不能通过，但是可以斜着靠"
+#~ "在上面，靠上去后仍可移动。(动画很丑陋)"
 #~ msgid "Failed!"
 #~ msgstr "生成失败!"
 #~ msgid "Width:"

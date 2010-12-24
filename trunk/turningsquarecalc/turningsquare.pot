@@ -2,14 +2,14 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
-#.    DrawTextB bmG_Lv.hDC, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hDC, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Lv.hdc, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 #. GameMenuCaption(5) = objText.GetText("Random level")
 msgid "Random Level"
 msgstr ""
 
-#.    DrawTextB bmG_Lv.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hDC, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Lv.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hdc, Replace(objText.GetText("Level %d"), "%d", CStr(GameLev)) + Me.Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Level %d"
 msgstr ""
 
@@ -81,31 +81,54 @@ msgstr ""
 msgid "Error!"
 msgstr ""
 
-#. DrawTextB bmG.hDC, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Demo"), Me.Font, r.Left + 8, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Demo"
 msgstr ""
 
-#. DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#. DrawTextB bmG.hDC, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Right - 72, r.Bottom - 24, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Cancel"), Me.Font, r.Left + 200, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Cancel"
 msgstr ""
 
-#. DrawTextB bmG.hDC, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Generate"), Me.Font, r.Left + 144, r.Bottom - 24, 48, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Generate"
 msgstr ""
 
-#. DrawTextB bmG.hDC, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Random map mode:"), Me.Font, r.Left + 8, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Random map mode:"
 msgstr ""
 
-#. DrawTextB bmG.hDC, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
-#.    DrawTextB bmG_Back.hDC, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#. DrawTextB bmG.hdc, objText.GetText("Seed:"), Me.Font, r.Left + 144, r.Top + 8, 128, 16, DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Seed:") + txtGame(0).Tag, Me.Font, 256, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Seed:"
 msgstr ""
 
-#. 's = Replace(Replace(objText.GetText("#INSTRUCTIONS#"), "\n", vbLf), "\t", s1)
-#. s = Replace(objText.GetText("#INSTRUCTIONS#"), vbTab, Space(8))
-msgid "#INSTRUCTIONS#"
+#.  s = Space(8) + .GetText("Turning Square is a clone and enhancement to popular game Bloxorz. The aim of the game is to get the block to fall into the square hole at the end of each level. There are 33 levels in default level pack, and many levels in other level pack. You can make your own levels using level editor, or explore completely new levels using random level generator.")
+msgid "Turning Square is a clone and enhancement to popular game Bloxorz. The aim of the game is to get the block to fall into the square hole at the end of each level. There are 33 levels in default level pack, and many levels in other level pack. You can make your own levels using level editor, or explore completely new levels using random level generator."
+msgstr ""
+
+#.  s = s + vbLf + Space(8) + .GetText("To move the block around the world, use the UP DOWN LEFT and RIGHT arrow keys. Be careful not to fall off the edges - the level will be restarted.")
+msgid "To move the block around the world, use the UP DOWN LEFT and RIGHT arrow keys. Be careful not to fall off the edges - the level will be restarted."
+msgstr ""
+
+#.  s = s + vbLf + Space(8) + .GetText("Bridges and switches are located in many levels. The switches are activated when they are pressed down by the block. You don't need to stay resting on the switch to keep bridges open. There are two types of switches: 'Heavy' X-shaped ones and 'Soft' round ones. Soft switches are activated when any part of your block presses it. Hard switches require much more pressure, so your block must be standing on its end to activate it. When activated, each switch may behave differently. Some will toggle the bridge state each time it is used. Some will only ever make certain bridges open, and activating it again will not make it close. Green or red colored squares will flash to indicate which bridges are being operated.")
+msgid "Bridges and switches are located in many levels. The switches are activated when they are pressed down by the block. You don't need to stay resting on the switch to keep bridges open. There are two types of switches: 'Heavy' X-shaped ones and 'Soft' round ones. Soft switches are activated when any part of your block presses it. Hard switches require much more pressure, so your block must be standing on its end to activate it. When activated, each switch may behave differently. Some will toggle the bridge state each time it is used. Some will only ever make certain bridges open, and activating it again will not make it close. Green or red colored squares will flash to indicate which bridges are being operated."
+msgstr ""
+
+#.  s = s + vbLf + Space(8) + .GetText("Orange tiles are more fragile than the rest of the land. If your block stands up vertically on an orange tile, the tile will give way and your block will fall.")
+msgid "Orange tiles are more fragile than the rest of the land. If your block stands up vertically on an orange tile, the tile will give way and your block will fall."
+msgstr ""
+
+#.  s = s + vbLf + Space(8) + .GetText("The tile shaped like two brackets will teleports your block to different locations, splitting it into two smaller blocks at the same time. These can be controlled individually by pressing the SPACE BAR and will rejoin into a normal block when both are placed next to each other. Small blocks can still operate soft switches, but they're too small to activate heavy switches. Also small blocks can't go through the exit hole - only a complete block can finish the level.")
+msgid "The tile shaped like two brackets will teleports your block to different locations, splitting it into two smaller blocks at the same time. These can be controlled individually by pressing the SPACE BAR and will rejoin into a normal block when both are placed next to each other. Small blocks can still operate soft switches, but they're too small to activate heavy switches. Also small blocks can't go through the exit hole - only a complete block can finish the level."
+msgstr ""
+
+#.  s = s + vbLf + Space(8) + .GetText("There are some new tiles in Turning Square: pyramid, ice and wall. Your block is unstable when standing on the pyramid, so it will lie down immediately unless there is a wall next to your block. When the block is completely on the ice, it will slip until get off the ice or hit the wall. As an obstacle, your block can't pass through the wall, but it can recline on the wall and move around.")
+msgid "There are some new tiles in Turning Square: pyramid, ice and wall. Your block is unstable when standing on the pyramid, so it will lie down immediately unless there is a wall next to your block. When the block is completely on the ice, it will slip until get off the ice or hit the wall. As an obstacle, your block can't pass through the wall, but it can recline on the wall and move around."
+msgstr ""
+
+#.  s = s + .GetText("(ANIMATION IS BROKEN)")
+msgid "(ANIMATION IS BROKEN)"
 msgstr ""
 
 #.  s = objText.GetText("VB6 version, author: ") + "acme_pjz"
@@ -120,27 +143,27 @@ msgstr ""
 msgid "Original version:"
 msgstr ""
 
-#.  .DrawTextXP bmG_Back.hDC, objText.GetText("OK"), 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.  .DrawTextXP bmG_Back.hdc, objText.GetText("OK"), 568, 456, 64, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "OK"
 msgstr ""
 
-#.    DrawTextB bmG_Back.hDC, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Copy"), Me.Font, 400, 8, 48, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Copy"
 msgstr ""
 
-#.   DrawTextB bmG_Back.hDC, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hdc, objText.GetText("Moves"), Me.Font, 8, 24, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Moves"
 msgstr ""
 
-#.   DrawTextB bmG_Back.hDC, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hdc, objText.GetText("Time used"), Me.Font, 8, 40, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Time used"
 msgstr ""
 
-#.   DrawTextB bmG_Back.hDC, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hdc, objText.GetText("Retries"), Me.Font, 8, 56, 72, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Retries"
 msgstr ""
 
-#.   DrawTextB bmG_Back.hDC, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#.   DrawTextB bmG_Back.hdc, objText.GetText("Menu"), Me.Font, 600, 8, 32, 16, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
 msgid "Menu"
 msgstr ""
 
@@ -158,6 +181,12 @@ msgstr ""
 
 #. GameMenuCaption(4) = objText.GetText("Open level file")
 msgid "Open level file"
+msgstr ""
+
+#.    DrawTextB bmG_Lv.hdc, objText.GetText("Random Level"), Label1(10).Font, 0, 0, 640, 480, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#.    DrawTextB bmG_Back.hdc, objText.GetText("Random Level") + txtGame(4).Tag, Me.Font, 8, 8, 480, 16, DT_VCENTER Or DT_SINGLELINE, vbBlack, , True
+#. GameMenuCaption(5) = objText.GetText("Random level")
+msgid "Random level"
 msgstr ""
 
 #. GameMenuCaption(6) = objText.GetText("Input solution")
@@ -384,12 +413,12 @@ msgid "Edit"
 msgstr ""
 
 #. Label1(2).Caption = objText.GetText("Pos2")
-#.     DrawTextB bmEdit.hDC, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.     DrawTextB bmEdit.hdc, objText.GetText("Pos2"), Me.Font, x * 24 - 48, y * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Pos2"
 msgstr ""
 
 #. Label1(1).Caption = objText.GetText("Pos1")
-#.     DrawTextB bmEdit.hDC, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.     DrawTextB bmEdit.hdc, objText.GetText("Pos1"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Pos1"
 msgstr ""
 
@@ -486,7 +515,7 @@ msgstr ""
 msgid "Flip &Vertically"
 msgstr ""
 
-#. DrawTextB bmG.hDC, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
+#. DrawTextB bmG.hdc, objText.GetText("Generating..."), Label1(10).Font, r.Left, r.Top, w, h, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbWhite, , True
 msgid "Generating..."
 msgstr ""
 
@@ -494,7 +523,7 @@ msgstr ""
 msgid "(None)"
 msgstr ""
 
-#.   DrawTextB bmEdit.hDC, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
+#.   DrawTextB bmEdit.hdc, objText.GetText("Start"), Me.Font, i * 24 - 48, j * 24 - 24, 72, 24, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, vbRed, , True
 msgid "Start"
 msgstr ""
 
