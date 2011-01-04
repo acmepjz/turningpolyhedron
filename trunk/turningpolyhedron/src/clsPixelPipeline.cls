@@ -48,6 +48,8 @@ Private m_nHDRBlurQuality As Long
 Private m_bRadialBlur As Boolean
 'volumetric fog
 Private m_bVolumeFog As Boolean
+'depth of field
+Private m_bDetphOfField As Boolean
 
 '////////
 
@@ -56,6 +58,14 @@ Private m_fParam(3) As D3DXVECTOR4
 Private m_fovy As Single, m_fAspect As Single, m_zn As Single, m_zf As Single
 Private m_vDistCorrection As D3DXVECTOR4
 Private m_vDepthOfField As D3DXVECTOR4
+
+Friend Property Get DepthOfFiendEnabled() As Boolean
+DepthOfFiendEnabled = m_bDetphOfField
+End Property
+
+Friend Property Let DepthOfFiendEnabled(ByVal b As Boolean)
+m_bDetphOfField = b
+End Property
 
 Friend Sub SetDepthOfFieldParams(ByVal u0 As Single, ByVal v0 As Single, ByVal f As Single, ByVal r0 As Single)
 'current method is fixed f, move v0
@@ -371,10 +381,12 @@ Else
  "fx_linear_with_fog", 0, 0, 0, 0, Vec4, v2, Vec4(0, 200, 1), m_vDistCorrection
 End If
 '///depth of field test
-objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(0), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
-objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
-objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(0), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
-objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
+If m_bDetphOfField Then
+ objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(0), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+ objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+ objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(0), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
+ objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
+End If
 '////////////////HDR
 f = 4 '8
 '///calc luminance
