@@ -25,6 +25,7 @@ End Type
 Private Type typeTab
  Caption As String
  Tag As String
+ ToolTipText As String
  w As Long
  nFlags As Byte
  '1-enabled
@@ -181,7 +182,7 @@ For i = 1 To tabc
 Next i
 End Sub
 
-Friend Function AddTab(ByVal Caption As String, Optional ByVal Index As Long, Optional ByVal Enabled As Boolean = True, Optional ByVal Tag As String, Optional ByVal Closable As Boolean = False) As Long
+Friend Function AddTab(ByVal Caption As String, Optional ByVal Index As Long, Optional ByVal Enabled As Boolean = True, Optional ByVal Tag As String, Optional ByVal Closable As Boolean = False, Optional ByVal ToolTipText As String) As Long
 Dim i As Long
 tabc = tabc + 1
 ReDim Preserve tabs(1 To tabc)
@@ -197,6 +198,7 @@ If tsld >= i Then tsld = tsld + 1
 With tabs(i)
  .Caption = Caption
  .Tag = Tag
+ .ToolTipText = ToolTipText
  .nFlags = (Enabled And 1&) Or (Closable And 2&)
 End With
 CalcTabSize tabs(i)
@@ -268,6 +270,15 @@ Friend Property Let TabTag(ByVal Index As Long, ByVal s As String)
 tabs(Index).Tag = s
 End Property
 
+Friend Property Get TabToolTipText(ByVal Index As Long) As String
+TabToolTipText = tabs(Index).ToolTipText
+End Property
+
+Friend Property Let TabToolTipText(ByVal Index As Long, ByVal s As String)
+tabs(Index).ToolTipText = s
+FakeDXUIHideToolTipText '?
+End Property
+
 Private Sub CalcTabSize(d As typeTab)
 Dim w As Single
 FakeDXGDIDrawText FakeDXUIDefaultFont, d.Caption, 0, 0, , , 0.5, DT_SINGLELINE Or DT_CALCRECT, 0, , , , , , , , w
@@ -284,6 +295,10 @@ If n > 0 And n <= tabc And n <> tsld Then
  tsld = n
  RaiseEvent TabClick(tsld)
 End If
+End Property
+
+Friend Property Get HighlightTab() As Long
+HighlightTab = thl
 End Property
 
 Friend Sub BeforeMouseEvent()

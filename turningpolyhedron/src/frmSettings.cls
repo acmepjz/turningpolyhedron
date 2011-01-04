@@ -60,7 +60,7 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
  '///tab control
  With .AddNewChildren(FakeCtl_TabStrip, 8, 8, -8, -40, &H3003000, , , , , , , , , 1, 1)
   '///graphics
-  With .AddNewChildren(FakeCtl_None, 0, 0, 320, 240, , , False)
+  With .AddNewChildren(FakeCtl_None, 0, 0, 320, 320, , , False)
    'resolution
    .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
    With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
@@ -78,14 +78,19 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
     m_idx(2) = .Index
    End With
-   'post process?
+   'shadow map?
    With .AddNewChildren(FakeCtl_Button, 10, 60, 198, 78, FBS_CheckBox, , , , _
+   objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
+    m_idx(5) = .Index
+   End With
+   'post process?
+   With .AddNewChildren(FakeCtl_Button, 10, 90, 198, 108, FBS_CheckBox, , , , _
    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
     m_idx(3) = .Index
    End With
    'HDR blur quality
-   .AddNewChildren FakeCtl_Label, 10, 80, 198, 98, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
-   With .AddNewChildren(FakeCtl_ComboBox, 100, 80, 298, 98, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+   .AddNewChildren FakeCtl_Label, 20, 110, 198, 128, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+   With .AddNewChildren(FakeCtl_ComboBox, 100, 110, 298, 128, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
     m_idx(4) = .Index
     With .ListViewObject
      .FullRowSelect = True
@@ -95,11 +100,31 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
      .AddItem objText.GetText("High")
     End With
    End With
+   'fog?
+   With .AddNewChildren(FakeCtl_Button, 20, 130, 198, 148, FBS_CheckBox, , , , _
+   objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
+    m_idx(6) = .Index
+   End With
+   'volumetric fog?
+   With .AddNewChildren(FakeCtl_Button, 30, 150, 198, 168, FBS_CheckBox, , , , _
+   objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
+    m_idx(7) = .Index
+   End With
+   'DOF?
+   With .AddNewChildren(FakeCtl_Button, 20, 170, 198, 188, FBS_CheckBox, , , , _
+   objText.GetText("Depth of fiend"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+    m_idx(8) = .Index
+   End With
+   'radial blur?
+   With .AddNewChildren(FakeCtl_Button, 20, 190, 198, 208, FBS_CheckBox, , , , _
+   objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
+    m_idx(9) = .Index
+   End With
   End With
   '///
   With .TabObject
-   .AddTab objText.GetText("Graphics")
-   .AddTab objText.GetText("Game")
+   .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
+   .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
    .SelectedTab = 1
   End With
  End With
@@ -137,9 +162,12 @@ If idx > 0 Then
  'fullscreen?
  FakeDXUIControls(m_idx(2)).Value = (d3dpp.Windowed = 0) And 1&
  'other
- frmMain.pGetPostProcessSettings b(0), n(0)
+ frmMain.pGetPostProcessSettings b(0), n(0), b(1), b(2), b(3), b(4), b(5)
  FakeDXUIControls(m_idx(3)).Value = b(0) And 1&
  FakeDXUIControls(m_idx(4)).ListViewObject.SelectedRow = n(0) + 1
+ For i = 1 To 5
+  FakeDXUIControls(m_idx(4 + i)).Value = b(i) And 1&
+ Next i
  '///over
  With FakeDXUIControls(idx)
   .RectangleEx = m_tDefaultPos
@@ -178,10 +206,12 @@ With FakeDXUIControls(m_idx(1)).ListViewObject
 End With
 nFull = FakeDXUIControls(m_idx(2)).Value
 If w > 0 And h > 0 Then
- frmMain.pChangeResolution w, h, nFull
+ FakeDXAppChangeResolution w, h, nFull
 End If
 'other
-frmMain.pSetPostProcessSettings FakeDXUIControls(m_idx(3)).Value, FakeDXUIControls(m_idx(4)).ListViewObject.SelectedRow - 1
+frmMain.pSetPostProcessSettings FakeDXUIControls(m_idx(3)).Value, FakeDXUIControls(m_idx(4)).ListViewObject.SelectedRow - 1, _
+FakeDXUIControls(m_idx(5)).Value, FakeDXUIControls(m_idx(6)).Value, FakeDXUIControls(m_idx(7)).Value, _
+FakeDXUIControls(m_idx(8)).Value, FakeDXUIControls(m_idx(9)).Value
 '///
 End Sub
 

@@ -38,6 +38,7 @@ Public FakeDXUIMouseHoverTime As Long
 '////////tool tip text
 
 Public FakeDXUIPopup_ToolTipText As Long 'control index
+Public FakeDXUIPopup_ToolTipText_SubIndex As Long
 Public FakeDXUIPopup_ToolTipText_State As Long '0-5=hide-show
 Public FakeDXUIPopup_ToolTipText_Pos As typeFakeDXUIRect
 Public FakeDXUIPopup_ToolTipText_Caption As String
@@ -343,16 +344,25 @@ End If
 End Sub
 
 Public Sub FakeDXUIDoEvents()
+On Error Resume Next
 Dim t As typeFakeDXUIMessage
+''///
+'Static b As Boolean
+'If b Then Exit Sub
+'b = True
+''///
 If FakeDXUIControlCount > 0 Then
  Do While FakeDXUIMessageQueueHead < FakeDXUIMessageQueueTail
   t = FakeDXUIMessageQueue(FakeDXUIMessageQueueHead)
-  FakeDXUIDispatchMessage t
-  FakeDXUIMessageQueueHead = FakeDXUIMessageQueueHead + 1
+  FakeDXUIMessageQueueHead = FakeDXUIMessageQueueHead + 1 'skip current message first!!!
+  FakeDXUIDispatchMessage t 'then dispatch it, prevents dispatch the same message infinitely
  Loop
  FakeDXUIMessageQueueHead = 0
  FakeDXUIMessageQueueTail = 0
 End If
+''///
+'b = False
+''///
 End Sub
 
 Public Sub FakeDXUIDestroy()
@@ -432,6 +442,7 @@ End Sub
 
 Public Sub FakeDXUIHideToolTipText()
 FakeDXUIPopup_ToolTipText = 0
+FakeDXUIPopup_ToolTipText_SubIndex = 0
 End Sub
 
 'inefficient when drawing a lot of controls (50+)

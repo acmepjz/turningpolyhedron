@@ -92,9 +92,72 @@ If FakeDXUIPopup_ToolTipText = m_nIndex Then
 End If
 End Property
 
-Friend Sub ShowToolTipText(Optional ByVal x As Single = -1, Optional ByVal y As Single = -1)
-If m_sToolTipText <> "" Then
- FakeDXUIShowToolTipText m_nIndex, m_sToolTipText, x, y
+Friend Sub ShowToolTipText(Optional ByVal x As Single = -1, Optional ByVal y As Single = -1, Optional ByVal bUpdateOnly As Boolean)
+Dim i As Long, s As String
+'///
+If bUpdateOnly Then
+ If FakeDXUIPopup_ToolTipText <> m_nIndex Then
+  If FakeDXUIMouseHover = m_nIndex And FakeDXUIMouseHoverTime > &H10& Then
+   FakeDXUIMouseHoverTime = 0 'reset hover time
+  End If
+  Exit Sub
+ End If
+Else
+ FakeDXUIPopup_ToolTipText_SubIndex = 0
+End If
+'///control-specified tooltiptext
+Select Case m_nType
+Case 1 'form
+ If m_nAnimVal(4) Then
+  If FakeDXUIPopup_ToolTipText_SubIndex <> 4 Then
+   FakeDXUIPopup_ToolTipText_SubIndex = 4
+   FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
+  End If
+  Exit Sub
+ ElseIf m_nAnimVal(5) Then
+  If (m_nState And 3&) = 1& Then
+   If FakeDXUIPopup_ToolTipText_SubIndex <> 3 Then
+    FakeDXUIPopup_ToolTipText_SubIndex = 3
+    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
+   End If
+  Else
+   If FakeDXUIPopup_ToolTipText_SubIndex <> 5 Then
+    FakeDXUIPopup_ToolTipText_SubIndex = 5
+    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Maximize"), x, y
+   End If
+  End If
+  Exit Sub
+ ElseIf m_nAnimVal(6) Then
+  If (m_nState And 3&) = 2& Then
+   If FakeDXUIPopup_ToolTipText_SubIndex <> 3 Then
+    FakeDXUIPopup_ToolTipText_SubIndex = 3
+    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
+   End If
+  Else
+   If FakeDXUIPopup_ToolTipText_SubIndex <> 6 Then
+    FakeDXUIPopup_ToolTipText_SubIndex = 6
+    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Minimize"), x, y
+   End If
+  End If
+  Exit Sub
+ End If
+Case 10 'tabstrip
+ i = m_objTab.HighlightTab
+ If i > 0 And i <= m_objTab.TabCount Then
+  If FakeDXUIPopup_ToolTipText_SubIndex <> i + 100 Then
+   FakeDXUIPopup_ToolTipText_SubIndex = i + 100
+   s = m_objTab.TabToolTipText(i)
+   If s <> "" Then FakeDXUIShowToolTipText m_nIndex, s, x, y _
+   Else FakeDXUIHideToolTipText
+  End If
+  Exit Sub
+ End If
+End Select
+'///default tooltiptext
+If FakeDXUIPopup_ToolTipText_SubIndex <> 1 Then
+ FakeDXUIPopup_ToolTipText_SubIndex = 1
+ If m_sToolTipText <> "" Then FakeDXUIShowToolTipText m_nIndex, m_sToolTipText, x, y _
+ Else FakeDXUIHideToolTipText
 End If
 End Sub
 
@@ -1994,6 +2057,7 @@ Case 1 'form
      End If
     End If
    End If
+   If m_nStyle And 28& Then ShowToolTipText x, y, True '???
   End If
   '///
   'TODO:
@@ -2168,6 +2232,8 @@ Case 10 'tab strip
   idxAutoScrollControl = m_objTab.SelectedTab
   If idxAutoScrollControl <= 0 Then idxAutoScrollControl = -1
  End If
+ '///
+ ShowToolTipText x, y, True '???
  '///
 Case Else
  'TODO:

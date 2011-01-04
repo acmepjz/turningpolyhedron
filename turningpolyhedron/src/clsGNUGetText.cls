@@ -152,10 +152,28 @@ Private Const LOCALE_USER_DEFAULT As Long = &H400&
 Private Const LOCALE_SISO639LANGNAME As Long = &H59
 Private Const LOCALE_SISO3166CTRYNAME As Long = &H5A
 
+Private m_bCaseSensitive As Boolean
+
+'workaround for stupid VB collection :-3 extremely slow
+Friend Function StringToHex(ByRef s As String) As String
+Dim i As Long
+For i = 1 To Len(s)
+ StringToHex = StringToHex + Right("000" + Hex(AscW(Mid(s, i, 1)) And &HFFFF&), 4)
+Next i
+End Function
+
+Friend Property Get CaseSensitive() As Boolean
+CaseSensitive = m_bCaseSensitive
+End Property
+
 Friend Function GetText(ByRef s As String) As String
 On Error Resume Next
 Err.Clear
-GetText = objString.Item(s)
+If m_bCaseSensitive Then
+ GetText = objString.Item(StringToHex(s))
+Else
+ GetText = objString.Item(s)
+End If
 If Err.Number Then GetText = s
 Err.Clear 'add to fix some bugs
 End Function
@@ -176,7 +194,7 @@ Friend Sub Clear()
 Set objString = New Collection
 End Sub
 
-Friend Function LoadFileWithLocale(ByRef sFileName As String, Optional ByVal Locale As Long) As Boolean
+Friend Function LoadFileWithLocale(ByRef sFileName As String, Optional ByVal Locale As Long, Optional ByVal bCaseSensitive As Boolean) As Boolean
 On Error Resume Next
 Dim v As Variant, m As Long
 Dim s1 As String, s2 As String
@@ -206,7 +224,7 @@ For i = 0 To m
   Err.Clear
   If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
    If Err.Number = 0 Then
-    If LoadFile(s2) Then
+    If LoadFile(s2, bCaseSensitive) Then
      LoadFileWithLocale = True
      Exit Function
     End If
@@ -220,7 +238,7 @@ For i = 0 To m
    Err.Clear
    If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
     If Err.Number = 0 Then
-     If LoadFile(s2) Then
+     If LoadFile(s2, bCaseSensitive) Then
       LoadFileWithLocale = True
       Exit Function
      End If
@@ -235,7 +253,7 @@ For i = 0 To m
    Err.Clear
    If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
     If Err.Number = 0 Then
-     If LoadFile(s2) Then
+     If LoadFile(s2, bCaseSensitive) Then
       LoadFileWithLocale = True
       Exit Function
      End If
@@ -250,7 +268,7 @@ For i = 0 To m
    Err.Clear
    If Dir(s2, vbReadOnly Or vbHidden Or vbSystem) <> "" Then
     If Err.Number = 0 Then
-     If LoadFile(s2) Then
+     If LoadFile(s2, bCaseSensitive) Then
       LoadFileWithLocale = True
       Exit Function
      End If
@@ -261,7 +279,7 @@ For i = 0 To m
 Next i
 End Function
 
-Friend Function LoadFile(ByRef sFileName As String) As Boolean
+Friend Function LoadFile(ByRef sFileName As String, Optional ByVal bCaseSensitive As Boolean) As Boolean
 On Error Resume Next
 Dim i As Long
 Dim b() As Byte, s1 As String, s2 As String
@@ -298,9 +316,14 @@ If Err.Number = 0 Then
      s2 = ""
     End If
     '///add
-    objString.Add s2, s1
+    If bCaseSensitive Then
+     objString.Add s2, StringToHex(s1)
+    Else
+     objString.Add s2, s1
+    End If
    Next i
   End If
+  m_bCaseSensitive = bCaseSensitive
   LoadFile = True
  End If
 End If

@@ -37,25 +37,48 @@ msgstr "文泉驿微米黑;文泉驿正黑;微软雅黑;黑体;宋体"
 msgid "Turning Polyhedron"
 msgstr "摇立体"
 
-#.  .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1, , , objText.GetText("Exit the program.")
-msgid "Exit the program."
-msgstr "退出程序。"
+#.  .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+msgid "Exit"
+msgstr "退出"
 
-#.  .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , "Options", , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
-msgid "Change the game settings."
-msgstr "修改游戏设置选项。"
+#.  .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+msgid "Exit the game and return to desktop."
+msgstr "退出游戏并返回桌面。"
 
-#.  s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
-msgid "Can't create D3DXEffect!! Error number: "
-msgstr "初始化D3DXEffect失败!! 错误代码: "
-
-#.  MsgBox s2, vbExclamation, objText.GetText("Error")
-msgid "Error"
-msgstr "错误"
-
+#.  .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
 #. 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
 msgid "Options"
 msgstr "选项"
+
+#.  .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
+msgid "Change the game settings."
+msgstr "修改游戏设置选项。"
+
+#.   If .MsgBox(objText.GetText("Are you sure?"), vbYesNo, objText.GetText("Exit game")) = vbYes Then Unload Me
+msgid "Are you sure?"
+msgstr "你确定吗？"
+
+#.   If .MsgBox(objText.GetText("Are you sure?"), vbYesNo, objText.GetText("Exit game")) = vbYes Then Unload Me
+msgid "Exit game"
+msgstr "退出游戏"
+
+#.    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
+msgid "Close"
+msgstr "关闭"
+
+#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
+#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
+msgid "Restore"
+msgstr "还原"
+
+#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Maximize"), x, y
+msgid "Maximize"
+msgstr "最大化"
+
+#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Minimize"), x, y
+msgid "Minimize"
+msgstr "最小化"
 
 #.    .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
 msgid "Resolution"
@@ -73,6 +96,14 @@ msgstr "全屏幕"
 msgid "Determines whether the program should run in full screen mode."
 msgstr "设置程序是否以全屏模式运行。"
 
+#.    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
+msgid "Shadow"
+msgstr "阴影"
+
+#.    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
+msgid "Enables shadow effect."
+msgstr "启用阴影效果。"
+
 #.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
 msgid "Post process"
 msgstr "后期处理"
@@ -81,11 +112,11 @@ msgstr "后期处理"
 msgid "Enables post process effects."
 msgstr "启用后期处理特效。"
 
-#.    .AddNewChildren FakeCtl_Label, 10, 80, 198, 98, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+#.    .AddNewChildren FakeCtl_Label, 20, 110, 198, 128, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
 msgid "HDR quality"
 msgstr "HDR质量"
 
-#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 80, 298, 98, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 110, 298, 128, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
 msgid "Set the quality of HDR blur."
 msgstr "设置HDR模糊的质量。"
 
@@ -101,15 +132,53 @@ msgstr "中"
 msgid "High"
 msgstr "高"
 
-#.    .AddTab objText.GetText("Graphics")
+#.    objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
+msgid "Fog"
+msgstr "雾化"
+
+#.    objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
+msgid "Enables fog effect."
+msgstr "启用雾化效果。"
+
+#.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
+msgid "Volumetric fog"
+msgstr "体积雾"
+
+#.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
+msgid "Enables volumetric fog effect."
+msgstr "启用体积雾效果。"
+
+#.    objText.GetText("Depth of fiend"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+msgid "Depth of fiend"
+msgstr "景深"
+
+#.    objText.GetText("Depth of fiend"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+msgid "Enables depth of field effect."
+msgstr "启用景深效果。"
+
+#.    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
+msgid "Radial blur"
+msgstr "径向模糊"
+
+#.    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
+msgid "Enables radial blur effect."
+msgstr "启用径向模糊效果。"
+
+#.    .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
 msgid "Graphics"
 msgstr "图像"
 
-#.    .AddTab objText.GetText("Game")
+#.    .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
+msgid "Change the graphics settings."
+msgstr "修改图形选项。"
+
+#.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
 msgid "Game"
 msgstr "游戏"
 
 #.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+#.  AddButton objText.GetText("OK"), vbOK
+#.  AddButton objText.GetText("OK"), vbOK
 msgid "OK"
 msgstr "确定"
 
@@ -118,6 +187,9 @@ msgid "Apply changes and close dialog."
 msgstr "应用变更并且关闭对话框。"
 
 #.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
+#.  AddButton objText.GetText("Cancel"), vbCancel
+#.  AddButton objText.GetText("Cancel"), vbCancel
+#.  AddButton objText.GetText("Cancel"), vbCancel
 msgid "Cancel"
 msgstr "取消"
 
@@ -133,6 +205,39 @@ msgstr "应用"
 msgid "Apply changes immediately."
 msgstr "立即应用选项变更。"
 
+#.  AddButton objText.GetText("Abort"), vbAbort
+msgid "Abort"
+msgstr "终止"
+
+#.  AddButton objText.GetText("Retry"), vbRetry
+#.  AddButton objText.GetText("Retry"), vbRetry
+msgid "Retry"
+msgstr "重试"
+
+#.  AddButton objText.GetText("Ignore"), vbIgnore
+msgid "Ignore"
+msgstr "忽略"
+
+#.  AddButton objText.GetText("Yes"), vbYes
+#.  AddButton objText.GetText("Yes"), vbYes
+msgid "Yes"
+msgstr "是"
+
+#.  AddButton objText.GetText("No"), vbNo
+#.  AddButton objText.GetText("No"), vbNo
+msgid "No"
+msgstr "否"
+
+#.  s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
+msgid "Can't create D3DXEffect!! Error number: "
+msgstr "初始化D3DXEffect失败!! 错误代码: "
+
+#.  MsgBox s2, vbExclamation, objText.GetText("Error")
+msgid "Error"
+msgstr "错误"
+
+#~ msgid "Exit the program."
+#~ msgstr "退出程序。"
 #~ msgid "DejaVu Sans;Tahoma"
 #~ msgstr "文泉驿微米黑;文泉驿正黑;微软雅黑;黑体;宋体;Tahoma"
 

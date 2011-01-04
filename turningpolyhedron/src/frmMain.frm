@@ -30,10 +30,9 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = True
+#Const UseSubclass = False
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
-Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
 Private Declare Function GetAsyncKeyState Lib "user32.dll" (ByVal vKey As Long) As Integer
@@ -42,22 +41,6 @@ Private Type POINTAPI
     x As Long
     y As Long
 End Type
-Private Declare Function GetWindowLong Lib "user32.dll" Alias "GetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long) As Long
-Private Declare Function SetWindowLong Lib "user32.dll" Alias "SetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long, ByVal dwNewLong As Long) As Long
-Private Declare Function SetWindowPos Lib "user32.dll" (ByVal hwnd As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
-Private Const SWP_NOMOVE As Long = &H2
-Private Const SWP_NOZORDER As Long = &H4
-Private Const SWP_NOACTIVATE As Long = &H10
-Private Const GWL_STYLE As Long = -16
-Private Const GWL_EXSTYLE As Long = -20
-Private Declare Function AdjustWindowRectEx Lib "user32.dll" (ByRef lpRect As RECT, ByVal dwStyle As Long, ByVal bMenu As Long, ByVal dwExStyle As Long) As Long
-Private Type RECT
-    Left As Long
-    Top As Long
-    Right As Long
-    Bottom As Long
-End Type
-Private Declare Function GetActiveWindow Lib "user32.dll" () As Long
 
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
@@ -67,20 +50,6 @@ Public m_sMyGamesPath As String
 Implements IFakeDXUIEvent
 
 'TODO:mouseleave event
-
-Private objTest As D3DXMesh
-Private objDrawTest As New clsRenderTexture, objRenderTest As New clsRenderPipeline
-Private objLand As New clsRenderLandscape, objLandTexture As Direct3DTexture9
-
-Private objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
-
-'///test
-Private objFontSprite As D3DXSprite
-Private objFont As D3DXFont
-'///
-
-Private objTiming As New clsTiming
-Private objCamera As New clsCamera
 
 Private cSub As New cSubclass
 
@@ -153,36 +122,9 @@ End Sub
 
 Private Sub Form_Load()
 pInit
-pMainLoop
-End Sub
-
-Private Sub pMainLoop()
+'///
 objTiming.MinPeriod = 1000 / 30
-Do Until d3dd9 Is Nothing
- '///process key event
- pKeyEvent
- '///
- objTiming.WaitForNextFrame
- pRender
- DoEvents
-Loop
-End Sub
-
-Private Sub pKeyEvent()
-Dim dx As Single, dz As Single
-If GetActiveWindow = Me.hwnd And FakeDXUIActiveWindow = 0 Then
- If GetAsyncKeyState(vbKeyA) And &H8000& Then
-  dx = -0.5
- ElseIf GetAsyncKeyState(vbKeyD) And &H8000& Then
-  dx = 0.5
- End If
- If GetAsyncKeyState(vbKeyS) And &H8000& Then
-  dz = -0.5
- ElseIf GetAsyncKeyState(vbKeyW) And &H8000& Then
-  dz = 0.5
- End If
- If dx <> 0 Or dz <> 0 Then objCamera.MoveByLocalCoordinatesLH dx, 0, dz
-End If
+FakeDXAppMainLoop
 End Sub
 
 Private Sub pInit()
@@ -247,7 +189,7 @@ objRenderTest.Create
 '///vertex declaration test
 CreateVertexDeclaration
 '///
-pSetRenderState
+FakeDXAppSetDefaultRenderState
 '////////test
 Set objTest = pLoasMeshTest
 '///
@@ -298,8 +240,8 @@ Dim i As Long
 FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
 With FakeDXUIControls(1)
  '///some buttons, including settings
- .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , "Exit", , "cmdExit", , 1, , 1, , , objText.GetText("Exit the program.")
- .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , "Options", , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+ .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+ .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
  '///
  With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFF20FF, , False, , "Form1234°¡°¢", , , , , , , , , "Test only!!!" + vbCrLf + "Don't touch!!!")
   .Show
@@ -448,34 +390,6 @@ End With
 Set FakeDXUIEvent = Me
 End Sub
 
-Private Sub pSetRenderState()
-'zFar can be very big and there's still small error, but zNear can't be very small
-objRenderTest.SetProjection_PerspectiveFovLH Atn(1.732), d3dpp.BackBufferWidth / d3dpp.BackBufferHeight, 0.1, 1000
-With d3dd9
- .SetRenderState D3DRS_LIGHTING, 0
- .SetSamplerState 0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
- .SetSamplerState 0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR
- .SetSamplerState 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR
- .SetSamplerState 1, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
- .SetSamplerState 1, D3DSAMP_MINFILTER, D3DTEXF_LINEAR
- .SetSamplerState 1, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR
- '///
- .SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
- .SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_TEXTURE
- .SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
- .SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
- .SetTextureStageState 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE
- .SetTextureStageState 0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE
- .SetRenderState D3DRS_SRCBLEND, D3DBLEND_SRCALPHA
- .SetRenderState D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA
- .SetSamplerState 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP
- .SetSamplerState 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP
- '///
- .SetRenderState D3DRS_CULLMODE, D3DCULL_CCW
- '.SetRenderState D3DRS_NORMALIZENORMALS, 1
-End With
-End Sub
-
 Private Sub Form_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 '///
 If FakeDXUIOnMouseEvent(Button, Shift, x, y, 1) Then Exit Sub
@@ -513,7 +427,7 @@ Private Sub Form_Unload(Cancel As Integer)
 pDestroy
 End Sub
 
-Private Sub pDestroy()
+Friend Sub pDestroy()
 FakeDXUIDestroy
 Set objLand = Nothing
 Set objLandTexture = Nothing
@@ -565,7 +479,9 @@ Case "cmdClose"
  i = FakeDXUIFindControl("frmTopmost")
  If i Then FakeDXUIControls(i).Unload
 Case "cmdExit"
- Unload Me
+ With New clsFakeDXUIMsgBox
+  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo, objText.GetText("Exit game")) = vbYes Then Unload Me
+ End With
 Case "cmdDanger"
  Randomize Timer
  For i = 1 To 1
@@ -583,118 +499,25 @@ Case "cmdOptions"
 End Select
 End Sub
 
-Friend Sub pGetPostProcessSettings(ByRef bEnabled As Boolean, ByRef nHDRQuality As Long)
+Friend Sub pGetPostProcessSettings(ByRef bEnabled As Boolean, ByRef nHDRQuality As Long, ByRef bShadow As Boolean, ByRef bFog As Boolean, ByRef bVolumeFog As Boolean, ByRef bDOF As Boolean, ByRef bRadialBlur As Boolean)
 bEnabled = objRenderTest.PostProcessEnabled
 nHDRQuality = objRenderTest.HDRBlurQuality
+bFog = True
+bVolumeFog = objRenderTest.VolumetricFogEnabled
+bDOF = objRenderTest.DepthOfFiendEnabled
+bRadialBlur = objRenderTest.RadialBlurEnabled
 End Sub
 
-Friend Sub pSetPostProcessSettings(ByVal bEnabled As Boolean, ByVal nHDRQuality As Long)
+Friend Sub pSetPostProcessSettings(ByVal bEnabled As Boolean, ByVal nHDRQuality As Long, ByVal bShadow As Boolean, ByVal bFog As Boolean, ByVal bVolumeFog As Boolean, ByVal bDOF As Boolean, ByVal bRadialBlur As Boolean)
 objRenderTest.PostProcessEnabled = bEnabled
 objRenderTest.HDRBlurQuality = nHDRQuality
-End Sub
-
-Friend Sub pChangeResolution(Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal bFullscreen As VbTriState = vbUseDefault)
-On Error Resume Next
-Dim r As RECT
-'///
-Select Case bFullscreen
-Case vbFalse
- bFullscreen = 0
-Case vbUseDefault
- bFullscreen = 1 - d3dpp.Windowed
-Case Else
- bFullscreen = 1
-End Select
-If nWidth <= 0 Then nWidth = d3dpp.BackBufferWidth
-If nHeight <= 0 Then nHeight = d3dpp.BackBufferHeight
-If nWidth <> d3dpp.BackBufferWidth Or nHeight <> d3dpp.BackBufferHeight Or d3dpp.Windowed <> 1 - bFullscreen Then
- '///
- With d3dpp
-  .BackBufferWidth = nWidth
-  .BackBufferHeight = nHeight
-  .Windowed = 1 - bFullscreen
- End With
- '///it works!
- pOnLostDevice
- d3dd9.Reset d3dpp
- pOnInitalize True
- '///resize window
- If bFullscreen Then
-  SetWindowLong Me.hwnd, GWL_STYLE, &H160A0000
-  SetWindowLong Me.hwnd, GWL_EXSTYLE, &H40000
- Else
-  SetWindowLong Me.hwnd, GWL_STYLE, &H16CA0000
-  SetWindowLong Me.hwnd, GWL_EXSTYLE, &H40100
-  r.Right = nWidth
-  r.Bottom = nHeight
-  AdjustWindowRectEx r, &H16CA0000, 0, &H40100
-  SetWindowPos Me.hwnd, 0, 0, 0, r.Right - r.Left, r.Bottom - r.Top, SWP_NOMOVE Or SWP_NOZORDER Or SWP_NOACTIVATE
- End If
- '///resize FakeDXUI
- If FakeDXUIControlCount > 0 Then
-  With FakeDXUIControls(1)
-   .SetRightEx nWidth, 0
-   .SetBottomEx nHeight, 0
-  End With
- End If
-End If
-End Sub
-
-Friend Sub pOnLostDevice()
-Set objTexture = Nothing
-Set objNormalTexture = Nothing
-objRenderTest.OnLostDevice
-objDrawTest.OnLostDevice
-objFontSprite.OnLostDevice
-objFont.OnLostDevice
-End Sub
-
-Friend Sub pOnInitalize(Optional ByVal bReset As Boolean)
-Static bInit As Boolean
-If bReset Then bInit = False Else _
-If bInit Then Exit Sub
-'///
-If bReset Then
- objRenderTest.OnResetDevice
- objDrawTest.OnResetDevice
- objFontSprite.OnResetDevice
- objFont.OnResetDevice
- '///
- pSetRenderState
- '///
-End If
-'///
-D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objTexture
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objNormalTexture
-'///
-Dim obj As Direct3DTexture9
-Dim obj2 As Direct3DTexture9
-'///
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj2
-objDrawTest.ProcessTextureEx Nothing, obj, "process_lerp", 0, 0, 0, 0, Vec4(-1024), Vec4(-1024), Vec4, Vec4
-objDrawTest.BeginRenderToTexture obj, "gen_simplexnoise", 6, 0, 0, 0, Vec4(1, 1, 0.86, 1.85), Vec4, Vec4, Vec4
-d3dd9.BeginScene
-objTest.DrawSubset 0
-d3dd9.EndScene
-objDrawTest.EndRenderToTexture
-'///expand texture to eliminate seal
-objDrawTest.ProcessTexture obj, obj2, "expand8_r32f"
-objDrawTest.ProcessTexture obj2, obj, "expand8_r32f"
-'///
-objDrawTest.ProcessTextureEx obj, obj2, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
-Set obj = Nothing
-'///
-objDrawTest.ProcessTextureEx obj2, objTexture, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
-'///
-objDrawTest.ProcessTextureEx obj2, objNormalTexture, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 1), Vec4, Vec4, Vec4
-Set obj2 = Nothing
-'///
-bInit = True
+objRenderTest.VolumetricFogEnabled = bVolumeFog
+objRenderTest.DepthOfFiendEnabled = bDOF
+objRenderTest.RadialBlurEnabled = bRadialBlur
 End Sub
 
 Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
-'Cancel = True
+'
 End Sub
 
 Private Sub iSubclass_After(lReturn As Long, ByVal hwnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
@@ -732,96 +555,3 @@ Else
 End If
 End Sub
 
-Private Sub pRender()
-On Error Resume Next
-Dim i As Long
-Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
-Dim r(3) As Long
-Dim f(3) As Single
-Dim s As String
-If Me.WindowState = vbMinimized Then
- Sleep 20
- Exit Sub
-End If
-With d3dd9
- i = .TestCooperativeLevel
- If i = D3DERR_DEVICENOTRESET Then
-  Sleep 20
-  '///it works!
-  pOnLostDevice
-  Err.Clear
-  .Reset d3dpp
-  i = Err.Number
-  If i = 0 Then pOnInitalize True
-  '///
- End If
- If i = 0 Then
-  '///init
-  pOnInitalize
-  '///
-  D3DXMatrixRotationZ mat1, 0.005
-  .GetTransform D3DTS_WORLD, mat
-  D3DXMatrixMultiply mat, mat1, mat
-  .SetTransform D3DTS_WORLD, mat
-  objCamera.Apply objRenderTest
-  '///
-  objRenderTest.SetDepthOfFieldParams objCamera.RealDistance, 0.01, 0.1, 40
-  '///shadow map
-  If objRenderTest.BeginRender(RenderPass_ShadowMap) Then
-   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
-   .BeginScene
-   objTest.DrawSubset 0
-   .EndScene
-   objRenderTest.EndRender
-  End If
-  '///draw cube with effects
-  objRenderTest.BeginRenderToPostProcessTarget
-  objRenderTest.SetTexture objTexture
-  objRenderTest.SetNormalTexture objNormalTexture
-  If objRenderTest.BeginRender(RenderPass_Main) Then
-   .BeginScene
-   objTest.DrawSubset 0
-'   '////////draw landscape test (new and buggy)
-'   objRenderTest.SetTexture objLandTexture
-'   .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
-'   objRenderTest.UpdateRenderState
-'   objLand.Render objRenderTest, objCamera
-'   .SetTransform D3DTS_WORLD, mat
-'   '////////
-   .EndScene
-   objRenderTest.EndRender
-  End If
-  objRenderTest.EndRenderToPostProcessTarget
-  '////////volumetric fog test
-  If objRenderTest.BeginRender(RenderPass_FogVolume) Then
-   D3DXMatrixScaling mat1, 5, 5, 5
-   D3DXMatrixMultiply mat2, mat1, mat
-   .SetTransform D3DTS_WORLD, mat2
-   objRenderTest.UpdateRenderState '???
-   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
-   .BeginScene
-   objTest.DrawSubset 0
-   .EndScene
-   objRenderTest.EndRender
-   .SetTransform D3DTS_WORLD, mat
-  End If
-  '////////perform post process
-  objRenderTest.PerformPostProcess objDrawTest
-  '////////draw text test
-  .BeginScene
-  s = "FPS:" + Format(objTiming.FPS, "0.0")
-  FakeDXGDIDrawText FakeDXUIDefaultFont, s, 32, 32, 128, 32, 0.75, DT_NOCLIP, -1, , &HFF000000, , , , , True
-  FakeDXGDIDrawText FakeDXUIDefaultFont, "Landscape Triangles:" + CStr(MyMini_IndexCount) + vbCrLf + "Fog Triangles:" + CStr(MyMini_FogIndexCount), _
-  48, 256, 128, 32, 0.75, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.2, True
-  .EndScene
-  '////////
-  .BeginScene
-  FakeDXUIRender
-  .EndScene
-  '////////
-  .Present ByVal 0, ByVal 0, 0, ByVal 0
- End If
-End With
-'Command1.Refresh
-'Command2.Refresh
-End Sub
