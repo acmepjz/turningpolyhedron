@@ -156,6 +156,11 @@ Public Enum enumFakeDXUIControlStyle
  FFS_MaxButton = 8
  FFS_CloseButton = 16
  FFS_TitleBar = 32
+ '///label
+ FLS_Left = 0
+ FLS_Center = &H100&
+ FLS_Right = &H200&
+ FLS_WordWrap = 1
  '///button
  FBS_CheckBox = 1
  FBS_CheckBoxTristate = 2
@@ -164,6 +169,9 @@ Public Enum enumFakeDXUIControlStyle
  FBS_Graphical = 8
  FBS_Default = 16
  FBS_Cancel = 32
+ FBS_Left = &H100 'TODO:
+ FBS_Center = 0
+ FBS_Right = &H200& 'TODO:
  '///textbox
  FTS_LowerCaseOnly = 1
  FTS_UpperCaseOnly = 2
@@ -172,7 +180,7 @@ Public Enum enumFakeDXUIControlStyle
  FTS_AutoSelect = &H20000
  '///combobox
  FCBS_DropdownList = 0
- FCBS_DropdownCombo = 1 'currently unsupported
+ FCBS_DropdownCombo = 1 'currently partially supported
  FCBS_SimpleCombo = 2 'currently unsupported
  FCBS_FixedText = 8
  FCBS_NoAutoClose = 16
@@ -190,12 +198,17 @@ Public Enum enumFakeDXUIMessage
  FakeCtl_Msg_Size = 5 'param1=ctlindex param2=maximize(1) minimize(2)
  FakeCtl_Msg_Close = 16 'param1=ctlindex
  '///
- FakeCtl_Msg_ZOrder = 65001 'param1=ctlindex param2=HWND_TOP(0) HWND_BOTTOM(1) HWND_TOPMOST(-1) HWND_NOTOPMOST(-2)
+ FakeCtl_Msg_ZOrder = &H10000001 'param1=ctlindex param2=HWND_TOP(0) HWND_BOTTOM(1) HWND_TOPMOST(-1) HWND_NOTOPMOST(-2)
  FakeCtl_Msg_Click 'param1=ctlindex
  FakeCtl_Msg_Change 'param1=ctlindex
  FakeCtl_Msg_ScrollChange 'param1=ctlindex
  FakeCtl_Msg_GetFocus 'param1=ctlindex
  FakeCtl_Msg_LostFocus 'param1=ctlindex
+ FakeCtl_Msg_SetFocus 'param1=ctlindex
+ '///
+ FakeCtl_Msg_Special = &HFFFF0000
+ FakeCtl_Msg_AbortProcess 'abort process, discard all following messages
+ FakeCtl_Msg_NextTimeProcess 'quit process and process following messages next time
 End Enum
 
 Public FakeDXUIMessageQueue() As typeFakeDXUIMessage '0-based
@@ -232,7 +245,7 @@ End Function
 
 Public Sub FakeDXUIRemoveModalWindow(ByVal nIndex As Long)
 Dim i As Long
-If nIndex = 0 Then '?
+If nIndex < 0 Then 'remove all (?)
  FakeDXUIModalStackCount = 0
 Else
  For i = 1 To FakeDXUIModalStackCount
@@ -324,6 +337,8 @@ Case FakeCtl_Msg_GetFocus
  FakeDXUIControls(t.nParam1).OnGetFocus
 Case FakeCtl_Msg_LostFocus
  FakeDXUIControls(t.nParam1).OnLostFocus
+Case FakeCtl_Msg_SetFocus
+ FakeDXUIControls(t.nParam1).SetFocus
 End Select
 End Sub
 
@@ -343,6 +358,11 @@ If FakeDXUIControlCount > 0 Then
 End If
 End Sub
 
+Public Sub FakeDXUIDiscardAllMessages()
+FakeDXUIMessageQueueHead = 0
+FakeDXUIMessageQueueTail = 0
+End Sub
+
 Public Sub FakeDXUIDoEvents()
 On Error Resume Next
 Dim t As typeFakeDXUIMessage
@@ -355,7 +375,16 @@ If FakeDXUIControlCount > 0 Then
  Do While FakeDXUIMessageQueueHead < FakeDXUIMessageQueueTail
   t = FakeDXUIMessageQueue(FakeDXUIMessageQueueHead)
   FakeDXUIMessageQueueHead = FakeDXUIMessageQueueHead + 1 'skip current message first!!!
+  '///
+  Select Case t.iMsg
+  Case FakeCtl_Msg_AbortProcess 'abort, erase all messages
+   Exit Do
+  Case FakeCtl_Msg_NextTimeProcess 'just exit sub and next time process all messages left
+   Exit Sub
+  End Select
+  '///
   FakeDXUIDispatchMessage t 'then dispatch it, prevents dispatch the same message infinitely
+  '///
  Loop
  FakeDXUIMessageQueueHead = 0
  FakeDXUIMessageQueueTail = 0

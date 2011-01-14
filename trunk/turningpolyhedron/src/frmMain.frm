@@ -240,10 +240,12 @@ Dim i As Long
 FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
 With FakeDXUIControls(1)
  '///some buttons, including settings
- .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
- .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+ .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+ .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
  '///
- With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFF20FF, , False, , "Form1234가각", , , , , , , , , "Test only!!!" + vbCrLf + "Don't touch!!!")
+ .AddNewChildren(FakeCtl_Button, 108, -32, 180, -8, , , , , "Danger!!!", , "cmdDanger", , 1, , 1, , , "Debug").ForeColor = &HFF0000
+ '///
+ With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFF20FF, , False, , "Form1234가각")
   .Show
   With .AddNewChildren(FakeCtl_None, 0, 0, 800, 600)
   '///
@@ -255,6 +257,7 @@ With FakeDXUIControls(1)
   .AddNewChildren(FakeCtl_TextBox, 132, 52, 196, 76, &H3030004, , , , , "528").SmallChange = 1
   .AddNewChildren(FakeCtl_TextBox, 200, 52, 296, 76, &H3030000, , , , , "528").SmallChange = 0.0625
   With .AddNewChildren(FakeCtl_Frame, 120, 144, 240, 256, FCS_CanGetFocus, , , , "Form1234가각")
+   .ForeColor = &HFF0000
    .ScrollBars = vbBoth
    .Min = -50
    .Max = 50
@@ -483,12 +486,20 @@ Case "cmdExit"
   If .MsgBox(objText.GetText("Are you sure?"), vbYesNo, objText.GetText("Exit game")) = vbYes Then Unload Me
  End With
 Case "cmdDanger"
- Randomize Timer
- For i = 1 To 1
-  With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
-   .AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
-  End With
- Next i
+ With New clsFakeDXUIMsgBox
+  For i = 1 To 9
+   .AddButton , vbOK
+  Next i
+  .MsgBox CStr(.MsgBox("HAHA", 15)), 15
+  .MsgBox , 15
+ End With
+ frmSettings.Show
+' Randomize Timer
+' For i = 1 To 1
+'  With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
+'   .AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
+'  End With
+' Next i
 Case "Check1"
  i = FakeDXUIFindControl("Check2")
  If i Then FakeDXUIControls(i).Enabled = obj.Value

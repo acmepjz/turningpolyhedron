@@ -69,7 +69,7 @@ Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef D
 '  destLen  - processed output size
 'Returns:
 '  SZ_OK -OK
-'  SZ_ERROR_MEM        - Memory allocation error
+'  SZ_ERROR_MEM        - Memory allocatiOn Error
 '  SZ_ERROR_PARAM      - Incorrect paramater
 '  SZ_ERROR_OUTPUT_EOF - output buffer overflow
 '  SZ_ERROR_THREAD     - errors in multithreading functions (only for Mt version)
@@ -108,7 +108,7 @@ Optional ByVal numThreads As Long = -1) As enumSRes
 'Returns:
 '  SZ_OK -OK
 '  SZ_ERROR_DATA        - Data error
-'  SZ_ERROR_MEM         - Memory allocation error
+'  SZ_ERROR_MEM         - Memory allocatiOn Error
 '  SZ_ERROR_UNSUPPORTED - Unsupported properties
 '  SZ_ERROR_INPUT_EOF   - it needs more bytes in input buffer (src)
 '

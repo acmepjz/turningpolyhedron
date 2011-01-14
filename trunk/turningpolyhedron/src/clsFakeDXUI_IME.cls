@@ -18,8 +18,8 @@ Private Const m_nFontZoom As Single = 0.5
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Function lstrlen Lib "kernel32.dll" Alias "lstrlenA" (ByRef lpString As Any) As Long
 
-Private Declare Function ImmGetContext Lib "imm32.dll" (ByVal hWnd As Long) As Long
-Private Declare Function ImmReleaseContext Lib "imm32.dll" (ByVal hWnd As Long, ByVal himc As Long) As Long
+Private Declare Function ImmGetContext Lib "imm32.dll" (ByVal hwnd As Long) As Long
+Private Declare Function ImmReleaseContext Lib "imm32.dll" (ByVal hwnd As Long, ByVal himc As Long) As Long
 
 Private Declare Function ImmGetCandidateList Lib "imm32.dll" Alias "ImmGetCandidateListA" (ByVal himc As Long, ByVal dwIndex As Long, ByRef lpCandidateList As Any, ByVal dwBufLen As Long) As Long
 Private Declare Function ImmGetCandidateListCount Lib "imm32.dll" Alias "ImmGetCandidateListCountA" (ByVal himc As Long, ByRef lpdwListCount As Long) As Long
@@ -42,8 +42,8 @@ Private Declare Function ImmGetDescriptionW Lib "imm32.dll" (ByVal HKL As Long, 
 Private Declare Function ImmEscapeW Lib "imm32.dll" (ByVal HKL As Long, ByVal himc As Long, ByVal un As Long, ByRef lpv As Any) As Long
 Private Const IME_ESC_IME_NAME As Long = &H1006
 
-Private Declare Function ImmGetDefaultIMEWnd Lib "imm32.dll" (ByVal hWnd As Long) As Long
-Private Declare Function SendMessage Lib "user32.dll" Alias "SendMessageA" (ByVal hWnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByRef lParam As Any) As Long
+Private Declare Function ImmGetDefaultIMEWnd Lib "imm32.dll" (ByVal hwnd As Long) As Long
+Private Declare Function SendMessage Lib "user32.dll" Alias "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal wParam As Long, ByRef lParam As Any) As Long
 Private Const WM_IME_CONTROL As Long = &H283
 Private Const IMC_CLOSESTATUSWINDOW As Long = &H21
 
@@ -53,7 +53,7 @@ Private Const IME_CMODE_FULLSHAPE As Long = &H8
 Private Const IME_CMODE_SYMBOL As Long = &H400
 Private Declare Function ImmSetOpenStatus Lib "imm32.dll" (ByVal himc As Long, ByVal b As Long) As Long
 
-Private Declare Function GetTextExtentPoint32W Lib "Gdi32.dll" ( _
+Private Declare Function GetTextExtentPoint32W Lib "gdi32.dll" ( _
   ByVal hdc As Long, _
   ByRef lpString As Any, _
   ByVal c As Long, _
@@ -259,8 +259,8 @@ a:
 m_bHasImm32 = False
 End Sub
 
-Friend Sub Create(ByVal hWnd As Long)
-m_hWnd = hWnd
+Friend Sub Create(ByVal hwnd As Long)
+m_hWnd = hwnd
 OnInputLanguageChange
 End Sub
 

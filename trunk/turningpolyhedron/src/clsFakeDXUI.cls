@@ -13,6 +13,9 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'You can change this parameter, but currently following controls are not affected: ListView,Tab,ToolTipText,IME
+'TODO:customizable
+
 Private Const m_nFontZoom As Single = 0.5
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
@@ -26,6 +29,9 @@ Private m_sCaption As String, m_sText As String, m_sGroupName As String, m_sTool
 Private m_bEnabled As Boolean, m_bVisible As Boolean
 Private m_nValue As Long
 Private m_nScrollBars As ScrollBarConstants
+
+Private m_nBackColor As Long '-1=transparent (default)
+Private m_nForeColor As Long
 
 Private m_tRectEx As typeFakeDXUIRectEx, m_tRectEx_Backup As typeFakeDXUIRectEx
 Private m_tRect As typeFakeDXUIRect
@@ -75,6 +81,26 @@ Attribute m_objTab.VB_VarHelpID = -1
 '////////event object
 
 Private m_objEvent As IFakeDXUIEvent
+
+'RRGGBB
+Friend Property Get BackColor() As Long
+BackColor = m_nBackColor
+End Property
+
+'RRGGBB
+Friend Property Let BackColor(ByVal n As Long)
+m_nBackColor = n
+End Property
+
+'RRGGBB
+Friend Property Get ForeColor() As Long
+ForeColor = m_nForeColor
+End Property
+
+'RRGGBB
+Friend Property Let ForeColor(ByVal n As Long)
+m_nForeColor = n
+End Property
 
 Friend Property Get ToolTipText() As String
 ToolTipText = m_sToolTipText
@@ -775,6 +801,7 @@ End Sub
 
 Friend Sub Unload()
 m_nClosing = 1
+FakeDXUIRemoveModalWindow m_nIndex
 End Sub
 
 Friend Sub Destroy()
@@ -801,6 +828,8 @@ m_nClosing = 0
 m_nScrollBars = 0
 m_idxFocus = 0
 m_nComboBoxPrimaryColumn = 1
+m_nBackColor = -1
+m_nForeColor = 0
 Set m_objTextBox = Nothing
 Set m_objListView = Nothing
 Set m_objTab = Nothing
@@ -823,12 +852,12 @@ If FakeDXUIActiveWindow = m_nIndex Then FakeDXUIActiveWindow = 0
 If FakeDXUIFocus = m_nIndex Then FakeDXUIFocus = 0
 If FakeDXUISetCapture = m_nIndex Then FakeDXUISetCapture = 0
 '///
-If m_idxParent > 0 And m_idxParent <= FakeDXUIControlCount Then
+If m_idxParent > 0 And m_idxParent <= FakeDXUIControlCount And m_nChildIndex > 0 Then
  FakeDXUIControls(m_idxParent).RemoveChildren m_nChildIndex
 End If
 '///
 m_idxParent = 0
-For i = 1 To m_nChildrenCount
+For i = 1 To m_nChildrenCount 'comment following code then the IDE crashes!!! :D
  FakeDXUIControls(m_idxChildren(i)).ChildIndex = 0
  FakeDXUIControls(m_idxChildren(i)).Destroy
 Next i
@@ -1060,7 +1089,8 @@ obj.Render r.x1, r.y1, nOpacity, bEnabled
 d3dd9.SetScissorRect r0
 End Sub
 
-'TODO:forecolor,etc.
+'TODO:forecolor,backcolor,etc.
+'currently forecolor support:button,label,frame
 Friend Sub Render(Optional ByVal nParentClientLeft As Single, Optional ByVal nParentClientTop As Single, Optional ByVal nOpacity As Single = 1, Optional ByVal bEnabled As Boolean = True)
 Dim i As Long, j As Long, jj As Long, k As Long, kk As Long
 Dim nLeft As Single, nTop As Single
@@ -1084,7 +1114,12 @@ If m_nClosing > 0 And m_nClosing <= &H10& Then
  m_nClosing = m_nClosing + 1
  If m_nClosing > 5 Then
   m_nClosing = 0
-  Destroy
+  '///buggy
+  'Destroy
+  '///delay destroy so we don't change childen data when rendering
+  m_bVisible = False
+  FakeDXUIPostMessage FakeCtl_Msg_Close, m_nIndex, 1
+  '///
   Exit Sub
  End If
 ElseIf m_nClosing > &H10 And m_nClosing <= &H20& Then
@@ -1218,7 +1253,10 @@ Case 1 'form
 Case 2 'label
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
- FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, , i, , , , , , , True
+ FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, _
+ (DT_CENTER And ((m_nStyle And &H300&) = &H100&)) Or _
+ (DT_RIGHT And ((m_nStyle And &H300&) = &H200&)) Or _
+ (DT_WORDBREAK And ((m_nStyle And 1&) <> 0)), i Or m_nForeColor, , , , , , , True
 Case 3 'frame
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
@@ -1226,7 +1264,7 @@ Case 3 'frame
  FakeDXGDIStretchBltColored nRight - 4, nTop + 4, nRight + 4, nTop + 12, 36, 284, 44, 292, 512, i Or &HFFFFFF
  '///draw text
  FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 10, nTop - 4, nRight - nLeft, 24, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE Or DT_CALCRECT, _
- i Or (&H666666 And Not bEnabled), , , , , , , True, w, h
+ i Or (&H666666 And Not bEnabled) Or (m_nForeColor And bEnabled), , , , , , , True, w, h
  FakeDXGDIStretchBltColored nLeft + w + 12, nTop + 4, nRight - 4, nTop + 12, 16, 284, 32, 292, 512, i Or &HFFFFFF
  '///
  FakeDXGDIStretchBltExColored nLeft - 4, nTop + 12, nRight + 4, nBottom + 4, 4, 292, 44, 324, 8, 0, 8, 8, 512, i Or &HFFFFFF
@@ -1286,7 +1324,7 @@ Case 4 'button
    pRenderFocusRect nLeft + 16, nTop, nRight, nBottom, nOpacity
    '///caption
    FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + 16, nTop, nRight - nLeft - 16, nBottom - nTop, m_nFontZoom, DT_VCENTER Or DT_SINGLELINE, _
-   i, , , , , , , True
+   i Or m_nForeColor, , , , , , , True
   Else
    '///base
    FakeDXGDIStretchBltColored nLeft, f - 8, nLeft + 16, f + 8, kk + 48, 368, kk + 64, 384, 512, i Or &HFFFFFF
@@ -1344,7 +1382,8 @@ Case 4 'button
    '///focus
    pRenderFocusRect nLeft, nTop, nRight, nBottom, nOpacity
    '///caption
-   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, i, , , , , , , True
+   FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, _
+   i Or m_nForeColor, , , , , , , True
   Else
    '///base
    FakeDXGDIStretchBltExBlended nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, 164, 324, 204, 364, 8, 8, 8, 8, 512, 84, 324, j, i Or &HFFFFFF
@@ -1584,17 +1623,21 @@ If m_nChildrenCount > 0 And Not bNoChild Then
  '///
  nLeft = nLeft + m_tClientMargin.Left
  nTop = nTop + m_tClientMargin.Top
- '///
- For i = 1 To m_nChildrenCount
+ '///fix a bug:m_nChildrenCount can change during rendering :-4
+ i = 1
+ Do While i <= m_nChildrenCount
   With FakeDXUIControls(m_idxChildren(i))
    If (.Style And FCS_TopMost) = 0 Then .Render nLeft, nTop, nOpacity, bEnabled
   End With
- Next i
- For i = 1 To m_nChildrenCount
+  i = i + 1
+ Loop
+ i = 1
+ Do While i <= m_nChildrenCount
   With FakeDXUIControls(m_idxChildren(i))
    If .Style And FCS_TopMost Then .Render nLeft, nTop, nOpacity, bEnabled
   End With
- Next i
+  i = i + 1
+ Loop
  '///
  d3dd9.SetScissorRect r0
 End If
@@ -1833,6 +1876,7 @@ End Property
 
 Private Sub Class_Initialize()
 m_nType = -1
+m_nBackColor = -1
 m_bEnabled = True
 m_bVisible = True
 m_nComboBoxPrimaryColumn = 1
@@ -1898,7 +1942,7 @@ End If
 pButtonHighlight_1 = i
 End Function
 
-Private Sub pSetFocus()
+Friend Sub SetFocus()
 If m_nStyle And &H1000000 Then
  If FakeDXUIFocus <> m_nIndex Then
   If FakeDXUIFocus > 0 And FakeDXUIFocus <= FakeDXUIControlCount Then FakeDXUIPostMessage FakeCtl_Msg_LostFocus, FakeDXUIFocus
@@ -2071,7 +2115,7 @@ Case 1 'form
  If m_nStyle And &H2000& Then idxAutoScrollControl = 1
 Case 3 'frame
  '///focus(?)
- If bInControl And nEventType = 1 Then pSetFocus
+ If bInControl And nEventType = 1 Then SetFocus
  '///scrollbar
  If m_nScrollBars And vbHorizontal Then
   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
@@ -2083,7 +2127,7 @@ Case 3 'frame
  If m_nStyle And &H2000& Then idxAutoScrollControl = 1
 Case 4 'button
  If bInControl Then
-  If nEventType = 1 Then pSetFocus
+  If nEventType = 1 Then SetFocus
   i = pButtonHighlight_1(1, Button, nEventType, b)
   If i > 255 Then
    m_nAnimVal(4) = 255
@@ -2096,11 +2140,11 @@ Case 4 'button
   b = True
  End If
 Case 5 'scrollbar
- If bInControl And nEventType = 1 Then pSetFocus
+ If bInControl And nEventType = 1 Then SetFocus
  b = FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
 Case 6 'picturebox
  If bInControl Then
-  If nEventType = 1 Then pSetFocus
+  If nEventType = 1 Then SetFocus
   b = True
  End If
  '///scrollbar
@@ -2114,7 +2158,7 @@ Case 6 'picturebox
  If m_nStyle And &H2000& Then idxAutoScrollControl = 1
 Case 7 'textbox
  If bInControl Then
-  If nEventType = 1 Then pSetFocus
+  If nEventType = 1 Then SetFocus
   b = True
  End If
  '///scrollbar
@@ -2150,7 +2194,7 @@ Case 7 'textbox
  End If
  '///
 Case 8 'listview
- If bInControl And nEventType = 1 Then pSetFocus
+ If bInControl And nEventType = 1 Then SetFocus
  '///scrollbar
  If m_nScrollBars And vbHorizontal Then
   b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
@@ -2190,7 +2234,7 @@ Case 9 'combobox
  End If
  '///
  If bInControl Then
-  If nEventType = 1 Then pSetFocus
+  If nEventType = 1 Then SetFocus
   '///
   Select Case m_nStyle And 7&
   Case 0 'dropdown list
@@ -2215,7 +2259,7 @@ Case 9 'combobox
  End If
  '///
 Case 10 'tab strip
- If bInControl And nEventType = 1 Then pSetFocus
+ If bInControl And nEventType = 1 Then SetFocus
  '///tab header
  If bInControl Or FakeDXUISetCapture = m_nIndex Then
   b = b Or m_objTab.OnMouseEvent(Button, Shift, x - m_tRectScreen.Left, y - m_tRectScreen.Top, nEventType)

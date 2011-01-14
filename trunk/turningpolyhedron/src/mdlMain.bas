@@ -72,6 +72,9 @@ Public objFontSprite As D3DXSprite
 Public objFont As D3DXFont
 '////////
 
+''////////test debug
+'Public objDebug As New IVBOnErrorHook
+
 Public Sub CreateVertexDeclaration()
 ReDim m_tDefVertexDecl(0 To 7)
 m_tDefVertexDecl(0) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
@@ -100,6 +103,7 @@ End Sub
 'WARNING: use alias!!!
 Public Sub FakeDXAppMainLoop(Optional ByVal objCallback As IMainLoopCallback)
 Dim b As Boolean
+'objDebug.Hook
 Do Until d3dd9 Is Nothing
  '///process key event
  FakeDXAppProcessKeyEvent
@@ -342,6 +346,8 @@ With d3dd9
  .SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
  .SetTextureStageState 0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE
  .SetTextureStageState 0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE
+' .SetTextureStageState 1, D3DTSS_COLOROP, D3DTOP_DISABLE
+' .SetTextureStageState 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE
  .SetRenderState D3DRS_SRCBLEND, D3DBLEND_SRCALPHA
  .SetRenderState D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA
  .SetSamplerState 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP
