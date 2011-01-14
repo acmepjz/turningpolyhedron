@@ -35,7 +35,27 @@ Erase m_sButtonCaption
 Erase m_nButtonValue
 End Sub
 
-Friend Sub AddButton(ByVal s As String, ByVal nValue As VbMsgBoxResult)
+Friend Sub AddButton(Optional ByVal s As String, Optional ByVal nValue As VbMsgBoxResult)
+'///get default name
+If s = "" Then
+ Select Case nValue
+ Case 1 'vbOK
+  s = objText.GetText("OK")
+ Case 2 'vbCancel
+  s = objText.GetText("Cancel")
+ Case 3 'vbAbort
+  s = objText.GetText("Abort")
+ Case 4 'vbRetry
+  s = objText.GetText("Retry")
+ Case 5 'vbIgnore
+  s = objText.GetText("Ignore")
+ Case 6 'vbYes
+  s = objText.GetText("Yes")
+ Case 7 'vbNo
+  s = objText.GetText("No")
+ End Select
+End If
+'///
 m_nButtonCount = m_nButtonCount + 1
 ReDim Preserve m_sButtonCaption(1 To m_nButtonCount)
 ReDim Preserve m_nButtonValue(1 To m_nButtonCount)
@@ -46,52 +66,71 @@ End Sub
 Friend Sub AddDefaultButtons(ByVal Buttons As VbMsgBoxStyle)
 Select Case Buttons And 15&
 Case 0 'vbOKOnly
- AddButton objText.GetText("OK"), vbOK
+ AddButton , vbOK
 Case 1 'vbOKCancel
- AddButton objText.GetText("OK"), vbOK
- AddButton objText.GetText("Cancel"), vbCancel
+ AddButton , vbOK
+ AddButton , vbCancel
 Case 2 'vbAbortRetryIgnore
- AddButton objText.GetText("Abort"), vbAbort
- AddButton objText.GetText("Retry"), vbRetry
- AddButton objText.GetText("Ignore"), vbIgnore
+ AddButton , vbAbort
+ AddButton , vbRetry
+ AddButton , vbIgnore
 Case 3 'vbYesNoCancel
- AddButton objText.GetText("Yes"), vbYes
- AddButton objText.GetText("No"), vbNo
- AddButton objText.GetText("Cancel"), vbCancel
+ AddButton , vbYes
+ AddButton , vbNo
+ AddButton , vbCancel
 Case 4 'vbYesNo
- AddButton objText.GetText("Yes"), vbYes
- AddButton objText.GetText("No"), vbNo
+ AddButton , vbYes
+ AddButton , vbNo
 Case 5 'vbRetryCancel
- AddButton objText.GetText("Retry"), vbRetry
- AddButton objText.GetText("Cancel"), vbCancel
+ AddButton , vbRetry
+ AddButton , vbCancel
 End Select
 End Sub
 
 'TODO:autosize,custom buttons,default button,icon,etc.
 Friend Function MsgBox(Optional ByVal Prompt As String, Optional ByVal Buttons As VbMsgBoxStyle, Optional ByVal Title As String, Optional ByVal Default As VbMsgBoxResult) As VbMsgBoxResult
+Dim w As Long, h As Long
+Dim ww As Single, hh As Single
 Dim i As Long, x As Long
+Dim idx As Long
 '///
 If m_idx Then Exit Function
 m_bUnload = False
 m_nReturnValue = Default
 '///
-With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -100, _
-200, 100, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , Title, , , 0.5, 0.5, 0.5, 0.5)
+Select Case Buttons And 15&
+Case 0 To 5
+ ClearButtons
+ AddDefaultButtons Buttons
+End Select
+'///calc size
+w = m_nButtonCount * 64& - 8&
+If w < 32& Then w = 32&
+FakeDXGDIDrawText FakeDXUIDefaultFont, Prompt, 0, 0, w, , 0.5, DT_CALCRECT, 0, , , , , , , , ww, hh
+If ww < w Then ww = w
+'If ww > d3dpp.BackBufferWidth - 32 Then 'does not work
+' FakeDXGDIDrawText FakeDXUIDefaultFont, Prompt, 0, 0, ww, hh, 0.5, DT_WORDBREAK Or DT_CALCRECT, 0, , , , , , , , ww, hh
+' If ww < w Then ww = w
+ If ww > d3dpp.BackBufferWidth - 32 Then ww = d3dpp.BackBufferWidth - 32
+'End If
+If hh > d3dpp.BackBufferHeight - 80 Then hh = d3dpp.BackBufferHeight - 80
+w = CLng(ww) \ 2& + 12
+h = CLng(hh) \ 2& + 38
+'///
+With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -w, -h, _
+w, h, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , Title, , , 0.5, 0.5, 0.5, 0.5)
  m_idx = .Index
  Set .EventObject = Me
  '///
- .AddNewChildren FakeCtl_Label, 8, 8, -8, -8, , , , , Prompt, , , , , 1, 1
+ .AddNewChildren FakeCtl_Label, 8, 8, -8, -8, FLS_WordWrap, , , , Prompt, , , , , 1, 1
  '///
- Select Case Buttons And 15&
- Case 0 To 5
-  ClearButtons
-  AddDefaultButtons Buttons
- End Select
- '///
+ idx = (Buttons And &HFF00&) \ &H100& + 1
  x = 4& - m_nButtonCount * 32&
  For i = 1 To m_nButtonCount
-  .AddNewChildren FakeCtl_Button, x, -32, x + 56, -8, FCS_TabStop Or FCS_CanGetFocus, , , , m_sButtonCaption(i), , "MsgBox", _
-  0.5, 1, 0.5, 1, , CStr(m_nButtonValue(i))
+  With .AddNewChildren(FakeCtl_Button, x, -32, x + 56, -8, FCS_TabStop Or FCS_CanGetFocus, , , , m_sButtonCaption(i), , "MsgBox", _
+  0.5, 1, 0.5, 1, , CStr(m_nButtonValue(i)))
+   If i = idx Then FakeDXUIPostMessage FakeCtl_Msg_SetFocus, .Index
+  End With
   x = x + 64
  Next i
  '///
@@ -99,6 +138,8 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -100, _
 End With
 '///wait for single object
 FakeDXAppMainLoop Me
+''///fix a bug (?)
+'FakeDXUIRemoveModalWindow m_idx
 '///
 MsgBox = m_nReturnValue
 m_idx = 0
