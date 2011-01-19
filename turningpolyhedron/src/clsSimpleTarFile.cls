@@ -13,6 +13,17 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'////////////////////////////////
+'This file is public domain.
+'////////////////////////////////
+
+'////////
+'a simple and buggy tar reader/writer, supports the most basic features only
+'documents about tar file can be found at:
+'http://en.wikipedia.org/wiki/Tar_(file_format)
+'http://www.gnu.org/software/automake/manual/tar/Standard.html
+'////////
+
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Sub ZeroMemory Lib "kernel32.dll" Alias "RtlZeroMemory" (ByRef Destination As Any, ByVal Length As Long)
 
@@ -36,13 +47,6 @@ Private Type TIME_ZONE_INFORMATION
     DaylightDate As SYSTEMTIME
     DaylightBias As Long
 End Type
-
-'////////
-'a simple and buggy tar reader/writer, supports the most basic features only
-'documents about tar file can be found at:
-'http://en.wikipedia.org/wiki/Tar_(file_format)
-'http://www.gnu.org/software/automake/manual/tar/Standard.html
-'////////
 
 '/* tar Header Block, from POSIX 1003.1-1990.  */
 '

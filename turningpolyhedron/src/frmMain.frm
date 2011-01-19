@@ -510,23 +510,6 @@ Case "cmdOptions"
 End Select
 End Sub
 
-Friend Sub pGetPostProcessSettings(ByRef bEnabled As Boolean, ByRef nHDRQuality As Long, ByRef bShadow As Boolean, ByRef bFog As Boolean, ByRef bVolumeFog As Boolean, ByRef bDOF As Boolean, ByRef bRadialBlur As Boolean)
-bEnabled = objRenderTest.PostProcessEnabled
-nHDRQuality = objRenderTest.HDRBlurQuality
-bFog = True
-bVolumeFog = objRenderTest.VolumetricFogEnabled
-bDOF = objRenderTest.DepthOfFiendEnabled
-bRadialBlur = objRenderTest.RadialBlurEnabled
-End Sub
-
-Friend Sub pSetPostProcessSettings(ByVal bEnabled As Boolean, ByVal nHDRQuality As Long, ByVal bShadow As Boolean, ByVal bFog As Boolean, ByVal bVolumeFog As Boolean, ByVal bDOF As Boolean, ByVal bRadialBlur As Boolean)
-objRenderTest.PostProcessEnabled = bEnabled
-objRenderTest.HDRBlurQuality = nHDRQuality
-objRenderTest.VolumetricFogEnabled = bVolumeFog
-objRenderTest.DepthOfFiendEnabled = bDOF
-objRenderTest.RadialBlurEnabled = bRadialBlur
-End Sub
-
 Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
 '
 End Sub

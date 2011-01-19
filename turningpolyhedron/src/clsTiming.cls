@@ -13,6 +13,10 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'////////////////////////////////
+'This file is public domain.
+'////////////////////////////////
+
 Private Declare Function QueryPerformanceCounter Lib "kernel32.dll" (ByRef lpPerformanceCount As Currency) As Long
 Private Declare Function QueryPerformanceFrequency Lib "kernel32.dll" (ByRef lpFrequency As Currency) As Long
 Private Declare Function GetTickCount Lib "kernel32.dll" () As Long
