@@ -185,7 +185,7 @@ With d3dd9
   If objRenderTest.BeginRender(RenderPass_Main) Then
    .BeginScene
    objTest.DrawSubset 0
-'   '////////draw landscape test (new and buggy)
+'   '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
 '   objRenderTest.SetTexture objLandTexture
 '   .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
 '   objRenderTest.UpdateRenderState

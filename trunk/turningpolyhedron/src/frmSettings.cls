@@ -24,6 +24,20 @@ Private m_tDefaultPos As typeFakeDXUIRectEx
 'control index
 Private m_idx(127) As Long
 
+Private Enum enumSettingsDialogControls
+ IDC_Main = 0
+ IDC_Resolution
+ IDC_Fullscreen
+ IDC_PostProcess
+ IDC_HDRBlurQuality
+ IDC_ShadowMap
+ IDC_Fog
+ IDC_VolumetricFog
+ IDC_DepthOfField
+ IDC_RadialBlur
+ IDC_
+End Enum
+
 Implements IFakeDXUIEvent
 
 Friend Function LoadFile(Optional ByVal sFileName As String) As Boolean
@@ -55,7 +69,7 @@ GetAdapterModes
 With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
  Set .EventObject = Me
- m_idx(0) = .Index
+ m_idx(IDC_Main) = .Index
  m_tDefaultPos = .RectangleEx
  '///tab control
  With .AddNewChildren(FakeCtl_TabStrip, 8, 8, -8, -40, &H3003000, , , , , , , , , 1, 1)
@@ -64,7 +78,7 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
    'resolution
    .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
    With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
-    m_idx(1) = .Index
+    m_idx(IDC_Resolution) = .Index
     With .ListViewObject
      .FullRowSelect = True
      .AddColumn ""
@@ -81,17 +95,17 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
    'shadow map?
    With .AddNewChildren(FakeCtl_Button, 10, 60, 198, 78, FBS_CheckBox, , , , _
    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
-    m_idx(5) = .Index
+    m_idx(IDC_ShadowMap) = .Index
    End With
    'post process?
    With .AddNewChildren(FakeCtl_Button, 10, 90, 198, 108, FBS_CheckBox, , , , _
    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
-    m_idx(3) = .Index
+    m_idx(IDC_PostProcess) = .Index
    End With
    'HDR blur quality
    .AddNewChildren FakeCtl_Label, 20, 110, 198, 128, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
    With .AddNewChildren(FakeCtl_ComboBox, 100, 110, 298, 128, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
-    m_idx(4) = .Index
+    m_idx(IDC_HDRBlurQuality) = .Index
     With .ListViewObject
      .FullRowSelect = True
      .AddColumn ""
@@ -103,22 +117,22 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
    'fog?
    With .AddNewChildren(FakeCtl_Button, 20, 130, 198, 148, FBS_CheckBox, , , , _
    objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
-    m_idx(6) = .Index
+    m_idx(IDC_Fog) = .Index
    End With
    'volumetric fog?
    With .AddNewChildren(FakeCtl_Button, 30, 150, 198, 168, FBS_CheckBox, , , , _
    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
-    m_idx(7) = .Index
+    m_idx(IDC_VolumetricFog) = .Index
    End With
    'DOF?
    With .AddNewChildren(FakeCtl_Button, 20, 170, 198, 188, FBS_CheckBox, , , , _
    objText.GetText("Depth of fiend"), , , , , , , , , objText.GetText("Enables depth of field effect."))
-    m_idx(8) = .Index
+    m_idx(IDC_DepthOfField) = .Index
    End With
    'radial blur?
    With .AddNewChildren(FakeCtl_Button, 20, 190, 198, 208, FBS_CheckBox, , , , _
    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
-    m_idx(9) = .Index
+    m_idx(IDC_RadialBlur) = .Index
    End With
   End With
   '///
@@ -145,8 +159,6 @@ Friend Sub Show()
 Dim idx As Long
 Dim i As Long
 '///
-Dim b(7) As Boolean, n(7) As Long
-'///
 idx = m_idx(0)
 If idx > 0 Then
  '///graphics
@@ -154,23 +166,25 @@ If idx > 0 Then
  For i = 0 To m_nAdapterModeCount - 1
   If d3dpp.BackBufferWidth = m_tAdapterModes(i).Width And d3dpp.BackBufferHeight = m_tAdapterModes(i).Height Then
    If d3dpp.FullScreen_RefreshRateInHz = 0 Or d3dpp.FullScreen_RefreshRateInHz = m_tAdapterModes(i).RefreshRate Then
-    FakeDXUIControls(m_idx(1)).ListViewObject.SelectedRow = i + 1
+    FakeDXUIControls(m_idx(IDC_Resolution)).ListViewObject.SelectedRow = i + 1
     Exit For
    End If
   End If
  Next i
  'fullscreen?
- FakeDXUIControls(m_idx(2)).Value = (d3dpp.Windowed = 0) And 1&
+ FakeDXUIControls(m_idx(IDC_Fullscreen)).Value = (d3dpp.Windowed = 0) And 1&
  'other
- frmMain.pGetPostProcessSettings b(0), n(0), b(1), b(2), b(3), b(4), b(5)
- FakeDXUIControls(m_idx(3)).Value = b(0) And 1&
- FakeDXUIControls(m_idx(4)).ListViewObject.SelectedRow = n(0) + 1
- For i = 1 To 5
-  FakeDXUIControls(m_idx(4 + i)).Value = b(i) And 1&
- Next i
+ FakeDXUIControls(m_idx(IDC_PostProcess)).Value = objRenderTest.PostProcessEnabled And 1&
+ FakeDXUIControls(m_idx(IDC_HDRBlurQuality)).ListViewObject.SelectedRow = objRenderTest.HDRBlurQuality + 1
+ '///
+ FakeDXUIControls(m_idx(IDC_ShadowMap)).Value = 0 'TODO:
+ FakeDXUIControls(m_idx(IDC_Fog)).Value = 1 'TODO:
+ FakeDXUIControls(m_idx(IDC_VolumetricFog)).Value = objRenderTest.VolumetricFogEnabled And 1&
+ FakeDXUIControls(m_idx(IDC_DepthOfField)).Value = objRenderTest.DepthOfFiendEnabled And 1&
+ FakeDXUIControls(m_idx(IDC_RadialBlur)).Value = objRenderTest.RadialBlurEnabled And 1&
  '///over
  With FakeDXUIControls(idx)
-  .RectangleEx = m_tDefaultPos
+  .RectangleEx = m_tDefaultPos 'dirty code:centering window
   .Show 1
  End With
 End If
@@ -194,7 +208,7 @@ Dim w As Long, h As Long
 Dim nFull As Long
 '///graphics
 'resolution and fullscreen
-With FakeDXUIControls(m_idx(1)).ListViewObject
+With FakeDXUIControls(m_idx(IDC_Resolution)).ListViewObject
  i = .SelectedRow
  If i > 0 And i <= m_nAdapterModeCount Then
   With m_tAdapterModes(i - 1)
@@ -204,14 +218,16 @@ With FakeDXUIControls(m_idx(1)).ListViewObject
   End With
  End If
 End With
-nFull = FakeDXUIControls(m_idx(2)).Value
+nFull = FakeDXUIControls(m_idx(IDC_Fullscreen)).Value
 If w > 0 And h > 0 Then
  FakeDXAppChangeResolution w, h, nFull
 End If
-'other
-frmMain.pSetPostProcessSettings FakeDXUIControls(m_idx(3)).Value, FakeDXUIControls(m_idx(4)).ListViewObject.SelectedRow - 1, _
-FakeDXUIControls(m_idx(5)).Value, FakeDXUIControls(m_idx(6)).Value, FakeDXUIControls(m_idx(7)).Value, _
-FakeDXUIControls(m_idx(8)).Value, FakeDXUIControls(m_idx(9)).Value
+'///other
+objRenderTest.PostProcessEnabled = FakeDXUIControls(m_idx(IDC_PostProcess)).Value
+objRenderTest.HDRBlurQuality = FakeDXUIControls(m_idx(IDC_HDRBlurQuality)).ListViewObject.SelectedRow - 1
+objRenderTest.VolumetricFogEnabled = FakeDXUIControls(m_idx(IDC_VolumetricFog)).Value
+objRenderTest.DepthOfFiendEnabled = FakeDXUIControls(m_idx(IDC_DepthOfField)).Value
+objRenderTest.RadialBlurEnabled = FakeDXUIControls(m_idx(IDC_RadialBlur)).Value
 '///
 End Sub
 
