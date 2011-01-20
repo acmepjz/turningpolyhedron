@@ -30,10 +30,10 @@ Private m_nValueSizeMax As Long
 Private Type typeTreeStorageSubNode
  '///
  nType As Long
- '(-1=unused) ??
+ '(-1=unused) ?? not implemented
  '0=attribute
  '1=subnode
- '2=subnode(array mode) (???)
+ '2=subnode(array mode) (???) not implemented
  objSubNode As clsTreeStorageNode
  '///
  bName() As Byte 'UCS-2,0-based
@@ -48,6 +48,7 @@ Private m_tNodes() As typeTreeStorageSubNode '1-based
 Private m_nNodeCount As Long
 
 Implements ITreeStorageBuilder
+Implements ITreeStorageReader
 
 Friend Sub Destroy()
 Erase m_bName, m_bValue, m_tNodes
@@ -707,3 +708,47 @@ End Sub
 Private Sub ITreeStorageBuilder_SetValue(ByVal lp As Long, ByVal nLength As Long)
 SetValueEx lp, nLength
 End Sub
+
+Private Function ITreeStorageReader_GetName(lpName As Long) As Long
+If m_nNameSize > 0 Then
+ lpName = VarPtr(m_bName(0))
+ ITreeStorageReader_GetName = m_nNameSize
+End If
+End Function
+
+Private Function ITreeStorageReader_GetNextAttribute(ByVal nUserData As Long, lpName As Long, nNameSize As Long, lpValue As Long, nValueSize As Long) As Long
+Dim i As Long
+For i = nUserData + 1 To m_nNodeCount
+ If m_tNodes(i).nType = 0 Then
+  '///
+  nNameSize = m_tNodes(i).nNameSize
+  If nNameSize > 0 Then lpName = VarPtr(m_tNodes(i).bName(0))
+  '///
+  nValueSize = m_tNodes(i).nValueSize
+  If nValueSize > 0 Then lpValue = VarPtr(m_tNodes(i).bValue(0))
+  '///
+  ITreeStorageReader_GetNextAttribute = i
+  Exit Function
+ End If
+Next i
+End Function
+
+Private Function ITreeStorageReader_GetNextNode(ByVal nUserData As Long, obj As ITreeStorageReader) As Long
+Dim i As Long
+For i = nUserData + 1 To m_nNodeCount
+ If m_tNodes(i).nType = 1 Then
+  '///
+  Set obj = m_tNodes(i).objSubNode
+  '///
+  ITreeStorageReader_GetNextNode = i
+  Exit Function
+ End If
+Next i
+End Function
+
+Private Function ITreeStorageReader_GetValue(lpValue As Long) As Long
+If m_nValueSize > 0 Then
+ lpValue = VarPtr(m_bValue(0))
+ ITreeStorageReader_GetValue = m_nValueSize
+End If
+End Function

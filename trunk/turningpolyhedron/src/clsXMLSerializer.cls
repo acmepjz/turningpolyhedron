@@ -389,15 +389,17 @@ End Select
 objOut.AppendValueEx StrPtr(s), m
 End Sub
 
-Friend Function SaveNodeToFile(ByVal FileName As String, ByVal obj As clsTreeStorageNode, Optional ByVal bWriteHeader As Boolean = True, Optional ByVal nIndent As Long, Optional ByVal bSaveSubNodeOnly As Boolean) As Boolean
+Friend Function SaveNodeToFile(ByVal FileName As String, ByVal obj As ITreeStorageReader, Optional ByVal bWriteHeader As Boolean = True, Optional ByVal nIndent As Long, Optional ByVal bSaveSubNodeOnly As Boolean) As Boolean
 Dim objOut As New clsTreeStorageNode
 WriteNode obj, objOut, bWriteHeader, nIndent, bSaveSubNodeOnly
 SaveNodeToFile = objOut.SaveValueToFile(FileName)
 End Function
 
-Friend Sub WriteNode(ByVal obj As clsTreeStorageNode, ByVal objOut As clsTreeStorageNode, Optional ByVal bWriteHeader As Boolean = True, Optional ByVal nIndent As Long, Optional ByVal bSaveSubNodeOnly As Boolean)
-Dim obj1 As clsTreeStorageNode
-Dim m As Long, i As Long
+Friend Sub WriteNode(ByVal obj As ITreeStorageReader, ByVal objOut As clsTreeStorageNode, Optional ByVal bWriteHeader As Boolean = True, Optional ByVal nIndent As Long, Optional ByVal bSaveSubNodeOnly As Boolean)
+Dim obj1 As ITreeStorageReader
+Dim lp As Long, lp1 As Long, lp2 As Long
+Dim m As Long, m1 As Long, m2 As Long
+Dim i As Long
 Dim bHaveContents As Boolean
 Dim bHaveSubNode As Boolean
 Dim bNoPretty As Boolean
@@ -406,65 +408,66 @@ If bWriteHeader Then WriteHeader objOut, nIndent >= 0
 '///
 If Not bSaveSubNodeOnly Then
  '///name
- m = obj.NameSize
+ m = obj.GetName(lp)
  WriteString StrPtr("<"), 2, objOut
- pEscapeAndWriteString obj.NamePointer, m, 1, objOut
+ pEscapeAndWriteString lp, m, 1, objOut
  '///
  bHaveContents = m > 0
  bHaveSubNode = False
  '///attributes
- For i = 1 To obj.SubNodeCount
-  If obj.SubNodeType(i) = 0 Then
-   bHaveContents = True
-   WriteString StrPtr(" "), 2, objOut
-   pEscapeAndWriteString obj.SubNodeNamePointer(i), obj.SubNodeNameSize(i), 1, objOut
-   WriteString StrPtr("="""), 4, objOut
-   pEscapeAndWriteString obj.SubNodeValuePointer(i), obj.SubNodeValueSize(i), 0, objOut
-   WriteString StrPtr(""""), 2, objOut
-  End If
- Next i
+ i = 0
+ Do
+  i = obj.GetNextAttribute(i, lp1, m1, lp2, m2)
+  If i = 0 Then Exit Do
+  bHaveContents = True
+  WriteString StrPtr(" "), 2, objOut
+  pEscapeAndWriteString lp1, m1, 1, objOut
+  WriteString StrPtr("="""), 4, objOut
+  pEscapeAndWriteString lp2, m2, 0, objOut
+  WriteString StrPtr(""""), 2, objOut
+ Loop
  '///value
- m = obj.ValueSize
- If m > 0 Then
+ m1 = obj.GetValue(lp1)
+ If m1 > 0 Then
   bHaveContents = True
   bHaveSubNode = True
   bNoPretty = True
   WriteString StrPtr(">"), 2, objOut
-  pEscapeAndWriteString obj.ValuePointer, m, 0, objOut
+  pEscapeAndWriteString lp1, m1, 0, objOut
  End If
 End If
 '///child nodes
 'TODO:non-recursive
-For i = 1 To obj.SubNodeCount
- If obj.SubNodeType(i) = 1 Then
-  Set obj1 = obj.SubNodeObject(i)
-  If Not obj1 Is Nothing Then
-   If Not bHaveSubNode Then
-    WriteString StrPtr(">"), 2, objOut
-    bHaveSubNode = True
+i = 0
+Do
+ i = obj.GetNextNode(i, obj1)
+ If i = 0 Then Exit Do
+ If Not obj1 Is Nothing Then
+  If Not bHaveSubNode Then
+   WriteString StrPtr(">"), 2, objOut
+   bHaveSubNode = True
+  End If
+  If nIndent >= 0 Then
+   If Not bNoPretty Then
+    WriteString StrPtr(vbCrLf + String(nIndent + 1, vbTab)), (nIndent + 3&) * 2&, objOut
    End If
-   If nIndent >= 0 Then
-    If Not bNoPretty Then
-     WriteString StrPtr(vbCrLf + String(nIndent + 1, vbTab)), (nIndent + 3&) * 2&, objOut
-    End If
-    bNoPretty = False
-    WriteNode obj1, objOut, False, nIndent + 1, False
-   Else
-    WriteNode obj1, objOut, False, -1, False
-   End If
+   bNoPretty = False
+   WriteNode obj1, objOut, False, nIndent + 1, False
+  Else
+   WriteNode obj1, objOut, False, -1, False
   End If
  End If
-Next i
+ Set obj1 = Nothing
+Loop
 '///
 If Not bSaveSubNodeOnly Then
  If bHaveSubNode Then
   If nIndent >= 0 And Not bNoPretty Then
    WriteString StrPtr(vbCrLf + String(nIndent, vbTab)), (nIndent + 2&) * 2&, objOut
   End If
-  m = obj.NameSize
   If m > 0 Then
    WriteString StrPtr("</"), 4, objOut
-   pEscapeAndWriteString obj.NamePointer, m, 1, objOut
+   pEscapeAndWriteString lp, m, 1, objOut
    WriteString StrPtr(">"), 2, objOut
   Else
    WriteString StrPtr("</ >"), 8, objOut

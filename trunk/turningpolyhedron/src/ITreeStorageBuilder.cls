@@ -25,6 +25,7 @@ Public Sub SetValue(ByVal lp As Long, ByVal nLength As Long)
 '
 End Sub
 
+'return value: newly created node
 Public Function NewNode() As ITreeStorageBuilder
 '
 End Function
