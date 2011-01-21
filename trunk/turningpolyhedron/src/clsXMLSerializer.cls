@@ -287,9 +287,8 @@ If nLength > 0 Then
   objOut.AppendValueEx VarPtr(0&), 1
   WriteString = (nLength + 1) And &HFFFFFFFE
  Case 2 '////////UCS2BE
-  m = objOut.ValueSize
   j = (nLength + 1) And &HFFFFFFFE
-  objOut.ValueSize = m + j
+  m = objOut.ExpandValueSizeEx(j, 0, &H40000)
   '///
   tSA.cbElements = 1
   tSA.cDims = 1
@@ -317,8 +316,7 @@ If nLength > 0 Then
   '///
   WriteString = j
  Case Else '////////UTF8
-  m = objOut.ValueSize
-  objOut.ValueSize = m + nLength * 2&
+  m = objOut.ExpandValueSizeEx(0, nLength * 2&, &H40000)
   '///
   tSA.cbElements = 1
   tSA.cDims = 1
@@ -396,6 +394,7 @@ SaveNodeToFile = objOut.SaveValueToFile(FileName)
 End Function
 
 Friend Sub WriteNode(ByVal obj As ITreeStorageReader, ByVal objOut As clsTreeStorageNode, Optional ByVal bWriteHeader As Boolean = True, Optional ByVal nIndent As Long, Optional ByVal bSaveSubNodeOnly As Boolean)
+On Error Resume Next
 Dim obj1 As ITreeStorageReader
 Dim lp As Long, lp1 As Long, lp2 As Long
 Dim m As Long, m1 As Long, m2 As Long
@@ -784,9 +783,9 @@ If nLength > 0 Then
     '///skip headers
     i = i + 1
     Do While i < m
-     If d2(i - 1) = ["?"] Then
+'     If d2(i - 1) = ["?"] Then '??? ill-formed?
       If d2(i) = [">"] Then Exit Do
-     End If
+'     End If
      i = i + 1
     Loop
     i = i + 1
@@ -873,6 +872,7 @@ If nLength > 0 Then
       If d2(i) <> ["="] Then Exit Function
       'read value
       i = i + 1
+      pSkipSpaces d2, i, m
       If i >= m Then Exit Function
       c3 = d2(i)
       Select Case c3
