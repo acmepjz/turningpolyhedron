@@ -79,6 +79,16 @@ Else
 End If
 End Property
 
+'return value=old size
+Friend Function ExpandNameSizeEx(ByVal nExpandCount As Long, ByVal nMinReservedCount As Long, ByVal nMaxReservedCount As Long) As Long
+ExpandNameSizeEx = m_nNameSize
+m_nNameSize = m_nNameSize + nExpandCount
+If m_nNameSize + nMinReservedCount > m_nNameSizeMax Then
+ m_nNameSizeMax = m_nNameSize + nMinReservedCount + nMaxReservedCount 'nMinReservedCount?
+ ReDim Preserve m_bName(m_nNameSizeMax - 1)
+End If
+End Function
+
 Friend Property Get NamePointer() As Long
 If m_nNameSizeMax > 0 Then NamePointer = VarPtr(m_bName(0))
 End Property
@@ -189,6 +199,16 @@ Else
  End If
 End If
 End Property
+
+'return value=old size
+Friend Function ExpandValueSizeEx(ByVal nExpandCount As Long, ByVal nMinReservedCount As Long, ByVal nMaxReservedCount As Long) As Long
+ExpandValueSizeEx = m_nValueSize
+m_nValueSize = m_nValueSize + nExpandCount
+If m_nValueSize + nMinReservedCount > m_nValueSizeMax Then
+ m_nValueSizeMax = m_nValueSize + nMinReservedCount + nMaxReservedCount 'nMinReservedCount?
+ ReDim Preserve m_bValue(m_nValueSizeMax - 1)
+End If
+End Function
 
 Friend Property Get ValuePointer() As Long
 If m_nValueSizeMax > 0 Then ValuePointer = VarPtr(m_bValue(0))
