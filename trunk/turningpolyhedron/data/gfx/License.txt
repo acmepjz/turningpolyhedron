@@ -1,0 +1,3 @@
+control1.png:
+
+Icons are ripped from Wine (www.winehq.org), license under GNU LGPL.

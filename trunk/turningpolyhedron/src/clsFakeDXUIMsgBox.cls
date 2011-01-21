@@ -13,6 +13,8 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+Private Declare Function MessageBeep Lib "user32.dll" (ByVal wType As Long) As Long
+
 Private m_idx As Long
 
 Private m_nReturnValue As Long
@@ -93,6 +95,7 @@ Dim w As Long, h As Long
 Dim ww As Single, hh As Single
 Dim i As Long, x As Long
 Dim idx As Long
+Dim ii As Long
 '///
 If m_idx Then Exit Function
 m_bUnload = False
@@ -103,10 +106,18 @@ Case 0 To 5
  ClearButtons
  AddDefaultButtons Buttons
 End Select
+'///
+ii = Buttons And &H70&
+If ii <= &H40& Then MessageBeep ii _
+Else ii = 0
 '///calc size
 w = m_nButtonCount * 64& - 8&
 If w < 32& Then w = 32&
-FakeDXGDIDrawText FakeDXUIDefaultFont, Prompt, 0, 0, w, , 0.5, DT_CALCRECT, 0, , , , , , , , ww, hh
+FakeDXGDIDrawText FakeDXUIDefaultFont, Prompt, 0, 0, , , 0.5, DT_CALCRECT, 0, , , , , , , , ww, hh
+If ii > 0 Then
+ ww = ww + 56
+ If hh < 48 Then hh = 48
+End If
 If ww < w Then ww = w
 'If ww > d3dpp.BackBufferWidth - 32 Then 'does not work
 ' FakeDXGDIDrawText FakeDXUIDefaultFont, Prompt, 0, 0, ww, hh, 0.5, DT_WORDBREAK Or DT_CALCRECT, 0, , , , , , , , ww, hh
@@ -122,7 +133,8 @@ w, h, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , Title, , , 0.5
  m_idx = .Index
  Set .EventObject = Me
  '///
- .AddNewChildren FakeCtl_Label, 8, 8, -8, -8, FLS_WordWrap, , , , Prompt, , , , , 1, 1
+ If ii > 0 Then .AddNewChildren FakeCtl_Label, 8, 8, 8, 8, ii
+ .AddNewChildren FakeCtl_Label, 8 + ((ii > 0) And 56&), 8, -8, -8, FLS_WordWrap, , , , Prompt, , , , , 1, 1
  '///
  idx = (Buttons And &HFF00&) \ &H100& + 1
  x = 4& - m_nButtonCount * 32&

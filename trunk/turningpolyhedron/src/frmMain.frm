@@ -30,7 +30,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
@@ -252,6 +252,11 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 0, 0, 78, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
+  '///scrollbar test
+  With .AddNewChildren(FakeCtl_ScrollBar, 240, 16, 400, 32, FCS_CanGetFocus Or FCS_TabStop)
+   .Max = 100
+   .LargeChange = 10
+  End With
   '////////tab order debug
   .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 76, &H3020000, , , , , "Single line text box blah blah blah °¡°¡°¡ blah blah"
   .AddNewChildren(FakeCtl_TextBox, 132, 52, 196, 76, &H3030004, , , , , "528").SmallChange = 1
@@ -483,15 +488,16 @@ Case "cmdClose"
  If i Then FakeDXUIControls(i).Unload
 Case "cmdExit"
  With New clsFakeDXUIMsgBox
-  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo, objText.GetText("Exit game")) = vbYes Then Unload Me
+  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
  End With
 Case "cmdDanger"
  With New clsFakeDXUIMsgBox
-  For i = 1 To 9
+  For i = 1 To 8
    .AddButton , vbOK
   Next i
-  .MsgBox CStr(.MsgBox("HAHA", 15)), 15
-  .MsgBox , 15
+  .MsgBox CStr(.MsgBox("HAHA", 15 Or vbInformation)), 15 Or vbExclamation
+  .MsgBox , 15 Or vbCritical
+  .MsgBox
  End With
  frmSettings.Show
 ' Randomize Timer

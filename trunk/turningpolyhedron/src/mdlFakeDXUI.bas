@@ -158,6 +158,11 @@ Public Enum enumFakeDXUIControlStyle
  FFS_TitleBar = 32
  '///label
  FLS_Left = 0
+ FLS_IconCritical = &H10&
+ FLS_IconQuestion = &H20&
+ FLS_IconExclamation = &H30&
+ FLS_IconInformation = &H40&
+ FLS_OwnerDraw = &H70& 'unsupported
  FLS_Center = &H100&
  FLS_Right = &H200&
  FLS_WordWrap = 1
@@ -172,6 +177,8 @@ Public Enum enumFakeDXUIControlStyle
  FBS_Left = &H100 'TODO:
  FBS_Center = 0
  FBS_Right = &H200& 'TODO:
+ '///scrollbar
+ FSS_Slider = 1
  '///textbox
  FTS_LowerCaseOnly = 1
  FTS_UpperCaseOnly = 2
