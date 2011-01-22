@@ -272,7 +272,7 @@ Case 1, 3, 5, 6, 10
   .nMin = n
   If .nValue < n Then
    .nValue = n
-   .nReserved = 1
+   .nFlags = .nFlags Or &H80&
   End If
  End With
  'TODO:
@@ -290,7 +290,7 @@ Case 1, 3, 5, 6, 10
   .nMax = n
   If .nValue > n Then
    .nValue = n
-   .nReserved = 1
+   .nFlags = .nFlags Or &H80&
   End If
  End With
  'TODO:
@@ -356,7 +356,7 @@ Case 1, 3, 5, 6, 10
   If n < .nMin Then n = .nMin Else If n > .nMax Then n = .nMax
   If .nValue <> n Then
    .nValue = n
-   .nReserved = 1
+   .nFlags = .nFlags Or &H80&
   End If
  End With
  'TODO:
@@ -594,6 +594,10 @@ End Property
 Friend Property Let Style(ByVal n As enumFakeDXUIControlStyle)
 m_nStyle = n
 Select Case m_nType
+Case 5
+ With m_tScrollBar(0)
+  .nFlags = (.nFlags And &H80&) Or (n And &H7F&)
+ End With
 Case 7
  m_objTextBox.Style = n
 Case 9
@@ -910,8 +914,8 @@ If m_nScrollBars And vbHorizontal Then
   .Bottom = nBottom + 16
  End With
  FakeDXUIRenderScrollBar m_tScrollBar(0), nOpacity, bEnabled
- If m_tScrollBar(0).nReserved Then
-  m_tScrollBar(0).nReserved = 0
+ If m_tScrollBar(0).nFlags And &H80& Then
+  m_tScrollBar(0).nFlags = m_tScrollBar(0).nFlags And &H7F&
   b = True
  End If
 End If
@@ -923,8 +927,8 @@ If m_nScrollBars And vbVertical Then
   .Bottom = nBottom
  End With
  FakeDXUIRenderScrollBar m_tScrollBar(1), nOpacity, bEnabled
- If m_tScrollBar(1).nReserved Then
-  m_tScrollBar(1).nReserved = 0
+ If m_tScrollBar(1).nFlags And &H80& Then
+  m_tScrollBar(1).nFlags = m_tScrollBar(1).nFlags And &H7F&
   b = True
  End If
  '///
@@ -1399,15 +1403,16 @@ Case 4 'button
   End If
  End Select
 Case 5 'scrollbar
- With m_tScrollBar(0).tRect
-  .Left = nLeft
-  .Top = nTop
-  .Right = nRight
-  .Bottom = nBottom
+ With m_tScrollBar(0)
+  .tRect.Left = nLeft
+  .tRect.Top = nTop
+  .tRect.Right = nRight
+  .tRect.Bottom = nBottom
+  .nAnimVal(17) = (FakeDXUIFocus = m_nIndex) And &HFF&
  End With
  FakeDXUIRenderScrollBar m_tScrollBar(0), nOpacity, bEnabled
- If m_tScrollBar(0).nReserved Then
-  m_tScrollBar(0).nReserved = 0
+ If m_tScrollBar(0).nFlags And &H80& Then
+  m_tScrollBar(0).nFlags = m_tScrollBar(0).nFlags And &H7F&
   FakeDXUIPostMessage FakeCtl_Msg_ScrollChange, m_nIndex
  End If
 Case 6 'picturebox
@@ -2730,7 +2735,7 @@ If idx >= 0 Then
    If i < .nMin Then i = .nMin Else If i > .nMax Then i = .nMax
    If .nValue <> i Then
     .nValue = i
-    .nReserved = 1
+    .nFlags = .nFlags Or &H80&
    End If
   End If
  End With
