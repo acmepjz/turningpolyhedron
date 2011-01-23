@@ -28,29 +28,29 @@ msgstr ""
 msgid "Turning Polyhedron"
 msgstr ""
 
-#.  .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+#.  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
 msgid "Exit"
 msgstr ""
 
-#.  .AddNewChildren FakeCtl_Button, 8, -24, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+#.  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
 msgid "Exit the game and return to desktop."
 msgstr ""
 
-#.  .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#.  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
 #. 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
 msgid "Options"
 msgstr ""
 
-#.  .AddNewChildren FakeCtl_Button, 208, -24, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#.  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
 #.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
 msgid "Change the game settings."
 msgstr ""
 
-#.   If .MsgBox(objText.GetText("Are you sure?"), vbYesNo, objText.GetText("Exit game")) = vbYes Then Unload Me
+#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 msgid "Are you sure?"
 msgstr ""
 
-#.   If .MsgBox(objText.GetText("Are you sure?"), vbYesNo, objText.GetText("Exit game")) = vbYes Then Unload Me
+#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 msgid "Exit game"
 msgstr ""
 
@@ -139,11 +139,11 @@ msgstr ""
 msgid "Enables volumetric fog effect."
 msgstr ""
 
-#.    objText.GetText("Depth of fiend"), , , , , , , , , objText.GetText("Enables depth of field effect."))
-msgid "Depth of fiend"
+#.    objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+msgid "Depth of field"
 msgstr ""
 
-#.    objText.GetText("Depth of fiend"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+#.    objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
 msgid "Enables depth of field effect."
 msgstr ""
 
@@ -168,8 +168,7 @@ msgid "Game"
 msgstr ""
 
 #.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
-#.  AddButton objText.GetText("OK"), vbOK
-#.  AddButton objText.GetText("OK"), vbOK
+#.   s = objText.GetText("OK")
 msgid "OK"
 msgstr ""
 
@@ -178,9 +177,7 @@ msgid "Apply changes and close dialog."
 msgstr ""
 
 #.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
-#.  AddButton objText.GetText("Cancel"), vbCancel
-#.  AddButton objText.GetText("Cancel"), vbCancel
-#.  AddButton objText.GetText("Cancel"), vbCancel
+#.   s = objText.GetText("Cancel")
 msgid "Cancel"
 msgstr ""
 
@@ -196,26 +193,23 @@ msgstr ""
 msgid "Apply changes immediately."
 msgstr ""
 
-#.  AddButton objText.GetText("Abort"), vbAbort
+#.   s = objText.GetText("Abort")
 msgid "Abort"
 msgstr ""
 
-#.  AddButton objText.GetText("Retry"), vbRetry
-#.  AddButton objText.GetText("Retry"), vbRetry
+#.   s = objText.GetText("Retry")
 msgid "Retry"
 msgstr ""
 
-#.  AddButton objText.GetText("Ignore"), vbIgnore
+#.   s = objText.GetText("Ignore")
 msgid "Ignore"
 msgstr ""
 
-#.  AddButton objText.GetText("Yes"), vbYes
-#.  AddButton objText.GetText("Yes"), vbYes
+#.   s = objText.GetText("Yes")
 msgid "Yes"
 msgstr ""
 
-#.  AddButton objText.GetText("No"), vbNo
-#.  AddButton objText.GetText("No"), vbNo
+#.   s = objText.GetText("No")
 msgid "No"
 msgstr ""
 

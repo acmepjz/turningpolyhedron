@@ -52,7 +52,6 @@ End Type
 Public m_tDefVertexDecl() As D3DVERTEXELEMENT9
 
 Public objText As New clsGNUGetText
-Public frmSettings As New frmSettings
 
 Public objTiming As New clsTiming
 
@@ -72,8 +71,8 @@ Public objFontSprite As D3DXSprite
 Public objFont As D3DXFont
 '////////
 
-''////////test debug
-'Public objDebug As New IVBOnErrorHook
+'////////settings
+Public frmSettings As New frmSettings
 
 Public Sub CreateVertexDeclaration()
 ReDim m_tDefVertexDecl(0 To 7)
@@ -100,10 +99,8 @@ End Sub
 'CopyMemory ByVal lp, d(0), Len(d(0)) * 24&
 'End Sub
 
-'WARNING: use alias!!!
-Public Sub FakeDXAppMainLoop(Optional ByVal objCallback As IMainLoopCallback)
-Dim b As Boolean
-'objDebug.Hook
+Public Sub FakeDXAppMainLoop(Optional ByVal lpbCancel As Long)
+Dim b As Byte
 Do Until d3dd9 Is Nothing
  '///process key event
  FakeDXAppProcessKeyEvent
@@ -112,8 +109,8 @@ Do Until d3dd9 Is Nothing
  FakeDXAppRender
  DoEvents
  '///
- If Not objCallback Is Nothing Then
-  objCallback.Callback b
+ If lpbCancel Then
+  CopyMemory b, ByVal lpbCancel, 1&
   If b Then Exit Do
  End If
 Loop

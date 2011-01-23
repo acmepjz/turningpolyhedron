@@ -1,6 +1,8 @@
 Attribute VB_Name = "mdlFakeDXUI"
 Option Explicit
 
+Public Const FakeDXUISliderSize As Long = 12
+
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
 Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
@@ -784,9 +786,26 @@ Dim f As Single, f2 As Single
 Dim f1 As Single
 If t.nValue < t.nMin Then t.nValue = t.nMin Else _
 If t.nValue > t.nMax Then t.nValue = t.nMax
-'If t.nFlags And 1 Then
+If t.nFlags And 1 Then
  '///slider
-'Else
+ If t.nOrientation Then 'vertical
+  f = t.tRect.Top
+  f2 = t.tRect.Bottom - FakeDXUISliderSize - f
+ Else 'horizontal
+  f = t.tRect.Left
+  f2 = t.tRect.Right - FakeDXUISliderSize - f
+ End If
+ If f2 > 0 Then
+  t.fValuePerPixel = (t.nMax - t.nMin) / f2
+  If t.fValuePerPixel > 0 Then t.fThumbStart = f + (t.nValue - t.nMin) / t.fValuePerPixel _
+  Else t.fThumbStart = f
+  t.fThumbEnd = t.fThumbStart + FakeDXUISliderSize
+ Else
+  t.fValuePerPixel = -1
+  t.fThumbStart = f
+  t.fThumbEnd = f - 1
+ End If
+Else
  '///scrollbar
  If t.nOrientation Then 'vertical
   f = t.tRect.Top + 16
@@ -810,7 +829,7 @@ If t.nValue > t.nMax Then t.nValue = t.nMax
   t.fThumbStart = f
   t.fThumbEnd = f - 1
  End If
-'End If
+End If
 End Sub
 
 Private Function pScrollBarButtonHighlight_1(ByRef t As typeFakeDXUIScrollBar, ByVal nIndex As Long, ByVal nRetIndex As Long, ByVal Button As Long, ByVal nEventType As Long, Optional ByRef bPressed As Boolean) As Long
@@ -871,7 +890,12 @@ If t.nAnimVal(0) = 3 And Button = 1 And nEventType = 0 And t.fValuePerPixel > 0 
  '///
  b = True
 ElseIf bInControl_0 Then
- If t.fValuePerPixel > 0 Then f2 = f + 16 Else f2 = (f + f1) / 2
+ If t.fValuePerPixel > 0 Then
+  If t.nFlags And 1& Then f2 = f _
+  Else f2 = f + 16
+ Else
+  f2 = (f + f1) / 2
+ End If
  If x < f Then
  ElseIf x < f2 Then '-smallchange
   pScrollBarButtonHighlight_1 t, 1, 11, Button, nEventType, b
@@ -890,15 +914,17 @@ ElseIf bInControl_0 Then
    If x < t.fThumbStart Then '-largechange
     pScrollBarButtonHighlight_1 t, 2, 12, Button, nEventType, b
     If b Then
-     i = t.nValue - t.nLargeChange
-     If i < t.nMin Then i = t.nMin
+     If t.nLargeChange > 0 Then i = t.nValue - t.nLargeChange _
+     Else i = t.nMin + (x - FakeDXUISliderSize \ 2 - f2) * t.fValuePerPixel
+     If i < t.nMin Then i = t.nMin Else _
+     If i > t.nMax Then i = t.nMax
      If t.nValue <> i Then
       t.nValue = i
       t.nFlags = t.nFlags Or &H80&
      End If
      t.nAnimVal(30) = 8 'TODO:adjustable timer
     End If
-    If t.nAnimVal(12) Then t.nCriticalValue = t.nMin + (x - f - 16) * t.fValuePerPixel
+    If t.nAnimVal(12) Then t.nCriticalValue = t.nMin + (x - f2) * t.fValuePerPixel
     b = True
    ElseIf x < t.fThumbEnd Then 'start drag
     pScrollBarButtonHighlight_1 t, 3, 13, Button, nEventType, b
@@ -907,10 +933,12 @@ ElseIf bInControl_0 Then
      t.fStartDragPos = x
     End If
     b = True
-   ElseIf x < f1 - 16 Then '+largechange
+   ElseIf x < f1 - (16& And ((t.nFlags And 1&) = 0&)) Then '+largechange
     pScrollBarButtonHighlight_1 t, 4, 14, Button, nEventType, b
     If b Then
-     i = t.nValue + t.nLargeChange
+     If t.nLargeChange > 0 Then i = t.nValue + t.nLargeChange _
+     Else i = t.nMin + (x - FakeDXUISliderSize \ 2 - f2) * t.fValuePerPixel
+     If i < t.nMin Then i = t.nMin Else _
      If i > t.nMax Then i = t.nMax
      If t.nValue <> i Then
       t.nValue = i
@@ -918,7 +946,7 @@ ElseIf bInControl_0 Then
      End If
      t.nAnimVal(30) = 8 'TODO:adjustable timer
     End If
-    If t.nAnimVal(14) Then t.nCriticalValue = t.nMin - t.nLargeChange + (x - f - 16) * t.fValuePerPixel
+    If t.nAnimVal(14) Then t.nCriticalValue = t.nMin - t.nLargeChange + (x - f2) * t.fValuePerPixel
     b = True
    End If
   End If
@@ -1104,6 +1132,11 @@ If t.nOrientation Then 'vertical
  If t.fValuePerPixel > 0 Then '5 buttons
   If t.nFlags And 1& Then
    '///slider
+   i = nOpacity * 255
+   i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+   j = 240 - (bEnabled And 16&)
+   f = (t.tRect.Left + t.tRect.Right) / 2
+   FakeDXGDIStretchBltExColored f - 3, t.tRect.Top, f + 5, t.tRect.Bottom + 4, j, 480, j + 8, 500, 0, 4, 0, 8, 512, i
    '///
    FakeDXUIRenderScrollBarButton t, 3, t.tRect.Left, t.fThumbStart, t.tRect.Right, t.fThumbEnd, nOpacity, bEnabled
   Else

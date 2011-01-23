@@ -596,7 +596,7 @@ m_nStyle = n
 Select Case m_nType
 Case 5
  With m_tScrollBar(0)
-  .nFlags = (.nFlags And &H80&) Or (n And &H7F&)
+  .nFlags = (.nFlags And &HF0&) Or (n And &HF&)
  End With
 Case 7
  m_objTextBox.Style = n

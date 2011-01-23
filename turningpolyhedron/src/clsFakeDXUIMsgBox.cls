@@ -25,7 +25,6 @@ Private m_sButtonCaption() As String
 Private m_nButtonValue() As Long
 
 Implements IFakeDXUIEvent
-Implements IMainLoopCallback
 
 Friend Property Get ReturnValue() As VbMsgBoxResult
 ReturnValue = m_nReturnValue
@@ -89,6 +88,11 @@ Case 5 'vbRetryCancel
 End Select
 End Sub
 
+'new style:
+'&H10000000=sizable
+'&H20000000=no close
+'&H40000000=no caption
+'&H80000000=not moveable
 'TODO:autosize,custom buttons,default button,icon,etc.
 Friend Function MsgBox(Optional ByVal Prompt As String, Optional ByVal Buttons As VbMsgBoxStyle, Optional ByVal Title As String, Optional ByVal Default As VbMsgBoxResult) As VbMsgBoxResult
 Dim w As Long, h As Long
@@ -130,10 +134,13 @@ If ww < w Then ww = w
 'End If
 If hh > d3dpp.BackBufferHeight - 80 Then hh = d3dpp.BackBufferHeight - 80
 w = CLng(ww) \ 2& + 12
-h = CLng(hh) \ 2& + 38
+h = CLng(hh) \ 2& + 28 + (10 And (Buttons And &H40000000) = 0)
 '///
 With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -w, -h, _
-w, h, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , Title, , , 0.5, 0.5, 0.5, 0.5)
+w, h, (FFS_CloseButton And (Buttons And &H20000000) = 0) _
+Or (FFS_Moveable And (Buttons And &H80000000) = 0) _
+Or (FFS_TitleBar And (Buttons And &H40000000) = 0) _
+Or (FFS_Sizable And (Buttons And &H10000000) <> 0), , False, , Title, , , 0.5, 0.5, 0.5, 0.5)
  m_idx = .Index
  Set .EventObject = Me
  '///
@@ -153,7 +160,7 @@ w, h, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , Title, , , 0.5
  .Show 1
 End With
 '///wait for single object
-FakeDXAppMainLoop Me
+FakeDXAppMainLoop VarPtr(m_bUnload)
 ''///fix a bug (?)
 'FakeDXUIRemoveModalWindow m_idx
 '///
@@ -187,8 +194,4 @@ End Sub
 
 Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
 m_bUnload = True
-End Sub
-
-Private Sub IMainLoopCallback_Callback(Cancel As Boolean)
-Cancel = m_bUnload
 End Sub
