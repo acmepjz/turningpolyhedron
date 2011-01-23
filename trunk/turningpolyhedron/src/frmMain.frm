@@ -30,7 +30,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = True
+#Const UseSubclass = False
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
@@ -137,7 +137,7 @@ SHGetSpecialFolderPath 0, m_sMyGamesPath, 5, 1
 m_sMyGamesPath = Left(m_sMyGamesPath, InStr(1, m_sMyGamesPath, vbNullChar) - 1) + "\My Games\Turning Polyhedron\"
 MakeSureDirectoryPathExists m_sMyGamesPath
 '///
-objText.LoadFileWithLocale App.Path + "\data\locale\*.mo"
+objText.LoadFileWithLocale App.Path + "\data\locale\*.mo", , True
 '///
 Me.Show
 Me.Caption = objText.GetText("Initalizing...")
@@ -194,8 +194,6 @@ FakeDXAppSetDefaultRenderState
 Set objTest = pLoasMeshTest
 '///
 pCreateUI
-'///
-frmSettings.Create
 '///
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
 objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
@@ -255,7 +253,12 @@ With FakeDXUIControls(1)
   '///scrollbar test
   With .AddNewChildren(FakeCtl_ScrollBar, 240, 16, 400, 32, FCS_CanGetFocus Or FCS_TabStop Or FSS_Slider)
    .Max = 10
-   .LargeChange = 2
+   .LargeChange = 0
+  End With
+  With .AddNewChildren(FakeCtl_ScrollBar, 408, 0, 424, 64, FCS_CanGetFocus Or FCS_TabStop Or FSS_Slider)
+   .Orientation = 1
+   .Max = 10
+   .LargeChange = 0
   End With
   '////////tab order debug
   .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 76, &H3020000, , , , , "Single line text box blah blah blah °¡°¡°¡ blah blah"
@@ -496,10 +499,9 @@ Case "cmdDanger"
   For i = 1 To 8
    .AddButton , vbOK
   Next i
-  .MsgBox CStr(.MsgBox("HAHA", 15 Or vbInformation)), 15 Or vbExclamation
+  .MsgBox CStr(.MsgBox("HAHA", &H1000000F Or vbInformation)), 15 Or vbExclamation
   .MsgBox , 15 Or vbCritical
-  .ClearButtons
-  .MsgBox , 15, "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+  .MsgBox , &H40000000
  End With
  frmSettings.Show
 ' Randomize Timer

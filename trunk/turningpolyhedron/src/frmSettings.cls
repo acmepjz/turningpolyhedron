@@ -16,7 +16,11 @@ Option Explicit
 Private m_nAdapterModeCount As Long
 Private m_tAdapterModes() As D3DDISPLAYMODE '0-based
 
+'///load/save config file
+
 Private m_sFileName As String
+
+'///
 
 'dirty workaround for show in center of screen. TODO:
 Private m_tDefaultPos As typeFakeDXUIRectEx
@@ -40,11 +44,11 @@ End Enum
 
 Implements IFakeDXUIEvent
 
-Friend Function LoadFile(Optional ByVal sFileName As String) As Boolean
+Friend Function LoadFile(Optional ByVal FileName As String) As Boolean
 'TODO:
 End Function
 
-Friend Function SaveFile(Optional ByVal sFileName As String) As Boolean
+Friend Function SaveFile(Optional ByVal FileName As String) As Boolean
 'TODO:
 End Function
 
@@ -61,6 +65,8 @@ End Sub
 
 Friend Sub Create()
 Dim i As Long
+'///
+If m_idx(0) Then Exit Sub
 '///
 GetAdapterModes
 '///
@@ -126,7 +132,7 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
    End With
    'DOF?
    With .AddNewChildren(FakeCtl_Button, 20, 170, 198, 188, FBS_CheckBox, , , , _
-   objText.GetText("Depth of fiend"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+   objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
     m_idx(IDC_DepthOfField) = .Index
    End With
    'radial blur?
@@ -159,46 +165,47 @@ Friend Sub Show()
 Dim idx As Long
 Dim i As Long
 '///
+Create
+'///
 idx = m_idx(0)
-If idx > 0 Then
- '///graphics
- 'screen resolution
- For i = 0 To m_nAdapterModeCount - 1
-  If d3dpp.BackBufferWidth = m_tAdapterModes(i).Width And d3dpp.BackBufferHeight = m_tAdapterModes(i).Height Then
-   If d3dpp.FullScreen_RefreshRateInHz = 0 Or d3dpp.FullScreen_RefreshRateInHz = m_tAdapterModes(i).RefreshRate Then
-    FakeDXUIControls(m_idx(IDC_Resolution)).ListViewObject.SelectedRow = i + 1
-    Exit For
-   End If
+If idx = 0 Then Exit Sub
+'///graphics
+'screen resolution
+For i = 0 To m_nAdapterModeCount - 1
+ If d3dpp.BackBufferWidth = m_tAdapterModes(i).Width And d3dpp.BackBufferHeight = m_tAdapterModes(i).Height Then
+  If d3dpp.FullScreen_RefreshRateInHz = 0 Or d3dpp.FullScreen_RefreshRateInHz = m_tAdapterModes(i).RefreshRate Then
+   FakeDXUIControls(m_idx(IDC_Resolution)).ListViewObject.SelectedRow = i + 1
+   Exit For
   End If
- Next i
- 'fullscreen?
- FakeDXUIControls(m_idx(IDC_Fullscreen)).Value = (d3dpp.Windowed = 0) And 1&
- 'other
- FakeDXUIControls(m_idx(IDC_PostProcess)).Value = objRenderTest.PostProcessEnabled And 1&
- FakeDXUIControls(m_idx(IDC_HDRBlurQuality)).ListViewObject.SelectedRow = objRenderTest.HDRBlurQuality + 1
- '///
- FakeDXUIControls(m_idx(IDC_ShadowMap)).Value = 0 'TODO:
- FakeDXUIControls(m_idx(IDC_Fog)).Value = 1 'TODO:
- FakeDXUIControls(m_idx(IDC_VolumetricFog)).Value = objRenderTest.VolumetricFogEnabled And 1&
- FakeDXUIControls(m_idx(IDC_DepthOfField)).Value = objRenderTest.DepthOfFiendEnabled And 1&
- FakeDXUIControls(m_idx(IDC_RadialBlur)).Value = objRenderTest.RadialBlurEnabled And 1&
- '///over
- With FakeDXUIControls(idx)
-  .RectangleEx = m_tDefaultPos 'dirty code:centering window
-  .Show 1
- End With
-End If
+ End If
+Next i
+'fullscreen?
+FakeDXUIControls(m_idx(IDC_Fullscreen)).Value = (d3dpp.Windowed = 0) And 1&
+'other
+FakeDXUIControls(m_idx(IDC_PostProcess)).Value = objRenderTest.PostProcessEnabled And 1&
+FakeDXUIControls(m_idx(IDC_HDRBlurQuality)).ListViewObject.SelectedRow = objRenderTest.HDRBlurQuality + 1
+'///
+FakeDXUIControls(m_idx(IDC_ShadowMap)).Value = 0 'TODO:
+FakeDXUIControls(m_idx(IDC_Fog)).Value = 1 'TODO:
+FakeDXUIControls(m_idx(IDC_VolumetricFog)).Value = objRenderTest.VolumetricFogEnabled And 1&
+FakeDXUIControls(m_idx(IDC_DepthOfField)).Value = objRenderTest.DepthOfFiendEnabled And 1&
+FakeDXUIControls(m_idx(IDC_RadialBlur)).Value = objRenderTest.RadialBlurEnabled And 1&
+'///over
+With FakeDXUIControls(idx)
+ .RectangleEx = m_tDefaultPos 'dirty code:centering window
+ .Show 1
+End With
 End Sub
 
 'TODO:
 Friend Sub Hide()
 Dim idx As Long
 idx = m_idx(0)
-If idx > 0 Then
- With FakeDXUIControls(idx)
-  .Hide
- End With
-End If
+If idx = 0 Then Exit Sub
+'///
+With FakeDXUIControls(idx)
+ .Hide
+End With
 End Sub
 
 'TODO:
@@ -206,6 +213,8 @@ Friend Sub Apply()
 Dim i As Long
 Dim w As Long, h As Long
 Dim nFull As Long
+'///
+If m_idx(0) = 0 Then Exit Sub
 '///graphics
 'resolution and fullscreen
 With FakeDXUIControls(m_idx(IDC_Resolution)).ListViewObject
