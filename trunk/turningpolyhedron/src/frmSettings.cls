@@ -16,12 +16,6 @@ Option Explicit
 Private m_nAdapterModeCount As Long
 Private m_tAdapterModes() As D3DDISPLAYMODE '0-based
 
-'///load/save config file
-
-Private m_sFileName As String
-
-'///
-
 'dirty workaround for show in center of screen. TODO:
 Private m_tDefaultPos As typeFakeDXUIRectEx
 
@@ -42,15 +36,71 @@ Private Enum enumSettingsDialogControls
  IDC_
 End Enum
 
+'config file name
+Private m_sFileName As String
+
 Implements IFakeDXUIEvent
 
-Friend Function LoadFile(Optional ByVal FileName As String) As Boolean
-'TODO:
-End Function
+Friend Property Get FileName() As String
+FileName = m_sFileName
+End Property
 
-Friend Function SaveFile(Optional ByVal FileName As String) As Boolean
-'TODO:
-End Function
+Friend Property Let FileName(ByVal s As String)
+m_sFileName = s
+End Property
+
+'TODO:other
+Friend Sub LoadFile()
+On Error Resume Next
+Dim b As Boolean
+Dim obj As New clsTreeStorageNode
+'///
+With New clsXMLSerializer
+ .LoadNodeFromFile m_sFileName, obj
+End With
+'///
+With obj.GetSubNodeObjectByName("GraphicsConfig", True)
+ d3dpp.BackBufferWidth = Val(.GetSubNodeValueAsStringByName("Width", 640))
+ d3dpp.BackBufferHeight = Val(.GetSubNodeValueAsStringByName("Height", 480))
+ d3dpp.FullScreen_RefreshRateInHz = Val(.GetSubNodeValueAsStringByName("RefreshRate", 0))
+ '///
+ b = False
+ b = CBool(.GetSubNodeValueAsStringByName("Fullscreen", False))
+ d3dpp.Windowed = (b And 1&) Xor 1&
+ '///
+ objRenderTest.PostProcessEnabled = CBool(.GetSubNodeValueAsStringByName("PostProcessEnabled", False))
+ objRenderTest.HDRBlurQuality = Val(.GetSubNodeValueAsStringByName("HDRBlurQuality", 0))
+ objRenderTest.VolumetricFogEnabled = CBool(.GetSubNodeValueAsStringByName("VolumetricFogEnabled", False))
+ objRenderTest.DepthOfFiendEnabled = CBool(.GetSubNodeValueAsStringByName("DepthOfFieldEnabled", False))
+ objRenderTest.RadialBlurEnabled = CBool(.GetSubNodeValueAsStringByName("RadialBlurEnabled", False))
+End With
+'///
+End Sub
+
+'TODO:other
+Friend Sub SaveFile()
+Dim obj As New clsTreeStorageNode
+'///
+obj.SetNameFromString "Config"
+With obj.GetSubNodeObjectByName("GraphicsConfig", True)
+ .AddSubNode , , "Width", CStr(d3dpp.BackBufferWidth)
+ .AddSubNode , , "Height", CStr(d3dpp.BackBufferHeight)
+ .AddSubNode , , "RefreshRate", CStr(d3dpp.FullScreen_RefreshRateInHz)
+ .AddSubNode , , "Fullscreen", CStr(d3dpp.Windowed = 0)
+ '///
+ .AddSubNode , , "PostProcessEnabled", CStr(objRenderTest.PostProcessEnabled)
+ .AddSubNode , , "HDRBlurQuality", CStr(objRenderTest.HDRBlurQuality)
+ .AddSubNode , , "ShadowMapEnabled", False 'TODO:
+ .AddSubNode , , "FogEnabled", True 'TODO:
+ .AddSubNode , , "VolumetricFogEnabled", CStr(objRenderTest.VolumetricFogEnabled)
+ .AddSubNode , , "DepthOfFieldEnabled", CStr(objRenderTest.DepthOfFiendEnabled)
+ .AddSubNode , , "RadialBlurEnabled", CStr(objRenderTest.RadialBlurEnabled)
+End With
+'///
+With New clsXMLSerializer
+ .SaveNodeToFile m_sFileName, obj
+End With
+End Sub
 
 Friend Sub GetAdapterModes()
 Dim i As Long
@@ -160,7 +210,7 @@ End With
 'TODO:
 End Sub
 
-'TODO:read current settings
+'TODO:read other settings
 Friend Sub Show()
 Dim idx As Long
 Dim i As Long
@@ -237,7 +287,6 @@ objRenderTest.HDRBlurQuality = FakeDXUIControls(m_idx(IDC_HDRBlurQuality)).ListV
 objRenderTest.VolumetricFogEnabled = FakeDXUIControls(m_idx(IDC_VolumetricFog)).Value
 objRenderTest.DepthOfFiendEnabled = FakeDXUIControls(m_idx(IDC_DepthOfField)).Value
 objRenderTest.RadialBlurEnabled = FakeDXUIControls(m_idx(IDC_RadialBlur)).Value
-'///
 End Sub
 
 Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
@@ -248,8 +297,10 @@ Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
 Select Case obj.Name
 Case "cmdApply"
  Apply
+ SaveFile
 Case "cmdOK"
  Apply
+ SaveFile
  Hide
 Case "cmdCancel"
  Hide

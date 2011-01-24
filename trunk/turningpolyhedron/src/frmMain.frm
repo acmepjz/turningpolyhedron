@@ -136,6 +136,9 @@ m_sMyGamesPath = Space(1024)
 SHGetSpecialFolderPath 0, m_sMyGamesPath, 5, 1
 m_sMyGamesPath = Left(m_sMyGamesPath, InStr(1, m_sMyGamesPath, vbNullChar) - 1) + "\My Games\Turning Polyhedron\"
 MakeSureDirectoryPathExists m_sMyGamesPath
+'///load config
+frmSettings.FileName = m_sMyGamesPath + "config.xml"
+frmSettings.LoadFile
 '///
 objText.LoadFileWithLocale App.Path + "\data\locale\*.mo", , True
 '///
@@ -149,19 +152,21 @@ If d3d9 Is Nothing Then
  End
 End If
 With d3dpp
- .Windowed = 1
+ '.Windowed = 1 'already loaded
  .hDeviceWindow = Me.hwnd
  .SwapEffect = D3DSWAPEFFECT_DISCARD
  .BackBufferCount = 1
  .BackBufferFormat = D3DFMT_X8R8G8B8
- .BackBufferWidth = 640
- .BackBufferHeight = 480
+ '.BackBufferWidth = 640 'already loaded
+ '.BackBufferHeight = 480 'already loaded
  .EnableAutoDepthStencil = 1
  .AutoDepthStencilFormat = D3DFMT_D24S8
  '.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
  .PresentationInterval = D3DPRESENT_INTERVAL_ONE
  '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES
 End With
+'///
+FakeDXAppAdjustWindowPos
 '///get device caps
 d3d9.GetDeviceCaps 0, D3DDEVTYPE_HAL, d3dc9
 If d3dc9.DevCaps And D3DDEVCAPS_HWTRANSFORMANDLIGHT Then i = D3DCREATE_HARDWARE_VERTEXPROCESSING _
