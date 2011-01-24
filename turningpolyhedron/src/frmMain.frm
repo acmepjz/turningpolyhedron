@@ -30,7 +30,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
@@ -251,14 +251,17 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   '///scrollbar test
-  With .AddNewChildren(FakeCtl_ScrollBar, 240, 16, 400, 32, FCS_CanGetFocus Or FCS_TabStop Or FSS_Slider)
-   .Max = 10
-   .LargeChange = 0
+  With .AddNewChildren(FakeCtl_ScrollBar, 240, 8, 400, 24, FCS_CanGetFocus Or FCS_TabStop Or FSS_Slider, , , , , , "Slider1")
+   .Max = 100
+   .LargeChange = 10
   End With
   With .AddNewChildren(FakeCtl_ScrollBar, 408, 0, 424, 64, FCS_CanGetFocus Or FCS_TabStop Or FSS_Slider)
    .Orientation = 1
    .Max = 10
    .LargeChange = 0
+  End With
+  With .AddNewChildren(FakeCtl_ProgressBar, 240, 32, 400, 48, , , , , , , "Progress1")
+   .Max = 100
   End With
   '////////tab order debug
   .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 76, &H3020000, , , , , "Single line text box blah blah blah °¡°¡°¡ blah blah"
@@ -479,8 +482,18 @@ End Function
 
 Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
 Dim i As Long
-i = FakeDXUIFindControl("Label1")
-If i Then FakeDXUIControls(i).Caption = CStr(obj.Value) + "," + CStr(obj.Value(1))
+Select Case obj.Name
+Case "Slider1"
+ i = FakeDXUIFindControl("Progress1")
+ If i Then
+  With FakeDXUIControls(i)
+   .Caption = Format(obj.Value / 100, "0%")
+   .Value = obj.Value
+  End With
+ End If
+End Select
+'i = FakeDXUIFindControl("Label1")
+'If i Then FakeDXUIControls(i).Caption = CStr(obj.Value) + "," + CStr(obj.Value(1))
 End Sub
 
 Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)

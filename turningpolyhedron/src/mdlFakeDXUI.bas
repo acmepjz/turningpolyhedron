@@ -148,6 +148,7 @@ Public Enum enumFakeDXUIControlType
  FakeCtl_ListView = 8
  FakeCtl_ComboBox = 9
  FakeCtl_TabStrip = 10
+ FakeCtl_ProgressBar = 11
 End Enum
 
 Public Enum enumFakeDXUIControlStyle

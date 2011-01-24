@@ -267,7 +267,7 @@ End Property
 
 Friend Property Let Min(Optional ByVal nIndex As Long, ByVal n As Long)
 Select Case m_nType
-Case 1, 3, 5, 6, 10
+Case 1, 3, 5, 6, 10, 11
  With m_tScrollBar(nIndex)
   .nMin = n
   If .nValue < n Then
@@ -285,7 +285,7 @@ End Property
 
 Friend Property Let Max(Optional ByVal nIndex As Long, ByVal n As Long)
 Select Case m_nType
-Case 1, 3, 5, 6, 10
+Case 1, 3, 5, 6, 10, 11
  With m_tScrollBar(nIndex)
   .nMax = n
   If .nValue > n Then
@@ -341,7 +341,7 @@ End Property
 
 Friend Property Get Value(Optional ByVal nIndex As Long) As Long
 Select Case m_nType
-Case 1, 3, 5, 6, 10
+Case 1, 3, 5, 6, 10, 11
  Value = m_tScrollBar(nIndex).nValue
 Case Else
  Value = m_nValue
@@ -351,7 +351,7 @@ End Property
 Friend Property Let Value(Optional ByVal nIndex As Long, ByVal n As Long)
 Dim i As Long, j As Long, k As Long
 Select Case m_nType
-Case 1, 3, 5, 6, 10
+Case 1, 3, 5, 6, 10, 11
  With m_tScrollBar(nIndex)
   If n < .nMin Then n = .nMin Else If n > .nMax Then n = .nMax
   If .nValue <> n Then
@@ -1606,6 +1606,25 @@ Case 10 'tab strip
  pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , True, bEnabled
  '///auto scroll
  If m_nStyle And &H2000& Then idxAutoScrollControl = m_objTab.SelectedTab
+Case 11 'progressbar
+ '///border
+ i = 255 * nOpacity
+ i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
+ FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4 - (16& And (m_nStyle And &H10000) <> 0), nBottom + 4, 124, 324, 164, 364, 8, 8, 8, 8, 512, i Or &HFFFFFF
+ '///progress
+ j = m_tScrollBar(0).nMin
+ k = m_tScrollBar(0).nMax - j
+ j = m_tScrollBar(0).nValue - j
+ If j > 0 And k > 0 Then
+  f = j / k
+  FakeDXGDIStretchBltColored nLeft + 2, nTop + 2, nLeft + 2 + (nRight - nLeft - 4) * f, nBottom - 2, 320, 416, 320 + 32 * f, 432, 512, i Or &HFFFFFF
+  '... 174, 416, 174, 432, 512, i
+ End If
+ '///caption
+ FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, DT_CENTER Or DT_VCENTER Or DT_SINGLELINE, i, , , , , , , True
+ '///
+ 'TODO:glow effect (?),etc.
+ '///
 Case Else
  'TODO:
 End Select
