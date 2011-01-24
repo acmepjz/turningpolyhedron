@@ -110,14 +110,14 @@ If m_bPostProcessEnabled <> b Then
 End If
 End Property
 
-Friend Sub Create(Optional ByVal bPostProcessEnabled As Boolean)
+Friend Sub Create(Optional ByVal bPostProcessEnabled As VbTriState = vbUseDefault)
 '///
 'test
 CreateEffect CStr(App.Path) + "\data\shader\pstest.txt", objEffect, , True
 '///???
 D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\data\gfx\noise.bmp", texNoise
 '///
-m_bPostProcessEnabled = bPostProcessEnabled
+If bPostProcessEnabled <> vbUseDefault Then m_bPostProcessEnabled = bPostProcessEnabled
 CreatePostProcessTarget
 End Sub
 
@@ -129,6 +129,9 @@ Friend Property Let HDRBlurQuality(Optional ByVal bForceRefresh As Boolean, ByVa
 Dim k As Long
 If m_nHDRBlurQuality <> n Or bForceRefresh Then
  m_nHDRBlurQuality = n
+ '///new
+ If d3dd9 Is Nothing Then Exit Property
+ '///
  Set objPostProcessTarget(1) = Nothing
  Set objPostProcessTarget(4) = Nothing
  Set objPostProcessTarget(5) = Nothing
@@ -145,6 +148,9 @@ End Property
 
 Friend Sub CreatePostProcessTarget()
 Erase objPostProcessTarget
+'///new
+If d3dd9 Is Nothing Then Exit Sub
+'///
 '/!\ we need 30M video memory if 1024x768, 80M if 1920x1080 :-3
 If m_bPostProcessEnabled Then
  '0=main render target BGR=color A=depth (0=0 zf=1)

@@ -574,7 +574,6 @@ End With
 AddSubNode = m_nNodeCount
 End Function
 
-'ERR?
 Friend Sub RemoveSubNode(ByVal nIndex As Long)
 Dim lp As Long, m As Long
 If nIndex > 0 And nIndex < m_nNodeCount Then
@@ -586,6 +585,7 @@ If nIndex > 0 And nIndex < m_nNodeCount Then
   Set .objSubNode = Nothing
  End With
  '///dirty code
+ 'ERR?
  CopyMemory ByVal lp + (nIndex - 1) * m, ByVal lp + nIndex * m, (m_nNodeCount - nIndex) * m
  ZeroMemory ByVal lp + (m_nNodeCount - 1) * m, m
  '///
@@ -612,7 +612,7 @@ For i = 1 To m_nNodeCount
 Next i
 End Function
 
-Friend Function GetSubNodeValueAsStringByName(ByVal sName As String) As String
+Friend Function GetSubNodeValueAsStringByName(ByVal sName As String, Optional ByVal sDefault As String) As String
 Dim i As Long
 For i = 1 To m_nNodeCount
  If CStr(m_tNodes(i).bName) = sName Then
@@ -620,24 +620,36 @@ For i = 1 To m_nNodeCount
   Exit Function
  End If
 Next i
+GetSubNodeValueAsStringByName = sDefault
 End Function
 
-Friend Sub SetSubNodeValueFromStringByName(ByVal sName As String, ByVal sValue As String)
+Friend Sub SetSubNodeValueFromStringByName(ByVal sName As String, ByVal sValue As String, Optional ByVal bCreateNew As Boolean)
 On Error Resume Next
 Dim i As Long
 For i = 1 To m_nNodeCount
- If CStr(m_tNodes(i).bName) = sName Then
-  m_tNodes(i).bValue = sValue
-  Err.Clear
-  m_tNodes(i).nValueSize = UBound(m_tNodes(i).bValue) + 1
-  If m_tNodes(i).nValueSize < 0 Or Err.Number <> 0 Then m_tNodes(i).nValueSize = 0
-  m_tNodes(i).nValueSizeMax = m_tNodes(i).nValueSize
-  Exit Sub
- End If
+ If CStr(m_tNodes(i).bName) = sName Then Exit For
 Next i
+'///
+If i > m_nNodeCount Then
+ If Not bCreateNew Then Exit Sub
+ m_nNodeCount = i
+ ReDim Preserve m_tNodes(1 To i)
+ '///
+ m_tNodes(i).bName = sName
+ Err.Clear
+ m_tNodes(i).nNameSize = UBound(m_tNodes(i).bName) + 1
+ If m_tNodes(i).nNameSize < 0 Or Err.Number <> 0 Then m_tNodes(i).nNameSize = 0
+ m_tNodes(i).nNameSizeMax = m_tNodes(i).nNameSize
+End If
+'///
+m_tNodes(i).bValue = sValue
+Err.Clear
+m_tNodes(i).nValueSize = UBound(m_tNodes(i).bValue) + 1
+If m_tNodes(i).nValueSize < 0 Or Err.Number <> 0 Then m_tNodes(i).nValueSize = 0
+m_tNodes(i).nValueSizeMax = m_tNodes(i).nValueSize
 End Sub
 
-Friend Function GetSubNodeObjectByName(ByVal sName As String) As clsTreeStorageNode
+Friend Function GetSubNodeObjectByName(ByVal sName As String, Optional ByVal bCreateNew As Boolean) As clsTreeStorageNode
 Dim i As Long
 For i = 1 To m_nNodeCount
  If Not m_tNodes(i).objSubNode Is Nothing Then
@@ -647,6 +659,60 @@ For i = 1 To m_nNodeCount
   End If
  End If
 Next i
+'///
+If Not bCreateNew Then Exit Function
+m_nNodeCount = i
+ReDim Preserve m_tNodes(1 To i)
+'///
+m_tNodes(i).nType = 1
+Set m_tNodes(i).objSubNode = New clsTreeStorageNode
+m_tNodes(i).objSubNode.SetNameFromString sName
+Set GetSubNodeObjectByName = m_tNodes(i).objSubNode
+End Function
+
+Friend Function GetHierachicalSubNodeValueAsStringByName(ByVal sName As String, Optional ByVal sDelimiter As String = "/", Optional ByVal sDefault As String) As String
+Dim v As Variant, i As Long, m As Long
+Dim obj As clsTreeStorageNode
+v = Split(sName, sDelimiter)
+m = UBound(v)
+If m >= 0 Then
+ Set obj = Me
+ For i = 0 To m - 1
+  Set obj = obj.GetSubNodeObjectByName(v(i))
+  If obj Is Nothing Then
+   GetHierachicalSubNodeValueAsStringByName = sDefault
+   Exit Function
+  End If
+ Next i
+ GetHierachicalSubNodeValueAsStringByName = obj.GetSubNodeValueAsStringByName(v(m), sDefault)
+End If
+End Function
+
+Friend Sub SetHierachicalSubNodeValueFromStringByName(ByVal sName As String, ByVal sValue As String, Optional ByVal sDelimiter As String = "/", Optional ByVal bCreateNew As Boolean)
+Dim v As Variant, i As Long, m As Long
+Dim obj As clsTreeStorageNode
+v = Split(sName, sDelimiter)
+m = UBound(v)
+If m >= 0 Then
+ Set obj = Me
+ For i = 0 To m - 1
+  Set obj = obj.GetSubNodeObjectByName(v(i), bCreateNew)
+  If obj Is Nothing Then Exit Sub
+ Next i
+ obj.SetSubNodeValueFromStringByName v(m), sValue, bCreateNew
+End If
+End Sub
+
+Friend Function GetHierachicalSubNodeObjectByName(ByVal sName As String, Optional ByVal sDelimiter As String = "/", Optional ByVal bCreateNew As Boolean) As clsTreeStorageNode
+Dim v As Variant, i As Long
+Dim obj As clsTreeStorageNode
+v = Split(sName, sDelimiter)
+Set obj = Me
+For i = 0 To UBound(v)
+ Set obj = obj.GetSubNodeObjectByName(v(i), bCreateNew)
+ If obj Is Nothing Then Exit Function
+Next i
+Set GetHierachicalSubNodeObjectByName = obj
 End Function
 
 Friend Function SaveNameToFile(ByVal FileName As String) As Boolean

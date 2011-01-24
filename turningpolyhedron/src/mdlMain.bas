@@ -278,9 +278,32 @@ Set obj2 = Nothing
 bInit = True
 End Sub
 
-Public Sub FakeDXAppChangeResolution(Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal bFullscreen As VbTriState = vbUseDefault)
+Public Sub FakeDXAppAdjustWindowPos()
 On Error Resume Next
 Dim r As RECT
+'///resize window
+If d3dpp.Windowed = 0 Then
+ SetWindowLong d3dpp.hDeviceWindow, GWL_STYLE, &H160A0000
+ SetWindowLong d3dpp.hDeviceWindow, GWL_EXSTYLE, &H40000
+Else
+ SetWindowLong d3dpp.hDeviceWindow, GWL_STYLE, &H16CA0000
+ SetWindowLong d3dpp.hDeviceWindow, GWL_EXSTYLE, &H40100
+ r.Right = d3dpp.BackBufferWidth
+ r.Bottom = d3dpp.BackBufferHeight
+ AdjustWindowRectEx r, &H16CA0000, 0, &H40100
+ SetWindowPos d3dpp.hDeviceWindow, 0, 0, 0, r.Right - r.Left, r.Bottom - r.Top, SWP_NOMOVE Or SWP_NOZORDER Or SWP_NOACTIVATE
+End If
+'///resize FakeDXUI
+If FakeDXUIControlCount > 0 Then
+ With FakeDXUIControls(1)
+  .SetRightEx d3dpp.BackBufferWidth, 0
+  .SetBottomEx d3dpp.BackBufferHeight, 0
+ End With
+End If
+End Sub
+
+Public Sub FakeDXAppChangeResolution(Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal bFullscreen As VbTriState = vbUseDefault)
+On Error Resume Next
 '///
 Select Case bFullscreen
 Case vbFalse
@@ -303,25 +326,8 @@ If nWidth <> d3dpp.BackBufferWidth Or nHeight <> d3dpp.BackBufferHeight Or d3dpp
  FakeDXAppOnLostDevice
  d3dd9.Reset d3dpp
  FakeDXAppOnInitalize True
- '///resize window
- If bFullscreen Then
-  SetWindowLong d3dpp.hDeviceWindow, GWL_STYLE, &H160A0000
-  SetWindowLong d3dpp.hDeviceWindow, GWL_EXSTYLE, &H40000
- Else
-  SetWindowLong d3dpp.hDeviceWindow, GWL_STYLE, &H16CA0000
-  SetWindowLong d3dpp.hDeviceWindow, GWL_EXSTYLE, &H40100
-  r.Right = nWidth
-  r.Bottom = nHeight
-  AdjustWindowRectEx r, &H16CA0000, 0, &H40100
-  SetWindowPos d3dpp.hDeviceWindow, 0, 0, 0, r.Right - r.Left, r.Bottom - r.Top, SWP_NOMOVE Or SWP_NOZORDER Or SWP_NOACTIVATE
- End If
- '///resize FakeDXUI
- If FakeDXUIControlCount > 0 Then
-  With FakeDXUIControls(1)
-   .SetRightEx nWidth, 0
-   .SetBottomEx nHeight, 0
-  End With
- End If
+ '///resize
+ FakeDXAppAdjustWindowPos
 End If
 End Sub
 
