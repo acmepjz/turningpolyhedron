@@ -2599,6 +2599,8 @@ If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit F
 'TODO:
 '///
 Select Case m_nType
+Case 5 'scrollbar
+ b = FakeDXUIOnScrollBarKeyEvent(KeyCode, Shift, nEventType, m_tScrollBar(0))
 Case 7 'textbox
  If m_nStyle And &H10000 Then
   If nEventType = 1 Then

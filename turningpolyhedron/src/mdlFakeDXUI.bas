@@ -852,6 +852,58 @@ t.nAnimVal(nRetIndex) = i
 pScrollBarButtonHighlight_1 = i
 End Function
 
+Public Function FakeDXUIOnScrollBarKeyEvent(ByVal KeyCode As Long, ByVal Shift As Long, ByVal nEventType As Long, ByRef t As typeFakeDXUIScrollBar) As Boolean
+Dim i As Long
+'///
+If Not t.bEnabled Then Exit Function
+'///
+If nEventType = 1 Then
+ Select Case KeyCode
+ Case vbKeyLeft, vbKeyUp '-smallchange
+  i = t.nValue - t.nSmallChange
+  If i < t.nMin Then i = t.nMin
+  If t.nValue <> i Then
+   t.nValue = i
+   t.nFlags = t.nFlags Or &H80&
+  End If
+ Case vbKeyRight, vbKeyDown '+smallchange
+  i = t.nValue + t.nSmallChange
+  If i < t.nMin Then i = t.nMin
+  If t.nValue <> i Then
+   t.nValue = i
+   t.nFlags = t.nFlags Or &H80&
+  End If
+ Case vbKeyPageUp '-largechange
+  i = t.nValue - t.nLargeChange
+  If i < t.nMin Then i = t.nMin
+  If t.nValue <> i Then
+   t.nValue = i
+   t.nFlags = t.nFlags Or &H80&
+  End If
+ Case vbKeyPageDown '-largechange
+  i = t.nValue + t.nLargeChange
+  If i < t.nMin Then i = t.nMin
+  If t.nValue <> i Then
+   t.nValue = i
+   t.nFlags = t.nFlags Or &H80&
+  End If
+ Case vbKeyHome
+  If t.nValue <> t.nMin Then
+   t.nValue = t.nMin
+   t.nFlags = t.nFlags Or &H80&
+  End If
+ Case vbKeyEnd
+  If t.nValue <> t.nMax Then
+   t.nValue = t.nMax
+   t.nFlags = t.nFlags Or &H80&
+  End If
+ Case Else
+  Exit Function
+ End Select
+ FakeDXUIOnScrollBarKeyEvent = True
+End If
+End Function
+
 Public Function FakeDXUIOnScrollBarMouseEvent(ByVal Button As Long, ByVal Shift As Long, ByVal x As Single, ByVal y As Single, ByVal nEventType As Long, ByRef t As typeFakeDXUIScrollBar) As Boolean
 Dim bInControl_0 As Boolean, bInControl As Boolean
 Dim b As Boolean
@@ -1001,7 +1053,7 @@ If nIndex And 1& Then 'button
   If j < k Then j = j + 51& Else _
   If j > k Then j = j - 51&
   t.nAnimVal(16) = j
-  If j > 0 Then
+  If j > 0 And (t.nFlags And 1&) = 0 Then
    i = j * nOpacity
    i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
    FakeDXGDIStretchBltExColored nLeft, nTop, nRight, nBottom, 8, 328, 40, 360, 4, 4, 4, 4, 512, i
@@ -1140,6 +1192,13 @@ If t.nOrientation Then 'vertical
    FakeDXGDIStretchBltExColored f - 3, t.tRect.Top, f + 5, t.tRect.Bottom + 4, j, 480, j + 8, 500, 0, 4, 0, 8, 512, i
    '///
    FakeDXUIRenderScrollBarButton t, 3, t.tRect.Left, t.fThumbStart, t.tRect.Right, t.fThumbEnd, nOpacity, bEnabled
+   '///focus
+   i = t.nAnimVal(16)
+   If i > 0 Then
+    i = i * nOpacity
+    i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+    FakeDXGDIStretchBltExColored t.tRect.Left - 2, t.tRect.Top - 2, t.tRect.Right + 2, t.tRect.Bottom + 2, 8, 328, 40, 360, 4, 4, 4, 4, 512, i
+   End If
   Else
    FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, t.tRect.Right, t.tRect.Top + 16, nOpacity, bEnabled
    FakeDXUIRenderScrollBarButton t, 2, t.tRect.Left, t.tRect.Top + 16, t.tRect.Right, t.fThumbStart, nOpacity, bEnabled
@@ -1163,6 +1222,13 @@ Else 'horizontal
    FakeDXGDIStretchBltExColored t.tRect.Left, f - 3, t.tRect.Right + 4, f + 5, 192, j, 212, j + 8, 4, 0, 8, 0, 512, i
    '///
    FakeDXUIRenderScrollBarButton t, 3, t.fThumbStart, t.tRect.Top, t.fThumbEnd, t.tRect.Bottom, nOpacity, bEnabled
+   '///focus
+   i = t.nAnimVal(16)
+   If i > 0 Then
+    i = i * nOpacity
+    i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000) Or &HFFFFFF
+    FakeDXGDIStretchBltExColored t.tRect.Left - 2, t.tRect.Top - 2, t.tRect.Right + 2, t.tRect.Bottom + 2, 8, 328, 40, 360, 4, 4, 4, 4, 512, i
+   End If
   Else
    FakeDXUIRenderScrollBarButton t, 1, t.tRect.Left, t.tRect.Top, t.tRect.Left + 16, t.tRect.Bottom, nOpacity, bEnabled
    FakeDXUIRenderScrollBarButton t, 2, t.tRect.Left + 16, t.tRect.Top, t.fThumbStart, t.tRect.Bottom, nOpacity, bEnabled
@@ -1284,4 +1350,3 @@ If i > 0 And i <= FakeDXUIControlCount Then
  End If
 End If
 End Sub
-
