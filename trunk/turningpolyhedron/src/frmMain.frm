@@ -260,7 +260,7 @@ With FakeDXUIControls(1)
    .Max = 100
    .LargeChange = 10
   End With
-  With .AddNewChildren(FakeCtl_ScrollBar, 408, 0, 424, 64, FCS_CanGetFocus Or FCS_TabStop Or FSS_Slider)
+  With .AddNewChildren(FakeCtl_ScrollBar, 408, 8, 424, 80, FCS_CanGetFocus Or FCS_TabStop Or FSS_Slider)
    .Orientation = 1
    .Max = 10
    .LargeChange = 0
