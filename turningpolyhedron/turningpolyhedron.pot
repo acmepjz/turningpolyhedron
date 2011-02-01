@@ -2,7 +2,15 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
-#. Me.Caption = objText.GetText("Initalizing...")
+#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
+msgid "Are you sure?"
+msgstr ""
+
+#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
+msgid "Exit game"
+msgstr ""
+
+#. frm.Caption = objText.GetText("Initalizing...")
 msgid "Initalizing..."
 msgstr ""
 
@@ -24,7 +32,7 @@ msgstr ""
 msgid "Tahoma"
 msgstr ""
 
-#. Me.Caption = objText.GetText("Turning Polyhedron")
+#. frm.Caption = objText.GetText("Turning Polyhedron")
 msgid "Turning Polyhedron"
 msgstr ""
 
@@ -46,15 +54,8 @@ msgstr ""
 msgid "Change the game settings."
 msgstr ""
 
-#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
-msgid "Are you sure?"
-msgstr ""
-
-#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
-msgid "Exit game"
-msgstr ""
-
 #.    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
+#.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
 msgid "Close"
 msgstr ""
 
@@ -169,6 +170,7 @@ msgstr ""
 
 #.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
 #.   s = objText.GetText("OK")
+#.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 msgid "OK"
 msgstr ""
 
@@ -178,6 +180,7 @@ msgstr ""
 
 #.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
 #.   s = objText.GetText("Cancel")
+#.   .AddNewChildren FakeCtl_Button, -64, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
 msgid "Cancel"
 msgstr ""
 
