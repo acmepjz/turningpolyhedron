@@ -11,7 +11,15 @@ msgstr ""
 "X-Poedit-Language: Chinese\n"
 "X-Poedit-Country: CHINA\n"
 
-#. Me.Caption = objText.GetText("Initalizing...")
+#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
+msgid "Are you sure?"
+msgstr "你确定吗？"
+
+#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
+msgid "Exit game"
+msgstr "退出游戏"
+
+#. frm.Caption = objText.GetText("Initalizing...")
 msgid "Initalizing..."
 msgstr "正在初始化..."
 
@@ -33,7 +41,7 @@ msgstr "初始化D3D9设备失败!!!"
 msgid "Tahoma"
 msgstr "文泉驿微米黑;文泉驿正黑;微软雅黑;黑体;宋体"
 
-#. Me.Caption = objText.GetText("Turning Polyhedron")
+#. frm.Caption = objText.GetText("Turning Polyhedron")
 msgid "Turning Polyhedron"
 msgstr "摇立体"
 
@@ -55,15 +63,8 @@ msgstr "选项"
 msgid "Change the game settings."
 msgstr "修改游戏设置选项。"
 
-#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
-msgid "Are you sure?"
-msgstr "你确定吗？"
-
-#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
-msgid "Exit game"
-msgstr "退出游戏"
-
 #.    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
+#.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
 msgid "Close"
 msgstr "关闭"
 
@@ -178,6 +179,7 @@ msgstr "游戏"
 
 #.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
 #.   s = objText.GetText("OK")
+#.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 msgid "OK"
 msgstr "确定"
 
@@ -187,6 +189,7 @@ msgstr "应用变更并且关闭对话框。"
 
 #.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
 #.   s = objText.GetText("Cancel")
+#.   .AddNewChildren FakeCtl_Button, -64, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
 msgid "Cancel"
 msgstr "取消"
 

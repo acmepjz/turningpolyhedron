@@ -1,5 +1,5 @@
 Type=Exe
-Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#D:\WINDOWS\system32\STDOLE2.TLB#OLE Automation
+Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#D:\WINDOWS\system32\stdole2.tlb#OLE Automation
 Reference=*\G{2684085F-5C59-4214-890B-3E393C5970B1}#0.0#0#.\tlb\dx9vbtest.tlb#Direct3D9 VB6 Type Library (Test Only!!!)
 Form=src\frmMain.frm
 Module=mdlMain; src\mdlMain.bas
@@ -33,6 +33,7 @@ Class=clsXMLSerializer; src\clsXMLSerializer.cls
 Class=clsFBMLSerializer; src\clsFBMLSerializer.cls
 Class=ITreeStorageBuilder; src\ITreeStorageBuilder.cls
 Class=clsGNUGetText; src\clsGNUGetText.cls
+Class=clsFakeDXUIInputBox; src\clsFakeDXUIInputBox.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""
