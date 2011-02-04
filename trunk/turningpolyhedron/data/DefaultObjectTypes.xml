@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- TEST ONLY -->
+<objectTypes>
+    <objectType name="ice">
+        <interaction default="slippery" fire="game-over:melting" sand="moveable"/>
+    </objectType>
+    <objectType name="fire">
+        <interaction/>
+    </objectType>
+    <objectType name="sand">
+        <interaction/>
+    </objectType>
+</objectTypes>
