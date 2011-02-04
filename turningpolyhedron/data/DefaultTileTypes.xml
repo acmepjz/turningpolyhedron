@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- TEST ONLY -->
+<tileTypes>
+  <tileType index="1">
+    <name>Ground</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+  </tileType>
+  <tileType index="2">
+    <name>Soft button</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onEnter type="triggerEvent"/>
+  </tileType>
+  <tileType index="3">
+    <name>Hard button</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onEnter condition="pressure=2-" type="triggerEvent"/>
+  </tileType>
+  <tileType index="4">
+    <name>Teleporter</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onMoveEnter condition="pressure=2-" type="teleport"/>
+  </tileType>
+  <tileType index="5">
+    <name>Thin ground</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onEnter condition="pressure=2-" type="game-over:breakdown"/>
+  </tileType>
+  <tileType index="6">
+    <name>Bridge (off)</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onEnter type="game-over"/>
+  </tileType>
+  <tileType index="7">
+    <name>Bridge (on)</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+  </tileType>
+  <tileType index="8" goal="true">
+    <name>Goal</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onEnter condition="pressure=2-" type="game-finished"/>
+  </tileType>
+  <tileType index="9" type="ice">
+    <name>Ice</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+  </tileType>
+  <tileType index="10">
+    <name>Pyramid</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onMoveEnter condition="pressure=2-" type="move"/>
+  </tileType>
+  <tileType index="11" blocked="true" block-height="1">
+    <name>Wall</name>
+    <description>NODESC</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+  </tileType>
+</tileTypes>
