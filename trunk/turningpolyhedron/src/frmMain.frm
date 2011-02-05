@@ -34,7 +34,7 @@ Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef D
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
 Private Declare Function GetAsyncKeyState Lib "user32.dll" (ByVal vKey As Long) As Integer
-Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hWnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
     x As Long
     y As Long
@@ -58,7 +58,7 @@ Implements iSubclass
 Private Sub Form_DblClick()
 Dim p As POINTAPI
 GetCursorPos p
-ScreenToClient Me.hWnd, p
+ScreenToClient Me.hwnd, p
 Call FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4)
 End Sub
 
@@ -164,9 +164,11 @@ Case "cmdDanger"
   For i = 1 To 8
    .AddButton , i
   Next i
-  .MsgBox CStr(.MsgBox("HAHA", &H1000000F Or vbInformation)), 15 Or vbExclamation
+  .MsgBox CStr(.MsgBox( _
+  "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W"), &H1000000F Or vbInformation)), 15 Or vbExclamation
   .MsgBox obj1.InputBox("HEHEHE", "LKS 123", "OXZ"), 15 Or vbCritical
   .MsgBox obj1.InputBox("HEHEHE", "LKS 123", , , True, vbBoth), &H40000000
+  .MsgBox "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W"), &H40000000
  End With
  frmSettings.Show
 ' Randomize Timer
@@ -187,7 +189,7 @@ Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
 '
 End Sub
 
-Private Sub iSubclass_After(lReturn As Long, ByVal hWnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
+Private Sub iSubclass_After(lReturn As Long, ByVal hwnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
 Dim i As Long
 Dim p As POINTAPI
 Select Case uMsg
@@ -202,13 +204,13 @@ Case WM_MOUSEWHEEL
 ' p.x = (lParam And &H7FFF&) Or (&HFFFF8000 And ((lParam And &H8000&) <> 0))
 ' p.y = (lParam And &HFFFF0000) \ &H10000
  GetCursorPos p
- ScreenToClient Me.hWnd, p
+ ScreenToClient Me.hwnd, p
  OnMouseWheel (wParam And 3&) Or (vbMiddleButton And ((wParam And &H10&) <> 0)), _
  ((wParam And &HC&) \ 4&) Or (vbAltMask And ((GetAsyncKeyState(vbKeyMenu) And &H8000&) <> 0)), p.x, p.y, i \ 120&
 End Select
 End Sub
 
-Private Sub iSubclass_Before(bHandled As Boolean, lReturn As Long, hWnd As Long, uMsg As Long, wParam As Long, lParam As Long)
+Private Sub iSubclass_Before(bHandled As Boolean, lReturn As Long, hwnd As Long, uMsg As Long, wParam As Long, lParam As Long)
 '
 End Sub
 

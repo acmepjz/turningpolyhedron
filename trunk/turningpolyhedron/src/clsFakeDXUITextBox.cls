@@ -245,7 +245,28 @@ m_nTextHeight = m_nTextHeight * m_nLineHeight
 End Sub
 
 Friend Property Get Text() As String
-Text = Join(m_sLines, vbCrLf)
+'wrong code!!!
+'Text = Join(m_sLines, vbCrLf)
+Dim i As Long, lp As Long, m As Long
+Dim s As String
+For i = 0 To m_nLineCount - 1
+ m = m + Len(m_sLines(i))
+Next i
+m = m + (m_nLineCount - 1) * 2&
+If m > 0 Then
+ s = Space(m)
+ lp = StrPtr(s)
+ For i = 0 To m_nLineCount - 1
+  m = CLng(Len(m_sLines(i))) * 2&
+  CopyMemory ByVal lp, ByVal StrPtr(m_sLines(i)), m
+  lp = lp + m
+  If i < m_nLineCount - 1 Then 'vbCrLf
+   CopyMemory ByVal lp, &HA000D, 4&
+   lp = lp + 4&
+  End If
+ Next i
+ Text = s
+End If
 End Property
 
 Friend Property Let Text(ByRef s As String)
