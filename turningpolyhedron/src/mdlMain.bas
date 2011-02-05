@@ -3,7 +3,7 @@ Option Explicit
 
 #Const UseSubclass = True
 
-Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hWnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
+Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
@@ -12,12 +12,12 @@ Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 Private Declare Function GetActiveWindow Lib "user32.dll" () As Long
 Private Declare Function GetAsyncKeyState Lib "user32.dll" (ByVal vKey As Long) As Integer
 
-Private Declare Function IsIconic Lib "user32.dll" (ByVal hWnd As Long) As Long
-Private Declare Function IsWindow Lib "user32.dll" (ByVal hWnd As Long) As Long
+Private Declare Function IsIconic Lib "user32.dll" (ByVal hwnd As Long) As Long
+Private Declare Function IsWindow Lib "user32.dll" (ByVal hwnd As Long) As Long
 
-Private Declare Function GetWindowLong Lib "user32.dll" Alias "GetWindowLongA" (ByVal hWnd As Long, ByVal nIndex As Long) As Long
-Private Declare Function SetWindowLong Lib "user32.dll" Alias "SetWindowLongA" (ByVal hWnd As Long, ByVal nIndex As Long, ByVal dwNewLong As Long) As Long
-Private Declare Function SetWindowPos Lib "user32.dll" (ByVal hWnd As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
+Private Declare Function GetWindowLong Lib "user32.dll" Alias "GetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long) As Long
+Private Declare Function SetWindowLong Lib "user32.dll" Alias "SetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long, ByVal dwNewLong As Long) As Long
+Private Declare Function SetWindowPos Lib "user32.dll" (ByVal hwnd As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
 Private Const SWP_NOMOVE As Long = &H2
 Private Const SWP_NOZORDER As Long = &H4
 Private Const SWP_NOACTIVATE As Long = &H10
@@ -423,7 +423,7 @@ If d3d9 Is Nothing Then
 End If
 With d3dpp
  '.Windowed = 1 'already loaded
- .hDeviceWindow = frm.hWnd
+ .hDeviceWindow = frm.hwnd
  .SwapEffect = D3DSWAPEFFECT_DISCARD
  .BackBufferCount = 1
  .BackBufferFormat = D3DFMT_X8R8G8B8
@@ -443,7 +443,7 @@ If d3dc9.DevCaps And D3DDEVCAPS_HWTRANSFORMANDLIGHT Then i = D3DCREATE_HARDWARE_
 Else i = D3DCREATE_SOFTWARE_VERTEXPROCESSING
 'TODO:shader version, etc.
 '///create device
-Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, frm.hWnd, i, d3dpp)
+Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, frm.hwnd, i, d3dpp)
 If d3dd9 Is Nothing Then
  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
  End
@@ -495,7 +495,7 @@ If App.LogMode = 1 Then
   .AddMsg WM_IME_ENDCOMPOSITION, MSG_AFTER
   .AddMsg WM_INPUTLANGCHANGE, MSG_AFTER
   .AddMsg WM_MOUSEWHEEL, MSG_AFTER
-  .Subclass frm.hWnd, objCallback
+  .Subclass frm.hwnd, objCallback
  End With
 End If
 '////////test
@@ -573,7 +573,8 @@ With FakeDXUIControls(1)
  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
  '///following items are TEST ONLY
- .AddNewChildren(FakeCtl_Button, 108, -32, 180, -8, , , , , "Danger!!!", , "cmdDanger", , 1, , 1, , , "Debug").ForeColor = &HFF0000
+ .AddNewChildren(FakeCtl_Button, 108, -32, 180, -8, , , , , "Danger!!!", , "cmdDanger", , 1, , 1, , , _
+ "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W")).ForeColor = &HFF0000
  '///
  With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFF20FF, , False, , "Form1234°¡°¢")
   .Show

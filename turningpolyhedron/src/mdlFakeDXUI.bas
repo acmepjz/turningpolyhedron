@@ -460,7 +460,7 @@ If x < 0 Or y < 0 Then
  y = p.y
 End If
 '///
-FakeDXGDIDrawText FakeDXUIDefaultFont, s, 0, 0, , , 0.5, DT_CALCRECT, 0, , , , , , , , w, h
+FakeDXGDIDrawText FakeDXUIDefaultFont, s, 0, 0, d3dpp.BackBufferWidth - 16, 16, 0.5, DT_WORDBREAK Or DT_CALCRECT, 0, , , , , , , , w, h
 w = w + 8
 h = h + 8
 '///
@@ -561,7 +561,7 @@ If FakeDXUIControlCount > 0 Then
    i = FakeDXUIPopup_ToolTipText_State * 51&
    i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
    FakeDXGDIStretchBltExColored .Left - 8, .Top - 8, .Right + 16, .Bottom + 16, 0, 176, 112, 240, 16, 16, 24, 24, 512, i Or &HFFFFFF
-   FakeDXGDIDrawText FakeDXUIDefaultFont, FakeDXUIPopup_ToolTipText_Caption, .Left + 4, .Top + 4, , , 0.5, DT_NOCLIP, i, , , , , , , True
+   FakeDXGDIDrawText FakeDXUIDefaultFont, FakeDXUIPopup_ToolTipText_Caption, .Left + 4, .Top + 4, .Right - .Left - 7, .Bottom - .Top - 8, 0.5, DT_WORDBREAK Or DT_NOCLIP, i, , , , , , , True
   End With
  End If
  '///

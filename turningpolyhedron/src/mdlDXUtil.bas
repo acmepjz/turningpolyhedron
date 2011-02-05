@@ -377,8 +377,8 @@ d3dd9.SetTextureStageState 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE
 d3dd9.SetTexture 1, Nothing
 End Sub
 
-Public Sub FakeDXGDIDrawText(ByRef tFont As typeFakeDXGDILogFont, ByVal lpStr As String, ByVal nLeft As Single, ByVal nTop As Single, Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal nZoom As Single = 1, Optional ByVal wFormat As D3DXDRAWTEXTFORMAT, _
-Optional ByVal nColor As Long = -1, Optional ByVal nTextLODBias As Single = -0.5, Optional ByVal nShadowColor As Long = 0, Optional ByVal nShadowOffsetX As Long = 2, Optional ByVal nShadowOffsetY As Long = 2, Optional ByVal nShadowLODBias As Single = 1.5, Optional ByVal nAngle As Single, Optional ByVal bSingle As Boolean, Optional ByRef nWidthReturn As Single, Optional ByRef nHeightReturn As Single)
+Public Function FakeDXGDIDrawText(ByRef tFont As typeFakeDXGDILogFont, ByVal lpStr As String, ByVal nLeft As Single, ByVal nTop As Single, Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal nZoom As Single = 1, Optional ByVal wFormat As D3DXDRAWTEXTFORMAT, _
+Optional ByVal nColor As Long = -1, Optional ByVal nTextLODBias As Single = -0.5, Optional ByVal nShadowColor As Long = 0, Optional ByVal nShadowOffsetX As Long = 2, Optional ByVal nShadowOffsetY As Long = 2, Optional ByVal nShadowLODBias As Single = 1.5, Optional ByVal nAngle As Single, Optional ByVal bSingle As Boolean, Optional ByRef nWidthReturn As Single, Optional ByRef nHeightReturn As Single) As Single
 Dim mat As D3DMATRIX
 Dim p As D3DRECT
 Dim obj As Direct3DDevice9
@@ -421,7 +421,7 @@ If Not bNoDraw Then
    nWidthReturn = p.x2 * nZoom
    nHeightReturn = p.Y2 * nZoom
   End If
-  tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nColor
+  FakeDXGDIDrawText = tFont.objFont.DrawTextW(tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nColor) * nZoom
   tFont.objSprite.Flush
  End If
  '///
@@ -433,12 +433,12 @@ Else
   p.y1 = 0
   p.x2 = nWidth / nZoom
   p.Y2 = nHeight / nZoom
-  tFont.objFont.DrawTextW Nothing, ByVal StrPtr(lpStr), -1, p, wFormat, 0 'Nothing??? it works :D
+  FakeDXGDIDrawText = tFont.objFont.DrawTextW(Nothing, ByVal StrPtr(lpStr), -1, p, wFormat, 0) * nZoom 'Nothing??? it works :D
   nWidthReturn = p.x2 * nZoom
   nHeightReturn = p.Y2 * nZoom
  End If
 End If
-End Sub
+End Function
 
 'Public Sub FakeDXGDIMaskBltExEx(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, _
 'ByVal nLeftMargin As Single, ByVal nTopMargin As Single, ByVal nRightMargin As Single, ByVal nBottomMargin As Single, ByVal nSize As Single, _

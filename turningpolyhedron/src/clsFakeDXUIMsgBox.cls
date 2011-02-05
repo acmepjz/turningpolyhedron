@@ -14,6 +14,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private Declare Function MessageBeep Lib "user32.dll" (ByVal wType As Long) As Long
+'Private Declare Function DrawTextW Lib "user32.dll" (ByVal hdc As Long, ByRef lpStr As Any, ByVal nCount As Long, ByRef lpRect As D3DRECT, ByVal wFormat As Long) As Long
 
 Private m_idx As Long
 
@@ -97,7 +98,7 @@ End Sub
 Friend Function MsgBox(Optional ByVal Prompt As String, Optional ByVal Buttons As VbMsgBoxStyle, Optional ByVal Title As String, Optional ByVal Default As VbMsgBoxResult) As VbMsgBoxResult
 Dim w As Long, h As Long
 Dim ww As Single, hh As Single
-Dim ww1 As Single
+Dim ww1 As Single ', hh1 As Single
 Dim i As Long, x As Long
 Dim idx As Long
 Dim ii As Long
@@ -118,12 +119,23 @@ Else ii = 0
 '///calc size
 w = m_nButtonCount * 64& - 8&
 If w < 32& Then w = 32&
-FakeDXGDIDrawText FakeDXUIDefaultFont, Prompt, 0, 0, , , 0.5, DT_CALCRECT, 0, , , , , , , , ww, hh
+'///debug
+If Len(Prompt) > 0 Then _
+Call FakeDXGDIDrawText(FakeDXUIDefaultFont, Prompt, 0, 0, d3dpp.BackBufferWidth - 64, 16, 0.5, DT_WORDBREAK Or DT_CALCRECT, 0, , , , , , , , ww, hh)
+'Debug.Print ww, hh, hh1
+''debug2
+'Dim r As D3DRECT
+'r.x2 = (d3dpp.BackBufferWidth - 32) * 2
+'DrawTextW FakeDXUIDefaultFont.objFont.GetDC, ByVal StrPtr(Prompt), Len(Prompt), r, DT_WORDBREAK Or DT_CALCRECT
+'Debug.Print r.x2 / 2, r.Y2 / 2
+''///
 If ii > 0 Then
  ww = ww + 56
  If hh < 48 Then hh = 48
 End If
-FakeDXGDIDrawText FakeDXUIDefaultFont, Title, 0, 0, , , 0.5, DT_CALCRECT Or DT_SINGLELINE, 0, , , , , , , , ww1
+'///
+If Len(Title) > 0 Then _
+FakeDXGDIDrawText FakeDXUIDefaultFont, Title, 0, 0, d3dpp.BackBufferWidth - 64, 16, 0.5, DT_CALCRECT Or DT_SINGLELINE, 0, , , , , , , , ww1
 ww1 = ww1 + 8
 If ww < ww1 Then ww = ww1
 If ww < w Then ww = w
