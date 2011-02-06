@@ -267,7 +267,7 @@ End Property
 
 Friend Property Let Min(Optional ByVal nIndex As Long, ByVal n As Long)
 Select Case m_nType
-Case 1, 3, 5, 6, 10, 11
+Case 0, 1, 3, 5, 6, 10, 11
  With m_tScrollBar(nIndex)
   .nMin = n
   If .nValue < n Then
@@ -285,7 +285,7 @@ End Property
 
 Friend Property Let Max(Optional ByVal nIndex As Long, ByVal n As Long)
 Select Case m_nType
-Case 1, 3, 5, 6, 10, 11
+Case 0, 1, 3, 5, 6, 10, 11
  With m_tScrollBar(nIndex)
   .nMax = n
   If .nValue > n Then
@@ -341,7 +341,7 @@ End Property
 
 Friend Property Get Value(Optional ByVal nIndex As Long) As Long
 Select Case m_nType
-Case 1, 3, 5, 6, 10, 11
+Case 0, 1, 3, 5, 6, 10, 11
  Value = m_tScrollBar(nIndex).nValue
 Case Else
  Value = m_nValue
@@ -351,7 +351,7 @@ End Property
 Friend Property Let Value(Optional ByVal nIndex As Long, ByVal n As Long)
 Dim i As Long, j As Long, k As Long
 Select Case m_nType
-Case 1, 3, 5, 6, 10, 11
+Case 0, 1, 3, 5, 6, 10, 11
  With m_tScrollBar(nIndex)
   If n < .nMin Then n = .nMin Else If n > .nMax Then n = .nMax
   If .nValue <> n Then
@@ -1152,6 +1152,10 @@ nRight = nParentClientLeft + m_tRect.Right
 nBottom = nParentClientTop + m_tRect.Bottom
 'TODO:caption,etc.
 Select Case m_nType
+Case 0 'none
+ '///scrollbar and autoscroll
+ pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , True, bEnabled
+ If m_nStyle And &H2000& Then idxAutoScrollControl = 1
 Case 1 'form
  '///
  i = m_nAnimVal(0)
@@ -1690,6 +1694,9 @@ If m_bSizeDirty Or bForce Then
  FakeDXUICalcRect m_tRectEx, m_tRect, w, h
  '///non-client area size
  Select Case m_nType
+ Case 0 'none
+  If m_nScrollBars And vbHorizontal Then t.Bottom = 16
+  If m_nScrollBars And vbVertical Then t.Right = 16
  Case 1 'window
   If (m_nState And 3&) = 0 Then
    t.Left = 4
@@ -2143,7 +2150,7 @@ Case 1 'form
  If m_nState And 2& Then bNoChild = True
  '///new:auto scroll
  If m_nStyle And &H2000& Then idxAutoScrollControl = 1
-Case 3 'frame
+Case 0, 3 'none,frame
  '///focus(?)
  If bInControl And nEventType = 1 Then SetFocus
  '///scrollbar
@@ -2713,7 +2720,7 @@ If m_nType < 0 Or Not m_bVisible Or Not m_bEnabled Or m_nClosing > 0 Then Exit F
 '///
 idx = -1
 Select Case m_nType
-Case 1, 3, 6, 7, 8, 10
+Case 0, 1, 3, 6, 7, 8, 10
  If m_nType = 7 And (m_nStyle And &H10000) <> 0 Then
   On Error Resume Next
   If nDelta Then m_objTextBox.Text = CStr(Val(m_objTextBox.Text) + nDelta * m_tScrollBar(2).fStartDragPos)

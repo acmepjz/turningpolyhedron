@@ -33,7 +33,6 @@ Private Enum enumSettingsDialogControls
  IDC_VolumetricFog
  IDC_DepthOfField
  IDC_RadialBlur
- IDC_
 End Enum
 
 'config file name
