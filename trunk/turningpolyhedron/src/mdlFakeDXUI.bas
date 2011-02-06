@@ -197,6 +197,10 @@ Public Enum enumFakeDXUIControlStyle
  FCBS_DropdownList = 0
  FCBS_DropdownCombo = 1 'currently partially supported
  FCBS_SimpleCombo = 2 'currently unsupported
+' FCBS_DropdownListAndButton = 4
+' FCBS_DropdownListAndCheckButton = 5
+' FCBS_DropdownListAndOptionButton = 6
+' FCBS_DropdownListAndOptionNullable = 7
  FCBS_FixedText = 8
  FCBS_NoAutoClose = 16
  FCBS_AutoSelect = &H20000

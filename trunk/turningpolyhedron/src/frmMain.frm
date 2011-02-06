@@ -160,17 +160,19 @@ Case "cmdExit"
 ' End With
  Unload Me
 Case "cmdDanger"
- With New clsFakeDXUIMsgBox
-  For i = 1 To 8
-   .AddButton , i
-  Next i
-  .MsgBox CStr(.MsgBox( _
-  "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W"), &H1000000F Or vbInformation)), 15 Or vbExclamation
-  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", "OXZ"), 15 Or vbCritical
-  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", , , True, vbBoth), &H40000000
-  .MsgBox "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W"), &H40000000
+' With New clsFakeDXUIMsgBox
+'  For i = 1 To 8
+'   .AddButton , i
+'  Next i
+'  .MsgBox CStr(.MsgBox( _
+'  "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W"), &H1000000F Or vbInformation)), 15 Or vbExclamation
+'  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", "OXZ"), 15 Or vbCritical
+'  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", , , True, vbBoth), &H40000000
+' End With
+ With New clsFakeCommonDialog
+  .VBGetOpenFileName "HEHE", , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath
  End With
- frmSettings.Show
+' frmSettings.Show
 ' Randomize Timer
 ' For i = 1 To 1
 '  With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
