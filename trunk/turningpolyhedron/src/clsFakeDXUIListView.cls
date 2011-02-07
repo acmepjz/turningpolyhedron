@@ -15,6 +15,8 @@ Option Explicit
 
 '///FakeDXUIListView - modified from FakeListView ver2
 
+'Private Const m_bRaiseEventWhenClick As Boolean = True 'wrong code
+
 Private Declare Function GetTextExtentPoint32W Lib "gdi32.dll" ( _
   ByVal hdc As Long, _
   ByRef lpString As Any, _
@@ -1082,9 +1084,11 @@ If Not m_bPressed Then
        End With
       Next i
      End If
-     m_nSelColumn = m_nHlColumn
-     m_nSelRow = m_nHlRow
-     RaiseEvent Click(m_nSelRow, m_nSelColumn)
+'     If m_nSelColumn <> m_nHlColumn Or m_nSelRow <> m_nHlRow Or m_bRaiseEventWhenClick Then
+      m_nSelColumn = m_nHlColumn
+      m_nSelRow = m_nHlRow
+      RaiseEvent Click(m_nSelRow, m_nSelColumn)
+'     End If
     ElseIf Not m_bMultiSelect Or Button = 1 Then '?
      If m_bVirtual Then
       For j = 1 To m_nRows
@@ -1101,9 +1105,11 @@ If Not m_bPressed Then
        Next j
       Next i
      End If
-     m_nSelColumn = m_nHlColumn
-     m_nSelRow = m_nHlRow
-     RaiseEvent Click(m_nSelRow, m_nSelColumn)
+'     If m_nSelColumn <> m_nHlColumn Or m_nSelRow <> m_nHlRow Or m_bRaiseEventWhenClick Then
+      m_nSelColumn = m_nHlColumn
+      m_nSelRow = m_nHlRow
+      RaiseEvent Click(m_nSelRow, m_nSelColumn)
+'     End If
     End If
    Else
     If (Shift And vbShiftMask) <> 0 And m_nSelRow > 0 And m_nSelRow <= m_nRows _
@@ -1147,9 +1153,11 @@ If Not m_bPressed Then
        .nFlags = .nFlags Xor 1&
       End With
      End If
-     m_nSelColumn = m_nHlColumn
-     m_nSelRow = m_nHlRow
-     RaiseEvent Click(m_nSelRow, m_nSelColumn)
+'     If m_nSelColumn <> m_nHlColumn Or m_nSelRow <> m_nHlRow Or m_bRaiseEventWhenClick Then
+      m_nSelColumn = m_nHlColumn
+      m_nSelRow = m_nHlRow
+      RaiseEvent Click(m_nSelRow, m_nSelColumn)
+'     End If
     ElseIf Not m_bMultiSelect Or Button = 1 Then '?
      If m_bVirtual Then
       For i = 1 To m_nColumns
@@ -1168,9 +1176,11 @@ If Not m_bPressed Then
        Next j
       Next i
      End If
-     m_nSelColumn = m_nHlColumn
-     m_nSelRow = m_nHlRow
-     RaiseEvent Click(m_nSelRow, m_nSelColumn)
+'     If m_nSelColumn <> m_nHlColumn Or m_nSelRow <> m_nHlRow Or m_bRaiseEventWhenClick Then
+      m_nSelColumn = m_nHlColumn
+      m_nSelRow = m_nHlRow
+      RaiseEvent Click(m_nSelRow, m_nSelColumn)
+'     End If
     End If
    End If
    'raise event

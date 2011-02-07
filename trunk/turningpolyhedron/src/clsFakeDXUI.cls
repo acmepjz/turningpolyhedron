@@ -2783,6 +2783,10 @@ End If
 FakeDXUIPostMessage FakeCtl_Msg_Click, m_nIndex
 End Sub
 
+Private Sub m_objListView_DblClick(ByVal nRow As Long, ByVal nColumn As Long)
+FakeDXUIPostMessage FakeCtl_Msg_DblClick, m_nIndex
+End Sub
+
 Private Sub m_objTab_TabClick(ByVal TabIndex As Long)
 Dim i As Long, idx As Long
 'TODO:when tab closed, order of children controls goes wrong

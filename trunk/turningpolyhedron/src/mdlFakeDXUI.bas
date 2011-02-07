@@ -219,6 +219,7 @@ Public Enum enumFakeDXUIMessage
  '///
  FakeCtl_Msg_ZOrder = &H10000001 'param1=ctlindex param2=HWND_TOP(0) HWND_BOTTOM(1) HWND_TOPMOST(-1) HWND_NOTOPMOST(-2)
  FakeCtl_Msg_Click 'param1=ctlindex
+ FakeCtl_Msg_DblClick 'param1=ctlindex
  FakeCtl_Msg_Change 'param1=ctlindex
  FakeCtl_Msg_ScrollChange 'param1=ctlindex
  FakeCtl_Msg_GetFocus 'param1=ctlindex
@@ -312,6 +313,9 @@ Select Case t.iMsg
 Case FakeCtl_Msg_Click
  Set obj = FakeDXUIControls(t.nParam1).GetEventObject
  If Not obj Is Nothing Then obj.Click FakeDXUIControls(t.nParam1)
+Case FakeCtl_Msg_DblClick
+ Set obj = FakeDXUIControls(t.nParam1).GetEventObject
+ If Not obj Is Nothing Then obj.DblClick FakeDXUIControls(t.nParam1)
 Case FakeCtl_Msg_Change
  Set obj = FakeDXUIControls(t.nParam1).GetEventObject
  If Not obj Is Nothing Then obj.Change FakeDXUIControls(t.nParam1)

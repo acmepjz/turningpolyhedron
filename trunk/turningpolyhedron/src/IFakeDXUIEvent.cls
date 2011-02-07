@@ -25,3 +25,6 @@ Public Sub Change(ByVal obj As clsFakeDXUI)
 '
 End Sub
 
+Public Sub DblClick(ByVal obj As clsFakeDXUI)
+
+End Sub

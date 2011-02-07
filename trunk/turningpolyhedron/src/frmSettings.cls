@@ -306,6 +306,10 @@ Case "cmdCancel"
 End Select
 End Sub
 
+Private Sub IFakeDXUIEvent_DblClick(ByVal obj As clsFakeDXUI)
+'
+End Sub
+
 Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
 obj.Hide
 Cancel = True
