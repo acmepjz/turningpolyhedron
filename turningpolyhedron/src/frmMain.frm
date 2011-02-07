@@ -187,6 +187,10 @@ Case "cmdOptions"
 End Select
 End Sub
 
+Private Sub IFakeDXUIEvent_DblClick(ByVal obj As clsFakeDXUI)
+'
+End Sub
+
 Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
 '
 End Sub

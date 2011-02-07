@@ -102,6 +102,10 @@ If m_idx > 0 And m_idx <= FakeDXUIControlCount Then
 End If
 End Sub
 
+Private Sub IFakeDXUIEvent_DblClick(ByVal obj As clsFakeDXUI)
+'
+End Sub
+
 Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
 m_bUnload = True
 End Sub
