@@ -45,10 +45,10 @@ m_sValue = vbNullString
 '///
 If MultiLine Then
  w = 200
- h = 120
+ h = 128
 Else
  w = 128
- h = 64
+ h = 68
 End If
 '///
 With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -w, -h, w, h, _
@@ -72,6 +72,7 @@ FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_Sizable Or FFS_TitleBar,
  '///
  .Show 1
 End With
+FakeDXUIPostMessage FakeCtl_Msg_SetFocus, m_idxTextBox
 '///wait for single object
 FakeDXAppMainLoop VarPtr(m_bUnload)
 '///

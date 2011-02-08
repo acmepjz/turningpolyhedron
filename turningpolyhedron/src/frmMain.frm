@@ -150,6 +150,7 @@ End Sub
 Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
 Dim i As Long
 Dim obj1 As New clsFakeDXUIInputBox
+Dim s As String
 Select Case obj.Name
 Case "cmdClose"
  i = FakeDXUIFindControl("frmTopmost")
@@ -170,7 +171,10 @@ Case "cmdDanger"
 '  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", , , True, vbBoth), &H40000000
 ' End With
  With New clsFakeCommonDialog
-  .VBGetOpenFileName "HEHE", , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath
+  s = "HEHE"
+  If .VBGetOpenFileName(s, , , , False, "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
+   Debug.Print s
+  End If
  End With
 ' frmSettings.Show
 ' Randomize Timer

@@ -522,6 +522,11 @@ Friend Property Let ItemData(ByVal nRow As Long, ByVal nColumn As Long, ByVal n 
 If Not m_bVirtual Then m_sData(nColumn, nRow).nItemData = n
 End Property
 
+'TODO:let
+Friend Property Get ItemSelected(ByVal nRow As Long, ByVal nColumn As Long) As Boolean
+If Not m_bVirtual Then ItemSelected = m_sData(nColumn, nRow).nFlags And 1&
+End Property
+
 Friend Function AddItem(ByVal sCaption As String, Optional ByVal nIndex As Long, Optional ByVal nItemData As Long, Optional ByRef vtSubItems As Variant) As Long
 Dim i As Long, j As Long, k As Long, kk As Long
 Dim t As typeFakeListViewItem
@@ -1070,6 +1075,9 @@ If Not m_bPressed Then
        Next j
       Next i
      End If
+     '??? TODO:
+     RaiseEvent Click(m_nSelRow, m_nSelColumn)
+     '???
     ElseIf (Shift And vbCtrlMask) <> 0 And m_bMultiSelect And Button = 1 Then
      If m_bVirtual Then
       i = 0

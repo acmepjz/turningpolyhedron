@@ -231,6 +231,10 @@ msgid "Can't create D3DXEffect!! Error number: "
 msgstr "初始化D3DXEffect失败!! 错误代码: "
 
 #. MsgBox s2, vbExclamation, objText.GetText("Error")
+#. .MsgBox InitDir + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#. objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
+#. .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#. .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 msgid "Error"
 msgstr "错误"
 
@@ -243,6 +247,7 @@ msgid "My Documents"
 msgstr "我的文档"
 
 #. obj.AddItem vbTab + .sName, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(.nTime, "yyyy-mm-dd hh:mm:ss"))
+#. .EnsureVisible .AddItem(vbTab + s, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(f, "yyyy-mm-dd hh:mm:ss")))
 msgid "Folder"
 msgstr "文件夹"
 
@@ -277,8 +282,21 @@ msgid "Modification time"
 msgstr "修改时间"
 
 #. .AddNewChildren FakeCtl_Button, -88, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("New folder"), , "cmdNewFolder", 1, , 1
+#. s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
 msgid "New folder"
 msgstr "新建文件夹"
+
+#. s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
+msgid "Input folder name"
+msgstr "输入文件夹名称"
+
+#. objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
+msgid "The folder already exists. Please input a different name."
+msgstr "文件夹已经存在。请输入一个不同的名称。"
+
+#. If .MsgBox(s + vbCrLf + objText.GetText("The file already exists. Do you want to overwrite it?"), _
+msgid "The file already exists. Do you want to overwrite it?"
+msgstr "文件已经存在。要覆盖它吗？"
 
 #~ msgid "Exit the program."
 #~ msgstr "退出程序。"
