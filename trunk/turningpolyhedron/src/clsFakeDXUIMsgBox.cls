@@ -129,6 +129,7 @@ Call FakeDXGDIDrawText(FakeDXUIDefaultFont, Prompt, 0, 0, d3dpp.BackBufferWidth 
 'DrawTextW FakeDXUIDefaultFont.objFont.GetDC, ByVal StrPtr(Prompt), Len(Prompt), r, DT_WORDBREAK Or DT_CALCRECT
 'Debug.Print r.x2 / 2, r.Y2 / 2
 ''///
+ww = ww + 2
 If ii > 0 Then
  ww = ww + 56
  If hh < 48 Then hh = 48
@@ -136,7 +137,7 @@ End If
 '///
 If Len(Title) > 0 Then _
 FakeDXGDIDrawText FakeDXUIDefaultFont, Title, 0, 0, d3dpp.BackBufferWidth - 64, 16, 0.5, DT_CALCRECT Or DT_SINGLELINE, 0, , , , , , , , ww1
-ww1 = ww1 + 8
+ww1 = ww1 + 10
 If ww < ww1 Then ww = ww1
 If ww < w Then ww = w
 'If ww > d3dpp.BackBufferWidth - 32 Then 'does not work

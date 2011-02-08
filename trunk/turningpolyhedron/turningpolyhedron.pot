@@ -222,6 +222,10 @@ msgid "Can't create D3DXEffect!! Error number: "
 msgstr ""
 
 #.  MsgBox s2, vbExclamation, objText.GetText("Error")
+#.      .MsgBox InitDir + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#.       objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
+#.       .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#.    .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 msgid "Error"
 msgstr ""
 
@@ -234,6 +238,7 @@ msgid "My Documents"
 msgstr ""
 
 #.      obj.AddItem vbTab + .sName, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(.nTime, "yyyy-mm-dd hh:mm:ss"))
+#.       .EnsureVisible .AddItem(vbTab + s, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(f, "yyyy-mm-dd hh:mm:ss")))
 msgid "Folder"
 msgstr ""
 
@@ -268,6 +273,19 @@ msgid "Modification time"
 msgstr ""
 
 #.  .AddNewChildren FakeCtl_Button, -88, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("New folder"), , "cmdNewFolder", 1, , 1
+#.    s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
 msgid "New folder"
+msgstr ""
+
+#.    s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
+msgid "Input folder name"
+msgstr ""
+
+#.       objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
+msgid "The folder already exists. Please input a different name."
+msgstr ""
+
+#.   If .MsgBox(s + vbCrLf + objText.GetText("The file already exists. Do you want to overwrite it?"), _
+msgid "The file already exists. Do you want to overwrite it?"
 msgstr ""
 
