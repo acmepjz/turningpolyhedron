@@ -81,32 +81,26 @@ m_idx = 0
 m_idxTextBox = 0
 End Function
 
-Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
-'
-End Sub
-
-Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
-Select Case obj.Name
-Case "cmdOK"
- m_bCancel = False
- If m_idxTextBox > 0 And m_idxTextBox <= FakeDXUIControlCount Then
-  m_sValue = FakeDXUIControls(m_idxTextBox).Text
+Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
+Select Case nType
+Case FakeCtl_Event_Click
+ Select Case obj.Name
+ Case "cmdOK"
+  m_bCancel = False
+  If m_idxTextBox > 0 And m_idxTextBox <= FakeDXUIControlCount Then
+   m_sValue = FakeDXUIControls(m_idxTextBox).Text
+  End If
+ Case "cmdCancel"
+ Case Else
+  Exit Function
+ End Select
+ If m_idx > 0 And m_idx <= FakeDXUIControlCount Then
+  FakeDXUIControls(m_idx).Unload
+  m_bUnload = True
+  m_idx = 0
  End If
-Case "cmdCancel"
-Case Else
- Exit Sub
-End Select
-If m_idx > 0 And m_idx <= FakeDXUIControlCount Then
- FakeDXUIControls(m_idx).Unload
+Case FakeCtl_Event_Unload
  m_bUnload = True
- m_idx = 0
-End If
-End Sub
+End Select
+End Function
 
-Private Sub IFakeDXUIEvent_DblClick(ByVal obj As clsFakeDXUI)
-'
-End Sub
-
-Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
-m_bUnload = True
-End Sub

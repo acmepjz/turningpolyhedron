@@ -13,18 +13,22 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-Public Sub Click(ByVal obj As clsFakeDXUI)
+'Public Sub Click(ByVal obj As clsFakeDXUI)
+''
+'End Sub
 '
-End Sub
-
-Public Sub Unload(ByVal obj As clsFakeDXUI, ByRef Cancel As Boolean)
+'Public Sub Unload(ByVal obj As clsFakeDXUI, ByRef Cancel As Boolean)
+''
+'End Sub
 '
-End Sub
-
-Public Sub Change(ByVal obj As clsFakeDXUI)
+'Public Sub Change(ByVal obj As clsFakeDXUI)
+''
+'End Sub
 '
-End Sub
+'Public Sub DblClick(ByVal obj As clsFakeDXUI)
+'
+'End Sub
 
-Public Sub DblClick(ByVal obj As clsFakeDXUI)
-
-End Sub
+Public Function OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
+'
+End Function

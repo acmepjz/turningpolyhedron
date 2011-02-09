@@ -288,29 +288,22 @@ objRenderTest.DepthOfFiendEnabled = FakeDXUIControls(m_idx(IDC_DepthOfField)).Va
 objRenderTest.RadialBlurEnabled = FakeDXUIControls(m_idx(IDC_RadialBlur)).Value
 End Sub
 
-Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
-'
-End Sub
-
-Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
-Select Case obj.Name
-Case "cmdApply"
- Apply
- SaveFile
-Case "cmdOK"
- Apply
- SaveFile
- Hide
-Case "cmdCancel"
- Hide
+Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
+Select Case nType
+Case FakeCtl_Event_Click
+ Select Case obj.Name
+ Case "cmdApply"
+  Apply
+  SaveFile
+ Case "cmdOK"
+  Apply
+  SaveFile
+  Hide
+ Case "cmdCancel"
+  Hide
+ End Select
+Case FakeCtl_Event_Unload
+ obj.Hide
+ IFakeDXUIEvent_OnEvent = 1
 End Select
-End Sub
-
-Private Sub IFakeDXUIEvent_DblClick(ByVal obj As clsFakeDXUI)
-'
-End Sub
-
-Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
-obj.Hide
-Cancel = True
-End Sub
+End Function

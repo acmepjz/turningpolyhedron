@@ -189,26 +189,20 @@ End Function
 'End If
 'End Sub
 
-Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
-'
-End Sub
-
-Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
-Select Case obj.Name
-Case "MsgBox"
- m_nReturnValue = Val(obj.GroupName)
- If m_idx > 0 And m_idx <= FakeDXUIControlCount Then
-  FakeDXUIControls(m_idx).Unload
-  m_bUnload = True
-  m_idx = 0
- End If
+Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
+Select Case nType
+Case FakeCtl_Event_Click
+ Select Case obj.Name
+ Case "MsgBox"
+  m_nReturnValue = Val(obj.GroupName)
+  If m_idx > 0 And m_idx <= FakeDXUIControlCount Then
+   FakeDXUIControls(m_idx).Unload
+   m_bUnload = True
+   m_idx = 0
+  End If
+ End Select
+Case FakeCtl_Event_Unload
+ m_bUnload = True
 End Select
-End Sub
+End Function
 
-Private Sub IFakeDXUIEvent_DblClick(ByVal obj As clsFakeDXUI)
-'
-End Sub
-
-Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
-m_bUnload = True
-End Sub
