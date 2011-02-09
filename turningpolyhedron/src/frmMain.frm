@@ -131,73 +131,73 @@ FakeDXAppRequestUnload = True
 Cancel = &H1& And Not FakeDXAppCanUnload
 End Sub
 
-Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
-Dim i As Long
-Select Case obj.Name
-Case "Slider1"
- i = FakeDXUIFindControl("Progress1")
- If i Then
-  With FakeDXUIControls(i)
-   .Caption = Format(obj.Value / 100, "0%")
-   .Value = obj.Value
-  End With
- End If
-End Select
-'i = FakeDXUIFindControl("Label1")
-'If i Then FakeDXUIControls(i).Caption = CStr(obj.Value) + "," + CStr(obj.Value(1))
-End Sub
-
-Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
+Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
 Dim i As Long
 Dim obj1 As New clsFakeDXUIInputBox
 Dim s As String
-Select Case obj.Name
-Case "cmdClose"
- i = FakeDXUIFindControl("frmTopmost")
- If i Then FakeDXUIControls(i).Unload
-Case "cmdExit"
-' With New clsFakeDXUIMsgBox
-'  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
-' End With
- Unload Me
-Case "cmdDanger"
-' With New clsFakeDXUIMsgBox
-'  For i = 1 To 8
-'   .AddButton , i
-'  Next i
-'  .MsgBox CStr(.MsgBox( _
-'  "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W"), &H1000000F Or vbInformation)), 15 Or vbExclamation
-'  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", "OXZ"), 15 Or vbCritical
-'  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", , , True, vbBoth), &H40000000
-' End With
- With New clsFakeCommonDialog
-  s = "HEHE"
-  If .VBGetOpenFileName(s, , , , False, "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
-   Debug.Print s
+Select Case nType
+Case FakeCtl_Event_Click
+ Select Case obj.Name
+ Case "cmdClose"
+  i = FakeDXUIFindControl("frmTopmost")
+  If i Then FakeDXUIControls(i).Unload
+ Case "cmdExit"
+ ' With New clsFakeDXUIMsgBox
+ '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
+ ' End With
+  Unload Me
+ Case "cmdDanger"
+ ' With New clsFakeDXUIMsgBox
+ '  For i = 1 To 8
+ '   .AddButton , i
+ '  Next i
+ '  .MsgBox CStr(.MsgBox( _
+ '  "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W"), &H1000000F Or vbInformation)), 15 Or vbExclamation
+ '  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", "OXZ"), 15 Or vbCritical
+ '  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", , , True, vbBoth), &H40000000
+ ' End With
+  With New clsFakeCommonDialog
+   s = ""
+   If .VBGetOpenFileName(s, , , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
+    Debug.Print s
+   End If
+   s = ""
+   If .VBGetSaveFileName(s, , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
+    Debug.Print s
+   End If
+   s = ""
+   If .VBChooseFolder(s, , , FakeDXAppMyGamesPath) Then
+    Debug.Print s
+   End If
+  End With
+ ' frmSettings.Show
+ ' Randomize Timer
+ ' For i = 1 To 1
+ '  With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
+ '   .AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
+ '  End With
+ ' Next i
+ Case "Check1"
+  i = FakeDXUIFindControl("Check2")
+  If i Then FakeDXUIControls(i).Enabled = obj.Value
+ Case "cmdOptions"
+  frmSettings.Show
+ End Select
+Case FakeCtl_Event_Change
+ Select Case obj.Name
+ Case "Slider1"
+  i = FakeDXUIFindControl("Progress1")
+  If i Then
+   With FakeDXUIControls(i)
+    .Caption = Format(obj.Value / 100, "0%")
+    .Value = obj.Value
+   End With
   End If
- End With
-' frmSettings.Show
-' Randomize Timer
-' For i = 1 To 1
-'  With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
-'   .AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
-'  End With
-' Next i
-Case "Check1"
- i = FakeDXUIFindControl("Check2")
- If i Then FakeDXUIControls(i).Enabled = obj.Value
-Case "cmdOptions"
- frmSettings.Show
+ End Select
+ 'i = FakeDXUIFindControl("Label1")
+ 'If i Then FakeDXUIControls(i).Caption = CStr(obj.Value) + "," + CStr(obj.Value(1))
 End Select
-End Sub
-
-Private Sub IFakeDXUIEvent_DblClick(ByVal obj As clsFakeDXUI)
-'
-End Sub
-
-Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
-'
-End Sub
+End Function
 
 Private Sub iSubclass_After(lReturn As Long, ByVal hwnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
 Dim i As Long

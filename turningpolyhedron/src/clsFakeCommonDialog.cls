@@ -79,6 +79,7 @@ Private m_nFilterIndex As Long
 Private m_bPathMustExist As Boolean
 Private m_bFileMustExist As Boolean '=OverWritePrompt
 Private m_bMultiSelect As Boolean
+Private m_sDefaultExt As String
 
 'control index
 Private m_idx(127) As Long
@@ -93,6 +94,7 @@ End Enum
 
 Private Type typeFileFilter
  sName As String
+ sDefaultExt As String
  nCount As Long
  sValue() As String
 End Type
@@ -192,7 +194,7 @@ FindClose h
 pEnumerateFiles = ret.nCount
 End Function
 
-Friend Function pCreateFolderButtons(ByVal InitDir As String, Optional ByVal fSearchOp As Long) As Boolean
+Friend Function pCreateFolderButtons(ByVal sPath As String) As Boolean
 On Error Resume Next
 '///
 Dim v As Variant
@@ -207,9 +209,9 @@ Dim bChanged As Boolean
 Dim objComboBox As clsFakeDXUI
 Dim objButton As clsFakeDXUI
 '///
-jj = AscW(Left(InitDir, 1)) And 31&
-v = Split(InitDir, "\")
-InitDir = ""
+jj = AscW(Left(sPath, 1)) And 31&
+v = Split(sPath, "\")
+sPath = ""
 pCreateFolderButtons = True
 '///
 With FakeDXUIControls(m_idx(IDC_Container))
@@ -220,10 +222,10 @@ With FakeDXUIControls(m_idx(IDC_Container))
    Exit For 'end of file or error
   Else
    '///
-   InitDir = InitDir + s + "\"
+   sPath = sPath + s + "\"
    bChanged = True
    If ii >= 0 And ii < m_nFolderCount Then
-    bChanged = LCase(InitDir) <> LCase(m_tFolders(ii + 1).sPath)
+    bChanged = LCase(sPath) <> LCase(m_tFolders(ii + 1).sPath)
    End If
    '///combobox
    If ii < m Then Set objComboBox = FakeDXUIControls(.Children(ii + ii + 1)) _
@@ -242,11 +244,16 @@ With FakeDXUIControls(m_idx(IDC_Container))
        k = 1
        For j = 1 To 26
         If kk And k Then
-         'TODO:volume label
-         .AddItem "(" + ChrW(64 + j) + ":)", , j
+         '///get volume label
+         s1 = Space(1024)
+         GetVolumeInformation ChrW(64 + j) + ":\", s1, 1024, 0, 0, 0, vbNullString, 0
+         i = InStr(1, s1, vbNullChar)
+         If i > 1 Then s1 = Left(s1, i - 1) + " " Else s1 = ""
+         .AddItem s1 + "(" + ChrW(64 + j) + ":)", , j
         End If
         k = k + k
        Next j
+       i = 0
       Else
        'folder
        For j = 1 To m_tFolders(ii).nCount
@@ -267,7 +274,7 @@ With FakeDXUIControls(m_idx(IDC_Container))
      m_nFolderMax = m_nFolderCount + 16&
      ReDim Preserve m_tFolders(1 To m_nFolderMax)
     End If
-    j = pEnumerateFiles(InitDir, m_tFolders(m_nFolderCount), fSearchOp)
+    j = pEnumerateFiles(sPath, m_tFolders(m_nFolderCount), m_nType = 3 And FindExSearchLimitToDirectories)
    End If
    '///add button
    FakeDXGDIDrawText FakeDXUIDefaultFont, s, 0, 0, 128, 24, 0.5, DT_SINGLELINE Or DT_CALCRECT, 0, , , , , , , , w
@@ -294,7 +301,7 @@ With FakeDXUIControls(m_idx(IDC_Container))
    If j < 0 Then
     pCreateFolderButtons = False
     With New clsFakeDXUIMsgBox
-     .MsgBox InitDir + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+     .MsgBox sPath + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
     End With
     Exit For
    End If
@@ -342,7 +349,7 @@ If nIndex > 0 And nIndex <= m_nFolderCount Then
     If .nSize < 0 Then
      'directory
      obj.AddItem vbTab + .sName, , i, Array(Array("", -1), vbTab + objText.GetText("Folder"), vbTab + Format(.nTime, "yyyy-mm-dd hh:mm:ss"))
-    Else
+    ElseIf m_nType <> 3 Then
      'file
      If m_nFilterIndex <= 0 Or m_nFilterIndex > m_nFilterCount Then
       b = True
@@ -373,37 +380,29 @@ If nIndex > 0 And nIndex <= m_nFolderCount Then
 End If
 End Sub
 
-Friend Function VBGetOpenFileName(ByRef FileName As String, _
-                           Optional ByRef FileTitle As String, _
-                           Optional ByVal PathMustExist As Boolean = True, _
-                           Optional ByVal FileMustExist As Boolean = True, _
-                           Optional ByVal MultiSelect As Boolean = False, _
-                           Optional ByVal Filter As String, _
-                           Optional ByRef FilterIndex As Long = 1, _
-                           Optional ByVal InitDir As String, _
-                           Optional ByVal DlgTitle As String) As Boolean
-'////////////////////////////////////////////////////////////////
+Friend Sub pInitFilter(Optional ByVal Filter As String, Optional ByVal FilterIndex As Long = 1, Optional ByVal DefaultExt As String)
 On Error Resume Next
-Dim i As Long, j As Long, m As Long
-Dim s As String, s1 As String
+Dim i As Long, j As Long, k As Long, m As Long
+Dim s As String
 Dim v As Variant, v2 As Variant
 '///
-If m_idx(0) <> 0 Or m_nType <> 0 Then Exit Function
-m_bUnload = False
-m_bCancel = True
-m_sValue = vbNullString
-m_nFilterIndex = 0
 Erase m_tFilter
 m_nFilterCount = 0
-Erase m_tFolders
-m_nFolderCount = 0
-m_nFolderMax = 0
-m_nSelectedFolder = 0
-'///
-m_nType = 1
-m_bPathMustExist = PathMustExist
-m_bFileMustExist = FileMustExist
-m_bMultiSelect = MultiSelect
+m_nFilterIndex = 0
+'///init default extension
+m_sDefaultExt = vbNullString
+If InStr(1, DefaultExt, "/") > 0 Then
+ElseIf InStr(1, DefaultExt, "\") > 0 Then
+ElseIf InStr(1, DefaultExt, ":") > 0 Then
+ElseIf InStr(1, DefaultExt, "*") > 0 Then
+ElseIf InStr(1, DefaultExt, "?") > 0 Then
+ElseIf InStr(1, DefaultExt, """") > 0 Then
+ElseIf InStr(1, DefaultExt, "<") > 0 Then
+ElseIf InStr(1, DefaultExt, ">") > 0 Then
+ElseIf InStr(1, DefaultExt, "|") > 0 Then
+Else
+ m_sDefaultExt = Trim(DefaultExt)
+End If
 '///init filter
 v = Split(Filter, "|")
 m_nFilterCount = (UBound(v) + 1) \ 2
@@ -421,13 +420,48 @@ If m_nFilterCount > 0 Then
     If s = "*.*" Then s = "*"
     m_tFilter(i).sValue(j) = s
    Next j
+   '///get default extension
+   m_tFilter(i).sDefaultExt = m_sDefaultExt
+   For j = 1 To m
+    s = m_tFilter(i).sValue(j)
+    k = InStrRev(s, ".")
+    If k > 0 Then
+     s = Trim(Mid(s, k + 1))
+     If s = vbNullString Then
+     ElseIf InStr(1, s, "/") > 0 Then
+     ElseIf InStr(1, s, "\") > 0 Then
+     ElseIf InStr(1, s, ":") > 0 Then
+     ElseIf InStr(1, s, "*") > 0 Then
+     ElseIf InStr(1, s, "?") > 0 Then
+     ElseIf InStr(1, s, """") > 0 Then
+     ElseIf InStr(1, s, "<") > 0 Then
+     ElseIf InStr(1, s, ">") > 0 Then
+     ElseIf InStr(1, s, "|") > 0 Then
+     Else
+      m_tFilter(i).sDefaultExt = s
+      Exit For
+     End If
+    End If
+   Next j
+   '///
   End If
  Next i
+ If FilterIndex > 0 And FilterIndex <= m_nFilterCount Then m_nFilterIndex = FilterIndex
 End If
-If FilterIndex > 0 And FilterIndex <= m_nFilterCount Then m_nFilterIndex = FilterIndex
-'///init title
-If DlgTitle = "" Then DlgTitle = objText.GetText("Open")
-m_sTitle = DlgTitle
+End Sub
+
+Friend Function pShowFileDialog(Optional ByRef FileName As String, Optional ByRef FileTitle As String, Optional ByRef FilterIndex As Long = 1, Optional ByVal InitDir As String) As Boolean
+On Error Resume Next
+Dim i As Long, j As Long
+Dim s As String, s1 As String
+'///
+m_bUnload = False
+m_bCancel = True
+m_sValue = vbNullString
+Erase m_tFolders
+m_nFolderCount = 0
+m_nFolderMax = 0
+m_nSelectedFolder = 0
 '///init filename
 FileName = Trim(Replace(FileName, "/", "\"))
 j = Len(FileName)
@@ -467,40 +501,53 @@ If Right(s, 1) <> "\" Then s = s + "\"
 InitDir = s
 '///
 With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -300, -200, 300, 200, _
-FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_Sizable Or FFS_TitleBar, , False, , DlgTitle, , , 0.5, 0.5, 0.5, 0.5)
+FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_Sizable Or FFS_TitleBar, , False, , m_sTitle, , , 0.5, 0.5, 0.5, 0.5)
  m_idx(0) = .Index
  Set .EventObject = Me
  '///
- 'TODO:
- With .AddNewChildren(FakeCtl_TextBox, 88, -64, -72, -40, FCS_TabStop Or FCS_CanGetFocus Or FTS_AutoSelect, , , , , FileName, "txtFileName", , 1, 1, 1)
-  m_idx(IDC_FileName) = .Index
- End With
- With .AddNewChildren(FakeCtl_ComboBox, 88, -32, -72, -8, FCS_TabStop Or FCS_CanGetFocus, , , , , , "cmbFilter", , 1, 1, 1)
-  m_idx(IDC_Filter) = .Index
-  With .ListViewObject
-   .FullRowSelect = True
-   .AddColumn ""
-   If m_nFilterCount > 0 Then
-    For i = 1 To m_nFilterCount
-     .AddItem m_tFilter(i).sName
-    Next i
-    If m_nFilterIndex > 0 Then .SelectedRow = m_nFilterIndex
-   End If
+ If m_nType = 3 Then
+  With .AddNewChildren(FakeCtl_TextBox, 104, -32, -136, -8, FCS_TabStop Or FCS_CanGetFocus Or FTS_AutoSelect, , , , , FileName, "txtFileName", , 1, 1, 1)
+   m_idx(IDC_FileName) = .Index
   End With
- End With
- .AddNewChildren FakeCtl_Label, 8, -64, 80, -40, , , , , objText.GetText("File name"), , , , 1, , 1
- .AddNewChildren FakeCtl_Label, 8, -32, 80, -8, , , , , objText.GetText("File type"), , , , 1, , 1
- .AddNewChildren FakeCtl_Button, -64, -64, -8, -40, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("Open"), , "cmdOK", 1, 1, 1, 1
+  .AddNewChildren FakeCtl_Label, 8, -32, 96, -8, , , , , objText.GetText("Folder name"), , , , 1, , 1
+  s = objText.GetText("OK")
+  i = -128
+  j = -32
+ Else
+  With .AddNewChildren(FakeCtl_TextBox, 88, -64, -72, -40, FCS_TabStop Or FCS_CanGetFocus Or FTS_AutoSelect, , , , , FileName, "txtFileName", , 1, 1, 1)
+   m_idx(IDC_FileName) = .Index
+  End With
+  With .AddNewChildren(FakeCtl_ComboBox, 88, -32, -72, -8, FCS_TabStop Or FCS_CanGetFocus, , , , , , "cmbFilter", , 1, 1, 1)
+   m_idx(IDC_Filter) = .Index
+   With .ListViewObject
+    .FullRowSelect = True
+    .AddColumn ""
+    If m_nFilterCount > 0 Then
+     For i = 1 To m_nFilterCount
+     .AddItem m_tFilter(i).sName
+     Next i
+     If m_nFilterIndex > 0 Then .SelectedRow = m_nFilterIndex
+    End If
+   End With
+  End With
+  .AddNewChildren FakeCtl_Label, 8, -64, 80, -40, , , , , objText.GetText("File name"), , , , 1, , 1
+  .AddNewChildren FakeCtl_Label, 8, -32, 80, -8, , , , , objText.GetText("File type"), , , , 1, , 1
+  If m_nType = 2 Then s = objText.GetText("Save") _
+  Else s = objText.GetText("Open")
+  i = -64
+  j = -64
+ End If
+ .AddNewChildren FakeCtl_Button, i, j, i + 56, j + 24, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , s, , "cmdOK", 1, 1, 1, 1
  .AddNewChildren FakeCtl_Button, -64, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1
- With .AddNewChildren(FakeCtl_ListView, 8, 56, -8, -72, FCS_TabStop Or FCS_CanGetFocus, , , , , , "lstFile", , , 1, 1)
+ With .AddNewChildren(FakeCtl_ListView, 8, 56, -8, (32 And m_nType = 3) - 72, FCS_TabStop Or FCS_CanGetFocus, , , , , , "lstFile", , , 1, 1)
   m_idx(IDC_ListView) = .Index
   With .ListViewObject
    .FullRowSelect = True
    .ColumnHeader = True
-   .MultiSelect = MultiSelect
+   .MultiSelect = m_bMultiSelect
    .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
-   .AddColumn objText.GetText("File size"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData Or efcfAlignRight, 128
-   .AddColumn objText.GetText("Extension"), , , efcfSizable Or efcfSortable, 128
+   .AddColumn objText.GetText("File size"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData Or efcfAlignRight Or (efcfHidden And m_nType = 3), 128
+   .AddColumn objText.GetText("Extension"), , , efcfSizable Or efcfSortable Or (efcfHidden And m_nType = 3), 128
    .AddColumn objText.GetText("Modification time"), , , efcfSizable Or efcfSortable, 128
   End With
  End With
@@ -537,11 +584,38 @@ Else
   If i > 0 Then FileTitle = Mid(m_sValue, i + 1) Else FileTitle = m_sValue
  End If
  FilterIndex = m_nFilterIndex
- VBGetOpenFileName = True
+ pShowFileDialog = True
 End If
 '///over
 Erase m_idx
 m_nType = 0
+End Function
+
+Friend Function VBGetOpenFileName(ByRef FileName As String, _
+                           Optional ByRef FileTitle As String, _
+                           Optional ByVal PathMustExist As Boolean = True, _
+                           Optional ByVal FileMustExist As Boolean = True, _
+                           Optional ByVal MultiSelect As Boolean = False, _
+                           Optional ByVal Filter As String, _
+                           Optional ByRef FilterIndex As Long = 1, _
+                           Optional ByVal InitDir As String, _
+                           Optional ByVal DlgTitle As String, _
+                           Optional ByVal DefaultExt As String) As Boolean
+'////////////////////////////////////////////////////////////////
+On Error Resume Next
+'///
+If m_idx(0) <> 0 Or m_nType <> 0 Then Exit Function
+'///
+m_nType = 1
+m_bPathMustExist = PathMustExist
+m_bFileMustExist = FileMustExist
+m_bMultiSelect = MultiSelect
+'///init filter
+pInitFilter Filter, FilterIndex, DefaultExt
+'///init title
+If DlgTitle = "" Then m_sTitle = objText.GetText("Open") Else m_sTitle = DlgTitle
+'///show
+VBGetOpenFileName = pShowFileDialog(FileName, FileTitle, FilterIndex, InitDir)
 '////////////////////////////////////////////////////////////////
 End Function
 
@@ -549,13 +623,26 @@ Friend Function VBGetSaveFileName(ByRef FileName As String, _
                            Optional ByRef FileTitle As String, _
                            Optional ByVal PathMustExist As Boolean = True, _
                            Optional ByVal OverWritePrompt As Boolean = True, _
-                           Optional ByVal Filter As String = "All (*.*)| *.*", _
+                           Optional ByVal Filter As String, _
                            Optional ByRef FilterIndex As Long = 1, _
                            Optional ByVal InitDir As String, _
                            Optional ByVal DlgTitle As String, _
                            Optional ByVal DefaultExt As String) As Boolean
 '////////////////////////////////////////////////////////////////
+On Error Resume Next
+'///
 If m_idx(0) <> 0 Or m_nType <> 0 Then Exit Function
+'///
+m_nType = 2
+m_bPathMustExist = PathMustExist
+m_bFileMustExist = OverWritePrompt
+m_bMultiSelect = False
+'///init filter
+pInitFilter Filter, FilterIndex, DefaultExt
+'///init title
+If DlgTitle = "" Then m_sTitle = objText.GetText("Save as") Else m_sTitle = DlgTitle
+'///show
+VBGetSaveFileName = pShowFileDialog(FileName, FileTitle, FilterIndex, InitDir)
 '////////////////////////////////////////////////////////////////
 End Function
 
@@ -565,182 +652,20 @@ Friend Function VBChooseFolder(ByRef FileName As String, _
                            Optional ByVal InitDir As String, _
                            Optional ByVal DlgTitle As String) As Boolean
 '////////////////////////////////////////////////////////////////
+On Error Resume Next
+'///
 If m_idx(0) <> 0 Or m_nType <> 0 Then Exit Function
+'///
+m_nType = 3
+m_bPathMustExist = PathMustExist
+m_bFileMustExist = PathMustExist
+m_bMultiSelect = MultiSelect
+'///init title
+If DlgTitle = "" Then m_sTitle = objText.GetText("Choose folder") Else m_sTitle = DlgTitle
+'///show
+VBChooseFolder = pShowFileDialog(FileName, , , InitDir)
 '////////////////////////////////////////////////////////////////
 End Function
-
-Private Sub IFakeDXUIEvent_Change(ByVal obj As clsFakeDXUI)
-'
-End Sub
-
-Private Sub IFakeDXUIEvent_Click(ByVal obj As clsFakeDXUI)
-On Error Resume Next
-Dim i As Long, j As Long, k As Long
-Dim s As String, s1 As String
-Dim f As Double
-'///
-If m_bDiscardEvent Then Exit Sub
-Select Case obj.Name
-Case "cmdOK"
- If m_nSelectedFolder > 0 And m_nSelectedFolder <= m_nFolderCount Then
-  i = m_idx(IDC_FileName)
-  If i > 0 And i <= FakeDXUIControlCount Then
-   s = FakeDXUIControls(i).Text
-  End If
-  i = m_idx(IDC_Filter)
-  If i > 0 And i <= FakeDXUIControlCount Then
-   m_nFilterIndex = FakeDXUIControls(i).ListViewObject.SelectedRow
-  End If
-  '///validate
-  i = 0
-  If m_bMultiSelect Then i = InStr(1, s, """")
-  If i > 0 Then
-   m_sValue = ""
-   Do
-    j = InStr(i + 1, s, """")
-    If j = 0 Then s1 = Mid(s, i + 1) _
-    Else s1 = Mid(s, i + 1, j - i - 1)
-    s1 = pValidateFile(m_tFolders(m_nSelectedFolder).sPath, s1)
-    If s1 = "" Then Exit Sub
-    m_sValue = m_sValue + "|" + s1
-    If j = 0 Then Exit Do
-    i = InStr(j + 1, s, """")
-   Loop Until i = 0
-   m_sValue = Mid(m_sValue, 2)
-  Else
-   s1 = pValidateFile(m_tFolders(m_nSelectedFolder).sPath, s)
-   If s1 = "" Then Exit Sub
-   m_sValue = s1
-  End If
-  '///
-  m_bUnload = True
-  m_bCancel = False
- End If
-Case "cmdCancel"
- m_bUnload = True
-Case "optFolder"
- m_nSelectedFolder = obj.ChildIndex \ 2
- pShowFile
-Case "cmbFolder"
- i = obj.ChildIndex \ 2
- If i = 0 Then
-  j = obj.ListViewObject.SelectedRow
-  If j > 0 Then j = obj.ListViewObject.ItemData(j, 1)
-  Select Case j
-  Case -1
-   s = Space(1024)
-   SHGetSpecialFolderPath 0, s, CSIDL_DESKTOPDIRECTORY, 1
-  Case -2
-   s = Space(1024)
-   SHGetSpecialFolderPath 0, s, CSIDL_PERSONAL, 1
-  Case 1 To 26
-   s = ChrW(64 + j) + ":\"
-  End Select
-  i = InStr(1, s, vbNullChar)
-  If i > 0 Then s = Left(s, i - 1)
-  If Right(s, 1) <> "\" Then s = s + "\"
-  '///
-  pCreateFolderButtons s
- ElseIf i <= m_nFolderCount Then
-  j = obj.ListViewObject.SelectedRow
-  If j > 0 Then j = obj.ListViewObject.ItemData(j, 1)
-  If j > 0 And j <= m_tFolders(i).nCount Then
-   pCreateFolderButtons m_tFolders(i).sPath + m_tFolders(i).tData(j).sName + "\"
-  End If
- End If
- '///???
- m_bDiscardEvent = True
- FakeDXAppMainLoop VarPtr(1&)
- m_bDiscardEvent = False
- '///
-Case "cmdNewFolder"
- If m_nSelectedFolder > 0 And m_nSelectedFolder <= m_nFolderCount Then
-  With New clsFakeDXUIInputBox
-   s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
-  End With
-  If s <> "" And InStr(1, s, "/") = 0 And InStr(1, s, "\") = 0 Then
-   If Replace(s, ".", "") <> "" Then
-    s1 = m_tFolders(m_nSelectedFolder).sPath + s + "\"
-    If pCheckFileExist(s1) Then
-     With New clsFakeDXUIMsgBox
-      .MsgBox objText.GetText(s1 + vbCrLf + _
-      objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
-     End With
-    ElseIf MakeSureDirectoryPathExists(s1) Then
-     With m_tFolders(m_nSelectedFolder)
-      i = .nCount + 1
-      .nCount = i
-      If i > .nMax Then
-       .nMax = i + 16
-       ReDim Preserve .tData(1 To .nMax)
-      End If
-      With .tData(i)
-       .sName = s
-       .nSize = -1
-       .sExtension = vbNullString
-       f = CDbl(Now)
-       .nTime = f
-      End With
-     End With
-     '///
-     With FakeDXUIControls(m_idx(IDC_ListView)).ListViewObject
-      .EnsureVisible .AddItem(vbTab + s, , i, Array(Array("", -1), vbTab + objText.GetText("Folder"), vbTab + Format(f, "yyyy-mm-dd hh:mm:ss")))
-     End With
-     '///
-     With FakeDXUIControls(m_idx(IDC_Container))
-      j = m_nSelectedFolder * 2 + 1
-      If j <= .ChildrenCount Then
-       With FakeDXUIControls(.Children(j)).ListViewObject
-        .AddItem s, , i
-       End With
-      End If
-     End With
-     '///
-    Else
-     With New clsFakeDXUIMsgBox
-      .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
-     End With
-    End If
-   End If
-  End If
- End If
-Case "lstFile"
- If m_nSelectedFolder > 0 And m_nSelectedFolder <= m_nFolderCount Then
-  With obj.ListViewObject
-   If m_bMultiSelect Then
-    For i = 1 To .RowCount
-     If .ItemSelected(i, 1) Then
-      j = .ItemData(i, 1)
-      If j > 0 And j <= m_tFolders(m_nSelectedFolder).nCount Then
-       If m_tFolders(m_nSelectedFolder).tData(j).nSize >= 0 Xor m_nType = 3 Then
-        k = k + 1
-        If k > 1 Then s = s + """ """
-        s = s + m_tFolders(m_nSelectedFolder).tData(j).sName
-       End If
-      End If
-     End If
-    Next i
-    '///
-    If k > 1 Then s = """" + s + """"
-    If k > 0 Then FakeDXUIControls(m_idx(IDC_FileName)).Text = s
-   Else
-    i = .SelectedRow
-    If i > 0 Then
-     j = .ItemData(i, 1)
-     If j > 0 And j <= m_tFolders(m_nSelectedFolder).nCount Then
-      If m_tFolders(m_nSelectedFolder).tData(j).nSize >= 0 Xor m_nType = 3 Then
-       FakeDXUIControls(m_idx(IDC_FileName)).Text = m_tFolders(m_nSelectedFolder).tData(j).sName
-      End If
-     End If
-    End If
-   End If
-  End With
- End If
-Case "cmbFilter"
- m_nFilterIndex = obj.ListViewObject.SelectedRow
- pShowFile
-End Select
-End Sub
 
 Private Function pCheckFileExist(ByVal s As String) As Long
 Dim h As Long, i As Long, j As Long
@@ -756,39 +681,57 @@ Do
 Loop Until i = j
 If Right(s, 1) = "\" Then s = Left(s, i - 1)
 '///
-h = FindFirstFile(s, t)
-If h = 0 Or h = -1 Then
+If Len(s) = 2 And Mid(s, 2, 1) = ":" Then
+ 'fix a bug: can't recognize "C:\"
+ h = FindFirstFile(s + "\*", t)
+ If h = 0 Or h = -1 Then
+  i = Err.LastDllError
+  If i <> ERROR_NO_MORE_FILES Then Exit Function
+ Else
+  FindClose h
+ End If
+ pCheckFileExist = vbDirectory Or &H10000
 Else
- s1 = StrConv(t.cFileName, vbUnicode)
- i = InStr(1, s1, vbNullChar)
- If i > 0 Then s1 = Left(s1, i - 1)
- i = InStrRev(s, "\")
- If i > 0 Then s = Mid(s, i + 1)
- If LCase(Trim(s)) = LCase(Trim(s1)) Then _
- pCheckFileExist = t.dwFileAttributes Or &H10000
- FindClose h
+ h = FindFirstFile(s, t)
+ If h = 0 Or h = -1 Then
+ Else
+  s1 = StrConv(t.cFileName, vbUnicode)
+  i = InStr(1, s1, vbNullChar)
+  If i > 0 Then s1 = Left(s1, i - 1)
+  i = InStrRev(s, "\")
+  If i > 0 Then s = Mid(s, i + 1)
+  If LCase(Trim(s)) = LCase(Trim(s1)) Then _
+  pCheckFileExist = t.dwFileAttributes Or &H10000
+  FindClose h
+ End If
 End If
 End Function
 
-Private Function pValidateFile(ByVal sPath As String, ByVal s As String) As String
+Private Function pValidateFile(ByVal s0 As String, ByVal s As String, Optional ByVal bHasExtension As Boolean) As String
 Dim i As Long, j As Long
 Dim s1 As String
 Dim bError As Boolean
 '///
 s = Trim(Replace(s, "/", "\"))
 j = Len(s)
-If j = 0 Then Exit Function
-Do
- i = j
- s = Replace(s, "\\", "\")
- j = Len(s)
-Loop Until i = j
-If Right(s, 1) = "\" Then s = Left(s, i - 1)
-'///
-s1 = Space(Len(sPath) + i + 1024)
-PathCombine s1, sPath, s
-i = InStr(1, s1, vbNullChar)
-If i > 0 Then s1 = Left(s1, i - 1)
+If j = 0 Then
+ If m_nType <> 3 Then Exit Function
+ s = s0
+ If Right(s, 1) = "\" Then s = Left(s, Len(s) - 1)
+ s1 = s
+Else
+ Do
+  i = j
+  s = Replace(s, "\\", "\")
+  j = Len(s)
+ Loop Until i = j
+ If Right(s, 1) = "\" Then s = Left(s, i - 1)
+ '///
+ s1 = Space(Len(s0) + i + 1024)
+ PathCombine s1, s0, s
+ i = InStr(1, s1, vbNullChar)
+ If i > 0 Then s1 = Left(s1, i - 1)
+End If
 '///
 If InStr(3, s1, ":") > 0 Then Exit Function
 If InStr(1, s1, "*") > 0 Then Exit Function
@@ -797,8 +740,25 @@ If InStr(1, s1, """") > 0 Then Exit Function
 If InStr(1, s1, "<") > 0 Then Exit Function
 If InStr(1, s1, ">") > 0 Then Exit Function
 If InStr(1, s1, "|") > 0 Then Exit Function
+'///get default extension
+If m_nFilterIndex > 0 And m_nFilterIndex <= m_nFilterCount Then s0 = m_tFilter(m_nFilterIndex).sDefaultExt _
+Else s0 = m_sDefaultExt
+'///check validate and append default extension if necessary
+i = InStrRev(s1, "\")
+If i > 0 Then i = InStr(i, s1, ".")
+If i > 0 Or s0 = vbNullString Or m_nType = 3 Or bHasExtension Then
+ i = pCheckFileExist(s1)
+ElseIf m_nType = 2 Then
+ s1 = s1 + "." + s0
+ i = pCheckFileExist(s1)
+Else
+ i = pCheckFileExist(s1)
+ If i = 0 Then
+  s1 = s1 + "." + s0
+  i = pCheckFileExist(s1)
+ End If
+End If
 '///
-i = pCheckFileExist(s1)
 If i = 0 Then
  Select Case Err.LastDllError
  Case 0
@@ -818,6 +778,7 @@ If i = 0 Then
  End If
 ElseIf i And vbDirectory Then
  If m_nType = 3 Then
+  If Right(s1, 1) <> "\" Then s1 = s1 + "\"
   pValidateFile = s1
  ElseIf Not m_bMultiSelect Then
   pCreateFolderButtons s1 + "\"
@@ -833,29 +794,204 @@ ElseIf m_nType <> 3 Then
 End If
 End Function
 
-Private Sub IFakeDXUIEvent_DblClick(ByVal obj As clsFakeDXUI)
+Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
 On Error Resume Next
-Dim i As Long
+Dim i As Long, j As Long, k As Long
+Dim s As String, s1 As String
+Dim f As Double
 '///
-If m_bDiscardEvent Then Exit Sub
-Select Case obj.Name
-Case "lstFile"
- 'TODO:
- If m_nSelectedFolder > 0 And m_nSelectedFolder <= m_nFolderCount Then
-  i = obj.ListViewObject.SelectedRow
-  If i > 0 Then i = obj.ListViewObject.ItemData(i, 1)
-  If i > 0 And i <= m_tFolders(m_nSelectedFolder).nCount Then
-   If m_tFolders(m_nSelectedFolder).tData(i).nSize < 0 Then
-    pCreateFolderButtons m_tFolders(m_nSelectedFolder).sPath + m_tFolders(m_nSelectedFolder).tData(i).sName + "\"
+Select Case nType
+Case FakeCtl_Event_Click
+ '////////////////////////////////
+ If m_bDiscardEvent Then Exit Function
+ Select Case obj.Name
+ Case "cmdOK"
+  If m_nSelectedFolder > 0 And m_nSelectedFolder <= m_nFolderCount Then
+   i = m_idx(IDC_FileName)
+   If i > 0 And i <= FakeDXUIControlCount Then
+    s = FakeDXUIControls(i).Text
+   End If
+   i = m_idx(IDC_Filter)
+   If i > 0 And i <= FakeDXUIControlCount Then
+    m_nFilterIndex = FakeDXUIControls(i).ListViewObject.SelectedRow
+   End If
+   '///validate
+   i = 0
+   If m_bMultiSelect Then i = InStr(1, s, """")
+   If i > 0 Then
+    m_sValue = ""
+    Do
+     j = InStr(i + 1, s, """")
+     If j = 0 Then s1 = Mid(s, i + 1) _
+     Else s1 = Mid(s, i + 1, j - i - 1)
+     s1 = pValidateFile(m_tFolders(m_nSelectedFolder).sPath, s1)
+     If s1 = "" Then Exit Function
+     m_sValue = m_sValue + "|" + s1
+     If j = 0 Then Exit Do
+     i = InStr(j + 1, s, """")
+    Loop Until i = 0
+    m_sValue = Mid(m_sValue, 2)
    Else
-    'TODO:selected this
+    s1 = pValidateFile(m_tFolders(m_nSelectedFolder).sPath, s)
+    If s1 = "" Then Exit Function
+    m_sValue = s1
+   End If
+   '///
+   m_bUnload = True
+   m_bCancel = False
+  End If
+ Case "cmdCancel"
+  m_bUnload = True
+ Case "optFolder"
+  m_nSelectedFolder = obj.ChildIndex \ 2
+  pShowFile
+ Case "cmbFolder"
+  i = obj.ChildIndex \ 2
+  If i = 0 Then
+   j = obj.ListViewObject.SelectedRow
+   If j > 0 Then j = obj.ListViewObject.ItemData(j, 1)
+   Select Case j
+   Case -1
+    s = Space(1024)
+    SHGetSpecialFolderPath 0, s, CSIDL_DESKTOPDIRECTORY, 1
+   Case -2
+    s = Space(1024)
+    SHGetSpecialFolderPath 0, s, CSIDL_PERSONAL, 1
+   Case 1 To 26
+    s = ChrW(64 + j) + ":\"
+   End Select
+   i = InStr(1, s, vbNullChar)
+   If i > 0 Then s = Left(s, i - 1)
+   If Right(s, 1) <> "\" Then s = s + "\"
+   '///
+   pCreateFolderButtons s
+  ElseIf i <= m_nFolderCount Then
+   j = obj.ListViewObject.SelectedRow
+   If j > 0 Then j = obj.ListViewObject.ItemData(j, 1)
+   If j > 0 And j <= m_tFolders(i).nCount Then
+    pCreateFolderButtons m_tFolders(i).sPath + m_tFolders(i).tData(j).sName + "\"
    End If
   End If
- End If
+  '///???
+  m_bDiscardEvent = True
+  FakeDXAppMainLoop VarPtr(1&)
+  m_bDiscardEvent = False
+  '///
+ Case "cmdNewFolder"
+  If m_nSelectedFolder > 0 And m_nSelectedFolder <= m_nFolderCount Then
+   With New clsFakeDXUIInputBox
+    s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
+   End With
+   If s <> "" And InStr(1, s, "/") = 0 And InStr(1, s, "\") = 0 Then
+    If Replace(s, ".", "") <> "" Then
+     s1 = m_tFolders(m_nSelectedFolder).sPath + s + "\"
+     If pCheckFileExist(s1) Then
+      With New clsFakeDXUIMsgBox
+       .MsgBox objText.GetText(s1 + vbCrLf + _
+       objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
+      End With
+     ElseIf MakeSureDirectoryPathExists(s1) Then
+      With m_tFolders(m_nSelectedFolder)
+       i = .nCount + 1
+       .nCount = i
+       If i > .nMax Then
+        .nMax = i + 16
+        ReDim Preserve .tData(1 To .nMax)
+       End If
+       With .tData(i)
+        .sName = s
+        .nSize = -1
+        .sExtension = vbNullString
+        f = CDbl(Now)
+        .nTime = f
+       End With
+      End With
+      '///
+      With FakeDXUIControls(m_idx(IDC_ListView)).ListViewObject
+       .EnsureVisible .AddItem(vbTab + s, , i, Array(Array("", -1), vbTab + objText.GetText("Folder"), vbTab + Format(f, "yyyy-mm-dd hh:mm:ss")))
+      End With
+      '///
+      With FakeDXUIControls(m_idx(IDC_Container))
+       j = m_nSelectedFolder * 2 + 1
+       If j <= .ChildrenCount Then
+        With FakeDXUIControls(.Children(j)).ListViewObject
+         .AddItem s, , i
+        End With
+       End If
+      End With
+      '///
+     Else
+      With New clsFakeDXUIMsgBox
+       .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+      End With
+     End If
+    End If
+   End If
+  End If
+ Case "lstFile"
+  If m_nSelectedFolder > 0 And m_nSelectedFolder <= m_nFolderCount Then
+   With obj.ListViewObject
+    If m_bMultiSelect Then
+     For i = 1 To .RowCount
+      If .ItemSelected(i, 1) Then
+       j = .ItemData(i, 1)
+       If j > 0 And j <= m_tFolders(m_nSelectedFolder).nCount Then
+        If m_tFolders(m_nSelectedFolder).tData(j).nSize >= 0 Xor m_nType = 3 Then
+         k = k + 1
+         If k > 1 Then s = s + """ """
+         s = s + m_tFolders(m_nSelectedFolder).tData(j).sName
+        End If
+       End If
+      End If
+     Next i
+     '///
+     If k > 1 Then s = """" + s + """"
+     If k > 0 Then FakeDXUIControls(m_idx(IDC_FileName)).Text = s
+    Else
+     i = .SelectedRow
+     If i > 0 Then
+      j = .ItemData(i, 1)
+      If j > 0 And j <= m_tFolders(m_nSelectedFolder).nCount Then
+       If m_tFolders(m_nSelectedFolder).tData(j).nSize >= 0 Xor m_nType = 3 Then
+        FakeDXUIControls(m_idx(IDC_FileName)).Text = m_tFolders(m_nSelectedFolder).tData(j).sName
+       End If
+      End If
+     End If
+    End If
+   End With
+  End If
+ Case "cmbFilter"
+  m_nFilterIndex = obj.ListViewObject.SelectedRow
+  pShowFile
+ End Select
+ '////////////////////////////////
+Case FakeCtl_Event_DblClick
+ '////////////////////////////////
+ If m_bDiscardEvent Then Exit Function
+ Select Case obj.Name
+ Case "lstFile"
+  If m_nSelectedFolder > 0 And m_nSelectedFolder <= m_nFolderCount Then
+   i = obj.ListViewObject.SelectedRow
+   If i > 0 Then i = obj.ListViewObject.ItemData(i, 1)
+   If i > 0 And i <= m_tFolders(m_nSelectedFolder).nCount Then
+    If m_tFolders(m_nSelectedFolder).tData(i).nSize < 0 Then
+     'open folder
+     pCreateFolderButtons m_tFolders(m_nSelectedFolder).sPath + m_tFolders(m_nSelectedFolder).tData(i).sName + "\"
+    ElseIf nType <> 3 Then
+     'selected this
+     s1 = pValidateFile(m_tFolders(m_nSelectedFolder).sPath, m_tFolders(m_nSelectedFolder).tData(i).sName, True)
+     If s1 <> "" Then
+      m_sValue = s1
+      m_bUnload = True
+      m_bCancel = False
+     End If
+    End If
+   End If
+  End If
+ End Select
+ '////////////////////////////////
+Case FakeCtl_Event_Unload
+ m_bUnload = True
 End Select
-End Sub
-
-Private Sub IFakeDXUIEvent_Unload(ByVal obj As clsFakeDXUI, Cancel As Boolean)
-m_bUnload = True
-End Sub
+End Function
 

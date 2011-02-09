@@ -231,6 +231,11 @@ Public Enum enumFakeDXUIMessage
  FakeCtl_Msg_NextTimeProcess 'quit process and process following messages next time
 End Enum
 
+Public Const FakeCtl_Event_Click As Long = 1
+Public Const FakeCtl_Event_DblClick As Long = 2
+Public Const FakeCtl_Event_Change As Long = 3
+Public Const FakeCtl_Event_Unload As Long = &H1000&
+
 Public FakeDXUIMessageQueue() As typeFakeDXUIMessage '0-based
 Public FakeDXUIMessageQueueHead As Long
 Public FakeDXUIMessageQueueTail As Long
@@ -312,18 +317,18 @@ Dim obj As IFakeDXUIEvent
 Select Case t.iMsg
 Case FakeCtl_Msg_Click
  Set obj = FakeDXUIControls(t.nParam1).GetEventObject
- If Not obj Is Nothing Then obj.Click FakeDXUIControls(t.nParam1)
+ If Not obj Is Nothing Then obj.OnEvent FakeDXUIControls(t.nParam1), FakeCtl_Event_Click, 0, 0, 0
 Case FakeCtl_Msg_DblClick
  Set obj = FakeDXUIControls(t.nParam1).GetEventObject
- If Not obj Is Nothing Then obj.DblClick FakeDXUIControls(t.nParam1)
+ If Not obj Is Nothing Then obj.OnEvent FakeDXUIControls(t.nParam1), FakeCtl_Event_DblClick, 0, 0, 0
 Case FakeCtl_Msg_Change
  Set obj = FakeDXUIControls(t.nParam1).GetEventObject
- If Not obj Is Nothing Then obj.Change FakeDXUIControls(t.nParam1)
+ If Not obj Is Nothing Then obj.OnEvent FakeDXUIControls(t.nParam1), FakeCtl_Event_Change, 0, 0, 0
 Case FakeCtl_Msg_ScrollChange
  Select Case FakeDXUIControls(t.nParam1).ControlType
  Case 1, 3, 5, 6, 10
   Set obj = FakeDXUIControls(t.nParam1).GetEventObject
-  If Not obj Is Nothing Then obj.Change FakeDXUIControls(t.nParam1)
+  If Not obj Is Nothing Then obj.OnEvent FakeDXUIControls(t.nParam1), FakeCtl_Event_Change, 0, 0, 0
  End Select
 Case FakeCtl_Msg_Size
  Select Case t.nParam2
@@ -336,7 +341,7 @@ Case FakeCtl_Msg_Close
  Select Case t.nParam2
  Case 0
   Set obj = FakeDXUIControls(t.nParam1).GetEventObject
-  If Not obj Is Nothing Then obj.Unload FakeDXUIControls(t.nParam1), b
+  If Not obj Is Nothing Then b = obj.OnEvent(FakeDXUIControls(t.nParam1), FakeCtl_Event_Unload, 0, 0, 0) And 1&
   If Not b Then FakeDXUIControls(t.nParam1).Unload
  Case Else
   FakeDXUIControls(t.nParam1).Destroy
