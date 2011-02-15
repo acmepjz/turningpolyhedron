@@ -55,8 +55,15 @@ float4 lightPos;
 //light type 0-directional 1-point
 int lightType;
 
-//0---ambient
-//1---x:hardness y:parallax offset z:parallax scale
+/*
+0---ambient color
+1---x=hardness
+y=parallax offset
+z=parallax scale
+3---
+z=Oren-Nayar A (TEST ONLY)
+w=Oren-Nayar B (TEST ONLY)
+*/
 float4 _fParam[4];
 
 ////////other
@@ -152,7 +159,7 @@ float4 ps_func(VS_OUTPUT d):COLOR0{
 
 float4 viewVec=normalize(viewPos-d.p);
 
-//new:parallax mapping test
+//========//new:parallax mapping test
 float4 clr_tex;
 #if 1
 
@@ -170,7 +177,7 @@ d.t+=parallax_offset;
 //get texture color
 clr_tex=tex2D(samp,d.t);
 
-//shadow map test
+//========//shadow map test
 float4 l=1.0f;
 
 #if 0
@@ -218,7 +225,7 @@ const float dist=0.01f;
 
 #endif
 
-//normal (normal map)
+//========//normal (normal map)
 #if 1
 
 float4 n=tex2D(sampNormal,d.t)*2.0f-1.0f;
@@ -230,7 +237,7 @@ float4 n=d.n;
 
 #endif
 
-//light vector
+//========//light vector
 float4 lightVec;
 if(lightType==1){
  lightVec=normalize(lightPos-d.p);
@@ -238,11 +245,33 @@ if(lightType==1){
  lightVec=lightDir;
 }
 
-//halfway vector
-float4 h=normalize(lightVec+viewVec); //TODO:can we use "reflect"?
+//========//halfway vector (Blinn-Phong shading)
+float4 h=normalize(lightVec+viewVec);
+//TODO:reflect vector (Phong shading)
 
-//TEST
-l*=lit(dot(n.xyz,lightVec.xyz),dot(n.xyz,h.xyz),_fParam[1].x);
+//========//Oren-Nayar diffuse (TEST ONLY)
+#if 1
+
+float n_dot_l=saturate(dot(n.xyz,lightVec.xyz));
+float n_dot_v=saturate(dot(n.xyz,viewVec.xyz));
+
+float f1=_fParam[3].z+_fParam[3].w*saturate(dot(normalize(
+lightVec.xyz-n_dot_l*n.xyz
+),normalize(
+viewVec.xyz-n_dot_l*n.xyz
+)))
+*sqrt(1.0f-n_dot_l*n_dot_l)
+*sqrt(1.0f-n_dot_v*n_dot_v)
+/max(n_dot_l,n_dot_v);
+
+n_dot_l*=f1;
+
+#else
+//========//Lambertian diffuse
+float n_dot_l=dot(n.xyz,lightVec.xyz);
+#endif
+//========//TEST
+l*=lit(n_dot_l,dot(n.xyz,h.xyz),_fParam[1].x);
 //
 float4 diffuse=d.c*clr_tex*(_fParam[0]+l.y); //min(_fParam[0]+l.y,1.0f);
 float4 specular=d.c1*l.z;

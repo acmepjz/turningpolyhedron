@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlMain"
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
@@ -484,7 +484,8 @@ objCamera.LinearDamping = 0.5
 'objRenderTest.CreateShadowMap 1024 'new
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
 'objRenderTest.SetShadowState True, 16, -100, 100  'directional
-objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 30, -0.5, 0.02
+objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 50, -0.5, 0.02
+objRenderTest.OrenNayarRoughness = 0
 objRenderTest.VolumetricFogEnabled = True
 '////////new:subclass
 #If UseSubclass Then
