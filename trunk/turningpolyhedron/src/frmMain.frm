@@ -191,6 +191,7 @@ Case FakeCtl_Event_Change
    With FakeDXUIControls(i)
     .Caption = Format(obj.Value / 100, "0%")
     .Value = obj.Value
+    objRenderTest.OrenNayarRoughness = obj.Value / 100
    End With
   End If
  End Select

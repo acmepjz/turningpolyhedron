@@ -480,6 +480,31 @@ m_fParam(1).z = f
 objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
 End Property
 
+Friend Property Get OrenNayarParamA() As Single
+OrenNayarParamA = m_fParam(3).z
+End Property
+
+Friend Property Let OrenNayarParamA(ByVal f As Single)
+m_fParam(3).z = f
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End Property
+
+Friend Property Get OrenNayarParamB() As Single
+OrenNayarParamB = m_fParam(3).w
+End Property
+
+Friend Property Let OrenNayarParamB(ByVal f As Single)
+m_fParam(3).w = f
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End Property
+
+Friend Property Let OrenNayarRoughness(ByVal f As Single)
+f = f * f
+m_fParam(3).z = 1 - 0.5 * f / (f + 0.33)
+m_fParam(3).w = 0.45 * f / (f + 0.09)
+objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End Property
+
 Friend Sub SetFloatParams(ByRef tAmbientColor As D3DXVECTOR4, ByVal fSpecularHardness As Single, ByVal fParallaxOffset As Single, ByVal fParallaxScale As Single)
 m_fParam(0) = tAmbientColor
 m_fParam(1).x = fSpecularHardness
