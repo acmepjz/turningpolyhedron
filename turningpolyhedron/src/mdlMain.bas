@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlMain"
 Option Explicit
 
-#Const UseSubclass = True
+#Const UseSubclass = False
 
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
@@ -154,7 +154,6 @@ End If
 End Sub
 
 Public Sub FakeDXAppRender()
-On Error Resume Next
 Dim i As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
 Dim r(3) As Long
@@ -452,6 +451,8 @@ If d3dd9 Is Nothing Then
  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
  End
 End If
+'///
+On Error GoTo 0
 '///font test
 s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
 '///

@@ -11,7 +11,7 @@ float4 ta:TANGENT;
 };
 
 struct VS_OUTPUT{
-float4 _p:POSITION;
+//float4 _p:POSITION;
 float4 c:COLOR0;
 float4 c1:COLOR1;
 float4 t:TEXCOORD0;//texture coord and z,w of camrea-space position
@@ -121,10 +121,9 @@ AddressU=WRAP;
 AddressV=WRAP;
 };
 
-VS_OUTPUT vs_func(VS_INPUT d0){
-VS_OUTPUT d;
-float4 p=mul(d0.p,mat);
-d._p=p;
+void vs_func(VS_INPUT d0,out VS_OUTPUT d,out float4 p:POSITION){
+//VS_OUTPUT d;
+p=mul(d0.p,mat);
 d.c=d0.c; //1
 d.c1=d0.c1; //1
 d.t=float4(d0.t.xy,p.zw);
@@ -138,7 +137,7 @@ d.pShadow=mul(d0.p,matShadow);
 //d.pShadow.xy*=float2(0.5f,-0.5f);
 //d.pShadow.xy+=0.5f;
 ////
-return d;
+//return d;
 }
 
 VS_OUTPUT_VOLUMEFOG vs_func_volumefog(VS_INPUT d0){
@@ -328,3 +327,34 @@ PixelShader=compile ps_3_0 ps_func_volumefog();
 ZENABLE=0;ALPHABLENDENABLE=1;CULLMODE=NONE;SRCBLEND=ONE;DESTBLEND=ONE;
 }
 }
+
+/* //error!!! ps_3_0 max input count=10 :-3
+
+float4 ps_func_danger(
+float4 p0:TEXCOORD0,
+float4 p1:TEXCOORD1,
+float4 p2:TEXCOORD2,
+float4 p3:TEXCOORD3,
+float4 p4:TEXCOORD4,
+float4 p5:TEXCOORD5,
+float4 p6:TEXCOORD6,
+float4 p7:TEXCOORD7,
+float4 p8:TEXCOORD8,
+float4 p9:TEXCOORD9,
+float4 p10:TEXCOORD10,
+float4 p11:TEXCOORD11,
+float4 p12:TEXCOORD12,
+float4 p13:TEXCOORD13,
+float4 p14:TEXCOORD14,
+float4 p15:TEXCOORD15
+):COLOR0{
+	return p0+p1+p2+p3+p4+p5+p6+p7+p8+p9+p10+p11+p12+p13+p14+p15;
+}
+
+technique test_danger{
+	pass{
+		PixelShader=compile ps_3_0 ps_func_danger();
+	}
+}
+
+*/

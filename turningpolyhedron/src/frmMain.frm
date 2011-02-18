@@ -147,6 +147,15 @@ Case FakeCtl_Event_Click
  ' End With
   Unload Me
  Case "cmdDanger"
+  Dim objNode As New clsTreeStorageNode
+  With New clsXMLSerializer
+   .LoadNodeFromFile App.Path + "\data\DefaultShaders.xml", objNode
+  End With
+  With New clsEffectManager
+   For i = 1 To objNode.SubNodeCount
+    MsgBox .AddEffectFromNode(objNode.SubNodeObject(i))
+   Next i
+  End With
  ' With New clsFakeDXUIMsgBox
  '  For i = 1 To 8
  '   .AddButton , i
@@ -156,20 +165,20 @@ Case FakeCtl_Event_Click
  '  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", "OXZ"), 15 Or vbCritical
  '  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", , , True, vbBoth), &H40000000
  ' End With
-  With New clsFakeCommonDialog
-   s = ""
-   If .VBGetOpenFileName(s, , , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
-    Debug.Print s
-   End If
-   s = ""
-   If .VBGetSaveFileName(s, , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
-    Debug.Print s
-   End If
-   s = ""
-   If .VBChooseFolder(s, , , FakeDXAppMyGamesPath) Then
-    Debug.Print s
-   End If
-  End With
+'  With New clsFakeCommonDialog
+'   s = ""
+'   If .VBGetOpenFileName(s, , , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
+'    Debug.Print s
+'   End If
+'   s = ""
+'   If .VBGetSaveFileName(s, , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
+'    Debug.Print s
+'   End If
+'   s = ""
+'   If .VBChooseFolder(s, , , FakeDXAppMyGamesPath) Then
+'    Debug.Print s
+'   End If
+'  End With
  ' frmSettings.Show
  ' Randomize Timer
  ' For i = 1 To 1

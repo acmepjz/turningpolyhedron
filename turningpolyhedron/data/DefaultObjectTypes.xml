@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- TEST ONLY -->
 <objectTypes>
-    <objectType name="ice">
-        <interaction default="slippery" fire="game-over:melting" sand="moveable"/>
-    </objectType>
-    <objectType name="fire">
-        <interaction/>
-    </objectType>
-    <objectType name="sand">
-        <interaction/>
-    </objectType>
+  <objectType name="black"/>
+  <objectType name="white"/>
+  <objectType name="ice">
+    <interaction default="slippery" fire="game-over:melting" sand="moveable"/>
+  </objectType>
+  <objectType name="fire"/>
+  <objectType name="sand"/>
+  <objectType name="wood">
+    <interaction fire="game-over:breakdown"/>
+  </objectType>
+  <objectType name="rough-wood">
+    <interaction fire="game-over:breakdown" ice="moveable"/>
+  </objectType>
 </objectTypes>

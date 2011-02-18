@@ -30,7 +30,8 @@ If ret < 0 Then
   If ret > 0 Then s = Left(s, ret - 1)
   s2 = s2 + vbCrLf + s
  End If
- #If IsDebug Then
+ #If IsDebug Or True Then
+ Debug.Print s2
  MsgBox s2, vbExclamation, objText.GetText("Error")
  #End If
  sError = s2
