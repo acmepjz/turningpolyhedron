@@ -35,6 +35,7 @@ Class=ITreeStorageBuilder; src\ITreeStorageBuilder.cls
 Class=clsGNUGetText; src\clsGNUGetText.cls
 Class=clsFakeDXUIInputBox; src\clsFakeDXUIInputBox.cls
 Class=clsFakeCommonDialog; src\clsFakeCommonDialog.cls
+Class=clsEffectManager; src\clsEffectManager.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""

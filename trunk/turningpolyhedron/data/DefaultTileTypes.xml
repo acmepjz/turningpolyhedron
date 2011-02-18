@@ -3,86 +3,148 @@
 <tileTypes>
   <tileType index="1">
     <name>Ground</name>
-    <description>NODESC</description>
+    <description>Normal ground.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" diffuse="0.25,0.25,0.25,1">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1"/>
+      </shader>
     </appearance>
   </tileType>
   <tileType index="2">
     <name>Soft button</name>
-    <description>NODESC</description>
+    <description>Soft button. Activated when any part of the block presses it.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onEnter type="triggerEvent"/>
+    <onEnter event="triggerEvent"/>
   </tileType>
   <tileType index="3">
     <name>Hard button</name>
-    <description>NODESC</description>
+    <description>Hard button. Activated only when the block standing on it.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onEnter condition="pressure=2-" type="triggerEvent"/>
+    <onEnter condition="pressure=2-" event="triggerEvent"/>
   </tileType>
   <tileType index="4">
     <name>Teleporter</name>
-    <description>NODESC</description>
+    <description>Teleporter will teleports your block to different locations, optionally splitting it into two smaller blocks at the same time.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onMoveEnter condition="pressure=2-" type="teleport"/>
+    <onMoveEnter condition="contactCount=1" event="teleport"/>
   </tileType>
   <tileType index="5">
     <name>Thin ground</name>
-    <description>NODESC</description>
+    <description>Thin ground are more fragile than the rest of the land. If your block stands up vertically on it, the tile will give way and your block will fall.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onEnter condition="pressure=2-" type="game-over:breakdown"/>
+    <onEnter condition="pressure=2-" event="game-over:breakdown"/>
   </tileType>
-  <tileType index="6">
+  <tileType index="6" invisibleAtRuntime="true">
     <name>Bridge (off)</name>
-    <description>NODESC</description>
+    <description>The bridge which is off.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onEnter type="game-over"/>
+    <onEnter event="game-over"/>
   </tileType>
   <tileType index="7">
-    <name>Bridge (on)</name>
-    <description>NODESC</description>
+    <name>Bridge</name>
+    <description>The bridge is just the same as normal ground when it is activated.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
   </tileType>
   <tileType index="8" goal="true">
     <name>Goal</name>
-    <description>NODESC</description>
+    <description>You'll win the game if you get your block to fall into this square hole after visiting all checkpoints.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onEnter condition="pressure=2-" type="game-finished"/>
+    <onEnter condition="contactCount=1" event="game-finished"/>
   </tileType>
   <tileType index="9" type="ice">
     <name>Ice</name>
-    <description>NODESC</description>
+    <description>Ice are slippery. If the block is not rough enough and is completely on the ice, it will slip until get off the ice or hit the wall.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
   </tileType>
   <tileType index="10">
     <name>Pyramid</name>
-    <description>NODESC</description>
+    <description>Your block is unstable when standing on the pyramid, so it will lie down immediately unless there is a wall next to your block.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onMoveEnter condition="pressure=2-" type="move"/>
+    <onMoveEnter condition="pressure=2-" event="move"/>
   </tileType>
   <tileType index="11" blocked="true" block-height="1">
     <name>Wall</name>
-    <description>NODESC</description>
+    <description>As an obstacle, your block can't pass through the wall, but it can recline on the wall and move around.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
+  </tileType>
+  <!-- test new floor type -->
+  <tileType id="one-time">
+    <name>Very thin ground</name>
+    <description>This ground is so thin that it will break down immediately after you move on it.</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onLeave event="breakdown"/>
+  </tileType>
+  <tileType id="tricky">
+    <name>Tricky ground</name>
+    <description>After you stand on a tricky ground, it will turn to thin ground.</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onLeave condition="pressure=2-" event="convertTo:5"/>
+  </tileType>
+  <tileType id="strange">
+    <name>Strange ground</name>
+    <description>The block can move onto a strange ground, but only if it stands upright on it.</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onEnter condition="contactCount=2-" event="game-over:immediately"/>
+  </tileType>
+  <tileType id="black">
+    <name>Black ground</name>
+    <description>Only black block can pass through black ground.</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onEnter condition="objectType!=black" event="game-over:immediately"/>
+  </tileType>
+  <tileType id="white">
+    <name>White ground</name>
+    <description>Only white block can pass through white ground.</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onEnter condition="objectType!=white" event="game-over:immediately"/>
+  </tileType>
+  <tileType id="color-undefined">
+    <name>Color-undefined ground</name>
+    <description>Same as normal ground, but it will change to the block's color if a black or white block is leave it.</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onLeave condition="objectType=black" event="convertTo:black"/>
+    <onLeave condition="objectType=white" event="convertTo:white"/>
+  </tileType>
+  <tileType id="color-inverse">
+    <name>Color-inverse ground</name>
+    <description>Same as normal ground, but it will change to the color opposite to the block's color if a black or white block is leave it.</description>
+    <appearance>
+      <!-- TODO: -->
+    </appearance>
+    <onLeave condition="objectType=black" event="convertTo:white"/>
+    <onLeave condition="objectType=white" event="convertTo:black"/>
   </tileType>
 </tileTypes>

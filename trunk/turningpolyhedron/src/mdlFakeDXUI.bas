@@ -423,6 +423,7 @@ End If
 End Sub
 
 Public Sub FakeDXUIDestroy()
+On Error Resume Next
 If Not FakeDXUITexture Is Nothing Then
  Erase FakeDXUIControls
  FakeDXUIControlCount = 0
