@@ -16,6 +16,7 @@ Option Explicit
 Private Const m_nFormat1 = D3DFMT_A8R8G8B8 'D3DFMT_A32B32G32R32F
 
 Private objEffect As D3DXEffect
+Private objCustomEffect As D3DXEffect '? test only
 
 Private m_tLightDir As D3DXVECTOR4, m_tLightPos As D3DXVECTOR4, m_tViewPos As D3DXVECTOR4
 Private m_nLightType As Long
@@ -224,6 +225,8 @@ Set objShadowStencil = Nothing
 Erase objPostProcessTarget
 '///
 objEffect.OnLostDevice
+'///
+Set objCustomEffect = Nothing '? test only
 End Sub
 
 Friend Sub OnResetDevice()
@@ -260,25 +263,45 @@ End If
 End Sub
 
 Friend Sub UpdateRenderState()
+On Error Resume Next
 Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
+Dim obj1 As D3DXEffect
+'///test only
+If Not objCustomEffect Is Nothing Then Set obj1 = objCustomEffect _
+Else Set obj1 = objEffect
+'///
 d3dd9.GetTransform D3DTS_WORLD, mat1
-objEffect.SetMatrix StrPtr(StrConv("matWorld", vbFromUnicode)), mat1
+obj1.SetMatrix StrPtr(StrConv("matWorld", vbFromUnicode)), mat1
 d3dd9.GetTransform D3DTS_VIEW, mat2
 d3dd9.GetTransform D3DTS_PROJECTION, mat3
 D3DXMatrixMultiply mat, mat1, mat2
 D3DXMatrixMultiply mat, mat, mat3
 D3DXMatrixInverse mat2, 0, mat1 '[out] pDeterminant
-objEffect.SetMatrixTranspose StrPtr(StrConv("matWorld1", vbFromUnicode)), mat2
-objEffect.SetMatrix StrPtr(StrConv("mat", vbFromUnicode)), mat
+obj1.SetMatrixTranspose StrPtr(StrConv("matWorldInv", vbFromUnicode)), mat2
+obj1.SetMatrix StrPtr(StrConv("matTransform", vbFromUnicode)), mat
 '///
-objEffect.CommitChanges
+obj1.CommitChanges
 End Sub
 
-Friend Function BeginRender(ByVal nType As enumRenderPassType) As Boolean
+'CustomEffect --> test only
+Friend Function BeginRender(ByVal nType As enumRenderPassType, Optional ByVal CustomEffect As D3DXEffect) As Boolean
 On Error Resume Next
-Dim obj As Direct3DTexture9
+Dim obj As Direct3DTexture9, obj1 As D3DXEffect
 Dim mat As D3DMATRIX
 Dim s As String
+'///test only
+If Not CustomEffect Is Nothing Then
+ Set objCustomEffect = CustomEffect
+ Set obj1 = CustomEffect
+ '///setup light
+ obj1.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), m_tLightDir
+ obj1.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), m_tLightPos
+ obj1.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), m_tViewPos
+ obj1.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_nLightType
+ '///
+Else
+ Set obj1 = objEffect
+End If
 '///
 Select Case nType
 Case RenderPass_ShadowMap
@@ -291,20 +314,20 @@ Case RenderPass_ShadowMap
  '///
  d3dd9.GetTransform D3DTS_WORLD, mat
  D3DXMatrixMultiply mat, mat, m_tLightViewProj
- objEffect.SetMatrix StrPtr(StrConv("matShadow", vbFromUnicode)), mat
+ obj1.SetMatrix StrPtr(StrConv("matShadow", vbFromUnicode)), mat
  '///
  s = "test_shadow"
 Case RenderPass_FogVolume
  If Not m_bPostProcessEnabled Or Not m_bVolumeFog Then Exit Function
  Set objOldTarget_1 = d3dd9.GetRenderTarget(0)
  d3dd9.SetRenderTarget 0, objPostProcessTarget(6).GetSurfaceLevel(0)
- objEffect.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), objPostProcessTarget(0)
+ obj1.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), objPostProcessTarget(0)
  '///
  s = "test_volumefog"
 Case RenderPass_Main
  If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
- objEffect.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
- objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
+ obj1.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
+ obj1.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
  s = "test"
 Case Else
  Exit Function
@@ -315,9 +338,9 @@ m_nLastType = nType
 '///
 UpdateRenderState
 '///
-objEffect.SetTechnique StrPtr(StrConv(s, vbFromUnicode))
-objEffect.Begin 0, 0
-objEffect.BeginPass 0
+obj1.SetTechnique StrPtr(StrConv(s, vbFromUnicode))
+obj1.Begin 0, 0
+obj1.BeginPass 0
 End Function
 
 Friend Sub EndRender()
@@ -327,9 +350,15 @@ Dim nType As Long
 nType = m_nLastType
 If nType = 0 Then Exit Sub
 m_nLastType = 0
-'///
-objEffect.EndPass
-objEffect.End
+'///test only
+If Not objCustomEffect Is Nothing Then
+ objCustomEffect.EndPass
+ objCustomEffect.End
+ Set objCustomEffect = Nothing
+Else
+ objEffect.EndPass
+ objEffect.End
+End If
 '///
 Select Case nType
 Case RenderPass_ShadowMap

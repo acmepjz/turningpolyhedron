@@ -147,15 +147,6 @@ Case FakeCtl_Event_Click
  ' End With
   Unload Me
  Case "cmdDanger"
-  Dim objNode As New clsTreeStorageNode
-  With New clsXMLSerializer
-   .LoadNodeFromFile App.Path + "\data\DefaultShaders.xml", objNode
-  End With
-  With New clsEffectManager
-   For i = 1 To objNode.SubNodeCount
-    MsgBox .AddEffectFromNode(objNode.SubNodeObject(i))
-   Next i
-  End With
  ' With New clsFakeDXUIMsgBox
  '  For i = 1 To 8
  '   .AddButton , i

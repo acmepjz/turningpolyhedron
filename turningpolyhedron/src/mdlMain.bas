@@ -87,6 +87,8 @@ Public objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
 
 Public objFontSprite As D3DXSprite
 Public objFont As D3DXFont
+
+Public objEffectManager As New clsEffectManager
 '////////
 
 '////////settings
@@ -198,7 +200,7 @@ With d3dd9
   objRenderTest.BeginRenderToPostProcessTarget
   objRenderTest.SetTexture objTexture
   objRenderTest.SetNormalTexture objNormalTexture
-  If objRenderTest.BeginRender(RenderPass_Main) Then
+  If objRenderTest.BeginRender(RenderPass_Main, objEffectManager.EffectObject(1)) Then '
    .BeginScene
    objTest.DrawSubset 0
 '   '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
@@ -384,6 +386,8 @@ Public Sub FakeDXAppDestroy()
 On Error Resume Next
 '///
 FakeDXUIDestroy
+objEffectManager.Destroy
+'///
 Set objLand = Nothing
 Set objLandTexture = Nothing
 Set objDrawTest = Nothing
@@ -479,7 +483,7 @@ objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
 objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
 'objRenderTest.SetLightType D3DLIGHT_POINT
 'objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1), True
-objCamera.SetCamrea Vec3(6, 6, 1), Vec3, Vec3(, , 1), True
+objCamera.SetCamrea Vec3(0, 8, -5), Vec3, Vec3(, , 1), True
 objCamera.AnimationEnabled = True
 objCamera.LinearDamping = 0.5
 'objRenderTest.CreateShadowMap 1024 'new
@@ -504,6 +508,8 @@ If App.LogMode = 1 Then
   .Subclass frm.hwnd, objCallback
  End With
 End If
+'////////new:load effects test
+objEffectManager.LoadEffectsFromFile App.Path + "\data\DefaultShaders.xml", New clsXMLSerializer
 '////////test
 Dim t As D3DXIMAGE_INFO
 objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1

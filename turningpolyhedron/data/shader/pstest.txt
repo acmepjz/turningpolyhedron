@@ -39,10 +39,10 @@ struct VS_OUTPUT_VOLUMEFOG{
 float4x4 matWorld;
 
 //Transpose[Inverse[world]] (?)
-float4x4 matWorld1;
+float4x4 matWorldInv;
 
 //world-view-proj matrix
-float4x4 mat,matShadow;
+float4x4 matTransform,matShadow;
 
 //////// light settings
 
@@ -123,14 +123,14 @@ AddressV=WRAP;
 
 void vs_func(VS_INPUT d0,out VS_OUTPUT d,out float4 p:POSITION){
 //VS_OUTPUT d;
-p=mul(d0.p,mat);
+p=mul(d0.p,matTransform);
 d.c=d0.c; //1
 d.c1=d0.c1; //1
 d.t=float4(d0.t.xy,p.zw);
 d.p=mul(d0.p,matWorld);
-d.n=mul(d0.n,matWorld1);
-d.b=mul(d0.b,matWorld1);
-d.ta=mul(d0.ta,matWorld1);
+d.n=mul(d0.n,matWorldInv);
+d.b=mul(d0.b,matWorldInv);
+d.ta=mul(d0.ta,matWorldInv);
 d.pShadow=mul(d0.p,matShadow);
 ////??
 //d.pShadow.xyz/=d.pShadow.w;
@@ -142,7 +142,7 @@ d.pShadow=mul(d0.p,matShadow);
 
 VS_OUTPUT_VOLUMEFOG vs_func_volumefog(VS_INPUT d0){
 	VS_OUTPUT_VOLUMEFOG d;
-	float4 p=mul(d0.p,mat);
+	float4 p=mul(d0.p,matTransform);
 	d._p=p;
 	d.c=d0.c; //1
 	d.c1=d0.c1; //1

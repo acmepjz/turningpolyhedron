@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- TEST ONLY -->
 <shaders>
-  <shaderTemplate templateName="simple1" shaderProgram="standard" ambient="shaderArgument" diffuse="color0"
+    <shaderTemplate templateName="test-only" shaderProgram="standard" ambient="0.2,0.2,0.2" diffuse="1,1,1"
+              specular="-1,-1,-1" specularHardness="250" specularAlgorithm="Phong"/>
+<!--
+    <shaderTemplate templateName="simple1" shaderProgram="standard" ambient="shaderArgument" diffuse="color0"
               specular="color1" specularHardness="shaderArgument" emissive="shaderArgument"/>
-  <shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument"
+    <shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument"
               specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"/>
-  <!-- TEST 2 -->
-  <shaderTemplate OrenNayarRoughness="1" diffuseAlgorithm="Oren-Nayar" specularAlgorithm="Phong" templateName="test1" shaderProgram="standard" ambient="texcoord4:AyAy" diffuse="color0:zyyw"
-              specular="color1:1xAy" specularHardness="texcoord0:z" emissive="texcoord13:wAAy:3.14,6.28"/>
+-->
 </shaders>
