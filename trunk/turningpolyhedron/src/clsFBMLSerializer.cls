@@ -22,6 +22,8 @@ Option Explicit
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Sub ZeroMemory Lib "kernel32.dll" Alias "RtlZeroMemory" (ByRef Destination As Any, ByVal Length As Long)
 
+Implements ITreeSerializer
+
 Friend Function WriteInteger(ByVal n As Long, ByVal objOut As clsTreeStorageNode, Optional ByVal nStart As Long = -1) As Boolean
 If n < 0 Or n >= &H40004080 Then Exit Function
 If n < &H80& Then
@@ -259,3 +261,20 @@ End If
 '///
 ReadNode = True
 End Function
+
+Private Function ITreeSerializer_LoadNodeFromFile(ByVal FileName As String, ByVal objOut As ITreeStorageBuilder, Optional ByVal bLoadSubNodeOnly As Boolean) As Boolean
+ITreeSerializer_LoadNodeFromFile = LoadNodeFromFile(FileName, objOut, bLoadSubNodeOnly)
+End Function
+
+Private Function ITreeSerializer_ReadNode(ByVal lp As Long, ByVal nLength As Long, ByVal objOut As ITreeStorageBuilder, Optional ByVal bLoadSubNodeOnly As Boolean) As Boolean
+ITreeSerializer_ReadNode = ReadNode(lp, nLength, objOut, bLoadSubNodeOnly)
+End Function
+
+Private Function ITreeSerializer_SaveNodeToFile(ByVal FileName As String, ByVal obj As ITreeStorageReader, Optional ByVal bWriteHeader As Boolean = True, Optional ByVal bSaveSubNodeOnly As Boolean) As Boolean
+ITreeSerializer_SaveNodeToFile = SaveNodeToFile(FileName, obj, bWriteHeader, bSaveSubNodeOnly)
+End Function
+
+Private Sub ITreeSerializer_WriteNode(ByVal obj As ITreeStorageReader, ByVal objOut As clsTreeStorageNode, Optional ByVal bWriteHeader As Boolean = True, Optional ByVal bSaveSubNodeOnly As Boolean)
+WriteNode obj, objOut, bWriteHeader, bSaveSubNodeOnly
+End Sub
+

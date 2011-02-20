@@ -21,7 +21,7 @@ Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef D
 'End Type
 
 Private Type typeFakeDXEffectArgument
- nType As Long
+ nType As Long '[3]
  '0=undefined
  '1=hard-coded constant[1]
  '2=shader argument constant[2]
@@ -39,10 +39,10 @@ Private Type typeFakeDXEffectArgument
  'TODO:texture and other
  '--------
  '[1] uses sData
- '[2] uses sOptionalData (which isn't signature)
+ '[2] uses sOptionalData
  '////////following strings are BINARY data !!!
- sData As String
- sOptionalData As String
+ sData As String '[3]
+ sOptionalData As String '[4]
  '////////if use shader argument
  nParamOffset As Byte
  nParamSize As Byte
@@ -59,16 +59,16 @@ Private Type typeFakeDXEffect
  '>0=template index
  sTemplateName As String 'if this is a template
  '////////
- sShaderProgram As String
+ sShaderProgram As String '[3]
  '""         = don't use shader (alias "default" "none")
  '"standard" = standard shader
- nDiffuseAlgorithm As Long
+ nDiffuseAlgorithm As Long '[3]
  '0=default=Lambertian
  '1=Oren-Nayar
- nSpecularAlgorithm As Long
+ nSpecularAlgorithm As Long '[3]
  '0=default=Blinn-Phong
  '1=Phong
- nFlags As Long
+ nFlags As Long '[3]
  '1=advanecd fog enabled (currently unsupported)
  '2=shadow map enabled (currently unsupported)
  '////////
@@ -76,7 +76,13 @@ Private Type typeFakeDXEffect
  '////////
  sShaderSourceCode As String
  nParamUsed As Long 'used float4
+ '////////
+ objEffect As D3DXEffect
 End Type
+'--------
+'[3] compare (pCompareFakeDXEffect value=1)
+'[4] optional compare (pCompareFakeDXEffect value=2)
+'--------
 
 Private Enum enumFakeDXEffectArgumentType
  IDA_Ambient
@@ -101,6 +107,12 @@ Private m_nParamSize(63) As Long
 Private m_sOutputName(31) As String
 Private m_sOutputSematics(31) As String
 
+Friend Sub Destroy()
+Erase m_tEffect
+m_nEffectCount = 0
+m_nEffectMax = 0
+End Sub
+
 Private Sub Class_Initialize()
 Dim i As Long
 '///
@@ -122,6 +134,7 @@ m_nParamSize(IDA_Specular) = 4
 m_nParamSize(IDA_SpecularHardness) = 1
 m_nParamSize(IDA_OrenNayarRoughness) = 1
 m_nParamSize(IDA_Emissive) = 4
+'///following are currently unsupported TODO:
 m_nParamSize(IDA_NormalMap) = 4 '????????
 m_nParamSize(IDA_NormalScale) = 1
 m_nParamSize(IDA_ParallaxMap) = 1 '???????? TODO:combined to normal map
@@ -161,30 +174,29 @@ Next i
 pCompareFakeDXEffect = 2
 End Function
 
-'TODO:
 Friend Function pFindExistingFakeDXEffect(ByRef t As typeFakeDXEffect, ByRef nIndex As Long) As Long
-Dim i As Long, j As Long
+Dim i As Long
+Dim j As Long, jj As Long
 Dim idx As Long
 '///
-nIndex = 0
-idx = t.nTemplateIndex
-If idx > 0 Then
- For i = 1 To m_nEffectCount
-  If m_tEffect(i).nTemplateIndex >= 0 Then
-   If pCompareFakeDXEffect(m_tEffect(i), t) = 2 Then
-    pFindExistingFakeDXEffect = 2
-    nIndex = i
-    Exit Function
-   End If
-  End If
- Next i
- pFindExistingFakeDXEffect = 1
- nIndex = idx
-ElseIf idx < 0 Then
- 'template??? TODO:
+If t.nTemplateIndex > 0 Then
+ nIndex = t.nTemplateIndex
+ jj = 1
 Else
- 'TODO:
+ nIndex = 0
+ jj = 0
 End If
+'///
+For i = 1 To m_nEffectCount
+ j = pCompareFakeDXEffect(m_tEffect(i), t)
+ If j > jj Then
+  jj = j
+  nIndex = i
+  If j >= 2 Then Exit For
+ End If
+Next i
+'///
+pFindExistingFakeDXEffect = jj
 End Function
 
 Friend Sub pCombineFakeDXEffectFromTemplate(ByRef t As typeFakeDXEffect)
@@ -197,6 +209,7 @@ With m_tEffect(t.nTemplateIndex)
  t.nDiffuseAlgorithm = .nDiffuseAlgorithm
  t.nSpecularAlgorithm = .nSpecularAlgorithm
  t.nFlags = .nFlags
+ '///
  For i = 0 To 63
   s = t.tArguments(i).sData
   If s = vbNullString Then s = t.tArguments(i).sOptionalData
@@ -206,7 +219,9 @@ With m_tEffect(t.nTemplateIndex)
   If m1 >= m2 Then t.tArguments(i).sOptionalData = s _
   Else MidB(t.tArguments(i).sOptionalData, 1, m1) = s
  Next i
+ '///
  t.nParamUsed = .nParamUsed
+ Set t.objEffect = .objEffect
 End With
 End Sub
 
@@ -705,7 +720,7 @@ Case "standard"
  Case 0
   sParam = sParam + vbTab + "float fSpecular=dot(vNormal,normalize(vLight+vView));" + vbCrLf + vbCrLf
  Case 1
-  sParam = sParam + vbTab + "float fSpecular=dot(vView,reflect(vLight,vNormal));" + vbCrLf + vbCrLf
+  sParam = sParam + vbTab + "float fSpecular=dot(vView,-reflect(vLight,vNormal));" + vbCrLf + vbCrLf '-reflect ???
  Case Else
   Exit Function
  End Select
@@ -737,7 +752,14 @@ Dim t As typeFakeDXEffect
 Dim i As Long, j As Long, m As Long
 Dim s As String
 '///
-If objNode.GetNameAsString = "shaderTemplate" Then t.nTemplateIndex = -1
+s = objNode.GetNameAsString
+Select Case s
+Case "shaderTemplate"
+ t.nTemplateIndex = -1
+Case "shader"
+Case Else
+ Exit Function
+End Select
 '///
 For i = 1 To objNode.SubNodeCount
  If objNode.SubNodeType(i) = 0 Then
@@ -750,43 +772,50 @@ For i = 1 To objNode.SubNodeCount
     t.sTemplateName = s
    Else
     For j = 1 To m_nEffectCount
-     If m_tEffect(j).nTemplateIndex < 0 Then
+     If m_tEffect(j).nTemplateIndex = -1 Then
       If m_tEffect(j).sTemplateName = s Then
        t.nTemplateIndex = j
        Exit For
       End If
      End If
     Next j
+    If j > m_nEffectCount Then
+     Debug.Assert False
+     Exit Function
+    End If
    End If
   Case "shaderProgram"
    s = objNode.GetSubNodeValueAsString(i)
    Select Case s
-   Case "", "none", "default"
+   Case vbNullString, "none", "default"
     t.sShaderProgram = vbNullString
    Case "standard"
     t.sShaderProgram = s
    Case Else
     Debug.Assert False
+    Exit Function
    End Select
   Case "diffuseAlgorithm"
    s = objNode.GetSubNodeValueAsString(i)
    Select Case s
-   Case "", "default", "Lambertian"
+   Case vbNullString, "default", "Lambertian"
     t.nDiffuseAlgorithm = 0
    Case "Oren-Nayar"
     t.nDiffuseAlgorithm = 1
    Case Else
     Debug.Assert False
+    Exit Function
    End Select
   Case "specularAlgorithm"
    s = objNode.GetSubNodeValueAsString(i)
    Select Case s
-   Case "", "default", "Blinn-Phong"
+   Case vbNullString, "default", "Blinn-Phong"
     t.nSpecularAlgorithm = 0
    Case "Phong"
     t.nSpecularAlgorithm = 1
    Case Else
     Debug.Assert False
+    Exit Function
    End Select
   Case Else
    For j = 0 To 63
@@ -795,23 +824,73 @@ For i = 1 To objNode.SubNodeCount
      Exit For
     End If
    Next j
-   If j > 63 Then Exit Function
+   If j > 63 Then
+    Debug.Assert False
+    Exit Function
+   End If
   End Select
  End If
 Next i
 '///
 pCombineFakeDXEffectFromTemplate t
-'///
-'TODO:check if already exists
-'///
-'test only
-If Not pGenerateHLSLCodeFromFakeDXEffect(t, True) Then Exit Function
-Open App.Path + "\test-out-" + t.sTemplateName + ".c" For Output As #1
-Print #1, t.sShaderSourceCode
-Close
-'test again
-CreateEffect t.sShaderSourceCode, Nothing
-'///
-'TODO:
-AddEffectFromNode = 528
+'///check if already exists
+j = pFindExistingFakeDXEffect(t, i)
+If j >= 2 And t.nTemplateIndex >= 0 Then
+ AddEffectFromNode = i
+ Exit Function
+End If
+'///compile effect
+If j = 1 Then
+ Set t.objEffect = m_tEffect(i).objEffect
+ElseIf t.sShaderProgram <> vbNullString Then
+ If Not pGenerateHLSLCodeFromFakeDXEffect(t, True) Then
+  Debug.Assert False
+  Exit Function
+ End If
+ 'Debug.Print t.sShaderSourceCode
+ If Not CreateEffect(t.sShaderSourceCode, t.objEffect) Then
+  Debug.Assert False
+  Exit Function
+ End If
+End If
+'///add new effect
+m = m_nEffectCount + 1
+If m > m_nEffectMax Then
+ m_nEffectMax = m_nEffectMax + 16&
+ ReDim Preserve m_tEffect(1 To m_nEffectMax)
+End If
+m_tEffect(m) = t
+m_nEffectCount = m
+'///over
+AddEffectFromNode = m
 End Function
+
+Friend Function LoadEffectsFromFile(ByVal FileName As String, ByVal objSerializer As ITreeSerializer) As Long
+Dim objNode As New clsTreeStorageNode
+If Not objSerializer.LoadNodeFromFile(FileName, objNode) Then Exit Function
+LoadEffectsFromFile = LoadEffectsFromSubNodes(objNode)
+End Function
+
+Friend Function LoadEffectsFromSubNodes(ByVal objNode As clsTreeStorageNode) As Long
+Dim i As Long, m As Long
+Dim obj As clsTreeStorageNode
+For i = 1 To objNode.SubNodeCount
+ Set obj = objNode.SubNodeObject(i)
+ If Not obj Is Nothing Then
+  If AddEffectFromNode(obj) > 0 Then m = m + 1
+ End If
+Next i
+LoadEffectsFromSubNodes = m
+End Function
+
+Friend Property Get EffectCount() As Long
+EffectCount = m_nEffectCount
+End Property
+
+Friend Property Get EffectObject(ByVal nIndex As Long) As D3DXEffect
+If nIndex > 0 And nIndex <= m_nEffectCount Then Set EffectObject = m_tEffect(nIndex).objEffect
+End Property
+
+Private Sub Class_Terminate()
+Destroy
+End Sub
