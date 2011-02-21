@@ -156,7 +156,7 @@ float4 ps_func(VS_OUTPUT d):COLOR0{
 	float depth=1.0f/(zData.x+zData.y*d.t.z/d.t.w);
 	//float depth=length(d.p.xyz-viewPos.xyz);
 
-float4 viewVec=normalize(viewPos-d.p);
+float4 viewVec=float4(normalize(viewPos.xyz-d.p.xyz),0);
 
 //========//new:parallax mapping test
 float4 clr_tex;
