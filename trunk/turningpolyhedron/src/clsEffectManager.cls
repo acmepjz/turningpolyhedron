@@ -25,8 +25,7 @@ Private Type typeFakeDXEffectArgument
  '0=undefined
  '1=hard-coded constant[1]
  '2=shader argument constant[2]
- '---
- 'bit16-20:
+ '---read vertex shader input = &H10000-&H1FFFFF
  '&H10000,&H20000=color0-1
  '&H100000-&H1F0000=texcoord0-15
  'bit0-3,4-7,8-11,12-15=components1,2,3,4 if all 0 then default order = &H4321
@@ -35,11 +34,19 @@ Private Type typeFakeDXEffectArgument
  '5=hard-coded constant[1]
  '6=shader argument constant[2]
  '7=one
+ '---(2D)texture[1][2][a] = &H1000000-&H1FFFFFF
+ '&H1xyzzww
+ 'x=texture sampler index (0-15)
+ 'y=texcoord index (0-15)
+ 'zz=output components (default=&HE4)
+ 'ww=input components (default=&HE4)
  '---
- 'TODO:texture and other
+ 'TODO:other (eg. expression, volune texture, etc.)
  '--------
  '[1] uses sData
  '[2] uses sOptionalData
+ '[a] sData format = sampler properties ['\x01' ...]
+ '    sOptionalData = file name (???) currently unsupported
  '////////following strings are BINARY data !!!
  sData As String '[3]
  sOptionalData As String '[4]
@@ -105,7 +112,7 @@ Private m_nEffectCount As Long, m_nEffectMax As Long
 Private m_sParamName(63) As String
 Private m_nParamSize(63) As Long
 Private m_sOutputName(31) As String
-Private m_sOutputSematics(31) As String
+Private m_sOutputSemantics(31) As String
 
 Friend Sub Destroy()
 Erase m_tEffect
@@ -142,11 +149,11 @@ m_nParamSize(IDA_ParallaxOffset) = 1
 m_nParamSize(IDA_ParallaxScale) = 1
 '///
 For i = 0 To 1
- m_sOutputSematics(i + 1) = "COLOR" + CStr(i)
+ m_sOutputSemantics(i + 1) = "COLOR" + CStr(i)
  m_sOutputName(i + 1) = "c" + CStr(i)
 Next i
 For i = 0 To 15
- m_sOutputSematics(i + 16) = "TEXCOORD" + CStr(i)
+ m_sOutputSemantics(i + 16) = "TEXCOORD" + CStr(i)
  m_sOutputName(i + 16) = "t" + CStr(i)
 Next i
 End Sub
@@ -199,31 +206,34 @@ Next i
 pFindExistingFakeDXEffect = jj
 End Function
 
-Friend Sub pCombineFakeDXEffectFromTemplate(ByRef t As typeFakeDXEffect)
+Friend Function pCombineFakeDXEffectFromTemplate(ByRef t As typeFakeDXEffect) As Boolean
 Dim i As Long
 Dim m1 As Long, m2 As Long
 Dim s As String
-If t.nTemplateIndex <= 0 Then Exit Sub
-With m_tEffect(t.nTemplateIndex)
- t.sShaderProgram = .sShaderProgram
- t.nDiffuseAlgorithm = .nDiffuseAlgorithm
- t.nSpecularAlgorithm = .nSpecularAlgorithm
- t.nFlags = .nFlags
- '///
- For i = 0 To 63
-  s = t.tArguments(i).sData
-  If s = vbNullString Then s = t.tArguments(i).sOptionalData
-  t.tArguments(i) = .tArguments(i)
-  m1 = LenB(s)
-  m2 = LenB(t.tArguments(i).sOptionalData)
-  If m1 >= m2 Then t.tArguments(i).sOptionalData = s _
-  Else MidB(t.tArguments(i).sOptionalData, 1, m1) = s
- Next i
- '///
- t.nParamUsed = .nParamUsed
- Set t.objEffect = .objEffect
-End With
-End Sub
+If t.nTemplateIndex > 0 Then
+ With m_tEffect(t.nTemplateIndex)
+  t.sShaderProgram = .sShaderProgram
+  t.nDiffuseAlgorithm = .nDiffuseAlgorithm
+  t.nSpecularAlgorithm = .nSpecularAlgorithm
+  t.nFlags = .nFlags
+  '///TODO:check argument type
+  For i = 0 To 63
+   s = t.tArguments(i).sData
+   If s = vbNullString Then s = t.tArguments(i).sOptionalData
+   t.tArguments(i) = .tArguments(i)
+   m1 = LenB(s)
+   m2 = LenB(t.tArguments(i).sOptionalData)
+   If m1 >= m2 Then t.tArguments(i).sOptionalData = s _
+   Else MidB(t.tArguments(i).sOptionalData, 1, m1) = s
+  Next i
+  '///
+  t.nParamUsed = .nParamUsed
+  Set t.objEffect = .objEffect
+ End With
+End If
+'///
+pCombineFakeDXEffectFromTemplate = True
+End Function
 
 Friend Function pFindUnusedInput(bInputUsed() As Byte, ByVal nStart As Long, ByVal nEnd As Long) As Long
 Dim i As Long
@@ -249,7 +259,7 @@ Dim ret As typeFakeDXEffectArgument
 Dim f As Single
 '///
 nDesiredSize = m_nParamSize(nIndex)
-If nDesiredSize = 0 Then
+If nDesiredSize <= 0 Then
  Debug.Assert False
  Exit Function
 End If
@@ -260,12 +270,23 @@ If m > 0 Then
  s = Trim(v(0))
  If Left(s, 5) = "color" Then
   i = Val(Mid(s, 6))
-  If i = 0 Or i = 1 Then ret.nType = (i + 1) * &H10000
+  If i = 0 Or i = 1 Then ret.nType = (i + 1) * &H10000 _
+  Else Exit Function
  ElseIf Left(s, 8) = "texcoord" Then
   i = Val(Mid(s, 9))
-  If i >= 0 And i < 16 Then ret.nType = (i + 16) * &H10000
+  If i >= 0 And i < 16 Then ret.nType = (i + 16) * &H10000 _
+  Else Exit Function
+ ElseIf Left(s, 15) = "textureArgument" Then
+  i = Val(Mid(s, 9))
+  If i >= 0 And i < 16 Then ret.nType = (i + 16) * &H100000 _
+  Else Exit Function
+ ElseIf Left(s, 11) = "textureFile" Then
+  'TODO:
+  Debug.Assert False
+  Exit Function
  End If
  If ret.nType >= &H10000 And ret.nType < &H200000 Then
+  '////////////////shader input
   If m > 1 Then
    s1 = Left(Trim(v(1)), 4)
    If m > 2 Then
@@ -311,6 +332,7 @@ If m > 0 Then
    Next i
   End If
  ElseIf s = "shaderArgument" Then
+  '////////////////shader argument (constant)
   ret.nType = 2
   If m > 1 Then
    v = Split(Trim(v(1)), ",")
@@ -324,10 +346,61 @@ If m > 0 Then
    End If
   End If
   ret.sOptionalData = Left(ret.sOptionalData + String(nDesiredSize * 2&, vbNullChar), nDesiredSize * 2&)
- ElseIf False Then
-  'TODO:texture,etc
-  Debug.Assert False
+ ElseIf ret.nType >= &H1000000 And ret.nType < &H2000000 Then
+  '////////////////texture
+  ret.nType = ret.nType Or &HE4E4&
+  'read output components
+  i = InStr(1, s, ".")
+  If i > 0 Then
+   k = &H100&
+   For i = i + 1 To i + 4
+    Select Case Mid(s, i, 1)
+    Case "x", "r": kk = 0
+    Case "y", "g": kk = 1
+    Case "z", "b": kk = 2
+    Case "w", "a": kk = 3
+    Case Else: Exit For
+    End Select
+    ret.nType = (ret.nType And Not (k * 3&)) Or (k * kk)
+    k = k * 4&
+   Next i
+  End If
+  'read input index and components
+  If m > 1 Then
+   s = Trim(v(1))
+   If Left(s, 8) = "texcoord" Then
+    i = Val(Mid(s, 9))
+    If i >= 0 And i < 16 Then ret.nType = ret.nType Or (i * &H10000) _
+    Else Exit Function
+   Else
+    Debug.Assert False
+    Exit Function
+   End If
+   '///
+   i = InStr(1, s, ".")
+   If i > 0 Then
+    k = &H1&
+    For i = i + 1 To i + 4
+     Select Case Mid(s, i, 1)
+     Case "x", "r": kk = 0
+     Case "y", "g": kk = 1
+     Case "z", "b": kk = 2
+     Case "w", "a": kk = 3
+     Case Else: Exit For
+     End Select
+     ret.nType = (ret.nType And Not (k * 3&)) Or (k * kk)
+     k = k * 4&
+    Next i
+   End If
+   '///
+  End If
+  'read sampler parameters
+  If m > 2 Then
+   ret.sData = Trim(v(m - 1))
+   If Right(ret.sData, 1) <> ";" Then ret.sData = ret.sData + ";"
+  End If
  Else
+  '////////////////fixed constant
   ret.nType = 1
   v = Split(s, ",")
   m = UBound(v) + 1
@@ -369,7 +442,7 @@ t.tArguments(nIndex) = ret
 pParseArgumentFromString = True
 End Function
 
-Friend Function pGenerateArgumentCode(ByRef t As typeFakeDXEffect, ByVal nIndex As Long, ByVal nDesiredSize As Long) As String
+Friend Function pGenerateArgumentCode(ByRef t As typeFakeDXEffect, ByVal nIndex As Long, ByVal nDesiredSize As Long, Optional ByVal sAdditional As String = vbNullString) As String
 Dim nType As Long
 Dim i As Long, j As Long, jj As Long
 Dim nLast As Long
@@ -445,7 +518,8 @@ With t.tArguments(nIndex)
    j = 0
    jj = 0
    '///
-   pGenerateArgumentCode = "float" + CStr(nDesiredSize) + "("
+   If nDesiredSize > 1 Then pGenerateArgumentCode = "float" + CStr(nDesiredSize) + "(" _
+   Else pGenerateArgumentCode = "("
    For i = 0 To nDesiredSize - 1
     If d(i) >= 1 And d(i) <= 4 Then
      If nLast <> 1 Then
@@ -490,19 +564,35 @@ With t.tArguments(nIndex)
    pGenerateArgumentCode = pGenerateArgumentCode + ")"
   End If
   '///
+ ElseIf nType >= &H1000000 And nType < &H2000000 Then
+  'texture
+  pGenerateArgumentCode = "tex2D(samp" + CStr((nType And &HF00000) \ &H100000) + ",cin.t" + CStr((nType And &HF0000) \ &H10000) + "."
+  j = nType And &HFF&
+  For i = 1 To 2
+   pGenerateArgumentCode = pGenerateArgumentCode + Mid("xyzw", 1 + (j And 3&), 1)
+   j = j \ 4&
+  Next i
+  pGenerateArgumentCode = pGenerateArgumentCode + ")."
+  j = (nType And &HFF00&) \ &H100&
+  For i = 1 To nDesiredSize
+   pGenerateArgumentCode = pGenerateArgumentCode + Mid("xyzw", 1 + (j And 3&), 1)
+   j = j \ 4&
+  Next i
  Else
-  'TODO:texture,etc.
+  'TODO:etc.
   Debug.Assert False
  End If
 End With
 End Function
 
 Friend Function pGenerateHLSLCodeFromFakeDXEffect(ByRef t As typeFakeDXEffect, Optional ByVal bComment As Boolean) As Boolean
-Dim sParam As String
+Dim sParam As String, sTexture As String
 Dim sInput As String, sOutput As String
 '///
 Dim bParamUsed(255) As Byte
 Dim bInputUsed(31) As Byte
+Dim bTextureUsed(15) As Byte
+Dim sTextureArgument(15) As String
 Dim nExtraInputCount As Long
 Dim i As Long
 Dim j As Long
@@ -567,7 +657,7 @@ Case "standard"
      '///
     End If
    Else
-    'TODO:texture,etc.
+    'TODO:etc.
    End If
   End With
   If kk = 0 Then Exit Function 'failed to assign space
@@ -587,10 +677,24 @@ Case "standard"
     bInputUsed(j) = 45
     '///output comment
     If bComment Then _
-    sOutput = sOutput + "// " + CStr(i) + " " + m_sParamName(i) + " in " + m_sOutputSematics(j) + vbCrLf
+    sOutput = sOutput + "// " + CStr(i) + " " + m_sParamName(i) + " in " + m_sOutputSemantics(j) + vbCrLf
     '///
+   ElseIf nType >= &H1000000 And nType < &H2000000 Then
+    'texture
+    j = ((nType And &HF0000) \ &H10000) + 16&
+    bInputUsed(j) = 45
+    '///output comment
+    If bComment Then
+     sOutput = sOutput + "// " + CStr(i) + " " + m_sParamName(i) + " in " + m_sOutputSemantics(j) + vbCrLf
+     sTexture = sTexture + "// " + CStr(i) + " " + m_sParamName(i) + " in texture #" + _
+     CStr((nType And &HF00000) \ &H100000) + " using " + m_sOutputSemantics(j) + vbCrLf
+    End If
+    '///
+    j = (nType And &HF00000) \ &H100000
+    bTextureUsed(j) = 1
+    If .sData <> vbNullString Then sTextureArgument(j) = .sData
    Else
-    'TODO:texture,etc.
+    'TODO:etc.
    End If
   End With
  Next i
@@ -599,8 +703,8 @@ Case "standard"
  sOutput = sOutput + "struct VS_OUTPUT{" + vbCrLf
  For i = 0 To 31
   If bInputUsed(i) Then
-   sInput = sInput + vbTab + "float4 " + m_sOutputName(i) + ":" + m_sOutputSematics(i) + ";" + vbCrLf
-   sOutput = sOutput + vbTab + "float4 " + m_sOutputName(i) + ":" + m_sOutputSematics(i) + ";" + vbCrLf
+   sInput = sInput + vbTab + "float4 " + m_sOutputName(i) + ":" + m_sOutputSemantics(i) + ";" + vbCrLf
+   sOutput = sOutput + vbTab + "float4 " + m_sOutputName(i) + ":" + m_sOutputSemantics(i) + ";" + vbCrLf
   End If
  Next i
  '///assign extra input
@@ -615,25 +719,25 @@ Case "standard"
  i = pFindUnusedInput(bInputUsed, 16, 31)
  If i < 0 Then Exit Function
  sInput = sInput + vbTab + "float4 vPos:POSITION;" + vbCrLf
- sOutput = sOutput + vbTab + "float4 vPos:" + m_sOutputSematics(i) + ";" + vbCrLf
+ sOutput = sOutput + vbTab + "float4 vPos:" + m_sOutputSemantics(i) + ";" + vbCrLf
  i = pFindUnusedInput(bInputUsed, 16, 31)
  If i < 0 Then Exit Function
  sInput = sInput + vbTab + "float4 vNormal:NORMAL;" + vbCrLf
- sOutput = sOutput + vbTab + "float4 vNormal:" + m_sOutputSematics(i) + ";" + vbCrLf
+ sOutput = sOutput + vbTab + "float4 vNormal:" + m_sOutputSemantics(i) + ";" + vbCrLf
  If bMoreNormals Then
   i = pFindUnusedInput(bInputUsed, 16, 31)
   If i < 0 Then Exit Function
   sInput = sInput + vbTab + "float4 vBinormal:BINORMAL;" + vbCrLf
-  sOutput = sOutput + vbTab + "float4 vBinormal:" + m_sOutputSematics(i) + ";" + vbCrLf
+  sOutput = sOutput + vbTab + "float4 vBinormal:" + m_sOutputSemantics(i) + ";" + vbCrLf
   i = pFindUnusedInput(bInputUsed, 16, 31)
   If i < 0 Then Exit Function
   sInput = sInput + vbTab + "float4 vTangent:TANGENT;" + vbCrLf
-  sOutput = sOutput + vbTab + "float4 vTangent:" + m_sOutputSematics(i) + ";" + vbCrLf
+  sOutput = sOutput + vbTab + "float4 vTangent:" + m_sOutputSemantics(i) + ";" + vbCrLf
  End If
  If bShadowMap Then
   i = pFindUnusedInput(bInputUsed, 16, 31)
   If i < 0 Then Exit Function
-  sOutput = sOutput + vbTab + "float4 vShadow:" + m_sOutputSematics(i) + ";" + vbCrLf
+  sOutput = sOutput + vbTab + "float4 vShadow:" + m_sOutputSemantics(i) + ";" + vbCrLf
  End If
  '///
  sInput = sInput + "};" + vbCrLf + vbCrLf
@@ -647,8 +751,17 @@ Case "standard"
  '///TODO:custom light
  'test only
  sParam = sParam + "float4 lightDir,lightPos,viewPos;" + vbCrLf + "int lightType;" + vbCrLf + vbCrLf
- '///
- 'TODO:texture
+ '///texture
+ mm = 0
+ sTexture = sTexture + vbCrLf
+ For i = 0 To 15
+  If bTextureUsed(i) Then
+   sTexture = sTexture + "texture tex" + CStr(i) + ";" + vbCrLf + "sampler samp" + CStr(i) + "=sampler_state{" _
+   + vbCrLf + vbTab + "Texture=<tex" + CStr(i) + ">;" + vbCrLf + vbTab + sTextureArgument(i) + vbCrLf + "};" + vbCrLf + vbCrLf
+   mm = mm + 1
+  End If
+ Next i
+ sParam = sParam + "// texture used:" + CStr(mm) + vbCrLf + vbCrLf + sTexture
  '///
  '////////////////////////////////generate vertex shader
  sParam = sParam + "void vs_func(VS_INPUT cin,out VS_OUTPUT cout,out float4 vPos:POSITION){" + vbCrLf
@@ -832,7 +945,7 @@ For i = 1 To objNode.SubNodeCount
  End If
 Next i
 '///
-pCombineFakeDXEffectFromTemplate t
+If Not pCombineFakeDXEffectFromTemplate(t) Then Exit Function
 '///check if already exists
 j = pFindExistingFakeDXEffect(t, i)
 If j >= 2 And t.nTemplateIndex >= 0 Then

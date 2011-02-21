@@ -209,7 +209,13 @@ objEffect.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_nLightType
 End Sub
 
 Friend Sub SetTexture(ByVal obj As Direct3DTexture9)
-objEffect.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), obj
+On Error Resume Next
+'TEST ONLY
+If Not objCustomEffect Is Nothing Then
+ objCustomEffect.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), obj
+Else
+ objEffect.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), obj
+End If
 End Sub
 
 Friend Sub SetNormalTexture(ByVal obj As Direct3DTexture9)
@@ -321,7 +327,7 @@ Case RenderPass_FogVolume
  If Not m_bPostProcessEnabled Or Not m_bVolumeFog Then Exit Function
  Set objOldTarget_1 = d3dd9.GetRenderTarget(0)
  d3dd9.SetRenderTarget 0, objPostProcessTarget(6).GetSurfaceLevel(0)
- obj1.SetTexture StrPtr(StrConv("tex", vbFromUnicode)), objPostProcessTarget(0)
+ obj1.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), objPostProcessTarget(0)
  '///
  s = "test_volumefog"
 Case RenderPass_Main
