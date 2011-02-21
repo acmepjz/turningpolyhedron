@@ -219,7 +219,13 @@ End If
 End Sub
 
 Friend Sub SetNormalTexture(ByVal obj As Direct3DTexture9)
-objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
+On Error Resume Next
+'TEST ONLY
+If Not objCustomEffect Is Nothing Then
+ objCustomEffect.SetTexture StrPtr(StrConv("tex1", vbFromUnicode)), obj
+Else
+ objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
+End If
 End Sub
 
 Friend Sub OnLostDevice()
