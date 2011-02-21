@@ -198,9 +198,10 @@ With d3dd9
   End If
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
-  objRenderTest.SetTexture objTexture
-  objRenderTest.SetNormalTexture objNormalTexture
-  If objRenderTest.BeginRender(RenderPass_Main, objEffectManager.EffectObject(1)) Then '
+  If objRenderTest.BeginRender(RenderPass_Main, objEffectManager.EffectObject(1)) Then
+   objRenderTest.SetTexture objTexture
+   objRenderTest.SetNormalTexture objNormalTexture
+   objRenderTest.UpdateRenderState
    .BeginScene
    objTest.DrawSubset 0
 '   '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects

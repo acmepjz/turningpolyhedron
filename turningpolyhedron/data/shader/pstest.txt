@@ -76,9 +76,9 @@ float4 zData; //(c1,c2,0,0) such that z=1/(c1+c2*z')
 float4 viewPos;
 
 //texture
-texture tex;
+texture tex0;
 sampler samp=sampler_state{
-Texture=<tex>;
+Texture=<tex0>;
 MipFilter=NONE;
 MinFilter=LINEAR;
 MagFilter=LINEAR;
