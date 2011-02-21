@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlMain"
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
@@ -89,6 +89,7 @@ Public objFontSprite As D3DXSprite
 Public objFont As D3DXFont
 
 Public objEffectManager As New clsEffectManager
+Public bTestOnly As Boolean
 '////////
 
 '////////settings
@@ -161,6 +162,7 @@ Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
 Dim r(3) As Long
 Dim f(3) As Single
 Dim s As String
+Dim obj As D3DXEffect
 If IsIconic(d3dpp.hDeviceWindow) Then
  Sleep 20
  Exit Sub
@@ -198,7 +200,8 @@ With d3dd9
   End If
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
-  If objRenderTest.BeginRender(RenderPass_Main, objEffectManager.EffectObject(1)) Then
+  If bTestOnly Then Set obj = objEffectManager.EffectObject(1) Else Set obj = Nothing
+  If objRenderTest.BeginRender(RenderPass_Main, obj) Then
    objRenderTest.SetTexture objTexture
    objRenderTest.SetNormalTexture objNormalTexture
    objRenderTest.UpdateRenderState
@@ -484,7 +487,7 @@ objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
 objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
 'objRenderTest.SetLightType D3DLIGHT_POINT
 'objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1), True
-objCamera.SetCamrea Vec3(0, 8, -5), Vec3, Vec3(, , 1), True
+objCamera.SetCamrea Vec3(0, 6, -3.75), Vec3, Vec3(, , 1), True
 objCamera.AnimationEnabled = True
 objCamera.LinearDamping = 0.5
 'objRenderTest.CreateShadowMap 1024 'new
@@ -627,7 +630,7 @@ With FakeDXUIControls(1)
    .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   End With
   .AddNewChildren FakeCtl_Button, 82, 0, 160, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
-  .AddNewChildren FakeCtl_Button, 82, 16, 160, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
+  .AddNewChildren FakeCtl_Button, 82, 16, 160, 32, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
   .AddNewChildren FakeCtl_Button, 82, 32, 160, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
   With .AddNewChildren(FakeCtl_None, 240, 144, 360, 256, FCS_CanGetFocus Or FCS_AutoScroll, , , , "Form5678°¡°¢")
    With .AddNewChildren(FakeCtl_None, 0, 0, 320, 240)

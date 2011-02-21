@@ -92,6 +92,7 @@ End Type
 '--------
 
 Private Enum enumFakeDXEffectArgumentType
+ IDA_BaseColor
  IDA_Ambient
  IDA_Diffuse
  IDA_Specular
@@ -100,10 +101,10 @@ Private Enum enumFakeDXEffectArgumentType
  IDA_Emissive
  'TODO:normal mapping and parallax mapping
  IDA_NormalMap
- IDA_NormalScale
+ IDA_NormalMapScale
  IDA_ParallaxMap
- IDA_ParallaxOffset
- IDA_ParallaxScale
+ IDA_ParallaxMapOffset
+ IDA_ParallaxMapScale
 End Enum
 
 Private m_tEffect() As typeFakeDXEffect
@@ -123,6 +124,7 @@ End Sub
 Private Sub Class_Initialize()
 Dim i As Long
 '///
+m_sParamName(IDA_BaseColor) = "baseColor"
 m_sParamName(IDA_Ambient) = "ambient"
 m_sParamName(IDA_Diffuse) = "diffuse"
 m_sParamName(IDA_Specular) = "specular"
@@ -130,11 +132,12 @@ m_sParamName(IDA_SpecularHardness) = "specularHardness"
 m_sParamName(IDA_OrenNayarRoughness) = "OrenNayarRoughness"
 m_sParamName(IDA_Emissive) = "emissive"
 m_sParamName(IDA_NormalMap) = "normalMap"
-m_sParamName(IDA_NormalScale) = "normalScale"
+m_sParamName(IDA_NormalMapScale) = "normalMapScale"
 m_sParamName(IDA_ParallaxMap) = "parallaxMap"
-m_sParamName(IDA_ParallaxOffset) = "parallaxOffset"
-m_sParamName(IDA_ParallaxScale) = "parallaxScale"
+m_sParamName(IDA_ParallaxMapOffset) = "parallaxMapOffset"
+m_sParamName(IDA_ParallaxMapScale) = "parallaxMapScale"
 '///
+m_nParamSize(IDA_BaseColor) = 4
 m_nParamSize(IDA_Ambient) = 4
 m_nParamSize(IDA_Diffuse) = 4
 m_nParamSize(IDA_Specular) = 4
@@ -143,10 +146,10 @@ m_nParamSize(IDA_OrenNayarRoughness) = 1
 m_nParamSize(IDA_Emissive) = 4
 '///following are currently unsupported TODO:
 m_nParamSize(IDA_NormalMap) = 4 '????????
-m_nParamSize(IDA_NormalScale) = 1
+m_nParamSize(IDA_NormalMapScale) = 1
 m_nParamSize(IDA_ParallaxMap) = 1 '???????? TODO:combined to normal map
-m_nParamSize(IDA_ParallaxOffset) = 1
-m_nParamSize(IDA_ParallaxScale) = 1
+m_nParamSize(IDA_ParallaxMapOffset) = 1
+m_nParamSize(IDA_ParallaxMapScale) = 1
 '///
 For i = 0 To 1
  m_sOutputSemantics(i + 1) = "COLOR" + CStr(i)
@@ -277,7 +280,7 @@ If m > 0 Then
   If i >= 0 And i < 16 Then ret.nType = (i + 16) * &H10000 _
   Else Exit Function
  ElseIf Left(s, 15) = "textureArgument" Then
-  i = Val(Mid(s, 9))
+  i = Val(Mid(s, 16))
   If i >= 0 And i < 16 Then ret.nType = (i + 16) * &H100000 _
   Else Exit Function
  ElseIf Left(s, 11) = "textureFile" Then
@@ -460,7 +463,7 @@ With t.tArguments(nIndex)
   lp = StrPtr(.sData)
   If m = 1 Then
    CopyMemory f, ByVal lp, 4&
-   pGenerateArgumentCode = CStr(f)
+   pGenerateArgumentCode = "(" + CStr(f) + ")"
   ElseIf m > 1 Then
    pGenerateArgumentCode = "float" + CStr(nDesiredSize) + "("
    For i = 0 To nDesiredSize - 1
@@ -572,7 +575,7 @@ With t.tArguments(nIndex)
    pGenerateArgumentCode = pGenerateArgumentCode + Mid("xyzw", 1 + (j And 3&), 1)
    j = j \ 4&
   Next i
-  pGenerateArgumentCode = pGenerateArgumentCode + ")."
+  pGenerateArgumentCode = pGenerateArgumentCode + sAdditional + ")."
   j = (nType And &HFF00&) \ &H100&
   For i = 1 To nDesiredSize
    pGenerateArgumentCode = pGenerateArgumentCode + Mid("xyzw", 1 + (j And 3&), 1)
@@ -588,6 +591,7 @@ End Function
 Friend Function pGenerateHLSLCodeFromFakeDXEffect(ByRef t As typeFakeDXEffect, Optional ByVal bComment As Boolean) As Boolean
 Dim sParam As String, sTexture As String
 Dim sInput As String, sOutput As String
+Dim s1 As String, s2 As String
 '///
 Dim bParamUsed(255) As Byte
 Dim bInputUsed(31) As Byte
@@ -790,15 +794,40 @@ Case "standard"
  '////////////////////////////////generate pixel shader
  sParam = sParam + "float4 ps_func(VS_OUTPUT cin):COLOR0{" + vbCrLf
  sParam = sParam + vbTab + "float3 vView=normalize(viewPos.xyz-cin.vPos.xyz);" + vbCrLf + vbCrLf
- If t.tArguments(IDA_ParallaxMap).nType Then
-  'TODO:parallax mapping
+ '///parallax mapping
+ 'only working when type is texture
+ nType = t.tArguments(IDA_ParallaxMap).nType
+ If nType >= &H1000000 And nType < &H2000000 Then
+  sParam = sParam + vbTab + "float2 parallaxBase=float2(dot(vView,cin.vBinormal),dot(vView,cin.vTangent));" + vbCrLf
+  '///
+  s1 = "cin.t" + CStr((nType And &HF0000) \ &H10000) + "."
+  j = nType And &HFF&
+  For i = 1 To 2
+   s1 = s1 + Mid("xyzw", 1 + (j And 3&), 1)
+   j = j \ 4&
+  Next i
+  '///
+  s2 = "parallaxBase*(" + pGenerateArgumentCode(t, IDA_ParallaxMap, 1, ChrW(1)) + "+" + _
+  pGenerateArgumentCode(t, IDA_ParallaxMapOffset, 1) + ")*" + pGenerateArgumentCode(t, IDA_ParallaxMapScale, 1)
+  '///
+  sParam = sParam + vbTab + "float2 parallaxOffset=" + Replace(s2, ChrW(1), "") + ";" + vbCrLf
+  s2 = vbTab + "parallaxOffset=(parallaxOffset+" + Replace(s2, ChrW(1), "+parallaxOffset") + ")*0.5f;" + vbCrLf
+  sParam = sParam + s2 + s2 + vbTab + s1 + "+=parallaxOffset;" + vbCrLf + vbCrLf
+  '///
  End If
  sParam = sParam + vbTab + "float lightAmount=1.0f;" + vbCrLf + vbCrLf
  If bShadowMap Then
   'TODO:shadow map
  End If
  If t.tArguments(IDA_NormalMap).nType Then
-  'TODO:normal mapping
+  'normal mapping
+  If t.tArguments(IDA_NormalMapScale).nType Then
+   sParam = sParam + vbTab + "float3 vNormal=(" + pGenerateArgumentCode(t, IDA_NormalMap, 3) + "-0.5f)*" + _
+   pGenerateArgumentCode(t, IDA_NormalMapScale, 1) + ";" + vbCrLf
+  Else
+   sParam = sParam + vbTab + "float3 vNormal=" + pGenerateArgumentCode(t, IDA_NormalMap, 3) + "-0.5f;" + vbCrLf
+  End If
+  sParam = sParam + vbTab + "vNormal=vNormal.x*cin.vBinormal.xyz+vNormal.y*cin.vTangent.xyz+vNormal.z*cin.vNormal.xyz;" + vbCrLf + vbCrLf
  Else
   sParam = sParam + vbTab + "float3 vNormal=cin.vNormal.xyz;" + vbCrLf + vbCrLf
  End If
@@ -838,10 +867,23 @@ Case "standard"
   Exit Function
  End Select
  '///
- sParam = sParam + vbTab + "float4 lightResult=lit(n_dot_l,fSpecular," + pGenerateArgumentCode(t, IDA_SpecularHardness, 1) + ");" + vbCrLf
- sParam = sParam + vbTab + "lightResult=" + pGenerateArgumentCode(t, IDA_Ambient, 4) + "+" + pGenerateArgumentCode(t, IDA_Emissive, 4) + _
- "+lightAmount*(lightResult.y*" + pGenerateArgumentCode(t, IDA_Diffuse, 4) + "+lightResult.z*" + pGenerateArgumentCode(t, IDA_Specular, 4) + _
- ");" + vbCrLf + vbCrLf
+ If t.tArguments(IDA_BaseColor).nType Then
+  sParam = sParam + vbTab + "float4 baseColor=" + pGenerateArgumentCode(t, IDA_BaseColor, 4) + ";" + vbCrLf
+ End If
+ sParam = sParam + vbTab + "float4 ambientColor=" + pGenerateArgumentCode(t, IDA_Ambient, 4) + ";" + vbCrLf
+ sParam = sParam + vbTab + "float4 diffuseColor=" + pGenerateArgumentCode(t, IDA_Diffuse, 4) + ";" + vbCrLf
+ sParam = sParam + vbTab + "float4 specularColor=" + pGenerateArgumentCode(t, IDA_Specular, 4) + ";" + vbCrLf
+ sParam = sParam + vbTab + "float4 emissiveColor=" + pGenerateArgumentCode(t, IDA_Emissive, 4) + ";" + vbCrLf
+ sParam = sParam + vbCrLf
+ '///
+ sParam = sParam + vbTab + "float4 lightResult=lightAmount*lit(n_dot_l,fSpecular," + pGenerateArgumentCode(t, IDA_SpecularHardness, 1) + ");" + vbCrLf
+ If t.tArguments(IDA_BaseColor).nType Then
+  sParam = sParam + vbTab + _
+  "lightResult=baseColor*(ambientColor+lightResult.y*diffuseColor)+lightResult.z*specularColor+emissiveColor;" + vbCrLf + vbCrLf
+ Else
+  sParam = sParam + vbTab + _
+  "lightResult=ambientColor+emissiveColor+lightResult.y*diffuseColor+lightResult.z*specularColor;" + vbCrLf + vbCrLf
+ End If
  '///
  If bFogEnabled Then
   sParam = sParam + vbTab + "return float4(lightResult.xyz,1.0f/(zData.x+zData.y*cin.vPos.w/cin.vNormal.w));" + vbCrLf + "}" + vbCrLf + vbCrLf

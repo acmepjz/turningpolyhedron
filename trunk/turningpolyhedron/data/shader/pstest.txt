@@ -162,19 +162,19 @@ float4 viewVec=normalize(viewPos-d.p);
 float4 clr_tex;
 #if 1
 
-//it works!! :)
+//it works!! :) but looks buggy ...
 clr_tex=float4(dot(viewVec,d.b),dot(viewVec,d.ta),0,0); //parallax_base // /dot(viewVec,d.n)
-float4 parallax_offset=clr_tex*(tex2D(sampNormal,d.t).w+_fParam[1].y)*_fParam[1].z;
+float4 parallax_offset=clr_tex*(tex2D(sampNormal,d.t.xy).w+_fParam[1].y)*_fParam[1].z;
 //iteration(?)
-parallax_offset=(parallax_offset+clr_tex*(tex2D(sampNormal,d.t+parallax_offset).w+_fParam[1].y)*_fParam[1].z)*0.5f;
-parallax_offset=(parallax_offset+clr_tex*(tex2D(sampNormal,d.t+parallax_offset).w+_fParam[1].y)*_fParam[1].z)*0.5f;
+parallax_offset=(parallax_offset+clr_tex*(tex2D(sampNormal,d.t.xy+parallax_offset.xy).w+_fParam[1].y)*_fParam[1].z)*0.5f;
+parallax_offset=(parallax_offset+clr_tex*(tex2D(sampNormal,d.t.xy+parallax_offset.xy).w+_fParam[1].y)*_fParam[1].z)*0.5f;
 
-d.t+=parallax_offset;
+d.t.xy+=parallax_offset.xy;
 
 #endif
 
 //get texture color
-clr_tex=tex2D(samp,d.t);
+clr_tex=tex2D(samp,d.t.xy);
 
 //========//shadow map test
 float4 l=1.0f;
