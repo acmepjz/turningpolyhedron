@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlMain"
 Option Explicit
 
-#Const UseSubclass = True
+#Const UseSubclass = False
 
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
@@ -172,11 +172,13 @@ With d3dd9
  If i = D3DERR_DEVICENOTRESET Then
   Sleep 20
   '///it works!
+  On Error Resume Next
   FakeDXAppOnLostDevice
   Err.Clear
   .Reset d3dpp
   i = Err.Number
   If i = 0 Then FakeDXAppOnInitalize True
+  On Error GoTo 0
   '///
  End If
  If i = 0 Then
@@ -257,6 +259,7 @@ objRenderTest.OnLostDevice
 objDrawTest.OnLostDevice
 objFontSprite.OnLostDevice
 objFont.OnLostDevice
+objEffectManager.OnLostDevice
 End Sub
 
 Public Sub FakeDXAppOnInitalize(Optional ByVal bReset As Boolean)
@@ -269,6 +272,7 @@ If bReset Then
  objDrawTest.OnResetDevice
  objFontSprite.OnResetDevice
  objFont.OnResetDevice
+ objEffectManager.OnResetDevice
  '///
  FakeDXAppSetDefaultRenderState
  '///

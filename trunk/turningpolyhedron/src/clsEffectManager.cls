@@ -60,6 +60,10 @@ End Type
 
 'TODO:light type
 Private Type typeFakeDXEffect
+ nReferenceIndex As Long
+ '0=no
+ '>0=has same effect with nReferenceIndex
+ '////////
  nTemplateIndex As Long
  '-1=this is a template
  '0=no template
@@ -81,8 +85,13 @@ Private Type typeFakeDXEffect
  '////////
  tArguments(63) As typeFakeDXEffectArgument
  '////////
- sShaderSourceCode As String
+ sShaderSourceCode As String 'optional
+ '////////
  nParamUsed As Long 'used float4
+ fParams(63) As D3DXVECTOR4
+ '////////
+ nTextureUsedFlag As Long 'bit 0-15
+ objTextures(15) As Direct3DBaseTexture9
  '////////
  objEffect As D3DXEffect
 End Type
@@ -91,7 +100,7 @@ End Type
 '[4] optional compare (pCompareFakeDXEffect value=2)
 '--------
 
-Private Enum enumFakeDXEffectArgumentType
+Public Enum enumFakeDXEffectArgumentType
  IDA_BaseColor
  IDA_Ambient
  IDA_Diffuse
@@ -99,9 +108,10 @@ Private Enum enumFakeDXEffectArgumentType
  IDA_SpecularHardness
  IDA_OrenNayarRoughness
  IDA_Emissive
- 'TODO:normal mapping and parallax mapping
+ '///
  IDA_NormalMap
  IDA_NormalMapScale
+ '///
  IDA_ParallaxMap
  IDA_ParallaxMapOffset
  IDA_ParallaxMapScale
@@ -114,6 +124,12 @@ Private m_sParamName(63) As String
 Private m_nParamSize(63) As Long
 Private m_sOutputName(31) As String
 Private m_sOutputSemantics(31) As String
+
+Private m_nLastIndex As Long
+
+Friend Sub SetTexture(ByVal nIndex As Long, ByVal nType As enumFakeDXEffectArgumentType, ByVal obj As Direct3DBaseTexture9)
+'TODO:
+End Sub
 
 Friend Sub Destroy()
 Erase m_tEffect
@@ -144,10 +160,9 @@ m_nParamSize(IDA_Specular) = 4
 m_nParamSize(IDA_SpecularHardness) = 1
 m_nParamSize(IDA_OrenNayarRoughness) = 1
 m_nParamSize(IDA_Emissive) = 4
-'///following are currently unsupported TODO:
-m_nParamSize(IDA_NormalMap) = 4 '????????
+m_nParamSize(IDA_NormalMap) = 3
 m_nParamSize(IDA_NormalMapScale) = 1
-m_nParamSize(IDA_ParallaxMap) = 1 '???????? TODO:combined to normal map
+m_nParamSize(IDA_ParallaxMap) = 1
 m_nParamSize(IDA_ParallaxMapOffset) = 1
 m_nParamSize(IDA_ParallaxMapScale) = 1
 '///
@@ -211,31 +226,59 @@ End Function
 
 Friend Function pCombineFakeDXEffectFromTemplate(ByRef t As typeFakeDXEffect) As Boolean
 Dim i As Long
+Dim t1 As Long, t2 As Long
 Dim m1 As Long, m2 As Long
 Dim s As String
+Dim b As Boolean, bErr As Boolean
+'///
 If t.nTemplateIndex > 0 Then
  With m_tEffect(t.nTemplateIndex)
   t.sShaderProgram = .sShaderProgram
   t.nDiffuseAlgorithm = .nDiffuseAlgorithm
   t.nSpecularAlgorithm = .nSpecularAlgorithm
   t.nFlags = .nFlags
-  '///TODO:check argument type
+  '///copy arguments and check type
   For i = 0 To 63
-   s = t.tArguments(i).sData
-   If s = vbNullString Then s = t.tArguments(i).sOptionalData
+   t1 = .tArguments(i).nType
+   t2 = t.tArguments(i).nType
+   b = False
+   If t1 = 2 Or (t1 >= &H10000 And t1 < &H200000) Then
+    If t2 = 0 Then
+    ElseIf t2 = 1 Or t2 = 2 Then
+     b = True
+    Else
+     bErr = True
+     Exit For
+    End If
+   Else
+    'TODO:texture file name,etc.
+   End If
+   If b Then
+    s = t.tArguments(i).sData
+    If s = vbNullString Then s = t.tArguments(i).sOptionalData
+   End If
    t.tArguments(i) = .tArguments(i)
-   m1 = LenB(s)
-   m2 = LenB(t.tArguments(i).sOptionalData)
-   If m1 >= m2 Then t.tArguments(i).sOptionalData = s _
-   Else MidB(t.tArguments(i).sOptionalData, 1, m1) = s
+   If b Then
+    m1 = LenB(s)
+    m2 = LenB(t.tArguments(i).sOptionalData)
+    If m1 >= m2 Then t.tArguments(i).sOptionalData = s _
+    Else MidB(t.tArguments(i).sOptionalData, 1, m1) = s
+   End If
   Next i
   '///
   t.nParamUsed = .nParamUsed
   Set t.objEffect = .objEffect
+  For i = 0 To 63
+   t.fParams(i) = .fParams(i)
+  Next i
+  t.nTextureUsedFlag = .nTextureUsedFlag
+  For i = 0 To 15
+   Set t.objTextures(i) = .objTextures(i)
+  Next i
  End With
 End If
 '///
-pCombineFakeDXEffectFromTemplate = True
+pCombineFakeDXEffectFromTemplate = Not bErr
 End Function
 
 Friend Function pFindUnusedInput(bInputUsed() As Byte, ByVal nStart As Long, ByVal nEnd As Long) As Long
@@ -612,7 +655,6 @@ t.sShaderSourceCode = vbNullString
 t.nParamUsed = 0
 '///
 'TODO:
-'TODO:normal mapping and parallax mapping
 Select Case t.sShaderProgram
 Case vbNullString
  'TODO:no HLSL shader
@@ -997,6 +1039,7 @@ End If
 '///compile effect
 If j = 1 Then
  Set t.objEffect = m_tEffect(i).objEffect
+ t.nReferenceIndex = i
 ElseIf t.sShaderProgram <> vbNullString Then
  If Not pGenerateHLSLCodeFromFakeDXEffect(t, True) Then
   Debug.Assert False
@@ -1008,6 +1051,18 @@ ElseIf t.sShaderProgram <> vbNullString Then
   Exit Function
  End If
 End If
+'///copy parameters to array
+For i = 0 To 63
+ With t.tArguments(i)
+  j = .nParamSize * 4&
+  If j > 0 Then
+   m = LenB(.sOptionalData)
+   If m > j Then m = j
+   If m > 0 Then _
+   CopyMemory ByVal VarPtr(t.fParams(0)) + .nParamOffset * 4&, ByVal StrPtr(.sOptionalData), m
+  End If
+ End With
+Next i
 '///add new effect
 m = m_nEffectCount + 1
 If m > m_nEffectMax Then
@@ -1048,4 +1103,85 @@ End Property
 
 Private Sub Class_Terminate()
 Destroy
+End Sub
+
+Friend Sub OnLostDevice()
+On Error Resume Next
+Dim i As Long
+For i = 1 To m_nEffectCount
+ m_tEffect(i).objEffect.OnLostDevice
+Next i
+'TODO:other
+End Sub
+
+Friend Sub OnResetDevice()
+On Error Resume Next
+Dim i As Long
+For i = 1 To m_nEffectCount
+ m_tEffect(i).objEffect.OnResetDevice
+Next i
+'TODO:other
+End Sub
+
+Friend Sub SetupEffect(ByVal nIndex As Long, Optional ByVal bSetupParameters As Boolean, Optional ByVal bSetupLight As Boolean, Optional ByVal bSetupTransform As Boolean, Optional ByVal bSetupTexture As Boolean, Optional ByVal bCommitChanges As Boolean, Optional ByVal bBeginEffect As Boolean)
+Dim obj As D3DXEffect
+Dim i As Long
+'TODO:
+If nIndex > 0 And nIndex <= m_nEffectCount Then
+ Set obj = m_tEffect(nIndex).objEffect
+ If obj Is Nothing Then
+  'TODO:no HLSL
+ Else
+  '///
+  If bSetupParameters Then
+   i = m_tEffect(nIndex).nParamUsed
+   If i > 0 Then _
+   obj.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_tEffect(nIndex).fParams(0), i
+  End If
+  If bSetupLight Then
+   objRenderTest.SetupLight obj
+  End If
+  If bSetupTransform Then
+   objRenderTest.SetupTransform obj
+  End If
+  If bSetupTexture Then
+   'TODO:
+  End If
+  If bCommitChanges Then obj.CommitChanges
+  If bBeginEffect Then
+   m_nLastIndex = nIndex
+   obj.SetTechnique StrPtr(StrConv("test", vbFromUnicode))
+   obj.Begin 0, 0
+   obj.BeginPass 0
+  End If
+  '///
+ End If
+End If
+End Sub
+
+Friend Sub BeginEffect(ByVal nIndex As Long)
+Dim obj As D3DXEffect
+'TODO:
+If nIndex > 0 And nIndex <= m_nEffectCount Then
+ Set obj = m_tEffect(nIndex).objEffect
+ If Not obj Is Nothing Then
+  m_nLastIndex = nIndex
+  obj.SetTechnique StrPtr(StrConv("test", vbFromUnicode))
+  obj.Begin 0, 0
+  obj.BeginPass 0
+ End If
+End If
+End Sub
+
+Friend Sub EndEffect()
+Dim obj As D3DXEffect
+'TODO:
+If m_nLastIndex > 0 And m_nLastIndex <= m_nEffectCount Then
+ Set obj = m_tEffect(m_nLastIndex).objEffect
+ If Not obj Is Nothing Then
+  obj.EndPass
+  obj.End
+ End If
+End If
+m_nLastIndex = 0
 End Sub
