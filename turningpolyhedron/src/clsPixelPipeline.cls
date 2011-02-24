@@ -276,12 +276,25 @@ End Sub
 
 Friend Sub UpdateRenderState()
 On Error Resume Next
-Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
 Dim obj1 As D3DXEffect
 '///test only
 If Not objCustomEffect Is Nothing Then Set obj1 = objCustomEffect _
 Else Set obj1 = objEffect
 '///
+SetupTransform obj1
+'///
+obj1.CommitChanges
+End Sub
+
+Friend Sub SetupLight(ByVal obj1 As D3DXEffect)
+obj1.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), m_tLightDir
+obj1.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), m_tLightPos
+obj1.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), m_tViewPos
+obj1.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_nLightType
+End Sub
+
+Friend Sub SetupTransform(ByVal obj1 As D3DXEffect)
+Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
 d3dd9.GetTransform D3DTS_WORLD, mat1
 obj1.SetMatrix StrPtr(StrConv("matWorld", vbFromUnicode)), mat1
 d3dd9.GetTransform D3DTS_VIEW, mat2
@@ -291,8 +304,6 @@ D3DXMatrixMultiply mat, mat, mat3
 D3DXMatrixInverse mat2, 0, mat1 '[out] pDeterminant
 obj1.SetMatrixTranspose StrPtr(StrConv("matWorldInv", vbFromUnicode)), mat2
 obj1.SetMatrix StrPtr(StrConv("matTransform", vbFromUnicode)), mat
-'///
-obj1.CommitChanges
 End Sub
 
 'CustomEffect --> test only
@@ -306,10 +317,7 @@ If Not CustomEffect Is Nothing Then
  Set objCustomEffect = CustomEffect
  Set obj1 = CustomEffect
  '///setup light
- obj1.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), m_tLightDir
- obj1.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), m_tLightPos
- obj1.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), m_tViewPos
- obj1.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_nLightType
+ SetupLight obj1
  '///
 Else
  Set obj1 = objEffect
@@ -337,9 +345,12 @@ Case RenderPass_FogVolume
  '///
  s = "test_volumefog"
 Case RenderPass_Main
- If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
- obj1.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
- obj1.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
+ 'TEST ONLY
+ If CustomEffect Is Nothing Then
+  If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
+  obj1.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
+  obj1.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
+ End If
  s = "test"
 Case Else
  Exit Function
