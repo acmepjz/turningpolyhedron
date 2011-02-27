@@ -41,7 +41,7 @@ Private Type typeFakeDXEffectArgument
  'zz=output components (default=&HE4)
  'ww=input components (default=&HE4)
  '---
- 'TODO:other (eg. expression, volune texture, etc.)
+ 'TODO:other (eg. expression, volume texture, etc.)
  '--------
  '[1] uses sData
  '[2] uses sOptionalData
@@ -128,7 +128,27 @@ Private m_sOutputSemantics(31) As String
 Private m_nLastIndex As Long
 
 Friend Sub SetTexture(ByVal nIndex As Long, ByVal nType As enumFakeDXEffectArgumentType, ByVal obj As Direct3DBaseTexture9)
-'TODO:
+Dim t As Long
+If nIndex > 0 And nIndex <= m_nEffectCount Then
+ t = m_tEffect(nIndex).tArguments(nType).nType
+ If t >= &H1000000 And t < &H2000000 Then
+  t = (t And &HF00000) \ &H100000
+  Set m_tEffect(nIndex).objTextures(t) = obj
+ Else
+  'TODO:other texture
+ End If
+End If
+End Sub
+
+Friend Sub EraseTexture(Optional ByVal nIndex As Long)
+Dim i As Long
+If nIndex = 0 Then
+ For i = 1 To m_nEffectCount
+  Erase m_tEffect(i).objTextures
+ Next i
+ElseIf nIndex > 0 And nIndex <= m_nEffectCount Then
+ Erase m_tEffect(nIndex).objTextures
+End If
 End Sub
 
 Friend Sub Destroy()
@@ -326,6 +346,7 @@ If m > 0 Then
   i = Val(Mid(s, 16))
   If i >= 0 And i < 16 Then ret.nType = (i + 16) * &H100000 _
   Else Exit Function
+  'TODO:other texture
  ElseIf Left(s, 11) = "textureFile" Then
   'TODO:
   Debug.Assert False
@@ -394,6 +415,7 @@ If m > 0 Then
   ret.sOptionalData = Left(ret.sOptionalData + String(nDesiredSize * 2&, vbNullChar), nDesiredSize * 2&)
  ElseIf ret.nType >= &H1000000 And ret.nType < &H2000000 Then
   '////////////////texture
+  'TODO:other texture
   ret.nType = ret.nType Or &HE4E4&
   'read output components
   i = InStr(1, s, ".")
@@ -625,7 +647,7 @@ With t.tArguments(nIndex)
    j = j \ 4&
   Next i
  Else
-  'TODO:etc.
+  'TODO:other texture, etc.
   Debug.Assert False
  End If
 End With
@@ -654,7 +676,6 @@ Dim bShadowMap As Boolean 'currently unsupported
 t.sShaderSourceCode = vbNullString
 t.nParamUsed = 0
 '///
-'TODO:
 Select Case t.sShaderProgram
 Case vbNullString
  'TODO:no HLSL shader
@@ -740,7 +761,7 @@ Case "standard"
     bTextureUsed(j) = 1
     If .sData <> vbNullString Then sTextureArgument(j) = .sData
    Else
-    'TODO:etc.
+    'TODO:other texture, etc.
    End If
   End With
  Next i
@@ -800,13 +821,18 @@ Case "standard"
  '///texture
  mm = 0
  sTexture = sTexture + vbCrLf
+ j = 1
+ k = 0
  For i = 0 To 15
   If bTextureUsed(i) Then
+   k = k Or j
    sTexture = sTexture + "texture tex" + CStr(i) + ";" + vbCrLf + "sampler samp" + CStr(i) + "=sampler_state{" _
    + vbCrLf + vbTab + "Texture=<tex" + CStr(i) + ">;" + vbCrLf + vbTab + sTextureArgument(i) + vbCrLf + "};" + vbCrLf + vbCrLf
    mm = mm + 1
   End If
+  j = j + j
  Next i
+ t.nTextureUsedFlag = k
  sParam = sParam + "// texture used:" + CStr(mm) + vbCrLf + vbCrLf + sTexture
  '///
  '////////////////////////////////generate vertex shader
@@ -1081,6 +1107,12 @@ If Not objSerializer.LoadNodeFromFile(FileName, objNode) Then Exit Function
 LoadEffectsFromFile = LoadEffectsFromSubNodes(objNode)
 End Function
 
+Friend Function LoadEffectsFromMemory(ByVal lp As Long, ByVal nLength As Long, ByVal objSerializer As ITreeSerializer) As Long
+Dim objNode As New clsTreeStorageNode
+If Not objSerializer.ReadNode(lp, nLength, objNode) Then Exit Function
+LoadEffectsFromMemory = LoadEffectsFromSubNodes(objNode)
+End Function
+
 Friend Function LoadEffectsFromSubNodes(ByVal objNode As clsTreeStorageNode) As Long
 Dim i As Long, m As Long
 Dim obj As clsTreeStorageNode
@@ -1107,9 +1139,16 @@ End Sub
 
 Friend Sub OnLostDevice()
 On Error Resume Next
-Dim i As Long
+Dim i As Long ', j As Long
 For i = 1 To m_nEffectCount
  m_tEffect(i).objEffect.OnLostDevice
+ Erase m_tEffect(i).objTextures
+' 'TODO:only erase default pool object
+' For j = 0 To 15
+'  If Not m_tEffect(i).objTextures(j) Is Nothing Then
+'   m_tEffect(i).objTextures(j).GetType
+'  End If
+' Next j
 Next i
 'TODO:other
 End Sub
@@ -1125,8 +1164,7 @@ End Sub
 
 Friend Sub SetupEffect(ByVal nIndex As Long, Optional ByVal bSetupParameters As Boolean, Optional ByVal bSetupLight As Boolean, Optional ByVal bSetupTransform As Boolean, Optional ByVal bSetupTexture As Boolean, Optional ByVal bCommitChanges As Boolean, Optional ByVal bBeginEffect As Boolean)
 Dim obj As D3DXEffect
-Dim i As Long
-'TODO:
+Dim i As Long, j As Long, k As Long
 If nIndex > 0 And nIndex <= m_nEffectCount Then
  Set obj = m_tEffect(nIndex).objEffect
  If obj Is Nothing Then
@@ -1145,7 +1183,14 @@ If nIndex > 0 And nIndex <= m_nEffectCount Then
    objRenderTest.SetupTransform obj
   End If
   If bSetupTexture Then
-   'TODO:
+   j = 1
+   k = m_tEffect(nIndex).nTextureUsedFlag
+   For i = 0 To 15
+    If j And k Then
+     obj.SetTexture StrPtr(StrConv("tex" + CStr(i), vbFromUnicode)), m_tEffect(nIndex).objTextures(i)
+    End If
+    j = j + j
+   Next i
   End If
   If bCommitChanges Then obj.CommitChanges
   If bBeginEffect Then
@@ -1161,7 +1206,7 @@ End Sub
 
 Friend Sub BeginEffect(ByVal nIndex As Long)
 Dim obj As D3DXEffect
-'TODO:
+'TODO:other
 If nIndex > 0 And nIndex <= m_nEffectCount Then
  Set obj = m_tEffect(nIndex).objEffect
  If Not obj Is Nothing Then
@@ -1175,7 +1220,7 @@ End Sub
 
 Friend Sub EndEffect()
 Dim obj As D3DXEffect
-'TODO:
+'TODO:other
 If m_nLastIndex > 0 And m_nLastIndex <= m_nEffectCount Then
  Set obj = m_tEffect(m_nLastIndex).objEffect
  If Not obj Is Nothing Then

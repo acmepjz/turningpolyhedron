@@ -181,7 +181,7 @@ Else
  nIndex = m_nFileCount
 End If
 '///
-m_tFiles(nIndex).sName = sName
+m_tFiles(nIndex).sName = Replace(sName, "\", "/")
 m_tFiles(nIndex).nSize = nSize
 If m_tFiles(nIndex).nMaxSize < nSize Then
  m_tFiles(nIndex).nMaxSize = nSize
@@ -229,12 +229,19 @@ If i >= 0 And n >= 0 Then
     ReDim Preserve m_tFiles(nIndex).bData(n - 1)
    Else
     ReDim m_tFiles(nIndex).bData(n - 1)
+    bPreserve = True 'prevent useless ZeroMemory
    End If
   End If
  End If
  If Not bPreserve Then
   If n > 0 Then ZeroMemory m_tFiles(nIndex).bData(0), n
  End If
+End If
+End Property
+
+Friend Property Get FilePointer(ByVal nIndex As Long) As Long
+If m_tFiles(nIndex).nSize > 0 Then
+ FilePointer = VarPtr(m_tFiles(nIndex).bData(0))
 End If
 End Property
 
@@ -313,14 +320,14 @@ Else
 End If
 End Function
 
-Friend Function FindOneFile(ByVal sFileName As String, Optional ByVal nLastIndex As Long) As Long
+Friend Function FindOneFile(ByVal Filter As String, Optional ByVal nLastIndex As Long) As Long
 Dim i As Long
 If nLastIndex >= m_nFileCount Then Exit Function _
 Else If nLastIndex < 0 Then nLastIndex = 0
-sFileName = Replace(sFileName, "\", "/")
+Filter = LCase(Replace(Filter, "\", "/"))
 For i = nLastIndex + 1 To m_nFileCount
  If m_tFiles(i).nSize >= 0 Then
-  If LCase(m_tFiles(i).sName) Like sFileName Then
+  If LCase(m_tFiles(i).sName) Like Filter Then
    FindOneFile = i
    Exit Function
   End If
@@ -328,15 +335,15 @@ For i = nLastIndex + 1 To m_nFileCount
 Next i
 End Function
 
-Friend Function FindAllFiles(ByVal sFileName As String, ByRef nIndex() As Long) As Long
+Friend Function FindAllFiles(ByVal Filter As String, ByRef nIndex() As Long) As Long
 Dim i As Long, m As Long, m2 As Long
 Erase nIndex
 m = 0
 m2 = 0
-sFileName = Replace(sFileName, "\", "/")
+Filter = LCase(Replace(Filter, "\", "/"))
 For i = 1 To m_nFileCount
  If m_tFiles(i).nSize >= 0 Then
-  If LCase(m_tFiles(i).sName) Like sFileName Then
+  If LCase(m_tFiles(i).sName) Like Filter Then
    m = m + 1
    If m > m2 Then
     m2 = m2 + 16&

@@ -88,9 +88,11 @@ Public objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
 Public objFontSprite As D3DXSprite
 Public objFont As D3DXFont
 
-Public objEffectManager As New clsEffectManager
+Public objEffectMgr As New clsEffectManager
 Public bTestOnly As Boolean
 '////////
+
+Public objFileMgr As New clsFileManager
 
 '////////settings
 Public frmSettings As New frmSettings
@@ -162,7 +164,8 @@ Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
 Dim r(3) As Long
 Dim f(3) As Single
 Dim s As String
-Dim obj As D3DXEffect
+'Dim obj As D3DXEffect
+'///
 If IsIconic(d3dpp.hDeviceWindow) Then
  Sleep 20
  Exit Sub
@@ -202,22 +205,31 @@ With d3dd9
   End If
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
-  If bTestOnly Then Set obj = objEffectManager.EffectObject(1) Else Set obj = Nothing
-  If objRenderTest.BeginRender(RenderPass_Main, obj) Then
-   objRenderTest.SetTexture objTexture
-   objRenderTest.SetNormalTexture objNormalTexture
-   objRenderTest.UpdateRenderState
+  'If bTestOnly Then Set obj = objEffectMgr.EffectObject(1) Else Set obj = Nothing
+  If bTestOnly Then
+   objEffectMgr.SetTexture 1, IDA_BaseColor, objTexture
+   objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
+   objEffectMgr.SetupEffect 1, True, True, True, True, , True
    .BeginScene
    objTest.DrawSubset 0
-'   '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
-'   objRenderTest.SetTexture objLandTexture
-'   .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
-'   objRenderTest.UpdateRenderState
-'   objLand.Render objRenderTest, objCamera
-'   .SetTransform D3DTS_WORLD, mat
-'   '////////
    .EndScene
-   objRenderTest.EndRender
+   objEffectMgr.EndEffect
+  Else
+   objRenderTest.SetTexture objTexture
+   objRenderTest.SetNormalTexture objNormalTexture
+   If objRenderTest.BeginRender(RenderPass_Main) Then
+    .BeginScene
+    objTest.DrawSubset 0
+'    '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
+'    objRenderTest.SetTexture objLandTexture
+'    .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
+'    objRenderTest.UpdateRenderState
+'    objLand.Render objRenderTest, objCamera
+'    .SetTransform D3DTS_WORLD, mat
+'    '////////
+    .EndScene
+    objRenderTest.EndRender
+   End If
   End If
   objRenderTest.EndRenderToPostProcessTarget
   '////////volumetric fog test
@@ -259,7 +271,7 @@ objRenderTest.OnLostDevice
 objDrawTest.OnLostDevice
 objFontSprite.OnLostDevice
 objFont.OnLostDevice
-objEffectManager.OnLostDevice
+objEffectMgr.OnLostDevice
 End Sub
 
 Public Sub FakeDXAppOnInitalize(Optional ByVal bReset As Boolean)
@@ -272,7 +284,7 @@ If bReset Then
  objDrawTest.OnResetDevice
  objFontSprite.OnResetDevice
  objFont.OnResetDevice
- objEffectManager.OnResetDevice
+ objEffectMgr.OnResetDevice
  '///
  FakeDXAppSetDefaultRenderState
  '///
@@ -394,7 +406,7 @@ Public Sub FakeDXAppDestroy()
 On Error Resume Next
 '///
 FakeDXUIDestroy
-objEffectManager.Destroy
+objEffectMgr.Destroy
 '///
 Set objLand = Nothing
 Set objLandTexture = Nothing
@@ -422,6 +434,8 @@ FakeDXAppMyGamesPath = Space(1024)
 SHGetSpecialFolderPath 0, FakeDXAppMyGamesPath, CSIDL_PERSONAL, 1
 FakeDXAppMyGamesPath = Left(FakeDXAppMyGamesPath, InStr(1, FakeDXAppMyGamesPath, vbNullChar) - 1) + "\My Games\Turning Polyhedron\"
 MakeSureDirectoryPathExists FakeDXAppMyGamesPath
+'///init file manager
+objFileMgr.AddPath App.Path + "\data\|" + FakeDXAppMyGamesPath
 '///load config
 frmSettings.FileName = FakeDXAppMyGamesPath + "config.xml"
 frmSettings.LoadFile
@@ -517,7 +531,13 @@ If App.LogMode = 1 Then
  End With
 End If
 '////////new:load effects test
-objEffectManager.LoadEffectsFromFile App.Path + "\data\DefaultShaders.xml", New clsXMLSerializer
+'objEffectMgr.LoadEffectsFromFile App.Path + "\data\DefaultShaders.xml", New clsXMLSerializer
+'////////NEW NEW     load effect from memory in normal file using file manager
+i = objFileMgr.LoadFile("DefaultShaders.xml")
+If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objFileMgr.FileSize(i), New clsXMLSerializer
+'////////NEW NEW NEW load effect from memory in archive file using file manager
+'i = objFileMgr.LoadFile("data.tar.lzma\DefaultShaders.xml")
+'If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objFileMgr.FileSize(i), New clsXMLSerializer
 '////////test
 Dim t As D3DXIMAGE_INFO
 objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
