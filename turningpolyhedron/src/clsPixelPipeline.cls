@@ -208,7 +208,7 @@ End If
 objEffect.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_nLightType
 End Sub
 
-Friend Sub SetTexture(ByVal obj As Direct3DTexture9)
+Friend Sub SetTexture(ByVal obj As Direct3DBaseTexture9)
 On Error Resume Next
 'TEST ONLY
 If Not objCustomEffect Is Nothing Then
@@ -218,7 +218,7 @@ Else
 End If
 End Sub
 
-Friend Sub SetNormalTexture(ByVal obj As Direct3DTexture9)
+Friend Sub SetNormalTexture(ByVal obj As Direct3DBaseTexture9)
 On Error Resume Next
 'TEST ONLY
 If Not objCustomEffect Is Nothing Then

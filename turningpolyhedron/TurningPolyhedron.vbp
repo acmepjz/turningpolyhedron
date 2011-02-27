@@ -38,6 +38,7 @@ Class=clsFakeCommonDialog; src\clsFakeCommonDialog.cls
 Class=clsEffectManager; src\clsEffectManager.cls
 Class=clsMeshManager; src\clsMeshManager.cls
 Class=ITreeSerializer; src\ITreeSerializer.cls
+Class=clsFileManager; src\clsFileManager.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""
