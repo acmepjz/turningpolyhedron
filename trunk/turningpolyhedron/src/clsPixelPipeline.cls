@@ -57,7 +57,7 @@ Private m_bDetphOfField As Boolean
 Private m_fParam(3) As D3DXVECTOR4
 
 Private m_fovy As Single, m_fAspect As Single, m_zn As Single, m_zf As Single
-Private m_vDistCorrection As D3DXVECTOR4
+Private m_vZData As D3DXVECTOR4, m_vDistCorrection As D3DXVECTOR4
 Private m_vDepthOfField As D3DXVECTOR4
 
 Friend Property Get DepthOfFiendEnabled() As Boolean
@@ -287,6 +287,7 @@ obj1.CommitChanges
 End Sub
 
 Friend Sub SetupLight(ByVal obj1 As D3DXEffect)
+On Error Resume Next
 obj1.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), m_tLightDir
 obj1.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), m_tLightPos
 obj1.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), m_tViewPos
@@ -294,6 +295,7 @@ obj1.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_nLightType
 End Sub
 
 Friend Sub SetupTransform(ByVal obj1 As D3DXEffect)
+On Error Resume Next
 Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
 d3dd9.GetTransform D3DTS_WORLD, mat1
 obj1.SetMatrix StrPtr(StrConv("matWorld", vbFromUnicode)), mat1
@@ -304,6 +306,11 @@ D3DXMatrixMultiply mat, mat, mat3
 D3DXMatrixInverse mat2, 0, mat1 '[out] pDeterminant
 obj1.SetMatrixTranspose StrPtr(StrConv("matWorldInv", vbFromUnicode)), mat2
 obj1.SetMatrix StrPtr(StrConv("matTransform", vbFromUnicode)), mat
+End Sub
+
+Friend Sub SetupZData(ByVal obj1 As D3DXEffect)
+On Error Resume Next
+obj1.SetVector StrPtr(StrConv("zData", vbFromUnicode)), m_vZData
 End Sub
 
 'CustomEffect --> test only
@@ -587,10 +594,9 @@ m_vDistCorrection.y = Tan(fovy / 2) * 2 * zf
 m_vDistCorrection.x = m_vDistCorrection.y * Aspect
 m_vDistCorrection.z = zf
 '///
-Dim v As D3DXVECTOR4
-v.x = zf / zn
-v.y = 1 - v.x
-objEffect.SetVector StrPtr(StrConv("zData", vbFromUnicode)), v
+m_vZData.x = zf / zn
+m_vZData.y = 1 - m_vZData.x
+objEffect.SetVector StrPtr(StrConv("zData", vbFromUnicode)), m_vZData
 End Sub
 
 Friend Sub GetProjection_PerspectiveFovLH(ByRef fovy As Single, ByRef Aspect As Single, ByRef zn As Single, ByRef zf As Single)

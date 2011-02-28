@@ -68,8 +68,8 @@ If FakeDXUIOnKeyEvent(KeyCode, Shift, 1) Then Exit Sub
 '///
 If KeyCode = vbKeyS And Shift = vbCtrlMask Then
    '///test
-   SaveRenderTargetToFile objTexture, CStr(App.Path) + "\test.bmp", D3DXIFF_BMP
-   SaveRenderTargetToFile objNormalTexture, CStr(App.Path) + "\testnormal.bmp", D3DXIFF_BMP
+   D3DXSaveTextureToFileW CStr(App.Path) + "\test.bmp", D3DXIFF_BMP, objTexture, ByVal 0
+   D3DXSaveTextureToFileW CStr(App.Path) + "\testnormal.bmp", D3DXIFF_BMP, objNormalTexture, ByVal 0
    '///
 End If
 End Sub

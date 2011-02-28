@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlMain"
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
@@ -207,8 +207,8 @@ With d3dd9
   objRenderTest.BeginRenderToPostProcessTarget
   'If bTestOnly Then Set obj = objEffectMgr.EffectObject(1) Else Set obj = Nothing
   If bTestOnly Then
-   objEffectMgr.SetTexture 1, IDA_BaseColor, objTexture
-   objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
+   'objEffectMgr.SetTexture 1, IDA_BaseColor, objTexture
+   'objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
    objEffectMgr.SetupEffect 1, True, True, True, True, , True
    .BeginScene
    objTest.DrawSubset 0
@@ -265,8 +265,8 @@ End With
 End Sub
 
 Public Sub FakeDXAppOnLostDevice()
-Set objTexture = Nothing
-Set objNormalTexture = Nothing
+'Set objTexture = Nothing
+'Set objNormalTexture = Nothing
 objRenderTest.OnLostDevice
 objDrawTest.OnLostDevice
 objFontSprite.OnLostDevice
@@ -276,8 +276,8 @@ End Sub
 
 Public Sub FakeDXAppOnInitalize(Optional ByVal bReset As Boolean)
 Static bInit As Boolean
-If bReset Then bInit = False Else _
-If bInit Then Exit Sub
+'If bReset Then bInit = False Else _
+'If bInit Then Exit Sub
 '///
 If bReset Then
  objRenderTest.OnResetDevice
@@ -289,9 +289,10 @@ If bReset Then
  FakeDXAppSetDefaultRenderState
  '///
 End If
-'///
-D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objTexture
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objNormalTexture
+If bInit Then Exit Sub
+'///modified: generate texture and copy to managed memory pool (slow?)
+'D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objTexture
+'D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objNormalTexture
 '///
 Dim obj As Direct3DTexture9
 Dim obj2 As Direct3DTexture9
@@ -311,9 +312,15 @@ objDrawTest.ProcessTexture obj2, obj, "expand8_r32f"
 objDrawTest.ProcessTextureEx obj, obj2, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
 Set obj = Nothing
 '///
-objDrawTest.ProcessTextureEx obj2, objTexture, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, obj
+D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, objTexture
+D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, objNormalTexture
+objDrawTest.ProcessTextureEx obj2, obj, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
+CopyRenderTargetData obj, objTexture
 '///
-objDrawTest.ProcessTextureEx obj2, objNormalTexture, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 1), Vec4, Vec4, Vec4
+objDrawTest.ProcessTextureEx obj2, obj, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 1), Vec4, Vec4, Vec4
+CopyRenderTargetData obj, objNormalTexture
+Set obj = Nothing
 Set obj2 = Nothing
 '///
 bInit = True

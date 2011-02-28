@@ -43,7 +43,7 @@ End Function
 
 Public Sub CopyRenderTargetData(objSrc As Direct3DTexture9, objDest As Direct3DTexture9)
 Dim tDesc As D3DSURFACE_DESC
-Dim tDesc2 As D3DSURFACE_DESC
+'Dim tDesc2 As D3DSURFACE_DESC
 Dim tLR As D3DLOCKED_RECT, tLR2 As D3DLOCKED_RECT
 Dim s As Direct3DSurface9, s2 As Direct3DSurface9
 Dim d3dtex_sys As Direct3DTexture9
@@ -65,7 +65,7 @@ End Sub
 
 Public Sub SaveRenderTargetToFile(ByVal objSrc As Direct3DTexture9, ByVal fn As String, ByVal nFormat As D3DXIMAGE_FILEFORMAT, Optional ByVal nLevel As Long)
 Dim tDesc As D3DSURFACE_DESC
-Dim tDesc2 As D3DSURFACE_DESC
+'Dim tDesc2 As D3DSURFACE_DESC
 Dim tLR As D3DLOCKED_RECT
 Dim d3dtex_sys As Direct3DTexture9
 objSrc.GetLevelDesc nLevel, tDesc
