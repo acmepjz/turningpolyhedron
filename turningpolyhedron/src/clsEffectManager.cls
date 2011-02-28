@@ -25,6 +25,7 @@ Private Type typeFakeDXEffectArgument
  '0=undefined
  '1=hard-coded constant[1]
  '2=shader argument constant[2]
+ '&HF1=texture(2D) file[2][b]
  '---read vertex shader input = &H10000-&H1FFFFF
  '&H10000,&H20000=color0-1
  '&H100000-&H1F0000=texcoord0-15
@@ -46,7 +47,8 @@ Private Type typeFakeDXEffectArgument
  '[1] uses sData
  '[2] uses sOptionalData
  '[a] sData format = sampler properties ['\x01' ...]
- '    sOptionalData = file name (???) currently unsupported
+ '    sOptionalData = file name (???)
+ '[b] doesn't generate any argument code
  '////////following strings are BINARY data !!!
  sData As String '[3]
  sOptionalData As String '[4]
@@ -249,7 +251,9 @@ Dim i As Long
 Dim t1 As Long, t2 As Long
 Dim m1 As Long, m2 As Long
 Dim s As String
-Dim b As Boolean, bErr As Boolean
+Dim nType As Long
+Dim bTextureOverwrite(15) As Byte
+Dim bErr As Boolean
 '///
 If t.nTemplateIndex > 0 Then
  With m_tEffect(t.nTemplateIndex)
@@ -261,40 +265,57 @@ If t.nTemplateIndex > 0 Then
   For i = 0 To 63
    t1 = .tArguments(i).nType
    t2 = t.tArguments(i).nType
-   b = False
+   nType = 0
    If t1 = 2 Or (t1 >= &H10000 And t1 < &H200000) Then
     If t2 = 0 Then
     ElseIf t2 = 1 Or t2 = 2 Then
-     b = True
+     nType = 1
     Else
+     Debug.Assert False
      bErr = True
      Exit For
     End If
-   Else
+   ElseIf t1 >= &H1000000 And t1 < &H2000000 Then
     'TODO:texture file name,etc.
+    If t2 = 0 Then
+    ElseIf t2 = &HF1& Then
+     nType = 2
+    Else
+     Debug.Assert False
+     bErr = True
+     Exit For
+    End If
    End If
-   If b Then
+   If nType Then
     s = t.tArguments(i).sData
     If s = vbNullString Then s = t.tArguments(i).sOptionalData
+    m1 = LenB(s)
+    If m1 <= 0 Then nType = 0
    End If
    t.tArguments(i) = .tArguments(i)
-   If b Then
-    m1 = LenB(s)
+   Select Case nType
+   Case 1
     m2 = LenB(t.tArguments(i).sOptionalData)
     If m1 >= m2 Then t.tArguments(i).sOptionalData = s _
     Else MidB(t.tArguments(i).sOptionalData, 1, m1) = s
-   End If
+   Case 2
+    t.tArguments(i).sOptionalData = s
+    bTextureOverwrite((t1 And &HF00000) \ &H100000) = 1
+   End Select
   Next i
   '///
-  t.nParamUsed = .nParamUsed
-  Set t.objEffect = .objEffect
-  For i = 0 To 63
-   t.fParams(i) = .fParams(i)
-  Next i
-  t.nTextureUsedFlag = .nTextureUsedFlag
-  For i = 0 To 15
-   Set t.objTextures(i) = .objTextures(i)
-  Next i
+  If Not bErr Then
+   t.nParamUsed = .nParamUsed
+   Set t.objEffect = .objEffect
+   'useless
+   'For i = 0 To 63
+   ' t.fParams(i) = .fParams(i)
+   'Next i
+   t.nTextureUsedFlag = .nTextureUsedFlag
+   For i = 0 To 15
+    If bTextureOverwrite(i) = 0 Then Set t.objTextures(i) = .objTextures(i)
+   Next i
+  End If
  End With
 End If
 '///
@@ -348,9 +369,8 @@ If m > 0 Then
   Else Exit Function
   'TODO:other texture
  ElseIf Left(s, 11) = "textureFile" Then
-  'TODO:
-  Debug.Assert False
-  Exit Function
+  ret.nType = &HF1&
+  If m > 1 Then ret.sOptionalData = Trim(v(1))
  End If
  If ret.nType >= &H10000 And ret.nType < &H200000 Then
   '////////////////shader input
@@ -462,9 +482,20 @@ If m > 0 Then
    End If
    '///
   End If
-  'read sampler parameters
-  If m > 2 Then
-   ret.sData = Trim(v(m - 1))
+  '///read file name (if any)
+  i = 2
+  If m > i Then
+   If Trim(v(i)) = "textureFile" Then
+    i = i + 1
+    If m > i Then
+     ret.sOptionalData = Trim(v(i))
+     i = i + 1
+    End If
+   End If
+  End If
+  '///read sampler parameters
+  If m > i Then
+   ret.sData = Trim(v(i))
    If Right(ret.sData, 1) <> ";" Then ret.sData = ret.sData + ";"
   End If
  Else
@@ -814,7 +845,7 @@ Case "standard"
  If bShadowMap Then _
  sParam = sParam + "float4x4 matShadow;" + vbCrLf + vbCrLf
  If bFogEnabled Then _
- sParam = sParam + "float4 zData; //for pixel fog. (c1,c2,0,0) such that z=1/(c1+c2*z')" + vbCrLf + vbCrLf
+ sParam = sParam + "float4 zData;" + vbCrLf + vbCrLf
  '///TODO:custom light
  'test only
  sParam = sParam + "float4 lightDir,lightPos,viewPos;" + vbCrLf + "int lightType;" + vbCrLf + vbCrLf
@@ -930,7 +961,7 @@ Case "standard"
  Case 0
   sParam = sParam + vbTab + "float fSpecular=dot(vNormal,normalize(vLight+vView));" + vbCrLf + vbCrLf
  Case 1
-  sParam = sParam + vbTab + "float fSpecular=dot(vView,-reflect(vLight,vNormal));" + vbCrLf + vbCrLf '-reflect ???
+  sParam = sParam + vbTab + "float fSpecular=dot(vView,-reflect(vLight,vNormal));" + vbCrLf + vbCrLf
  Case Else
   Exit Function
  End Select
@@ -971,9 +1002,13 @@ End Select
 End Function
 
 Friend Function AddEffectFromNode(ByVal objNode As clsTreeStorageNode) As Long
+On Error Resume Next
 Dim t As typeFakeDXEffect
-Dim i As Long, j As Long, m As Long
+Dim i As Long, j As Long, k As Long, m As Long
 Dim s As String
+'///
+'?? TODO
+t.nFlags = 1
 '///
 s = objNode.GetNameAsString
 Select Case s
@@ -1086,6 +1121,21 @@ For i = 0 To 63
    If m > j Then m = j
    If m > 0 Then _
    CopyMemory ByVal VarPtr(t.fParams(0)) + .nParamOffset * 4&, ByVal StrPtr(.sOptionalData), m
+  Else
+   '///load texture from file (if any)
+   j = .nType
+   If j >= &H1000000 And j < &H2000000 Then
+    j = (j And &HF00000) \ &H100000
+    If t.objTextures(j) Is Nothing Then
+     If Len(.sOptionalData) > 0 Then
+      k = objFileMgr.LoadFile(.sOptionalData)
+      If k > 0 Then
+       'TODO:load file options
+       D3DXCreateTextureFromFileInMemory d3dd9, ByVal objFileMgr.FilePointer(k), objFileMgr.FileSize(k), t.objTextures(j)
+      End If
+     End If
+    End If
+   End If
   End If
  End With
 Next i
@@ -1142,13 +1192,14 @@ On Error Resume Next
 Dim i As Long ', j As Long
 For i = 1 To m_nEffectCount
  m_tEffect(i).objEffect.OnLostDevice
- Erase m_tEffect(i).objTextures
-' 'TODO:only erase default pool object
-' For j = 0 To 15
-'  If Not m_tEffect(i).objTextures(j) Is Nothing Then
-'   m_tEffect(i).objTextures(j).GetType
-'  End If
-' Next j
+ 'now no textures are default pool object, so we don't need this
+' Erase m_tEffect(i).objTextures
+'' 'TODO:only erase default pool object
+'' For j = 0 To 15
+''  If Not m_tEffect(i).objTextures(j) Is Nothing Then
+''   m_tEffect(i).objTextures(j).GetType
+''  End If
+'' Next j
 Next i
 'TODO:other
 End Sub
@@ -1181,6 +1232,7 @@ If nIndex > 0 And nIndex <= m_nEffectCount Then
   End If
   If bSetupTransform Then
    objRenderTest.SetupTransform obj
+   If m_tEffect(nIndex).nFlags And 1& Then objRenderTest.SetupZData obj
   End If
   If bSetupTexture Then
    j = 1
