@@ -418,7 +418,7 @@ If m_bPostProcessEnabled Then
 End If
 End Sub
 
-Friend Sub PerformPostProcess(ByVal objDraw As clsRenderTexture)
+Friend Sub PerformPostProcess(ByVal objDraw As clsTextureManager)
 Dim nOldState As Long
 Dim i As Long, j As Long
 Dim f As Single

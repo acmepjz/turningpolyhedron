@@ -8,7 +8,6 @@
       ambient="0.5,0.5,0.5" diffuse="1,1,1"
       specular="1,1,0.8" specularHardness="50"
       normalMap="textureArgument1:texcoord0:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
-      normalMapScale="2"
       parallaxMap="textureArgument1.w:texcoord0"
       parallaxMapOffset="-0.5" parallaxMapScale="0.02"
     />
@@ -16,10 +15,9 @@
     <shader shaderProgram="standard"
       baseColor="textureArgument0:texcoord0:textureFile:tex1.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
       ambient="0.5,0.5,0.5" diffuse="0.5,0.5,0.5"
-      specular="0.2,0.2,0.1" specularHardness="20"
+      specular="0.4,0.4,0.3" specularHardness="20"
       normalMap="textureArgument1.zyx:texcoord0:textureFile:normal1.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
-      normalMapScale="2"
-      parallaxMap="textureArgument0.x:texcoord0"
+      parallaxMap="textureArgument0.y:texcoord0"
       parallaxMapOffset="-0.5" parallaxMapScale="0.02"
     />
 <!--

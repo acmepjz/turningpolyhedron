@@ -561,7 +561,6 @@ If m > 0 Then lps = VarPtr(b(lps))
 LoadFromMemory lps, m
 End Sub
 
-
 Friend Function SaveFile(ByRef sFileName As String) As Boolean
 On Error GoTo a
 Dim i As Long, nTime As Long

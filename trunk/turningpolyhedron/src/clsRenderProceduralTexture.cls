@@ -6,18 +6,129 @@ BEGIN
   DataSourceBehavior  = 0  'vbNone
   MTSTransactionMode  = 0  'NotAnMTSObject
 END
-Attribute VB_Name = "clsRenderTexture"
+Attribute VB_Name = "clsTextureManager"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'TextureManager: store texture load from file or procedural generated
+'and perform procedural texture generation
+
+'TODO:use collection for fast look up (?)
+
+Private Type typeTextMgrData
+ sName As String
+ objTexture As Direct3DBaseTexture9
+End Type
+
+Private m_tData() As typeTextMgrData
+Private m_nCount As Long
+
 Private objEffect As D3DXEffect
 Private texNoise As Direct3DTexture9
 
 Private objOldTarget As Direct3DSurface9
 Private objOldStencil As Direct3DSurface9
+
+Friend Sub Clear()
+Erase m_tData
+m_nCount = 0
+End Sub
+
+Friend Function AddTexture(ByVal obj As Direct3DBaseTexture9, Optional ByVal sName As String) As Long
+Dim i As Long, j As Long
+If Not obj Is Nothing Then
+ For i = 1 To m_nCount
+  If obj Is m_tData(i).objTexture Then
+   AddTexture = i
+   Exit Function
+  ElseIf m_tData(i).objTexture Is Nothing Then
+   j = i
+  End If
+ Next i
+ '///
+ If j = 0 Then
+  m_nCount = m_nCount + 1
+  ReDim Preserve m_tData(1 To m_nCount)
+  j = m_nCount
+ End If
+ '///
+ With m_tData(j)
+  .sName = sName
+  Set .objTexture = obj
+ End With
+ AddTexture = j
+End If
+End Function
+
+Friend Function AddTextureFromRenderTarget(ByVal obj As Direct3DTexture9, Optional ByVal sName As String) As Long
+Dim obj2 As Direct3DTexture9
+CopyRenderTargetData obj, obj2
+AddTextureFromRenderTarget = AddTexture(obj2, sName)
+End Function
+
+'TODO:load file options
+Friend Function AddTextureFromFile(ByVal sName As String, Optional ByVal f As clsFileManager) As Long
+Dim i As Long, j As Long
+Dim obj As Direct3DTexture9
+'///
+'TODO:case insensitive (???)
+For i = 1 To m_nCount
+ If sName = m_tData(i).sName Then
+  AddTextureFromFile = i
+  Exit Function
+ ElseIf m_tData(i).objTexture Is Nothing Then
+  j = i
+ End If
+Next i
+'///
+If j = 0 Then
+ m_nCount = m_nCount + 1
+ ReDim Preserve m_tData(1 To m_nCount)
+ j = m_nCount
+End If
+'///
+If f Is Nothing Then
+ D3DXCreateTextureFromFileW d3dd9, sName, obj
+Else
+ i = f.LoadFile(sName)
+ If i = 0 Then Exit Function
+ D3DXCreateTextureFromFileInMemory d3dd9, ByVal f.FilePointer(i), f.FileSize(i), obj
+End If
+'///
+If obj Is Nothing Then Exit Function
+With m_tData(j)
+ .sName = sName
+ Set .objTexture = obj
+End With
+AddTextureFromFile = j
+End Function
+
+Friend Property Get TextureName(ByVal nIndex As Long) As String
+If nIndex > 0 And nIndex <= m_nCount Then _
+TextureName = m_tData(nIndex).sName
+End Property
+
+Friend Property Let TextureName(ByVal nIndex As Long, ByRef s As String)
+If nIndex > 0 And nIndex <= m_nCount Then _
+m_tData(nIndex).sName = s
+End Property
+
+Friend Property Get Texture(ByVal nIndex As Long) As Direct3DBaseTexture9
+If nIndex > 0 And nIndex <= m_nCount Then _
+Set Texture = m_tData(nIndex).objTexture
+End Property
+
+Friend Property Set Texture(ByVal nIndex As Long, ByVal obj As Direct3DBaseTexture9)
+If nIndex > 0 And nIndex <= m_nCount Then _
+Set m_tData(nIndex).objTexture = obj
+End Property
+
+Friend Property Get TextureCount() As Long
+TextureCount = m_nCount
+End Property
 
 Friend Sub OnLostDevice()
 Set objOldTarget = Nothing
