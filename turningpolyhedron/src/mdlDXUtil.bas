@@ -48,9 +48,14 @@ Dim tLR As D3DLOCKED_RECT, tLR2 As D3DLOCKED_RECT
 Dim s As Direct3DSurface9, s2 As Direct3DSurface9
 Dim d3dtex_sys As Direct3DTexture9
 objSrc.GetLevelDesc 0, tDesc
-If d3dtex_sys Is Nothing Then
+Debug.Assert tDesc.Pool = D3DPOOL_DEFAULT
+'If d3dtex_sys Is Nothing Then
  D3DXCreateTexture d3dd9, tDesc.Width, tDesc.Height, 1, 0, tDesc.Format, D3DPOOL_SYSTEMMEM, d3dtex_sys
  Debug.Assert Not d3dtex_sys Is Nothing
+'End If
+If objDest Is Nothing Then
+ D3DXCreateTexture d3dd9, tDesc.Width, tDesc.Height, 0, D3DUSAGE_AUTOGENMIPMAP, tDesc.Format, D3DPOOL_MANAGED, objDest
+ Debug.Assert Not objDest Is Nothing
 End If
 Set s = d3dtex_sys.GetSurfaceLevel(0)
 d3dd9.GetRenderTargetData objSrc.GetSurfaceLevel(0), s
@@ -69,10 +74,11 @@ Dim tDesc As D3DSURFACE_DESC
 Dim tLR As D3DLOCKED_RECT
 Dim d3dtex_sys As Direct3DTexture9
 objSrc.GetLevelDesc nLevel, tDesc
-If d3dtex_sys Is Nothing Then
+Debug.Assert tDesc.Pool = D3DPOOL_DEFAULT
+'If d3dtex_sys Is Nothing Then
  D3DXCreateTexture d3dd9, tDesc.Width, tDesc.Height, 1, 0, tDesc.Format, D3DPOOL_SYSTEMMEM, d3dtex_sys
  Debug.Assert Not d3dtex_sys Is Nothing
-End If
+'End If
 d3dd9.GetRenderTargetData objSrc.GetSurfaceLevel(nLevel), d3dtex_sys.GetSurfaceLevel(0)
 'save file
 D3DXSaveTextureToFileW fn, nFormat, d3dtex_sys, ByVal 0

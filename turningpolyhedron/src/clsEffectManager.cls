@@ -13,6 +13,8 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'TODO:use collection for fast look up (?)
+
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
 'Private Type typeFakeDXEffectArgumentPos
@@ -82,7 +84,7 @@ Private Type typeFakeDXEffect
  '0=default=Blinn-Phong
  '1=Phong
  nFlags As Long '[3]
- '1=advanecd fog enabled (currently unsupported)
+ '1=advanecd fog enabled (currently can't read from settings)
  '2=shadow map enabled (currently unsupported)
  '////////
  tArguments(63) As typeFakeDXEffectArgument
@@ -276,7 +278,6 @@ If t.nTemplateIndex > 0 Then
      Exit For
     End If
    ElseIf t1 >= &H1000000 And t1 < &H2000000 Then
-    'TODO:texture file name,etc.
     If t2 = 0 Then
     ElseIf t2 = &HF1& Then
      nType = 2
@@ -920,11 +921,13 @@ Case "standard"
  End If
  If t.tArguments(IDA_NormalMap).nType Then
   'normal mapping
+  sParam = sParam + vbTab + "float3 vNormal=" + pGenerateArgumentCode(t, IDA_NormalMap, 3) + "*2.0f-1.0f;" + vbCrLf
   If t.tArguments(IDA_NormalMapScale).nType Then
-   sParam = sParam + vbTab + "float3 vNormal=(" + pGenerateArgumentCode(t, IDA_NormalMap, 3) + "-0.5f)*" + _
-   pGenerateArgumentCode(t, IDA_NormalMapScale, 1) + ";" + vbCrLf
-  Else
-   sParam = sParam + vbTab + "float3 vNormal=" + pGenerateArgumentCode(t, IDA_NormalMap, 3) + "-0.5f;" + vbCrLf
+'   'completely wrong code
+'   sParam = sParam + vbTab + "float3 vNormal=(" + pGenerateArgumentCode(t, IDA_NormalMap, 3) + "-0.5f)*" + _
+'   pGenerateArgumentCode(t, IDA_NormalMapScale, 1) + ";" + vbCrLf
+   sParam = sParam + vbTab + "vNormal.xy*=" + pGenerateArgumentCode(t, IDA_NormalMapScale, 1) + ";" + vbCrLf
+   sParam = sParam + vbTab + "vNormal=normalize(vNormal);" + vbCrLf
   End If
   sParam = sParam + vbTab + "vNormal=vNormal.x*cin.vBinormal.xyz+vNormal.y*cin.vTangent.xyz+vNormal.z*cin.vNormal.xyz;" + vbCrLf + vbCrLf
  Else
@@ -1128,11 +1131,9 @@ For i = 0 To 63
     j = (j And &HF00000) \ &H100000
     If t.objTextures(j) Is Nothing Then
      If Len(.sOptionalData) > 0 Then
-      k = objFileMgr.LoadFile(.sOptionalData)
-      If k > 0 Then
-       'TODO:load file options
-       D3DXCreateTextureFromFileInMemory d3dd9, ByVal objFileMgr.FilePointer(k), objFileMgr.FileSize(k), t.objTextures(j)
-      End If
+      'TODO:load file options
+      k = objTextMgr.AddTextureFromFile(.sOptionalData, objFileMgr)
+      If k > 0 Then Set t.objTextures(j) = objTextMgr.Texture(k)
      End If
     End If
    End If
@@ -1179,8 +1180,8 @@ Friend Property Get EffectCount() As Long
 EffectCount = m_nEffectCount
 End Property
 
-Friend Property Get EffectObject(ByVal nIndex As Long) As D3DXEffect
-If nIndex > 0 And nIndex <= m_nEffectCount Then Set EffectObject = m_tEffect(nIndex).objEffect
+Friend Property Get Effect(ByVal nIndex As Long) As D3DXEffect
+If nIndex > 0 And nIndex <= m_nEffectCount Then Set Effect = m_tEffect(nIndex).objEffect
 End Property
 
 Private Sub Class_Terminate()

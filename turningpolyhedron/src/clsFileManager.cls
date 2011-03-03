@@ -13,6 +13,8 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'TODO:use collection for fast look up (?)
+
 Private Declare Function PathCombine Lib "shlwapi.dll" Alias "PathCombineA" (ByVal szDest As String, ByVal lpszDir As String, ByVal lpszFile As String) As Long
 
 Private Declare Function FindFirstFile Lib "kernel32.dll" Alias "FindFirstFileA" (ByVal lpFileName As String, ByRef lpFindFileData As WIN32_FIND_DATA) As Long
@@ -154,6 +156,17 @@ Dim t As typeFileMgrData
 If nIndex <= 0 Or nIndex > m_nFileCount Then Exit Sub
 t.nSize = -1
 m_tFiles(nIndex) = t
+End Sub
+
+Friend Sub CloseNonArchiveFile()
+Dim t As typeFileMgrData
+Dim i As Long
+t.nSize = -1
+For i = 1 To m_nFileCount
+ If m_tFiles(i).nSize >= 0 And m_tFiles(i).nArchiveIndex = 0 Then
+  m_tFiles(i) = t
+ End If
+Next i
 End Sub
 
 Friend Function LoadFile(ByVal s As String) As Long
@@ -351,6 +364,7 @@ For i = 0 To UBound(v)
   m_nPathCount = m_nPathCount + 1
   ReDim Preserve m_sPath(1 To m_nPathCount)
   m_sPath(m_nPathCount) = s
+'  FakeDXAppLog "[FileManager] Add search path " + s + vbCrLf
  End If
 Next i
 End Sub

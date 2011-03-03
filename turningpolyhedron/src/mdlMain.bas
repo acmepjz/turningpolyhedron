@@ -3,6 +3,12 @@ Option Explicit
 
 #Const UseSubclass = True
 
+'Private Declare Function GetStdHandle Lib "kernel32.dll" (ByVal nStdHandle As Long) As Long
+'Private Declare Function AllocConsole Lib "kernel32.dll" () As Long
+'Private Declare Function FreeConsole Lib "kernel32.dll" () As Long
+'Private Declare Function WriteFile Lib "kernel32.dll" (ByVal hFile As Long, ByRef lpBuffer As Any, ByVal nNumberOfBytesToWrite As Long, ByRef lpNumberOfBytesWritten As Long, ByRef lpOverlapped As Any) As Long
+'Private Const STD_ERROR_HANDLE As Long = -12&
+
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
 
@@ -80,7 +86,8 @@ Public objCamera As New clsCamera
 
 'test
 Public objTest As D3DXMesh
-Public objDrawTest As New clsRenderTexture, objRenderTest As New clsRenderPipeline
+Public objTextMgr As New clsTextureManager
+Public objRenderTest As New clsRenderPipeline
 Public objLand As New clsRenderLandscape, objLandTexture As Direct3DTexture9
 
 Public objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
@@ -96,6 +103,8 @@ Public objFileMgr As New clsFileManager
 
 '////////settings
 Public frmSettings As New frmSettings
+
+Public m_hStdErr As Long
 
 Public Sub CreateVertexDeclaration()
 ReDim m_tDefVertexDecl(0 To 7)
@@ -246,7 +255,7 @@ With d3dd9
    .SetTransform D3DTS_WORLD, mat
   End If
   '////////perform post process
-  objRenderTest.PerformPostProcess objDrawTest
+  objRenderTest.PerformPostProcess objTextMgr
   '////////draw text test
   .BeginScene
   s = "FPS:" + Format(objTiming.FPS, "0.0")
@@ -268,7 +277,7 @@ Public Sub FakeDXAppOnLostDevice()
 'Set objTexture = Nothing
 'Set objNormalTexture = Nothing
 objRenderTest.OnLostDevice
-objDrawTest.OnLostDevice
+objTextMgr.OnLostDevice
 objFontSprite.OnLostDevice
 objFont.OnLostDevice
 objEffectMgr.OnLostDevice
@@ -281,7 +290,7 @@ Static bInit As Boolean
 '///
 If bReset Then
  objRenderTest.OnResetDevice
- objDrawTest.OnResetDevice
+ objTextMgr.OnResetDevice
  objFontSprite.OnResetDevice
  objFont.OnResetDevice
  objEffectMgr.OnResetDevice
@@ -299,26 +308,26 @@ Dim obj2 As Direct3DTexture9
 '///
 D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
 D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj2
-objDrawTest.ProcessTextureEx Nothing, obj, "process_lerp", 0, 0, 0, 0, Vec4(-1024), Vec4(-1024), Vec4, Vec4
-objDrawTest.BeginRenderToTexture obj, "gen_simplexnoise", 6, 0, 0, 0, Vec4(1, 1, 0.86, 1.85), Vec4, Vec4, Vec4
+objTextMgr.ProcessTextureEx Nothing, obj, "process_lerp", 0, 0, 0, 0, Vec4(-1024), Vec4(-1024), Vec4, Vec4
+objTextMgr.BeginRenderToTexture obj, "gen_simplexnoise", 6, 0, 0, 0, Vec4(1, 1, 0.86, 1.85), Vec4, Vec4, Vec4
 d3dd9.BeginScene
 objTest.DrawSubset 0
 d3dd9.EndScene
-objDrawTest.EndRenderToTexture
+objTextMgr.EndRenderToTexture
 '///expand texture to eliminate seal
-objDrawTest.ProcessTexture obj, obj2, "expand8_r32f"
-objDrawTest.ProcessTexture obj2, obj, "expand8_r32f"
+objTextMgr.ProcessTexture obj, obj2, "expand8_r32f"
+objTextMgr.ProcessTexture obj2, obj, "expand8_r32f"
 '///
-objDrawTest.ProcessTextureEx obj, obj2, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
+objTextMgr.ProcessTextureEx obj, obj2, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
 Set obj = Nothing
 '///
 D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, obj
 D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, objTexture
 D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, objNormalTexture
-objDrawTest.ProcessTextureEx obj2, obj, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
+objTextMgr.ProcessTextureEx obj2, obj, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
 CopyRenderTargetData obj, objTexture
 '///
-objDrawTest.ProcessTextureEx obj2, obj, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 1), Vec4, Vec4, Vec4
+objTextMgr.ProcessTextureEx obj2, obj, "normal_map", 0, 0, 0, 0, Vec4(0.25, 0.25, 0, 1), Vec4, Vec4, Vec4
 CopyRenderTargetData obj, objNormalTexture
 Set obj = Nothing
 Set obj2 = Nothing
@@ -417,7 +426,7 @@ objEffectMgr.Destroy
 '///
 Set objLand = Nothing
 Set objLandTexture = Nothing
-Set objDrawTest = Nothing
+Set objTextMgr = Nothing
 Set objTest = Nothing
 Set objTexture = Nothing
 Set objNormalTexture = Nothing
@@ -430,12 +439,16 @@ For Each frm In Forms
  Unload frm
 Next frm
 '///
+'FakeDXAppEndLog
+'///
 End Sub
 
 Public Sub FakeDXAppInit(ByVal frm As Form, ByVal objSubclass As cSubclass, ByVal objCallback As iSubclass, ByVal objEventCallback As IFakeDXUIEvent)
 On Error Resume Next
 Dim i As Long
 Dim s As String
+'///
+'FakeDXAppBeginLog
 '///
 FakeDXAppMyGamesPath = Space(1024)
 SHGetSpecialFolderPath 0, FakeDXAppMyGamesPath, CSIDL_PERSONAL, 1
@@ -496,7 +509,7 @@ With FakeDXUIDefaultFont
  Set .objSprite = objFontSprite
 End With
 'CreateEffect CStr(App.Path) + "\data\shader\texteffect.txt", objFontEffect, , True
-objDrawTest.Create
+objTextMgr.Create
 objRenderTest.Create
 '///vertex declaration test
 CreateVertexDeclaration
@@ -784,3 +797,27 @@ End With
 Set FakeDXUIEvent = objEventCallback
 End Sub
 
+'Public Sub FakeDXAppBeginLog()
+'If m_hStdErr = 0 Then
+' m_hStdErr = GetStdHandle(STD_ERROR_HANDLE)
+' If m_hStdErr = 0 Or m_hStdErr = -1 Then
+'  AllocConsole
+'  m_hStdErr = GetStdHandle(STD_ERROR_HANDLE)
+'  If m_hStdErr = 0 Or m_hStdErr = -1 Then m_hStdErr = 0
+' End If
+'End If
+'End Sub
+'
+'Public Sub FakeDXAppEndLog()
+'If m_hStdErr Then
+' FreeConsole
+' m_hStdErr = 0
+'End If
+'End Sub
+'
+'Public Sub FakeDXAppLog(ByVal s As String)
+'If m_hStdErr Then
+' s = StrConv(s, vbFromUnicode)
+' WriteFile m_hStdErr, ByVal StrPtr(s), LenB(s), 0, ByVal 0
+'End If
+'End Sub
