@@ -89,6 +89,7 @@ Private Type typeFakeDXEffect
  '////////
  tArguments(63) As typeFakeDXEffectArgument
  '////////
+ sEffectStates As String '[3]
  sShaderSourceCode As String 'optional
  '////////
  nParamUsed As Long 'used float4
@@ -210,6 +211,7 @@ If t1.sShaderProgram <> t2.sShaderProgram Then Exit Function
 If t1.nDiffuseAlgorithm <> t2.nDiffuseAlgorithm Then Exit Function
 If t1.nSpecularAlgorithm <> t2.nSpecularAlgorithm Then Exit Function
 If t1.nFlags <> t2.nFlags Then Exit Function
+If t1.sEffectStates <> t2.sEffectStates Then Exit Function
 For i = 0 To 63
  If t1.tArguments(i).nType <> t2.tArguments(i).nType Then Exit Function
  If t1.tArguments(i).sData <> t2.tArguments(i).sData Then Exit Function
@@ -263,6 +265,7 @@ If t.nTemplateIndex > 0 Then
   t.nDiffuseAlgorithm = .nDiffuseAlgorithm
   t.nSpecularAlgorithm = .nSpecularAlgorithm
   t.nFlags = .nFlags
+  t.sEffectStates = .sEffectStates
   '///copy arguments and check type
   For i = 0 To 63
    t1 = .tArguments(i).nType
@@ -994,7 +997,10 @@ Case "standard"
  End If
  '////////////////////////////////generate effect
  sParam = sParam + "technique test{" + vbCrLf + vbTab + "pass{" + vbCrLf + vbTab + vbTab + "VertexShader=compile vs_3_0 vs_func();" + _
- vbCrLf + vbTab + vbTab + "PixelShader=compile ps_3_0 ps_func();" + vbCrLf + vbTab + "}" + vbCrLf + "}" + vbCrLf
+ vbCrLf + vbTab + vbTab + "PixelShader=compile ps_3_0 ps_func();" + vbCrLf
+ If t.sEffectStates <> vbNullString Then _
+ sParam = sParam + vbTab + vbTab + t.sEffectStates + vbCrLf
+ sParam = sParam + vbTab + "}" + vbCrLf + "}" + vbCrLf
  '////////////////////////////////over
  t.sShaderSourceCode = sInput + sOutput + sParam
  pGenerateHLSLCodeFromFakeDXEffect = True
@@ -1019,6 +1025,7 @@ Case "shaderTemplate"
  t.nTemplateIndex = -1
 Case "shader"
 Case Else
+ Debug.Assert False
  Exit Function
 End Select
 '///
@@ -1078,6 +1085,12 @@ For i = 1 To objNode.SubNodeCount
     Debug.Assert False
     Exit Function
    End Select
+  Case "effectStates"
+   s = Trim(objNode.GetSubNodeValueAsString(i))
+   If s <> vbNullString Then
+    If Right(s, 1) <> ";" Then s = s + ";"
+    t.sEffectStates = s
+   End If
   Case Else
    For j = 0 To 63
     If s = m_sParamName(j) Then

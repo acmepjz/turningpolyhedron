@@ -19,7 +19,7 @@
       normalMap="textureArgument1.zyx:texcoord0:textureFile:normal1.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
       parallaxMap="textureArgument0.y:texcoord0"
       parallaxMapOffset="-0.5" parallaxMapScale="0.02"
-    />
+    /> <!-- effectStates="FillMode = WIREFRAME;" -->
 <!--
     <shaderTemplate templateName="simple1" shaderProgram="standard" ambient="shaderArgument" diffuse="color0"
               specular="color1" specularHardness="shaderArgument" emissive="shaderArgument"/>
