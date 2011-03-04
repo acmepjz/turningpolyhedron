@@ -572,14 +572,13 @@ Loop
 End Sub
 
 'internal use only
-Friend Function pUnescapeStringInPlace(ByRef d2() As Integer, ByRef i As Long, ByVal m As Long, Optional ByVal nEndCharacter As Long, Optional ByRef nLTrim As Long, Optional ByRef nRTrim As Long) As Long
+Friend Function pUnescapeStringInPlace(ByRef d2() As Integer, ByRef i As Long, ByVal m As Long, Optional ByVal nEndCharacter As Long, Optional ByRef nLTrim As Long, Optional ByRef nRTrim As Long, Optional ByVal iOld As Long = -1) As Long
 On Error Resume Next
-Dim iOld As Long
 Dim nCount As Long
 Dim c As Long, c1 As Long
 Dim bStart As Boolean
 '///
-iOld = i
+If iOld < 0 Then iOld = i
 nLTrim = 0
 nRTrim = 0
 Do While i < m
@@ -703,7 +702,7 @@ Dim tSA As SAFEARRAY2D
 Dim d() As Byte
 '///
 Dim d2() As Integer
-Dim i As Long, j As Long, m As Long
+Dim i As Long, j As Long, k As Long, m As Long
 Dim c As Long, c1 As Long, c2 As Long, c3 As Long
 '///stack
 Dim nStackPointer As Long
@@ -767,7 +766,7 @@ If nLength > 0 Then
    '///
    Select Case c
    Case ["!"]
-    '<!DOCTYPE and <![CDATA[ are not supported, only comments
+    'only support comments
     If i + 2 >= m Then Exit Function
     If d2(i + 1) <> ["-"] Or d2(i + 2) <> ["-"] Then Exit Function
     '///skip comment
@@ -858,10 +857,59 @@ If nLength > 0 Then
       '///node with some data (if any)
       i = i + 1
       '///read value (if any)
-      j = i
-      c = pUnescapeStringInPlace(d2, i, m, ["<"], c1, c2)
-      c = c - c1 - c2
-      If c > 0 Then objOut.SetValue VarPtr(d2(0)) + (j + c1) * 2&, c * 2&
+      j = i 'start address
+      c = pUnescapeStringInPlace(d2, i, m, ["<"], c1, c2) 'size
+      j = j + c1
+      c = c - c1
+      Do While i + 3 < m
+       If d2(i + 1) = ["!"] Then
+        Select Case d2(i + 2)
+        Case ["lll"] '<![CDATA[
+         If i + 8 >= m Then Exit Do
+         If d2(i + 3) <> ["c"] Then Exit Do
+         If d2(i + 4) <> ["d"] Then Exit Do
+         If d2(i + 5) <> ["a"] Then Exit Do
+         If d2(i + 6) <> ["t"] Then Exit Do
+         If d2(i + 7) <> ["a"] Then Exit Do
+         If d2(i + 8) <> ["lll"] Then Exit Do
+         '///
+         i = i + 11
+         Do While i < m ']]>
+          If d2(i - 2) = ["rrr"] Then
+           If d2(i - 1) = ["rrr"] Then
+            If d2(i) = [">"] Then Exit Do
+           End If
+          End If
+          d2(j + c) = d2(i - 2)
+          c = c + 1
+          i = i + 1
+         Loop
+         i = i + 1
+        Case ["-"] '<!--
+         If d2(i + 3) <> ["-"] Then Exit Do
+         '///skip comment
+         i = i + 4
+         Do While i < m
+          If d2(i - 2) = ["-"] Then
+           If d2(i - 1) = ["-"] Then
+            If d2(i) = [">"] Then Exit Do
+           End If
+          End If
+          i = i + 1
+         Loop
+         i = i + 1
+        Case Else
+         Exit Do
+        End Select
+       Else
+        Exit Do
+       End If
+       '///
+       c = c + pUnescapeStringInPlace(d2, i, m, ["<"], , c2, j + c)
+       '///
+      Loop
+      c = c - c2
+      If c > 0 Then objOut.SetValue VarPtr(d2(0)) + j * 2&, c * 2&
       '///
       Exit Do
      Case Else
