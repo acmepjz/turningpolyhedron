@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlMain"
 Option Explicit
 
-#Const UseSubclass = True
+#Const UseSubclass = False
 
 'Private Declare Function GetStdHandle Lib "kernel32.dll" (ByVal nStdHandle As Long) As Long
 'Private Declare Function AllocConsole Lib "kernel32.dll" () As Long
@@ -100,6 +100,8 @@ Public bTestOnly As Boolean
 '////////
 
 Public objFileMgr As New clsFileManager
+
+Public objMeshMgr As New clsMeshManager
 
 '////////settings
 Public frmSettings As New frmSettings
@@ -558,7 +560,14 @@ If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objF
 '////////NEW NEW NEW load effect from memory in archive file using file manager
 'i = objFileMgr.LoadFile("data.tar.lzma\DefaultShaders.xml")
 'If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objFileMgr.FileSize(i), New clsXMLSerializer
-'////////test
+'////////TEST TEST TEST load mesh test
+Dim obj As New clsTreeStorageNode
+With New clsXMLSerializer
+ .LoadNodeFromFile App.Path + "\data\test.xml", obj
+End With
+objMeshMgr.AddMeshFromNode obj.SubNodeObject(1)
+objMeshMgr.Destroy
+'////////landscape test
 Dim t As D3DXIMAGE_INFO
 objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
 'objLand.CreateFromFile App.Path + "\heightmap_test.png", 3, 5, 0.05, , , -15, App.Path + "\fogmap_test.png", 3, 0.05, 2

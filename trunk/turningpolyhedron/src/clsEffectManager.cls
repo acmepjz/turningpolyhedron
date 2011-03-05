@@ -17,11 +17,6 @@ Option Explicit
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
-'Private Type typeFakeDXEffectArgumentPos
-' nOffset As Byte
-' nSize As Byte
-'End Type
-
 Private Type typeFakeDXEffectArgument
  nType As Long '[3]
  '0=undefined

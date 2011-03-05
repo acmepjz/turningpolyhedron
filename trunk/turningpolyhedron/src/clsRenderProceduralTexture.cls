@@ -63,6 +63,13 @@ If Not obj Is Nothing Then
 End If
 End Function
 
+Friend Sub RemoveTexture(ByVal nIndex As Long)
+If nIndex > 0 And nIndex <= m_nCount Then
+ m_tData(nIndex).sName = vbNullString
+ Set m_tData(nIndex).objTexture = Nothing
+End If
+End Sub
+
 Friend Function AddTextureFromRenderTarget(ByVal obj As Direct3DTexture9, Optional ByVal sName As String) As Long
 Dim obj2 As Direct3DTexture9
 CopyRenderTargetData obj, obj2

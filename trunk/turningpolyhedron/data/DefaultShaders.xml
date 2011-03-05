@@ -20,10 +20,8 @@
       parallaxMap="textureArgument0.y:texcoord0"
       parallaxMapOffset="-0.5" parallaxMapScale="0.02"
     /> <!-- effectStates="FillMode = WIREFRAME;" -->
-<!--
     <shaderTemplate templateName="simple1" shaderProgram="standard" ambient="shaderArgument" diffuse="color0"
               specular="color1" specularHardness="shaderArgument" emissive="shaderArgument"/>
     <shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument"
               specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"/>
--->
 </shaders>
