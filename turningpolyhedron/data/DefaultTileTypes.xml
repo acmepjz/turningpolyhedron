@@ -6,8 +6,8 @@
     <description>Normal ground.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" diffuse="0.25,0.25,0.25,1">
-        <mesh type="cube" s="1,1,0.25" c="0,0,1"/>
+      <shader templateName="simple1_fixed" ambient="0.25,0.25,0.2" diffuse="0.25,0.25,0.2">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
   </tileType>

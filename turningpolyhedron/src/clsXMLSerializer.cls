@@ -702,7 +702,7 @@ Dim tSA As SAFEARRAY2D
 Dim d() As Byte
 '///
 Dim d2() As Integer
-Dim i As Long, j As Long, k As Long, m As Long
+Dim i As Long, j As Long, m As Long
 Dim c As Long, c1 As Long, c2 As Long, c3 As Long
 '///stack
 Dim nStackPointer As Long
@@ -905,7 +905,8 @@ If nLength > 0 Then
         Exit Do
        End If
        '///
-       c = c + pUnescapeStringInPlace(d2, i, m, ["<"], , c2, j + c)
+       c3 = pUnescapeStringInPlace(d2, i, m, ["<"], c1, c2, j + c)
+       If c1 < c3 Then c = c + c3
        '///
       Loop
       c = c - c2
