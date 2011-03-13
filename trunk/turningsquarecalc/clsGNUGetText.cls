@@ -13,9 +13,12 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+'////////////////////////////////
+'This file is public domain.
+'////////////////////////////////
+
 '////////
 'A simple and buggy (case insensitive) implementation of GNU GetText
-'This file is public domain.
 '////////
 
 'The format of the generated MO files is best described by a picture, which appears below.
