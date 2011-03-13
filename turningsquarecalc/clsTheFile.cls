@@ -427,29 +427,30 @@ a:
 Close
 End Function
 
-Public Function SaveData(d() As Byte, Optional ByVal IsCompress As Boolean = True) As Long
-Dim i As Long, j As Long, m As Long
-Dim b() As Byte, b2() As Byte, s As String
-m = pSaveData(b)
-If IsCompress Then
- m = -m
- Put #1, 9, m
- m = cmp.CompressData(b, b2)
- SaveData = m + 12
- ReDim d(1 To m + 12)
- CopyMemory d(13), b2(1), m
-Else
- SaveData = m + 8
- ReDim d(1 To m + 8)
- CopyMemory d(9), b(1), m
-End If
-s = MyStrConv(sig, vbFromUnicode)
-ReDim b(1 To 8)
-m = LenB(s)
-If m > 8 Then m = 8
-If m > 0 Then CopyMemory b(1), ByVal StrPtr(s), m
-CopyMemory d(1), b(1), 8&
-End Function
+''wrong code
+'Public Function SaveData(d() As Byte, Optional ByVal IsCompress As Boolean = True) As Long
+'Dim i As Long, j As Long, m As Long
+'Dim b() As Byte, b2() As Byte, s As String
+'m = pSaveData(b)
+'If IsCompress Then
+' m = -m
+' Put #1, 9, m
+' m = cmp.CompressData(b, b2)
+' SaveData = m + 12
+' ReDim d(1 To m + 12)
+' CopyMemory d(13), b2(1), m
+'Else
+' SaveData = m + 8
+' ReDim d(1 To m + 8)
+' CopyMemory d(9), b(1), m
+'End If
+'s = MyStrConv(sig, vbFromUnicode)
+'ReDim b(1 To 8)
+'m = LenB(s)
+'If m > 8 Then m = 8
+'If m > 0 Then CopyMemory b(1), ByVal StrPtr(s), m
+'CopyMemory d(1), b(1), 8&
+'End Function
 
 Private Function pSaveData(b() As Byte) As Long
 Dim i As Long, j As Long, m As Long, lp As Long
