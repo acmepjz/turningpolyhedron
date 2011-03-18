@@ -222,7 +222,13 @@ With d3dd9
    'objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
    objEffectMgr.SetupEffect 1, True, True, True, True, , True
    .BeginScene
-   objTest.DrawSubset 0
+   '///TEST TEST TEST
+   If objMeshMgr.Count > 0 Then
+    objMeshMgr.Mesh(1).DrawSubset 0
+   Else
+    objTest.DrawSubset 0
+   End If
+   '///
    .EndScene
    objEffectMgr.EndEffect
   Else
@@ -566,7 +572,7 @@ With New clsXMLSerializer
  .LoadNodeFromFile App.Path + "\data\test.xml", obj
 End With
 objMeshMgr.AddMeshFromNode obj.SubNodeObject(1)
-objMeshMgr.Destroy
+'objMeshMgr.Destroy
 '////////landscape test
 Dim t As D3DXIMAGE_INFO
 objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
