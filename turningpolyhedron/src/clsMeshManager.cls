@@ -50,9 +50,21 @@ Private Type typeMeshVertex_Temp
  fTexcoord As D3DXVECTOR4 'w=index
 End Type
 
+Private Type typeMeshEdge_Temp
+ nFlags As Long
+ 'bit 0-1=bevel index (0-x 1-y 2-z 3-w) for vertex 0-1
+ 'bit 2-3=bevel index for vertex 2-3
+ nVertexIndex(3) As Long
+ '|F|
+ '3-2
+ '0-1
+ '|F|
+End Type
+
 Private Type typeMeshFace_Temp
  nFlags As Long
- '&H1=bevel face (unused)
+ 'bit 0-7=edge(0-3) bevel index (0-x 1-y 2-z 3-w)
+ 'edge N = vertex N to vertex N+1
  '///
  nCount As Long '3 or 4
  nVertex(3) As Long
@@ -159,7 +171,7 @@ n = n Or (((m - 1) And 3&) * &H40&)
 pReadComponent = True
 End Function
 
-'TODO:
+'TODO:other options
 Friend Function pReadComponentValue(ByVal s As String, ByRef t As typeMeshOptionalData, ByVal nIndex As Long, ByVal nDefaultType As Long) As Boolean
 Dim i As Long
 Dim s1 As String
@@ -231,21 +243,28 @@ t.nVertexSize = m * 16&
 '///
 D3DXCreateMesh nFaceCount, nVertexCount, D3DXMESH_MANAGED, tt(0), d3dd9, t.objMesh
 Debug.Assert Not t.objMesh Is Nothing
+Debug.Print nVertexCount, nFaceCount
 '///
 End Sub
 
 'the coordinate system is annoying (LH)
 Friend Sub pCreateCube(ByRef t As typeMeshMgrData, ByRef t2 As typeMeshOptionalData)
-Dim p(7) As D3DXVECTOR4
+Dim p(15) As D3DXVECTOR4
 '0=actual corner pos
-'1-3=
-'4-6=bevel
+'1-3=x,y,z vector
+'4-6=bevel x,y,z vector
+'7-9=tmp
+'etc...(currently unused)
 Dim fLength(2) As Single
 Dim mat As D3DMATRIX
 Dim nVertexCount As Long, nFaceCount As Long, nFaceCount_1 As Long
 Dim nBevel As Long
-Dim tFace(1 To 128) As typeMeshFace_Temp
-Dim tVertex(1 To 512) As typeMeshVertex_Temp
+Dim tFace() As typeMeshFace_Temp
+Dim tVertex() As typeMeshVertex_Temp
+Dim i As Long, j As Long
+'///init
+ReDim tFace(1 To 128)
+ReDim tVertex(1 To 512)
 '///scale
 t2.fPos(1).x = t2.fPos(1).x * t2.fScale.x
 t2.fPos(1).y = t2.fPos(1).y * t2.fScale.x
@@ -274,9 +293,9 @@ If nBevel = 1 Or nBevel = 2 Then
  If t2.fBevel.y < 0 Then t2.fBevel.y = -t2.fBevel.y / fLength(1)
  If t2.fBevel.z < 0 Then t2.fBevel.z = -t2.fBevel.z / fLength(2)
  '///
- If CLng(t2.fBevel.x < 0.0001!) + _
- CLng(t2.fBevel.y < 0.0001!) + _
- CLng(t2.fBevel.z < 0.0001!) <= -2 Then
+ If CLng(t2.fBevel.x < 0.000001!) + _
+ CLng(t2.fBevel.y < 0.000001!) + _
+ CLng(t2.fBevel.z < 0.000001!) <= -2 Then
   nBevel = 0
  Else
   p(4).x = p(1).x * t2.fBevel.x
@@ -294,32 +313,130 @@ End If
 '// and create data
 'nVertexCount = sum(FaceVertexCount)
 'nFaceCount = sum(FaceVertexCount-2)
+'--> nVertexCount = nFaceCount + nFaceCount_1 * 2
 Select Case nBevel
-Case 1
- nVertexCount = 96
- nFaceCount = 44
- 'TODO:
 Case 2
- nVertexCount = 264
- nFaceCount = 108
- 'TODO:
+  nVertexCount = 56 '264
+  nFaceCount_1 = 14 '78
+ '//========
+ '//bottom
+ p(7) = D3DXVec4Add3(p(0), p(4), p(5))
+ p(8) = D3DXVec4AddScale(p(1), p(4), -2)
+ p(9) = D3DXVec4AddScale(p(2), p(5), -2)
+ pCreateFace tFace, 1, tVertex, 1, 2, 4, 3, _
+ p(7), p(9), p(8), _
+ Vec4(1 - t2.fBevel.x, t2.fBevel.y), _
+ Vec4(, 1 - t2.fBevel.y * 2), _
+ Vec4(t2.fBevel.x * 2 - 1)
+ '//top
+ pCreateFace tFace, 2, tVertex, 5, 8, 6, 7, _
+ D3DXVec4Add(p(7), p(3)), p(8), p(9), _
+ Vec4(1 - t2.fBevel.x, 1 - t2.fBevel.y, , 1), _
+ Vec4(t2.fBevel.x * 2 - 1), _
+ Vec4(, t2.fBevel.y * 2 - 1)
+ '//front
+ p(7) = D3DXVec4Add3(p(0), p(4), p(6))
+ p(9) = D3DXVec4AddScale(p(3), p(6), -2)
+ pCreateFace tFace, 3, tVertex, 9, 10, 11, 12, _
+ p(7), p(8), p(9), _
+ Vec4(1 - t2.fBevel.x, 1 - t2.fBevel.z, , 2), _
+ Vec4(t2.fBevel.x * 2 - 1), _
+ Vec4(, t2.fBevel.z * 2 - 1)
+ '//back
+ pCreateFace tFace, 5, tVertex, 18, 20, 17, 19, _
+ D3DXVec4Add(p(7), p(2)), p(9), p(8), _
+ Vec4(t2.fBevel.x, 1 - t2.fBevel.z, , 4), _
+ Vec4(, t2.fBevel.z * 2 - 1), _
+ Vec4(1 - t2.fBevel.x * 2)
+ '//right
+ p(7) = D3DXVec4Add3(p(0), p(5), p(6))
+ p(8) = D3DXVec4AddScale(p(2), p(5), -2)
+ pCreateFace tFace, 4, tVertex, 14, 16, 13, 15, _
+ p(7), p(9), p(8), _
+ Vec4(t2.fBevel.y, 1 - t2.fBevel.z, , 3), _
+ Vec4(, t2.fBevel.z * 2 - 1), _
+ Vec4(1 - t2.fBevel.y * 2)
+ '//left
+ pCreateFace tFace, 6, tVertex, 21, 22, 23, 24, _
+ D3DXVec4Add(p(7), p(1)), p(8), p(9), _
+ Vec4(1 - t2.fBevel.y, 1 - t2.fBevel.z, , 5), _
+ Vec4(t2.fBevel.y * 2 - 1), _
+ Vec4(, t2.fBevel.z * 2 - 1)
+ '//===
+ i = 7: j = 25
+  '//========
+  '0.2928932!=1-sqr(1/2)
+  '//horizontal
+  p(8) = D3DXVec4AddScale(p(3), p(6), -2)
+  p(9) = Vec4(, t2.fBevel.z * 2 - 1)
+  i = 7: j = 25
+  '==front-right
+  p(7) = D3DXVec4Add3(p(0), p(6), D3DXVec4Scale(D3DXVec4Add(p(4), p(5)), 0.2928932!))
+  pCreateFace tFace, i, tVertex, j + 2, j, j + 3, j + 1, _
+  p(7), p(7), p(8), _
+  Vec4(1, 1 - t2.fBevel.z, , 2), p(9), p(9), _
+  , 9, , 11, 1, , -1
+  pCreateFace tFace, i + 1, tVertex, j + 4, j + 5, j + 6, j + 7, _
+  p(7), p(7), p(8), _
+  Vec4(0, 1 - t2.fBevel.z, , 3), p(9), p(9), _
+  j + 2, j + 3, 14, 16, 1, , 12
+  i = i + 2: j = j + 8
+  '==right-back
+  p(7) = D3DXVec4Add(D3DXVec4Add3(p(0), p(6), p(2)), D3DXVec4Scale(D3DXVec4Subtract(p(4), p(5)), 0.2928932!))
+  pCreateFace tFace, i, tVertex, j + 2, j, j + 3, j + 1, _
+  p(7), p(7), p(8), _
+  Vec4(1, 1 - t2.fBevel.z, , 3), p(9), p(9), _
+  , 13, , 15, 1, , -1
+  pCreateFace tFace, i + 1, tVertex, j + 4, j + 5, j + 6, j + 7, _
+  p(7), p(7), p(8), _
+  Vec4(0, 1 - t2.fBevel.z, , 4), p(9), p(9), _
+  j + 2, j + 3, 18, 20, 1, , 12
+  i = i + 2: j = j + 8
+  '==back-left
+  p(7) = D3DXVec4AddSubtract(D3DXVec4Add3(p(0), p(6), p(1)), p(2), D3DXVec4Scale(D3DXVec4Add(p(4), p(5)), 0.2928932!))
+  pCreateFace tFace, i, tVertex, j + 2, j, j + 3, j + 1, _
+  p(7), p(7), p(8), _
+  Vec4(1, 1 - t2.fBevel.z, , 4), p(9), p(9), _
+  , 17, , 19, 1, , -1
+  pCreateFace tFace, i + 1, tVertex, j + 4, j + 5, j + 6, j + 7, _
+  p(7), p(7), p(8), _
+  Vec4(0, 1 - t2.fBevel.z, , 5), p(9), p(9), _
+  j + 2, j + 3, 22, 24, 1, , 12
+  i = i + 2: j = j + 8
+  '==left-front
+  p(7) = D3DXVec4Subtract(D3DXVec4Add3(p(0), p(6), p(1)), D3DXVec4Scale(D3DXVec4Subtract(p(4), p(5)), 0.2928932!))
+  pCreateFace tFace, i, tVertex, j + 2, j, j + 3, j + 1, _
+  p(7), p(7), p(8), _
+  Vec4(1, 1 - t2.fBevel.z, , 5), p(9), p(9), _
+  , 21, , 23, 1, , -1
+  pCreateFace tFace, i + 1, tVertex, j + 4, j + 5, j + 6, j + 7, _
+  p(7), p(7), p(8), _
+  Vec4(0, 1 - t2.fBevel.z, , 2), p(9), p(9), _
+  j + 2, j + 3, 10, 12, 1, , 12
+  i = i + 2: j = j + 8
+  'TODO:
+  'Debug.Assert False
+  '//========
 Case Else
  nVertexCount = 24
- nFaceCount = 12
  nFaceCount_1 = 6
- 'bottom
- pCreateFace tFace, 1, tVertex, 1, 2, 4, 3, p(0), p(2), p(1), Vec4(1), Vec4(, 1), Vec4(-1)
- 'top
- pCreateFace tFace, 2, tVertex, 5, 8, 6, 7, D3DXVec4Add(p(0), p(3)), p(1), p(2), Vec4(1, 1, , 1), Vec4(-1), Vec4(, -1)
- 'front
- pCreateFace tFace, 3, tVertex, 9, 10, 11, 12, p(7), p(7), p(7), Vec4(1, 1, , 2), Vec4(-1), Vec4(, -1), 1, 4, 5, 8
- 'right
- pCreateFace tFace, 4, tVertex, 13, 14, 15, 16, p(7), p(7), p(7), Vec4(1, 1, , 3), Vec4(-1), Vec4(, -1), 2, 1, 6, 5
- 'back
- pCreateFace tFace, 5, tVertex, 17, 18, 19, 20, p(7), p(7), p(7), Vec4(1, 1, , 4), Vec4(-1), Vec4(, -1), 3, 2, 7, 6
- 'left
- pCreateFace tFace, 6, tVertex, 21, 22, 23, 24, p(7), p(7), p(7), Vec4(1, 1, , 5), Vec4(-1), Vec4(, -1), 4, 3, 8, 7
+ '//========
+ '//bottom
+ pCreateFace tFace, 1, tVertex, 1, 2, 4, 3, p(0), p(2), p(1), Vec4(1), Vec4(, 1), Vec4(-1), , , , , , &H44&
+ '//top
+ pCreateFace tFace, 2, tVertex, 5, 8, 6, 7, D3DXVec4Add(p(0), p(3)), p(1), p(2), Vec4(1, 1, , 1), Vec4(-1), Vec4(, -1), , , , , , &H11&
+ '//front
+ pCreateFace tFace, 3, tVertex, 9, 10, 11, 12, p(7), p(7), p(7), Vec4(1, 1, , 2), Vec4(-1), Vec4(, -1), 1, 4, 5, 8, , &H22&
+ '//right
+ pCreateFace tFace, 4, tVertex, 13, 14, 15, 16, p(7), p(7), p(7), Vec4(1, 1, , 3), Vec4(-1), Vec4(, -1), 2, 1, 6, 5, , &H66&
+ '//back
+ pCreateFace tFace, 5, tVertex, 17, 18, 19, 20, p(7), p(7), p(7), Vec4(1, 1, , 4), Vec4(-1), Vec4(, -1), 3, 2, 7, 6, , &H22&
+ '//left
+ pCreateFace tFace, 6, tVertex, 21, 22, 23, 24, p(7), p(7), p(7), Vec4(1, 1, , 5), Vec4(-1), Vec4(, -1), 4, 3, 8, 7, , &H66&
+ '//========new
+ If nBevel = 1 Then pPerformBevel tFace, nFaceCount_1, tVertex, nVertexCount, nBevel, t2.fBevel
 End Select
+nFaceCount = nVertexCount - nFaceCount_1 * 2&
 '///calc normal
 pCalcFaceNormal tFace, nFaceCount_1, tVertex
 pCalcAverageNormal tVertex, nVertexCount
@@ -331,6 +448,482 @@ pCreateEmptyMesh t, nVertexCount, nFaceCount
 pApplyMeshData t, t2, tFace, nFaceCount_1, nFaceCount, tVertex, nVertexCount
 'TODO:optimize mesh
 D3DXComputeTangentFrame t.objMesh, 0
+End Sub
+
+'assume nBevel=1 or 2, and all count >0
+Friend Sub pPerformBevel(ByRef tFace() As typeMeshFace_Temp, ByRef nFaceCount As Long, ByRef tVertex() As typeMeshVertex_Temp, ByRef nVertexCount As Long, ByVal nBevel As Long, ByRef vBevel As D3DXVECTOR4)
+'currently more than 3 edges meet together is unsupported
+Const nVertexAdjacencyCount As Long = 3
+'///
+Dim fBevel(3) As Single
+Dim nVertexToVertexIndex() As Long
+Dim nVertexToEdgeIndex() As Long
+Dim tEdgeData() As typeMeshEdge_Temp
+Dim nEdgeCount As Long
+Dim nVertexCount_Old As Long
+Dim nVertexMax As Long, nFaceMax As Long
+'///
+Dim i As Long, j As Long, k As Long, n As Long
+Dim k1 As Long, k2 As Long
+Dim k1_0 As Long, k2_0 As Long
+Dim nFlags As Long
+Dim p(15) As D3DXVECTOR4
+'///
+fBevel(0) = vBevel.x
+fBevel(1) = vBevel.y
+fBevel(2) = vBevel.z
+fBevel(3) = vBevel.w
+'///init
+ReDim nVertexToVertexIndex(1 To nVertexCount, 0 To nVertexAdjacencyCount - 1)
+ReDim nVertexToEdgeIndex(1 To nVertexCount, 0 To nVertexAdjacencyCount - 1)
+ReDim tEdgeData(1 To nFaceCount * 4&)
+'////////================================================================calc adjacency
+For i = 1 To nFaceCount
+ nFlags = tFace(i).nFlags And &HFF&
+ '////////////////////////////////////////////////////////////////
+ k1 = tFace(i).nVertex(0)
+ k2 = tFace(i).nVertex(1)
+ '////////COPY AND PASTE CODE BELOW
+ k1_0 = tVertex(k1).nParent
+ k2_0 = tVertex(k2).nParent
+ If k1_0 <= 0 Then k1_0 = k1
+ If k2_0 <= 0 Then k2_0 = k2
+ 'find and add
+ For k = 0 To nVertexAdjacencyCount - 1
+  n = nVertexToVertexIndex(k1_0, k)
+  If n = k2_0 Or n = 0 Then Exit For
+ Next k
+ If k >= nVertexAdjacencyCount Or n = 0 Then
+  n = nEdgeCount + 1
+  nEdgeCount = n
+  tEdgeData(n).nFlags = nFlags And 3&
+  tEdgeData(n).nVertexIndex(0) = k1
+  tEdgeData(n).nVertexIndex(1) = k2
+ Else
+  n = nVertexToEdgeIndex(k1_0, k)
+  tEdgeData(n).nFlags = tEdgeData(n).nFlags Or ((nFlags And 3&) * 4&)
+  tEdgeData(n).nVertexIndex(2) = k1
+  tEdgeData(n).nVertexIndex(3) = k2
+ End If
+ 'save
+ For k = 0 To nVertexAdjacencyCount - 1
+  If nVertexToVertexIndex(k2_0, k) = 0 Then
+   nVertexToVertexIndex(k2_0, k) = k1_0
+   nVertexToEdgeIndex(k2_0, k) = n
+   Exit For
+  End If
+ Next k
+ If k >= nVertexAdjacencyCount Then
+  Debug.Assert False
+  Exit Sub
+ End If
+ nFlags = nFlags \ 4&
+ '////////COPY AND PASTE CODE ABOVE
+ Select Case tFace(i).nCount
+ Case 4
+ '////////////////////////////////////////////////////////////////
+ k1 = tFace(i).nVertex(1)
+ k2 = tFace(i).nVertex(3)
+ '////////COPY AND PASTE CODE BELOW
+ k1_0 = tVertex(k1).nParent
+ k2_0 = tVertex(k2).nParent
+ If k1_0 <= 0 Then k1_0 = k1
+ If k2_0 <= 0 Then k2_0 = k2
+ 'find and add
+ For k = 0 To nVertexAdjacencyCount - 1
+  n = nVertexToVertexIndex(k1_0, k)
+  If n = k2_0 Or n = 0 Then Exit For
+ Next k
+ If k >= nVertexAdjacencyCount Or n = 0 Then
+  n = nEdgeCount + 1
+  nEdgeCount = n
+  tEdgeData(n).nFlags = nFlags And 3&
+  tEdgeData(n).nVertexIndex(0) = k1
+  tEdgeData(n).nVertexIndex(1) = k2
+ Else
+  n = nVertexToEdgeIndex(k1_0, k)
+  tEdgeData(n).nFlags = tEdgeData(n).nFlags Or ((nFlags And 3&) * 4&)
+  tEdgeData(n).nVertexIndex(2) = k1
+  tEdgeData(n).nVertexIndex(3) = k2
+ End If
+ 'save
+ For k = 0 To nVertexAdjacencyCount - 1
+  If nVertexToVertexIndex(k2_0, k) = 0 Then
+   nVertexToVertexIndex(k2_0, k) = k1_0
+   nVertexToEdgeIndex(k2_0, k) = n
+   Exit For
+  End If
+ Next k
+ If k >= nVertexAdjacencyCount Then
+  Debug.Assert False
+  Exit Sub
+ End If
+ nFlags = nFlags \ 4&
+ '////////COPY AND PASTE CODE ABOVE
+ '////////////////////////////////////////////////////////////////
+ k1 = tFace(i).nVertex(3)
+ k2 = tFace(i).nVertex(2)
+ '////////COPY AND PASTE CODE BELOW
+ k1_0 = tVertex(k1).nParent
+ k2_0 = tVertex(k2).nParent
+ If k1_0 <= 0 Then k1_0 = k1
+ If k2_0 <= 0 Then k2_0 = k2
+ 'find and add
+ For k = 0 To nVertexAdjacencyCount - 1
+  n = nVertexToVertexIndex(k1_0, k)
+  If n = k2_0 Or n = 0 Then Exit For
+ Next k
+ If k >= nVertexAdjacencyCount Or n = 0 Then
+  n = nEdgeCount + 1
+  nEdgeCount = n
+  tEdgeData(n).nFlags = nFlags And 3&
+  tEdgeData(n).nVertexIndex(0) = k1
+  tEdgeData(n).nVertexIndex(1) = k2
+ Else
+  n = nVertexToEdgeIndex(k1_0, k)
+  tEdgeData(n).nFlags = tEdgeData(n).nFlags Or ((nFlags And 3&) * 4&)
+  tEdgeData(n).nVertexIndex(2) = k1
+  tEdgeData(n).nVertexIndex(3) = k2
+ End If
+ 'save
+ For k = 0 To nVertexAdjacencyCount - 1
+  If nVertexToVertexIndex(k2_0, k) = 0 Then
+   nVertexToVertexIndex(k2_0, k) = k1_0
+   nVertexToEdgeIndex(k2_0, k) = n
+   Exit For
+  End If
+ Next k
+ If k >= nVertexAdjacencyCount Then
+  Debug.Assert False
+  Exit Sub
+ End If
+ nFlags = nFlags \ 4&
+ '////////COPY AND PASTE CODE ABOVE
+ Case Else 'assume is 3
+ '////////////////////////////////////////////////////////////////
+ k1 = tFace(i).nVertex(1)
+ k2 = tFace(i).nVertex(2)
+ '////////COPY AND PASTE CODE BELOW
+ k1_0 = tVertex(k1).nParent
+ k2_0 = tVertex(k2).nParent
+ If k1_0 <= 0 Then k1_0 = k1
+ If k2_0 <= 0 Then k2_0 = k2
+ 'find and add
+ For k = 0 To nVertexAdjacencyCount - 1
+  n = nVertexToVertexIndex(k1_0, k)
+  If n = k2_0 Or n = 0 Then Exit For
+ Next k
+ If k >= nVertexAdjacencyCount Or n = 0 Then
+  n = nEdgeCount + 1
+  nEdgeCount = n
+  tEdgeData(n).nFlags = nFlags And 3&
+  tEdgeData(n).nVertexIndex(0) = k1
+  tEdgeData(n).nVertexIndex(1) = k2
+ Else
+  n = nVertexToEdgeIndex(k1_0, k)
+  tEdgeData(n).nFlags = tEdgeData(n).nFlags Or ((nFlags And 3&) * 4&)
+  tEdgeData(n).nVertexIndex(2) = k1
+  tEdgeData(n).nVertexIndex(3) = k2
+ End If
+ 'save
+ For k = 0 To nVertexAdjacencyCount - 1
+  If nVertexToVertexIndex(k2_0, k) = 0 Then
+   nVertexToVertexIndex(k2_0, k) = k1_0
+   nVertexToEdgeIndex(k2_0, k) = n
+   Exit For
+  End If
+ Next k
+ If k >= nVertexAdjacencyCount Then
+  Debug.Assert False
+  Exit Sub
+ End If
+ nFlags = nFlags \ 4&
+ '////////COPY AND PASTE CODE ABOVE
+ End Select
+ '////////////////////////////////////////////////////////////////
+ k1 = tFace(i).nVertex(2)
+ k2 = tFace(i).nVertex(0)
+ '////////COPY AND PASTE CODE BELOW
+ k1_0 = tVertex(k1).nParent
+ k2_0 = tVertex(k2).nParent
+ If k1_0 <= 0 Then k1_0 = k1
+ If k2_0 <= 0 Then k2_0 = k2
+ 'find and add
+ For k = 0 To nVertexAdjacencyCount - 1
+  n = nVertexToVertexIndex(k1_0, k)
+  If n = k2_0 Or n = 0 Then Exit For
+ Next k
+ If k >= nVertexAdjacencyCount Or n = 0 Then
+  n = nEdgeCount + 1
+  nEdgeCount = n
+  tEdgeData(n).nFlags = (nFlags And 3&)
+  tEdgeData(n).nVertexIndex(0) = k1
+  tEdgeData(n).nVertexIndex(1) = k2
+ Else
+  n = nVertexToEdgeIndex(k1_0, k)
+  tEdgeData(n).nFlags = tEdgeData(n).nFlags Or ((nFlags And 3&) * 4&)
+  tEdgeData(n).nVertexIndex(2) = k1
+  tEdgeData(n).nVertexIndex(3) = k2
+ End If
+ 'save
+ For k = 0 To nVertexAdjacencyCount - 1
+  If nVertexToVertexIndex(k2_0, k) = 0 Then
+   nVertexToVertexIndex(k2_0, k) = k1_0
+   nVertexToEdgeIndex(k2_0, k) = n
+   Exit For
+  End If
+ Next k
+ If k >= nVertexAdjacencyCount Then
+  Debug.Assert False
+  Exit Sub
+ End If
+ nFlags = nFlags \ 4&
+ '////////COPY AND PASTE CODE ABOVE
+ '////////////////////////////////////////////////////////////////over
+Next i
+'////////================================================================split face
+For i = 1 To nFaceCount
+ nFlags = tFace(i).nFlags And &HFF&
+ n = tFace(i).nCount
+ Debug.Assert n = 3 Or n = 4
+ '///
+ If n = 4 Then k1_0 = (nFlags \ &H40&) And 3& _
+ Else k1_0 = (nFlags \ &H10&) And 3&
+ k2_0 = nFlags And 3&
+ k = tFace(i).nVertex(0)
+ k1 = tFace(i).nVertex(2)
+ k2 = tFace(i).nVertex(1)
+ '////////COPY AND PASTE CODE BELOW
+ p(0) = tVertex(k).fPos
+ p(1).x = tVertex(k1).fPos.x - p(0).x
+ p(1).y = tVertex(k1).fPos.y - p(0).y
+ p(1).z = tVertex(k1).fPos.z - p(0).z
+ p(2).x = tVertex(k2).fPos.x - p(0).x
+ p(2).y = tVertex(k2).fPos.y - p(0).y
+ p(2).z = tVertex(k2).fPos.z - p(0).z
+ p(4) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k2_0)), D3DXVec4Scale(p(2), fBevel(k1_0)))
+ p(0) = tVertex(k).fTexcoord
+ p(1).x = tVertex(k1).fTexcoord.x - p(0).x
+ p(1).y = tVertex(k1).fTexcoord.y - p(0).y
+ p(1).z = tVertex(k1).fTexcoord.z - p(0).z
+ p(2).x = tVertex(k2).fTexcoord.x - p(0).x
+ p(2).y = tVertex(k2).fTexcoord.y - p(0).y
+ p(2).z = tVertex(k2).fTexcoord.z - p(0).z
+ p(8) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k2_0)), D3DXVec4Scale(p(2), fBevel(k1_0)))
+ '////////COPY AND PASTE CODE ABOVE
+ Select Case n
+ Case 4
+  k1 = k
+  k = k2
+  k2 = tFace(i).nVertex(3)
+  k1_0 = k2_0
+  k2_0 = (nFlags \ 4&) And 3&
+  '////////COPY AND PASTE CODE BELOW
+  p(0) = tVertex(k).fPos
+  p(1).x = tVertex(k1).fPos.x - p(0).x
+  p(1).y = tVertex(k1).fPos.y - p(0).y
+  p(1).z = tVertex(k1).fPos.z - p(0).z
+  p(2).x = tVertex(k2).fPos.x - p(0).x
+  p(2).y = tVertex(k2).fPos.y - p(0).y
+  p(2).z = tVertex(k2).fPos.z - p(0).z
+  p(5) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k2_0)), D3DXVec4Scale(p(2), fBevel(k1_0)))
+  p(0) = tVertex(k).fTexcoord
+  p(1).x = tVertex(k1).fTexcoord.x - p(0).x
+  p(1).y = tVertex(k1).fTexcoord.y - p(0).y
+  p(1).z = tVertex(k1).fTexcoord.z - p(0).z
+  p(2).x = tVertex(k2).fTexcoord.x - p(0).x
+  p(2).y = tVertex(k2).fTexcoord.y - p(0).y
+  p(2).z = tVertex(k2).fTexcoord.z - p(0).z
+  p(9) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k2_0)), D3DXVec4Scale(p(2), fBevel(k1_0)))
+  '////////COPY AND PASTE CODE ABOVE
+  k1 = k
+  k = k2
+  k2 = tFace(i).nVertex(2)
+  k1_0 = k2_0
+  k2_0 = (nFlags \ &H10&) And 3&
+  '////////COPY AND PASTE CODE BELOW
+  p(0) = tVertex(k).fPos
+  p(1).x = tVertex(k1).fPos.x - p(0).x
+  p(1).y = tVertex(k1).fPos.y - p(0).y
+  p(1).z = tVertex(k1).fPos.z - p(0).z
+  p(2).x = tVertex(k2).fPos.x - p(0).x
+  p(2).y = tVertex(k2).fPos.y - p(0).y
+  p(2).z = tVertex(k2).fPos.z - p(0).z
+  p(7) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k2_0)), D3DXVec4Scale(p(2), fBevel(k1_0)))
+  p(0) = tVertex(k).fTexcoord
+  p(1).x = tVertex(k1).fTexcoord.x - p(0).x
+  p(1).y = tVertex(k1).fTexcoord.y - p(0).y
+  p(1).z = tVertex(k1).fTexcoord.z - p(0).z
+  p(2).x = tVertex(k2).fTexcoord.x - p(0).x
+  p(2).y = tVertex(k2).fTexcoord.y - p(0).y
+  p(2).z = tVertex(k2).fTexcoord.z - p(0).z
+  p(11) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k2_0)), D3DXVec4Scale(p(2), fBevel(k1_0)))
+  '////////COPY AND PASTE CODE ABOVE
+  k1 = k
+  k = k2
+  k2 = tFace(i).nVertex(0)
+  k1_0 = k2_0
+  k2_0 = (nFlags \ &H40&) And 3&
+  '////////COPY AND PASTE CODE BELOW
+  p(0) = tVertex(k).fPos
+  p(1).x = tVertex(k1).fPos.x - p(0).x
+  p(1).y = tVertex(k1).fPos.y - p(0).y
+  p(1).z = tVertex(k1).fPos.z - p(0).z
+  p(2).x = tVertex(k2).fPos.x - p(0).x
+  p(2).y = tVertex(k2).fPos.y - p(0).y
+  p(2).z = tVertex(k2).fPos.z - p(0).z
+  p(6) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k2_0)), D3DXVec4Scale(p(2), fBevel(k1_0)))
+  p(0) = tVertex(k).fTexcoord
+  p(1).x = tVertex(k1).fTexcoord.x - p(0).x
+  p(1).y = tVertex(k1).fTexcoord.y - p(0).y
+  p(1).z = tVertex(k1).fTexcoord.z - p(0).z
+  p(2).x = tVertex(k2).fTexcoord.x - p(0).x
+  p(2).y = tVertex(k2).fTexcoord.y - p(0).y
+  p(2).z = tVertex(k2).fTexcoord.z - p(0).z
+  p(10) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k2_0)), D3DXVec4Scale(p(2), fBevel(k1_0)))
+  '////////COPY AND PASTE CODE ABOVE
+ Case Else 'assume is 3
+  nFlags = (nFlags \ 4&) And 3&
+  '---
+  p(0) = tVertex(k2).fPos
+  p(1).x = tVertex(k).fPos.x - p(0).x
+  p(1).y = tVertex(k).fPos.y - p(0).y
+  p(1).z = tVertex(k).fPos.z - p(0).z
+  p(2).x = tVertex(k1).fPos.x - p(0).x
+  p(2).y = tVertex(k1).fPos.y - p(0).y
+  p(2).z = tVertex(k1).fPos.z - p(0).z
+  p(5) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(nFlags)), D3DXVec4Scale(p(2), fBevel(k2_0)))
+  p(0) = tVertex(k2).fTexcoord
+  p(1).x = tVertex(k).fTexcoord.x - p(0).x
+  p(1).y = tVertex(k).fTexcoord.y - p(0).y
+  p(1).z = tVertex(k).fTexcoord.z - p(0).z
+  p(2).x = tVertex(k1).fTexcoord.x - p(0).x
+  p(2).y = tVertex(k1).fTexcoord.y - p(0).y
+  p(2).z = tVertex(k1).fTexcoord.z - p(0).z
+  p(9) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(nFlags)), D3DXVec4Scale(p(2), fBevel(k2_0)))
+  '---
+  p(0) = tVertex(k1).fPos
+  p(1).x = tVertex(k2).fPos.x - p(0).x
+  p(1).y = tVertex(k2).fPos.y - p(0).y
+  p(1).z = tVertex(k2).fPos.z - p(0).z
+  p(2).x = tVertex(k).fPos.x - p(0).x
+  p(2).y = tVertex(k).fPos.y - p(0).y
+  p(2).z = tVertex(k).fPos.z - p(0).z
+  p(6) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k1_0)), D3DXVec4Scale(p(2), fBevel(nFlags)))
+  p(0) = tVertex(k1).fTexcoord
+  p(1).x = tVertex(k2).fTexcoord.x - p(0).x
+  p(1).y = tVertex(k2).fTexcoord.y - p(0).y
+  p(1).z = tVertex(k2).fTexcoord.z - p(0).z
+  p(2).x = tVertex(k).fTexcoord.x - p(0).x
+  p(2).y = tVertex(k).fTexcoord.y - p(0).y
+  p(2).z = tVertex(k).fTexcoord.z - p(0).z
+  p(10) = D3DXVec4Add3(p(0), D3DXVec4Scale(p(1), fBevel(k1_0)), D3DXVec4Scale(p(2), fBevel(nFlags)))
+ End Select
+ '///
+ For j = 0 To n - 1
+  k = tFace(i).nVertex(j)
+  tVertex(k).nParent = 0
+  tVertex(k).fPos = p(j + 4)
+  tVertex(k).fTexcoord = p(j + 8)
+ Next j
+Next i
+'///
+nVertexCount_Old = nVertexCount
+nVertexMax = UBound(tVertex)
+nFaceMax = UBound(tFace)
+'////////================================================================split edge
+Select Case nBevel
+Case 2
+ 'TODO:
+Case Else
+ For i = 1 To nEdgeCount
+  If tEdgeData(i).nVertexIndex(2) Then
+   j = nVertexCount + 4
+   n = nFaceCount + 1
+   If j > nVertexMax Then
+    nVertexMax = j + 4096&
+    ReDim Preserve tVertex(1 To nVertexMax)
+   End If
+   If n > nFaceMax Then
+    nFaceMax = n + 4096&
+    ReDim Preserve tFace(1 To nFaceMax)
+   End If
+   pCreateFace tFace, n, tVertex, j - 3, j - 2, j - 1, j, p(0), p(0), p(0), p(0), p(0), p(0), _
+   tEdgeData(i).nVertexIndex(1), tEdgeData(i).nVertexIndex(0), tEdgeData(i).nVertexIndex(2), tEdgeData(i).nVertexIndex(3), _
+   1, , -1
+   nVertexCount = j
+   nFaceCount = n
+  End If
+ Next i
+End Select
+'////////================================================================split vertex
+For i = 1 To nVertexCount_Old
+ 'FIXME:ugly code, only works when exactly 3 edges meet together
+ k1_0 = nVertexToEdgeIndex(i, 1)
+ k2_0 = nVertexToEdgeIndex(i, 2)
+ If k1_0 > 0 And k2_0 > 0 Then
+  k = tEdgeData(k1_0).nVertexIndex(0)
+  k2 = tEdgeData(k1_0).nVertexIndex(3)
+  If k = tEdgeData(k2_0).nVertexIndex(1) Then
+   k1 = tEdgeData(k2_0).nVertexIndex(2)
+  ElseIf k = tEdgeData(k2_0).nVertexIndex(3) Then
+   k1 = tEdgeData(k2_0).nVertexIndex(0)
+  Else
+   k = tEdgeData(k1_0).nVertexIndex(2)
+   k2 = tEdgeData(k1_0).nVertexIndex(1)
+   If k = tEdgeData(k2_0).nVertexIndex(1) Then
+    k1 = tEdgeData(k2_0).nVertexIndex(2)
+   ElseIf k = tEdgeData(k2_0).nVertexIndex(3) Then
+    k1 = tEdgeData(k2_0).nVertexIndex(0)
+   Else
+    k = tEdgeData(k1_0).nVertexIndex(1)
+    k1 = tEdgeData(k1_0).nVertexIndex(2)
+    If k = tEdgeData(k2_0).nVertexIndex(0) Then
+     k2 = tEdgeData(k2_0).nVertexIndex(3)
+    ElseIf k = tEdgeData(k2_0).nVertexIndex(2) Then
+     k2 = tEdgeData(k2_0).nVertexIndex(1)
+    Else
+     k = tEdgeData(k1_0).nVertexIndex(3)
+     k1 = tEdgeData(k1_0).nVertexIndex(0)
+     If k = tEdgeData(k2_0).nVertexIndex(0) Then
+      k2 = tEdgeData(k2_0).nVertexIndex(3)
+     ElseIf k = tEdgeData(k2_0).nVertexIndex(2) Then
+      k2 = tEdgeData(k2_0).nVertexIndex(1)
+     Else
+      Debug.Assert False
+      Exit For
+     End If
+    End If
+   End If
+  End If
+  '///
+  'k
+  '|
+  'k2-k1
+  '///
+  Select Case nBevel
+  Case 2
+   'TODO:
+  Case Else
+   j = nVertexCount + 3
+   n = nFaceCount + 1
+   If j > nVertexMax Then
+    nVertexMax = j + 4096&
+    ReDim Preserve tVertex(1 To nVertexMax)
+   End If
+   If n > nFaceMax Then
+    nFaceMax = n + 4096&
+    ReDim Preserve tFace(1 To nFaceMax)
+   End If
+   pCreateFace tFace, n, tVertex, j - 2, j - 1, j, 0, p(0), p(0), p(0), p(0), p(0), p(0), _
+   k, k1, k2, , _
+   1, , -1
+   nVertexCount = j
+   nFaceCount = n
+  End Select
+  '///
+ End If
+Next i
 End Sub
 
 Friend Sub pApplyMeshData(ByRef t As typeMeshMgrData, ByRef t2 As typeMeshOptionalData, ByRef tFace() As typeMeshFace_Temp, ByVal nFaceCount As Long, ByVal m As Long, ByRef tVertex() As typeMeshVertex_Temp, ByVal nVertexCount As Long)
@@ -345,7 +938,7 @@ t.objMesh.LockVertexBuffer 0, lp
 For i = 1 To nVertexCount
  '--fix unknown bug
  tVertex(i).fPos.w = 1
- tVertex(i).fNormal(0).w = 1
+ 'tVertex(i).fNormal(0).w = 1
  '---
  CopyMemory ByVal lp + (i - 1) * t.nVertexSize, tVertex(i).fPos, 32&
 Next i
@@ -477,9 +1070,11 @@ For i = 1 To nFaceCount
  p.z = p1.x * p2.y - p2.x * p1.y
  '///normalize
  p1.w = Sqr(p.x * p.x + p.y * p.y + p.z * p.z)
- p.x = p.x / p1.w
- p.y = p.y / p1.w
- p.z = p.z / p1.w
+ If p1.w > 0.000001! Then
+  p.x = p.x / p1.w
+  p.y = p.y / p1.w
+  p.z = p.z / p1.w
+ End If
  '///save
  For j = 0 To tFace(i).nCount - 1
   tVertex(tFace(i).nVertex(j)).fNormal(1) = p
@@ -503,9 +1098,11 @@ For i = nVertexCount To 1 Step -1
   f = Sqr(tVertex(i).fNormal(0).x * tVertex(i).fNormal(0).x + _
   tVertex(i).fNormal(0).y * tVertex(i).fNormal(0).y + _
   tVertex(i).fNormal(0).z * tVertex(i).fNormal(0).z)
-  tVertex(i).fNormal(0).x = tVertex(i).fNormal(0).x / f
-  tVertex(i).fNormal(0).y = tVertex(i).fNormal(0).y / f
-  tVertex(i).fNormal(0).z = tVertex(i).fNormal(0).z / f
+  If f > 0.000001! Then
+   tVertex(i).fNormal(0).x = tVertex(i).fNormal(0).x / f
+   tVertex(i).fNormal(0).y = tVertex(i).fNormal(0).y / f
+   tVertex(i).fNormal(0).z = tVertex(i).fNormal(0).z / f
+  End If
  End If
 Next i
 End Sub
@@ -523,9 +1120,13 @@ For i = nVertexCount To 1 Step -1
    f.y = tVertex(i).fNormal(1).y + fNormalSmoothness * (tVertex(kk).fNormal(0).y - tVertex(i).fNormal(1).y)
    f.z = tVertex(i).fNormal(1).z + fNormalSmoothness * (tVertex(kk).fNormal(0).z - tVertex(i).fNormal(1).z)
    f.w = Sqr(f.x * f.x + f.y * f.y + f.z * f.z)
-   tVertex(i).fNormal(0).x = f.x / f.w
-   tVertex(i).fNormal(0).y = f.y / f.w
-   tVertex(i).fNormal(0).z = f.z / f.w
+   If f.w > 0.000001! Then
+    tVertex(i).fNormal(0).x = f.x / f.w
+    tVertex(i).fNormal(0).y = f.y / f.w
+    tVertex(i).fNormal(0).z = f.z / f.w
+   Else
+    tVertex(i).fNormal(0) = tVertex(i).fNormal(1)
+   End If
   Else
    tVertex(i).fNormal(0) = tVertex(i).fNormal(1)
   End If
@@ -541,27 +1142,35 @@ ByVal nVertexIndex1 As Long, ByVal nVertexIndex2 As Long, ByVal nVertexIndex3 As
 ByRef p As D3DXVECTOR4, ByRef pDelta1 As D3DXVECTOR4, ByRef pDelta2 As D3DXVECTOR4, _
 ByRef pTex As D3DXVECTOR4, ByRef pTexDelta1 As D3DXVECTOR4, ByRef pTexDelta2 As D3DXVECTOR4, _
 Optional ByVal nParentIndex1 As Long, Optional ByVal nParentIndex2 As Long, Optional ByVal nParentIndex3 As Long, Optional ByVal nParentIndex4 As Long, _
-Optional ByVal nVertexFlags As Long, Optional ByVal nFaceFlags As Long)
+Optional ByVal nVertexFlags As Long, Optional ByVal nFaceFlags As Long, Optional ByVal nUseParentTexFlags As Long)
 Dim t As D3DXVECTOR4, tTex As D3DXVECTOR4
 '///Index1
 If nParentIndex1 > 0 Then
  tVertex(nParentIndex1).nParent = -1
  tVertex(nVertexIndex1).nParent = nParentIndex1
  tVertex(nVertexIndex1).fPos = tVertex(nParentIndex1).fPos
+ If nUseParentTexFlags And 1& Then _
+ tVertex(nVertexIndex1).fTexcoord = tVertex(nParentIndex1).fTexcoord
 Else
  tVertex(nVertexIndex1).fPos = p
+ nUseParentTexFlags = nUseParentTexFlags And Not 1&
 End If
 tVertex(nVertexIndex1).nFlags = nVertexFlags
+If (nUseParentTexFlags And 1&) = 0& Then _
 tVertex(nVertexIndex1).fTexcoord = pTex
 '///Index2
 If nParentIndex2 > 0 Then
  tVertex(nParentIndex2).nParent = -1
  tVertex(nVertexIndex2).nParent = nParentIndex2
  tVertex(nVertexIndex2).fPos = tVertex(nParentIndex2).fPos
+ If nUseParentTexFlags And 2& Then _
+ tVertex(nVertexIndex2).fTexcoord = tVertex(nParentIndex2).fTexcoord
 Else
  tVertex(nVertexIndex2).fPos = D3DXVec4Add(p, pDelta1)
+ nUseParentTexFlags = nUseParentTexFlags And Not 2&
 End If
 tVertex(nVertexIndex2).nFlags = nVertexFlags
+If (nUseParentTexFlags And 2&) = 0& Then _
 tVertex(nVertexIndex2).fTexcoord = D3DXVec4Add(pTex, pTexDelta1)
 '///
 t = D3DXVec4Add(p, pDelta2)
@@ -571,10 +1180,14 @@ If nParentIndex3 > 0 Then
  tVertex(nParentIndex3).nParent = -1
  tVertex(nVertexIndex3).nParent = nParentIndex3
  tVertex(nVertexIndex3).fPos = tVertex(nParentIndex3).fPos
+ If nUseParentTexFlags And 4& Then _
+ tVertex(nVertexIndex3).fTexcoord = tVertex(nParentIndex3).fTexcoord
 Else
  tVertex(nVertexIndex3).fPos = t
+ nUseParentTexFlags = nUseParentTexFlags And Not 4&
 End If
 tVertex(nVertexIndex3).nFlags = nVertexFlags
+If (nUseParentTexFlags And 4&) = 0& Then _
 tVertex(nVertexIndex3).fTexcoord = tTex
 '///Index4
 If nVertexIndex4 > 0 Then
@@ -582,10 +1195,14 @@ If nVertexIndex4 > 0 Then
   tVertex(nParentIndex4).nParent = -1
   tVertex(nVertexIndex4).nParent = nParentIndex4
   tVertex(nVertexIndex4).fPos = tVertex(nParentIndex4).fPos
+  If nUseParentTexFlags And 8& Then _
+  tVertex(nVertexIndex4).fTexcoord = tVertex(nParentIndex4).fTexcoord
  Else
   tVertex(nVertexIndex4).fPos = D3DXVec4Add(t, pDelta1)
+  nUseParentTexFlags = nUseParentTexFlags And Not 8&
  End If
  tVertex(nVertexIndex4).nFlags = nVertexFlags
+ If (nUseParentTexFlags And 8&) = 0& Then _
  tVertex(nVertexIndex4).fTexcoord = D3DXVec4Add(tTex, pTexDelta1)
  '///
  tFace(nFaceIndex).nCount = 4
