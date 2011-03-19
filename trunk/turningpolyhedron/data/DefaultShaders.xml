@@ -21,7 +21,7 @@
     />
     -->
     <shaderTemplate templateName="simple1" shaderProgram="standard" ambient="0.25,0.25,0.25" diffuse="0.5,0.5,0.5"
-    baseColor="textureArgument0:texcoord0:textureFile:test3.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=wrap;AddressV=wrap;"
+    baseColor="textureArgument0:texcoord0:textureFile:test3.png:MipFilter=LINEAR;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=wrap;AddressV=wrap;"
     specular="1,1,1"
     specularHardness="50" emissive="shaderArgument"/>
     <shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument"
