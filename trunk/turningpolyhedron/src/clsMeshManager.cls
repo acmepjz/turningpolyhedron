@@ -56,10 +56,10 @@ Private Type typeMeshFace_Temp
  '///
  nCount As Long '3 or 4
  nVertex(3) As Long
- 'note: order=
- '2-3
- ' \
- '0-1
+ 'note: order(??)=
+ '0-1  -x
+ ' /  |
+ '2-3 y
 End Type
 
 Private Type typeMeshOptionalData
@@ -234,6 +234,7 @@ Debug.Assert Not t.objMesh Is Nothing
 '///
 End Sub
 
+'the coordinate system is annoying (LH)
 Friend Sub pCreateCube(ByRef t As typeMeshMgrData, ByRef t2 As typeMeshOptionalData)
 Dim p(7) As D3DXVECTOR4
 '0=actual corner pos
@@ -307,17 +308,17 @@ Case Else
  nFaceCount = 12
  nFaceCount_1 = 6
  'bottom
- pCreateFace tFace, 1, tVertex, 1, 2, 4, 3, p(0), p(2), p(1), Vec4, Vec4(, 1), Vec4(1)
+ pCreateFace tFace, 1, tVertex, 1, 2, 4, 3, p(0), p(2), p(1), Vec4(1), Vec4(, 1), Vec4(-1)
  'top
- pCreateFace tFace, 2, tVertex, 5, 8, 6, 7, D3DXVec4Add(p(0), p(3)), p(1), p(2), Vec4(, 1, , 1), Vec4(1), Vec4(, -1)
+ pCreateFace tFace, 2, tVertex, 5, 8, 6, 7, D3DXVec4Add(p(0), p(3)), p(1), p(2), Vec4(1, 1, , 1), Vec4(-1), Vec4(, -1)
  'front
- pCreateFace tFace, 3, tVertex, 9, 10, 11, 12, p(7), p(7), p(7), Vec4(, 1, , 2), Vec4(1), Vec4(, -1), 1, 4, 5, 8
+ pCreateFace tFace, 3, tVertex, 9, 10, 11, 12, p(7), p(7), p(7), Vec4(1, 1, , 2), Vec4(-1), Vec4(, -1), 1, 4, 5, 8
  'right
- pCreateFace tFace, 4, tVertex, 13, 14, 15, 16, p(7), p(7), p(7), Vec4(, 1, , 3), Vec4(1), Vec4(, -1), 4, 3, 8, 7
+ pCreateFace tFace, 4, tVertex, 13, 14, 15, 16, p(7), p(7), p(7), Vec4(1, 1, , 3), Vec4(-1), Vec4(, -1), 2, 1, 6, 5
  'back
- pCreateFace tFace, 5, tVertex, 17, 18, 19, 20, p(7), p(7), p(7), Vec4(, 1, , 4), Vec4(1), Vec4(, -1), 3, 2, 7, 6
+ pCreateFace tFace, 5, tVertex, 17, 18, 19, 20, p(7), p(7), p(7), Vec4(1, 1, , 4), Vec4(-1), Vec4(, -1), 3, 2, 7, 6
  'left
- pCreateFace tFace, 6, tVertex, 21, 22, 23, 24, p(7), p(7), p(7), Vec4(, 1, , 5), Vec4(1), Vec4(, -1), 2, 1, 6, 5
+ pCreateFace tFace, 6, tVertex, 21, 22, 23, 24, p(7), p(7), p(7), Vec4(1, 1, , 5), Vec4(-1), Vec4(, -1), 4, 3, 8, 7
 End Select
 '///calc normal
 pCalcFaceNormal tFace, nFaceCount_1, tVertex
@@ -342,7 +343,10 @@ Dim nIndex() As Integer
 t.objMesh.LockVertexBuffer 0, lp
 '///position and normal
 For i = 1 To nVertexCount
+ '--fix unknown bug
  tVertex(i).fPos.w = 1
+ tVertex(i).fNormal(0).w = 1
+ '---
  CopyMemory ByVal lp + (i - 1) * t.nVertexSize, tVertex(i).fPos, 32&
 Next i
 '///
