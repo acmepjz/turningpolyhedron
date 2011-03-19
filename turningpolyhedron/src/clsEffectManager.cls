@@ -925,11 +925,14 @@ Case "standard"
 '   sParam = sParam + vbTab + "float3 vNormal=(" + pGenerateArgumentCode(t, IDA_NormalMap, 3) + "-0.5f)*" + _
 '   pGenerateArgumentCode(t, IDA_NormalMapScale, 1) + ";" + vbCrLf
    sParam = sParam + vbTab + "vNormal.xy*=" + pGenerateArgumentCode(t, IDA_NormalMapScale, 1) + ";" + vbCrLf
-   sParam = sParam + vbTab + "vNormal=normalize(vNormal);" + vbCrLf
+   '===fixed again (r152)
+   'sParam = sParam + vbTab + "vNormal=normalize(vNormal);" + vbCrLf
   End If
-  sParam = sParam + vbTab + "vNormal=vNormal.x*cin.vBinormal.xyz+vNormal.y*cin.vTangent.xyz+vNormal.z*cin.vNormal.xyz;" + vbCrLf + vbCrLf
+  '===fixed again (r152)
+  sParam = sParam + vbTab + "vNormal=normalize(vNormal.x*cin.vBinormal.xyz+vNormal.y*cin.vTangent.xyz+vNormal.z*cin.vNormal.xyz);" + vbCrLf + vbCrLf
  Else
-  sParam = sParam + vbTab + "float3 vNormal=cin.vNormal.xyz;" + vbCrLf + vbCrLf
+  '===fixed again (r152)
+  sParam = sParam + vbTab + "float3 vNormal=normalize(cin.vNormal.xyz);" + vbCrLf + vbCrLf
  End If
  '///TODO:custom light
  sParam = sParam + vbTab + "float3 vLight;" + vbCrLf + vbTab + "if(lightType==1) vLight=normalize(lightPos.xyz-cin.vPos.xyz);" + vbCrLf + vbTab + _

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <test>
-	<mesh type="cube" s="2,2,2" c="0.5,0.5,0.5" bevel="0;0.05" bevelNormalSmoothness="1" color0="0.5,0,0"
-	normalSmoothness="0.5"/>
+	<mesh type="cube" s="2,2,4" c="0.5,0.5,0.5" bevel="0;0.05" bevelNormalSmoothness="1" color0="0.5,0,0"
+	normalSmoothness="1.00" texcoord0.xy="rect"/>
 </test>
