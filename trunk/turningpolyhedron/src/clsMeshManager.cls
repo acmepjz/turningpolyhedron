@@ -221,27 +221,36 @@ End Function
 Friend Sub pCreateEmptyMesh(ByRef t As typeMeshMgrData, ByVal nVertexCount As Long, ByVal nFaceCount As Long)
 Dim tt(63) As D3DVERTEXELEMENT9
 Dim i As Long, m As Long
+Dim nSize As Long
 '///
-tt(0) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_POSITION)
-tt(1) = D3DVertexElementCreate(, 16&, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_NORMAL)
-tt(2) = D3DVertexElementCreate(, 32&, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_BINORMAL)
-tt(3) = D3DVertexElementCreate(, 48&, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_TANGENT)
-m = 4
+tt(0) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
+tt(1) = D3DVertexElementCreate(, 12&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_NORMAL)
+If t.FVF And &H1F00& Then
+ tt(2) = D3DVertexElementCreate(, 24&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_BINORMAL)
+ tt(3) = D3DVertexElementCreate(, 36&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_TANGENT)
+ m = 4
+Else
+ m = 2
+End If
+nSize = m * 12&
 If t.FVF And D3DFVF_DIFFUSE Then
- tt(m) = D3DVertexElementCreate(, m * 16&, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_COLOR)
+ tt(m) = D3DVertexElementCreate(, nSize, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_COLOR)
  m = m + 1
+ nSize = nSize + 16&
 End If
 If t.FVF And D3DFVF_SPECULAR Then
- tt(m) = D3DVertexElementCreate(, m * 16&, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_COLOR, 1)
+ tt(m) = D3DVertexElementCreate(, nSize, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_COLOR, 1)
  m = m + 1
+ nSize = nSize + 16&
 End If
 For i = 0 To (t.FVF And &H1F00&) \ &H100& - 1
- tt(m) = D3DVertexElementCreate(, m * 16&, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_TEXCOORD, i)
+ tt(m) = D3DVertexElementCreate(, nSize, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_TEXCOORD, i)
  m = m + 1
+ nSize = nSize + 16&
 Next i
 tt(m) = D3DDECL_END
 '///
-t.nVertexSize = m * 16&
+t.nVertexSize = nSize
 '///
 D3DXCreateMesh nFaceCount, nVertexCount, D3DXMESH_MANAGED, tt(0), d3dd9, t.objMesh
 Debug.Assert Not t.objMesh Is Nothing
@@ -901,13 +910,20 @@ For i = 1 To nVertexCount_Old
    p(1) = D3DXVec4Subtract3(tVertex(k).fTexcoord, tVertexDelta(k, 2), tVertexDelta(k, 3))
    p(2) = D3DXVec4Subtract3(tVertex(k1).fTexcoord, tVertexDelta(k1, 2), tVertexDelta(k1, 3))
    p(3) = D3DXVec4Subtract3(tVertex(k2).fTexcoord, tVertexDelta(k2, 2), tVertexDelta(k2, 3))
+'   '///wrong code because violates the assumption: parent index must < current index
+'   pCreateFace tFace, n - 5, tVertex, j, j - 17, j - 16, 0, p(0), p(0), p(0), p(1), tVertexDelta(k, 3), p(0), , k1_0, k, , 1, , 4
+'   pCreateFace tFace, n - 4, tVertex, j - 15, j - 14, j - 13, 0, p(0), p(0), p(0), p(1), p(0), tVertexDelta(k, 2), j, k, k2_0, , 1, , 2
+'   pCreateFace tFace, n - 3, tVertex, j - 12, j - 11, j - 10, 0, p(0), p(0), p(0), p(2), tVertexDelta(k1, 3), p(0), j, k2_0, k1, , 1, , 4
+'   pCreateFace tFace, n - 2, tVertex, j - 9, j - 8, j - 7, 0, p(0), p(0), p(0), p(2), p(0), tVertexDelta(k1, 2), j, k1, k_0, , 1, , 2
+'   pCreateFace tFace, n - 1, tVertex, j - 6, j - 5, j - 4, 0, p(0), p(0), p(0), p(3), tVertexDelta(k2, 3), p(0), j, k_0, k2, , 1, , 4
+'   pCreateFace tFace, n, tVertex, j - 3, j - 2, j - 1, 0, p(0), p(0), p(0), p(3), p(0), tVertexDelta(k2, 2), j, k2, k1_0, , 1, , 2
    '///
-   pCreateFace tFace, n - 5, tVertex, j, j - 17, j - 16, 0, p(0), p(0), p(0), p(1), tVertexDelta(k, 3), p(0), , k1_0, k, , 1, , 4
-   pCreateFace tFace, n - 4, tVertex, j - 15, j - 14, j - 13, 0, p(0), p(0), p(0), p(1), p(0), tVertexDelta(k, 2), j, k, k2_0, , 1, , 2
-   pCreateFace tFace, n - 3, tVertex, j - 12, j - 11, j - 10, 0, p(0), p(0), p(0), p(2), tVertexDelta(k1, 3), p(0), j, k2_0, k1, , 1, , 4
-   pCreateFace tFace, n - 2, tVertex, j - 9, j - 8, j - 7, 0, p(0), p(0), p(0), p(2), p(0), tVertexDelta(k1, 2), j, k1, k_0, , 1, , 2
-   pCreateFace tFace, n - 1, tVertex, j - 6, j - 5, j - 4, 0, p(0), p(0), p(0), p(3), tVertexDelta(k2, 3), p(0), j, k_0, k2, , 1, , 4
-   pCreateFace tFace, n, tVertex, j - 3, j - 2, j - 1, 0, p(0), p(0), p(0), p(3), p(0), tVertexDelta(k2, 2), j, k2, k1_0, , 1, , 2
+   pCreateFace tFace, n - 5, tVertex, j - 17, j - 16, j - 15, 0, p(0), p(0), p(0), p(1), tVertexDelta(k, 3), p(0), , k1_0, k, , 1, , 4
+   pCreateFace tFace, n - 4, tVertex, j - 14, j - 13, j - 12, 0, p(0), p(0), p(0), p(1), p(0), tVertexDelta(k, 2), j - 17, k, k2_0, , 1, , 2
+   pCreateFace tFace, n - 3, tVertex, j - 11, j - 10, j - 9, 0, p(0), p(0), p(0), p(2), tVertexDelta(k1, 3), p(0), j - 17, k2_0, k1, , 1, , 4
+   pCreateFace tFace, n - 2, tVertex, j - 8, j - 7, j - 6, 0, p(0), p(0), p(0), p(2), p(0), tVertexDelta(k1, 2), j - 17, k1, k_0, , 1, , 2
+   pCreateFace tFace, n - 1, tVertex, j - 5, j - 4, j - 3, 0, p(0), p(0), p(0), p(3), tVertexDelta(k2, 3), p(0), j - 17, k_0, k2, , 1, , 4
+   pCreateFace tFace, n, tVertex, j - 2, j - 1, j, 0, p(0), p(0), p(0), p(3), p(0), tVertexDelta(k2, 2), j - 17, k2, k1_0, , 1, , 2
    '///
    nVertexCount = j
    nFaceCount = n
@@ -933,32 +949,36 @@ For i = 1 To nVertexCount_Old
 Next i
 End Sub
 
+'note: will screw up data in tVertex
 Friend Sub pApplyMeshData(ByRef t As typeMeshMgrData, ByRef t2 As typeMeshOptionalData, ByRef tFace() As typeMeshFace_Temp, ByVal nFaceCount As Long, ByVal m As Long, ByRef tVertex() As typeMeshVertex_Temp, ByVal nVertexCount As Long)
 Dim lp As Long
 Dim i As Long, j As Long, k As Long, kk As Long
-Dim nOffset As Long
+Dim nOffset As Long, nOffset_0 As Long
 Dim tParam As typeMeshParamData
 Dim nIndex() As Integer
+'///
+nOffset_0 = 24& + (((t.FVF And &H1F00&) <> 0) And 24&)
 '////////////////copy vertex buffer
 t.objMesh.LockVertexBuffer 0, lp
 '///position and normal
 For i = 1 To nVertexCount
- '--fix unknown bug
- tVertex(i).fPos.w = 1
- 'tVertex(i).fNormal(0).w = 1
+ '---screw up some data
+ tVertex(i).fPos.w = tVertex(i).fNormal(0).x
+ tVertex(i).fNormal(0).x = tVertex(i).fNormal(0).y
+ tVertex(i).fNormal(0).y = tVertex(i).fNormal(0).z
  '---
- CopyMemory ByVal lp + (i - 1) * t.nVertexSize, tVertex(i).fPos, 32&
+ CopyMemory ByVal lp + (i - 1) * t.nVertexSize, tVertex(i).fPos, 24&
 Next i
 '///
 For j = 1 To t2.nParamCount
  tParam = t2.tParams(j)
  Select Case tParam.nType And &H1F&
  Case 1
-  nOffset = 64&
+  nOffset = nOffset_0
  Case 2
-  nOffset = 64& + ((t.FVF And D3DFVF_DIFFUSE) <> 0 And 16&)
+  nOffset = nOffset_0 + ((t.FVF And D3DFVF_DIFFUSE) <> 0 And 16&)
  Case &H10& To &H1F&
-  nOffset = 64& + ((t.FVF And D3DFVF_DIFFUSE) <> 0 And 16&) _
+  nOffset = nOffset_0 + ((t.FVF And D3DFVF_DIFFUSE) <> 0 And 16&) _
   + ((t.FVF And D3DFVF_SPECULAR) <> 0 And 16&) _
   + (tParam.nType And &HF&) * 16&
  Case Else
@@ -1095,6 +1115,7 @@ Dim f As Single
 For i = nVertexCount To 1 Step -1
  j = tVertex(i).nParent
  If j > 0 Then
+  Debug.Assert j < i
   tVertex(j).fNormal(0).x = tVertex(j).fNormal(0).x + tVertex(i).fNormal(1).x
   tVertex(j).fNormal(0).y = tVertex(j).fNormal(0).y + tVertex(i).fNormal(1).y
   tVertex(j).fNormal(0).z = tVertex(j).fNormal(0).z + tVertex(i).fNormal(1).z

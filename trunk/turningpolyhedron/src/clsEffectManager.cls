@@ -117,8 +117,19 @@ Public Enum enumFakeDXEffectArgumentType
  IDA_ParallaxMapScale
 End Enum
 
-Private m_tEffect() As typeFakeDXEffect
+Private m_tEffect() As typeFakeDXEffect '1-based
 Private m_nEffectCount As Long, m_nEffectMax As Long
+
+Private Type typeMeshInstanceData
+ nEffectIndex As Long
+ nMeshIndex As Long
+ matWorld As D3DMATRIX
+End Type
+
+Private m_tInstance() As typeMeshInstanceData '1-based
+Private m_nInstOrder() As Long '1-based
+Private m_nInstCount As Long, m_nInstMax As Long
+Private m_bInstDirty As Boolean
 
 Private m_sParamName(63) As String
 Private m_nParamSize(63) As Long
@@ -126,6 +137,8 @@ Private m_sOutputName(31) As String
 Private m_sOutputSemantics(31) As String
 
 Private m_nLastIndex As Long
+
+Implements ISort2
 
 Friend Sub SetTexture(ByVal nIndex As Long, ByVal nType As enumFakeDXEffectArgumentType, ByVal obj As Direct3DBaseTexture9)
 Dim t As Long
@@ -152,9 +165,134 @@ End If
 End Sub
 
 Friend Sub Destroy()
-Erase m_tEffect
+Erase m_tEffect, m_tInstance, m_nInstOrder
 m_nEffectCount = 0
 m_nEffectMax = 0
+m_nInstCount = 0
+m_nInstMax = 0
+m_bInstDirty = False
+End Sub
+
+Friend Sub ClearInstance()
+Erase m_tInstance, m_nInstOrder
+m_nInstCount = 0
+m_nInstMax = 0
+m_bInstDirty = False
+End Sub
+
+Friend Function AddInstance(ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld As D3DMATRIX) As Long
+If nEffectIndex > 0 And nEffectIndex <= m_nEffectCount Then
+ m_nInstCount = m_nInstCount + 1
+ If m_nInstCount > m_nInstMax Then
+  m_nInstMax = m_nInstMax + 256&
+  ReDim Preserve m_tInstance(1 To m_nInstMax)
+  ReDim Preserve m_nInstOrder(1 To m_nInstMax)
+ End If
+ m_tInstance(m_nInstCount).nEffectIndex = nEffectIndex
+ m_tInstance(m_nInstCount).nMeshIndex = nMeshIndex
+ m_tInstance(m_nInstCount).matWorld = matWorld
+ m_nInstOrder(m_nInstCount) = m_nInstCount
+ m_bInstDirty = True
+ AddInstance = m_nInstCount
+End If
+End Function
+
+Friend Property Get InstanceEffectIndex(ByVal nIndex As Long) As Long
+InstanceEffectIndex = m_tInstance(nIndex).nEffectIndex
+End Property
+
+Friend Property Let InstanceEffectIndex(ByVal nIndex As Long, ByVal n As Long)
+m_tInstance(nIndex).nEffectIndex = n
+m_bInstDirty = True
+End Property
+
+Friend Property Get InstanceMeshIndex(ByVal nIndex As Long) As Long
+InstanceMeshIndex = m_tInstance(nIndex).nMeshIndex
+End Property
+
+Friend Property Let InstanceMeshIndex(ByVal nIndex As Long, ByVal n As Long)
+m_tInstance(nIndex).nMeshIndex = n
+End Property
+
+'has some code copied from SetupEffect
+Friend Sub DrawInstance(ByVal objMeshMgr As clsMeshManager, Optional ByVal bSetupLight As Boolean)
+Dim i As Long, ii As Long, j As Long, k As Long
+Dim idx As Long
+Dim nEffectIndex As Long, nMeshIndex As Long
+Dim obj As D3DXEffect, objNew As D3DXEffect
+Dim matBackup As D3DMATRIX
+Dim b As Boolean
+'///
+If m_nEffectCount <= 0 Or m_nInstCount <= 0 Or m_nLastIndex > 0 Then Exit Sub
+'///
+If m_bInstDirty Then
+ With New ISort2
+  .QuickSort m_nInstOrder, 1, m_nInstCount, Me
+ End With
+ m_bInstDirty = False
+End If
+'///
+d3dd9.GetTransform D3DTS_WORLD, matBackup
+'///
+For i = 1 To m_nInstCount
+ idx = m_nInstOrder(i)
+ '///SetupEffect
+ j = m_tInstance(idx).nEffectIndex
+ If nEffectIndex <> j Then
+  nEffectIndex = j
+  Set objNew = m_tEffect(j).objEffect
+  b = Not obj Is objNew
+  If b Then 'change effect
+   If Not obj Is Nothing Then
+    obj.EndPass
+    obj.End
+   End If
+   Set obj = objNew
+  End If
+  If obj Is Nothing Then
+   'TODO:no HLSL
+   Debug.Assert False
+   Exit For
+  Else
+   '///SetupParam
+   ii = m_tEffect(nEffectIndex).nParamUsed
+   If ii > 0 Then _
+   obj.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_tEffect(nEffectIndex).fParams(0), i
+   '///SetupTexture
+   j = 1
+   k = m_tEffect(nEffectIndex).nTextureUsedFlag
+   For ii = 0 To 15
+    If j And k Then
+     obj.SetTexture StrPtr(StrConv("tex" + CStr(ii), vbFromUnicode)), m_tEffect(nEffectIndex).objTextures(ii)
+    End If
+    j = j + j
+   Next ii
+   '///
+   If b Then
+    If bSetupLight Then
+     objRenderTest.SetupLight obj
+    End If
+    If m_tEffect(nEffectIndex).nFlags And 1& Then objRenderTest.SetupZData obj
+    obj.SetTechnique StrPtr(StrConv("test", vbFromUnicode))
+    obj.Begin 0, 0
+    obj.BeginPass 0
+   End If
+   '///
+  End If
+ End If
+ '///SetupTransform
+ d3dd9.SetTransform D3DTS_WORLD, m_tInstance(idx).matWorld
+ objRenderTest.SetupTransform obj
+ obj.CommitChanges
+ '///draw
+ objMeshMgr.Mesh(m_tInstance(idx).nMeshIndex).DrawSubset 0
+Next i
+'///over
+If Not obj Is Nothing Then
+ obj.EndPass
+ obj.End
+End If
+d3dd9.SetTransform D3DTS_WORLD, matBackup
 End Sub
 
 Private Sub Class_Initialize()
@@ -1294,3 +1432,29 @@ If m_nLastIndex > 0 And m_nLastIndex <= m_nEffectCount Then
 End If
 m_nLastIndex = 0
 End Sub
+
+Private Function ISort2_Compare(ByVal Index1 As Long, ByVal Index2 As Long, ByVal nUserData As Long) As Long
+Dim i As Long, j As Long
+Dim ii As Long, jj As Long
+i = m_tInstance(Index1).nEffectIndex
+j = m_tInstance(Index2).nEffectIndex
+ii = m_tEffect(i).nReferenceIndex
+jj = m_tEffect(j).nReferenceIndex
+If ii = 0 Then ii = i
+If jj = 0 Then jj = j
+'///
+If ii < jj Then
+ ISort2_Compare = -1
+ElseIf ii > jj Then
+ ISort2_Compare = 1
+ElseIf i < j Then
+ ISort2_Compare = -1
+ElseIf i > j Then
+ ISort2_Compare = 1
+'Else
+' i = m_tInstance(Index1).nMeshIndex
+' j = m_tInstance(Index2).nMeshIndex
+' If i < j Then ISort2_Compare = -1 _
+' Else If i > j Then ISort2_Compare = 1
+End If
+End Function

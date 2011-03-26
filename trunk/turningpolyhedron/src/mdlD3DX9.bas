@@ -278,6 +278,33 @@ With D3DXVec4Subtract
 End With
 End Function
 
+Public Function D3DXVec4Add3(pV1 As D3DXVECTOR4, pV2 As D3DXVECTOR4, pV3 As D3DXVECTOR4) As D3DXVECTOR4
+With D3DXVec4Add3
+ .x = pV1.x + pV2.x + pV3.x
+ .y = pV1.y + pV2.y + pV3.y
+ .z = pV1.z + pV2.z + pV3.z
+ .w = pV1.w + pV2.w + pV3.w
+End With
+End Function
+
+Public Function D3DXVec4Subtract3(pV1 As D3DXVECTOR4, pV2 As D3DXVECTOR4, pV3 As D3DXVECTOR4) As D3DXVECTOR4
+With D3DXVec4Subtract3
+ .x = pV1.x - pV2.x - pV3.x
+ .y = pV1.y - pV2.y - pV3.y
+ .z = pV1.z - pV2.z - pV3.z
+ .w = pV1.w - pV2.w - pV3.w
+End With
+End Function
+
+Public Function D3DXVec4AddSubtract(pV1 As D3DXVECTOR4, pV2 As D3DXVECTOR4, pV3 As D3DXVECTOR4) As D3DXVECTOR4
+With D3DXVec4AddSubtract
+ .x = pV1.x + pV2.x - pV3.x
+ .y = pV1.y + pV2.y - pV3.y
+ .z = pV1.z + pV2.z - pV3.z
+ .w = pV1.w + pV2.w - pV3.w
+End With
+End Function
+
 Public Function D3DXVec4Minimize(pV1 As D3DXVECTOR4, pV2 As D3DXVECTOR4) As D3DXVECTOR4
 With D3DXVec4Minimize
  If pV1.x < pV2.x Then .x = pV1.x Else .x = pV2.x
@@ -302,6 +329,15 @@ With D3DXVec4Scale
  .y = pV.y * s
  .z = pV.z * s
  .w = pV.w * s
+End With
+End Function
+
+Public Function D3DXVec4AddScale(pV1 As D3DXVECTOR4, pV2 As D3DXVECTOR4, ByVal s As Single) As D3DXVECTOR4
+With D3DXVec4AddScale
+ .x = pV1.x + pV2.x * s
+ .y = pV1.y + pV2.y * s
+ .z = pV1.z + pV2.z * s
+ .w = pV1.w + pV2.w * s
 End With
 End Function
 

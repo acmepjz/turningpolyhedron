@@ -60,7 +60,7 @@ If Index1 < Index2 Then Compare = -1 Else _
 If Index1 > Index2 Then Compare = 1 Else Compare = 0
 End Function
 
-Friend Sub QuickSort(idxArray() As Long, ByVal nStart As Long, ByVal nEnd As Long, Optional ByVal obj As ISort2, Optional ByVal nUserData As Long, Optional ByVal nLimit As Long = 8)
+Friend Sub QuickSort(idxArray() As Long, ByVal nStart As Long, ByVal nEnd As Long, Optional ByVal obj As ISort2, Optional ByVal nUserData As Long, Optional ByVal nLimit As Long = 75)
 '///check
 If nEnd - nStart <= 0 Then Exit Sub
 If obj Is Nothing Then Set obj = Me
@@ -418,5 +418,90 @@ For i = nEnd To 2 Step -1
  Loop
  idxArray(nStart + nParent) = nTemp
 Next i
+End Sub
+
+'the only stable sort algorithm :)
+Friend Sub MergeSort(idxArray() As Long, ByVal nStart As Long, ByVal nEnd As Long, Optional ByVal obj As ISort2, Optional ByVal nUserData As Long)
+Dim i As Long, j As Long, k As Long, m As Long
+Dim n As Long, n2 As Long
+Dim lpArray0 As Long, lpArray1 As Long, lpArray1_0 As Long, lpArrayAux As Long
+Dim aux() As Long
+'///
+If obj Is Nothing Then Set obj = Me
+'///
+nEnd = nEnd - nStart + 1
+If nEnd <= 1 Then
+ Exit Sub
+ElseIf nEnd = 2 Then
+ j = idxArray(nStart)
+ k = idxArray(nStart + 1)
+ If obj.Compare(j, k, nUserData) > 0 Then
+  idxArray(nStart) = k
+  idxArray(nStart + 1) = j
+ End If
+ Exit Sub
+End If
+'//calc additional size
+i = 1
+Do
+ If nEnd - i <= i Then
+  m = nEnd - i
+  Exit Do
+ End If
+ i = i + i
+Loop
+If m < i Then m = i
+ReDim aux(m - 1)
+'//
+For i = 0 To nEnd - 2 Step 2
+ j = idxArray(nStart + i)
+ k = idxArray(nStart + i + 1)
+ If obj.Compare(j, k, nUserData) > 0 Then
+  idxArray(nStart + i) = k
+  idxArray(nStart + i + 1) = j
+ End If
+Next i
+'//
+n = 2
+Do While n < nEnd
+ For i = 0 To nEnd - n - 1 Step n + n
+  n2 = nEnd - i - n
+  If n2 > n Then n2 = n
+  lpArray1_0 = nStart + i
+  lpArray1 = lpArray1_0 + n - 1
+  lpArrayAux = n2 - 1
+  lpArray0 = lpArray1 + n2
+  '//copy second half
+  For j = 0 To n2 - 1
+   aux(j) = idxArray(lpArray1 + 1 + j)
+  Next j
+  '//merge
+  Do While lpArray1 >= lpArray1_0 And lpArrayAux >= 0
+   j = idxArray(lpArray1)
+   k = aux(lpArrayAux)
+   If obj.Compare(j, k, nUserData) > 0 Then
+    idxArray(lpArray0) = j
+    lpArray1 = lpArray1 - 1
+   Else
+    idxArray(lpArray0) = k
+    lpArrayAux = lpArrayAux - 1
+   End If
+   lpArray0 = lpArray0 - 1
+  Loop
+  '//
+  Do While lpArray1 >= lpArray1_0
+   idxArray(lpArray0) = idxArray(lpArray1)
+   lpArray0 = lpArray0 - 1
+   lpArray1 = lpArray1 - 1
+  Loop
+  Do While lpArrayAux >= 0
+   idxArray(lpArray0) = aux(lpArrayAux)
+   lpArray0 = lpArray0 - 1
+   lpArrayAux = lpArrayAux - 1
+  Loop
+ Next i
+ n = n + n
+Loop
+'//over
 End Sub
 
