@@ -3,7 +3,7 @@ Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#D:\WINDOWS\system32\st
 Reference=*\G{2684085F-5C59-4214-890B-3E393C5970B1}#0.0#0#.\tlb\dx9vbtest.tlb#Direct3D9 VB6 Type Library (Test Only!!!)
 Form=src\frmMain.frm
 Module=mdlMain; src\mdlMain.bas
-Class=clsRenderTexture; src\clsRenderProceduralTexture.cls
+Class=clsTextureManager; src\clsRenderProceduralTexture.cls
 Class=clsRenderPipeline; src\clsPixelPipeline.cls
 Class=clsFakeDXUI; src\clsFakeDXUI.cls
 Module=mdlFakeDXUI; src\mdlFakeDXUI.bas
@@ -73,6 +73,7 @@ Unattended=0
 Retained=0
 ThreadPerObject=0
 MaxNumberOfThreads=1
+DebugStartupOption=0
 
 [MS Transaction Server]
 AutoRefresh=1
