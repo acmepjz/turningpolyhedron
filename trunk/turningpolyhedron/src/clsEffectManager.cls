@@ -300,6 +300,7 @@ m_tInstance(nIndex).matWorld = mat
 End Property
 
 'has some code copied from SetupEffect
+'draw more than 10000 objects is slow ... consider using hardware instancing
 Friend Sub DrawInstance(ByVal objMeshMgr As clsMeshManager, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
 Dim i As Long, ii As Long, j As Long, k As Long
 Dim idx As Long

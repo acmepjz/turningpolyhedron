@@ -69,7 +69,7 @@ Public Type typeVertex_XYZ_Diffuse
  clr1 As Long
 End Type
 
-Public m_tDefVertexDecl() As D3DVERTEXELEMENT9
+Public m_tDefVertexDecl() As D3DVERTEXELEMENT9, m_objVertexDecl As Direct3DVertexDeclaration9
 
 Public objText As New clsGNUGetText
 
@@ -86,6 +86,10 @@ Public objCamera As New clsCamera
 
 'test
 Public objTest As D3DXMesh
+
+'hardware instancing test
+Public objInstanceBuffer As Direct3DVertexBuffer9
+
 Public objTextMgr As New clsTextureManager
 Public objRenderTest As New clsRenderPipeline
 Public objLand As New clsRenderLandscape, objLandTexture As Direct3DTexture9
@@ -109,7 +113,7 @@ Public frmSettings As New frmSettings
 Public m_hStdErr As Long
 
 Public Sub CreateVertexDeclaration()
-ReDim m_tDefVertexDecl(0 To 7)
+ReDim m_tDefVertexDecl(0 To 63)
 m_tDefVertexDecl(0) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
 m_tDefVertexDecl(1) = D3DVertexElementCreate(, 12&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_NORMAL)
 m_tDefVertexDecl(2) = D3DVertexElementCreate(, 24&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_BINORMAL)
@@ -118,6 +122,17 @@ m_tDefVertexDecl(4) = D3DVertexElementCreate(, 48&, D3DDECLTYPE_D3DCOLOR, , D3DD
 m_tDefVertexDecl(5) = D3DVertexElementCreate(, 52&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR, 1)
 m_tDefVertexDecl(6) = D3DVertexElementCreate(, 56&, D3DDECLTYPE_FLOAT2, , D3DDECLUSAGE_TEXCOORD)
 m_tDefVertexDecl(7) = D3DDECL_END '64 bytes
+'///
+m_tDefVertexDecl(8) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
+m_tDefVertexDecl(9) = D3DVertexElementCreate(, 12&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_NORMAL)
+m_tDefVertexDecl(10) = D3DVertexElementCreate(, 24&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_BINORMAL)
+m_tDefVertexDecl(11) = D3DVertexElementCreate(, 36&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_TANGENT)
+m_tDefVertexDecl(12) = D3DVertexElementCreate(, 48&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR)
+m_tDefVertexDecl(13) = D3DVertexElementCreate(, 52&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR, 1)
+m_tDefVertexDecl(14) = D3DVertexElementCreate(, 56&, D3DDECLTYPE_FLOAT2, , D3DDECLUSAGE_TEXCOORD)
+m_tDefVertexDecl(15) = D3DVertexElementCreate(1, 0, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_POSITION, 7)
+m_tDefVertexDecl(16) = D3DDECL_END
+Set m_objVertexDecl = d3dd9.CreateVertexDeclaration(m_tDefVertexDecl(8))
 End Sub
 
 'Public Sub CreateCube1(ByVal lp As Long, ByVal clr1 As Long, ByVal clr2 As Long)
@@ -232,7 +247,22 @@ With d3dd9
    objRenderTest.SetNormalTexture objNormalTexture
    If objRenderTest.BeginRender(RenderPass_Main) Then
     .BeginScene
-    objTest.DrawSubset 0
+    'objTest.DrawSubset 0
+    '///TEST hardware instancing
+    .SetStreamSourceFreq 0, D3DSTREAMSOURCE_INDEXEDDATA Or 400
+    .SetStreamSource 0, objTest.GetVertexBuffer, 0, 64&
+    .SetStreamSourceFreq 1, D3DSTREAMSOURCE_INSTANCEDATA Or 1
+    .SetStreamSource 1, objInstanceBuffer, 0, 16&
+    '///
+    .SetVertexDeclaration m_objVertexDecl
+    .SetIndices objTest.GetIndexBuffer
+    .DrawIndexedPrimitive D3DPT_TRIANGLELIST, 0, 0, 24&, 0, 12&
+    '///
+    .SetStreamSourceFreq 0, 1
+    .SetStreamSource 0, Nothing, 0, 0
+    .SetStreamSourceFreq 1, 1
+    .SetStreamSource 1, Nothing, 0, 0
+    '///
 '    '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
 '    objRenderTest.SetTexture objLandTexture
 '    .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
@@ -432,6 +462,8 @@ Set objLand = Nothing
 Set objLandTexture = Nothing
 Set objTextMgr = Nothing
 Set objTest = Nothing
+Set objInstanceBuffer = Nothing
+Set m_objVertexDecl = Nothing
 Set objTexture = Nothing
 Set objNormalTexture = Nothing
 Set d3dd9 = Nothing
@@ -643,6 +675,19 @@ Next i
 obj.UnlockVertexBuffer
 '///
 Set pLoadMeshTest = obj
+'///hardware instancing test
+Dim v As D3DXVECTOR4
+d3dd9.CreateVertexBuffer 6400, 0, 0, D3DPOOL_MANAGED, objInstanceBuffer, ByVal 0
+objInstanceBuffer.Lock 0, 0, lp, D3DLOCK_DISCARD
+For i = -10 To 9
+ For j = -10 To 9
+  v.x = i * 3
+  v.y = j * 3
+  CopyMemory ByVal lp, v, 16
+  lp = lp + 16
+ Next j
+Next i
+objInstanceBuffer.Unlock
 End Function
 
 Public Sub FakeDXAppCreateUI(ByVal objEventCallback As IFakeDXUIEvent)
