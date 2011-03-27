@@ -8,6 +8,9 @@ float4 t:TEXCOORD0;
 float4 n:NORMAL;
 float4 b:BINORMAL;
 float4 ta:TANGENT;
+	//test hardware instancing
+	float4 ppp:POSITION7;
+	//end
 };
 
 struct VS_OUTPUT{
@@ -123,6 +126,7 @@ AddressV=WRAP;
 
 void vs_func(VS_INPUT d0,out VS_OUTPUT d,out float4 p:POSITION){
 //VS_OUTPUT d;
+d0.p+=float4(d0.ppp.xyz,0);
 p=mul(d0.p,matTransform);
 d.c=d0.c; //1
 d.c1=d0.c1; //1
