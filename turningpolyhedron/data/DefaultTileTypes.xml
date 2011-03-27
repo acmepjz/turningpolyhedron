@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- TEST ONLY -->
 <tileTypes>
-  <tileType index="1">
+  <tileType id="ground" index="1">
     <name>Ground</name>
     <description>Normal ground.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.25,0.25,0.2" diffuse="0.25,0.25,0.2">
+      <shader templateName="simple1_fixed" ambient="0.25,0.25,0.2" diffuse="0.25,0.25,0.2" specular="0.5,0.5,0.5" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
   </tileType>
-  <tileType index="2">
+  <tileType id="soft-button" index="2">
     <name>Soft button</name>
     <description>Soft button. Activated when any part of the block presses it.</description>
     <appearance>
@@ -19,31 +19,31 @@
     </appearance>
     <onEnter event="triggerEvent"/>
   </tileType>
-  <tileType index="3">
+  <tileType id="hard-button" index="3">
     <name>Hard button</name>
     <description>Hard button. Activated only when the block standing on it.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onEnter condition="pressure=2-" event="triggerEvent"/>
+    <onEnter condition="pressure=2~" event="triggerEvent"/>
   </tileType>
-  <tileType index="4">
+  <tileType id="teleporter" index="4">
     <name>Teleporter</name>
     <description>Teleporter will teleports your block to different locations, optionally splitting it into two smaller blocks at the same time.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onMoveEnter condition="contactCount=1" event="teleport"/>
+    <onMoveEnter condition="onGroundCount=1" event="teleport"/>
   </tileType>
-  <tileType index="5">
+  <tileType id="thin-ground" index="5">
     <name>Thin ground</name>
     <description>Thin ground are more fragile than the rest of the land. If your block stands up vertically on it, the tile will give way and your block will fall.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onEnter condition="pressure=2-" event="game-over:breakdown"/>
+    <onEnter condition="pressure=2~" event="game-over:breakdown"/>
   </tileType>
-  <tileType index="6" invisibleAtRuntime="true">
+  <tileType id="bridge-off" index="6" invisibleAtRuntime="true">
     <name>Bridge (off)</name>
     <description>The bridge which is off.</description>
     <appearance>
@@ -51,37 +51,37 @@
     </appearance>
     <onEnter event="game-over"/>
   </tileType>
-  <tileType index="7">
+  <tileType id="bridge-on" index="7">
     <name>Bridge</name>
     <description>The bridge is just the same as normal ground when it is activated.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
   </tileType>
-  <tileType index="8" goal="true">
+  <tileType id="goal" index="8" goal="true">
     <name>Goal</name>
     <description>You'll win the game if you get your block to fall into this square hole after visiting all checkpoints.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onEnter condition="contactCount=1" event="game-finished"/>
+    <onEnter condition="onGroundCount=1" event="game-finished"/>
   </tileType>
-  <tileType index="9" type="ice">
+  <tileType id="ice" index="9" type="ice">
     <name>Ice</name>
     <description>Ice are slippery. If the block is not rough enough and is completely on the ice, it will slip until get off the ice or hit the wall.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
   </tileType>
-  <tileType index="10">
+  <tileType id="pyramid" index="10">
     <name>Pyramid</name>
     <description>Your block is unstable when standing on the pyramid, so it will lie down immediately unless there is a wall next to your block.</description>
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onMoveEnter condition="pressure=2-" event="move"/>
+    <onMoveEnter condition="pressure=2~" event="move"/>
   </tileType>
-  <tileType index="11" blocked="true" block-height="1">
+  <tileType id="wall" index="11" blocked="true" block-height="1">
     <name>Wall</name>
     <description>As an obstacle, your block can't pass through the wall, but it can recline on the wall and move around.</description>
     <appearance>
@@ -103,7 +103,7 @@
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onLeave condition="pressure=2-" event="convertTo:5"/>
+    <onLeave condition="pressure=2~" event="convertTo:thin-ground"/>
   </tileType>
   <tileType id="strange">
     <name>Strange ground</name>
@@ -111,7 +111,7 @@
     <appearance>
       <!-- TODO: -->
     </appearance>
-    <onEnter condition="contactCount=2-" event="game-over:immediately"/>
+    <onEnter condition="onGroundCount=2~" event="game-over:immediately"/>
   </tileType>
   <tileType id="black">
     <name>Black ground</name>

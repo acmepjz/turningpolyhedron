@@ -24,6 +24,10 @@ Private m_nType As Long, m_nIndex As Long, m_nChildIndex As Long
 Private m_sName As String
 Private m_nStyle As Long
 Private m_nState As Long
+'bit 0-1 (if it's Form)
+'0-default
+'1-maximize
+'2-minimize
 
 Private m_sCaption As String, m_sText As String, m_sGroupName As String, m_sToolTipText As String
 Private m_bEnabled As Boolean, m_bVisible As Boolean
@@ -2092,7 +2096,7 @@ bInControl = x >= m_tRectScreen.Left And x < m_tRectScreen.Right And y >= m_tRec
 Select Case m_nType
 Case 1 'form
  '///new:scrollbar
- If m_nAnimVal(15) = 0 Or FakeDXUISetCapture <> m_nIndex Then
+ If (m_nAnimVal(15) = 0 Or FakeDXUISetCapture <> m_nIndex) And (m_nState And 3&) <> 2& Then
   If m_nScrollBars And vbHorizontal Then
    b = b Or FakeDXUIOnScrollBarMouseEvent(Button, Shift, x, y, nEventType, m_tScrollBar(0))
   End If
