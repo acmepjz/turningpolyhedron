@@ -344,8 +344,9 @@ pApplyAverageNormal tVertex, nVertexCount, 1, 1, t2.fBevelNormalSmoothness
 pCreateEmptyMesh t, nVertexCount, nFaceCount
 '///apply data
 pApplyMeshData t, t2, tFace, nFaceCount_1, nFaceCount, tVertex, nVertexCount
+'TODO:custom main texcoord
+If t.FVF And &H1F00& Then D3DXComputeTangentFrame t.objMesh, 0
 'TODO:optimize mesh
-D3DXComputeTangentFrame t.objMesh, 0
 End Sub
 
 'assume nBevel=1 or 2, and all count >0

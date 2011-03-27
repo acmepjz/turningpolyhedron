@@ -121,15 +121,23 @@ Private m_tEffect() As typeFakeDXEffect '1-based
 Private m_nEffectCount As Long, m_nEffectMax As Long
 
 Private Type typeMeshInstanceData
- nEffectIndex As Long
- nMeshIndex As Long
+ nEffectIndex As Long '<=0 is unused, if <0 then is &H80000000 or (next unused index)
+ nMeshIndex As Long 'must >0
  matWorld As D3DMATRIX
 End Type
 
 Private m_tInstance() As typeMeshInstanceData '1-based
 Private m_nInstOrder() As Long '1-based
-Private m_nInstCount As Long, m_nInstMax As Long
+Private m_nInstCount As Long, m_nInstUnused As Long ', m_nInstMax As Long
 Private m_bInstDirty As Boolean
+
+Private Type typeAppearanceData
+ nCount As Long
+ tData() As typeMeshInstanceData
+End Type
+
+Private m_tAppr() As typeAppearanceData '1-based
+Private m_nApprCount As Long, m_nApprMax As Long
 
 Private m_sParamName(63) As String
 Private m_nParamSize(63) As Long
@@ -165,45 +173,114 @@ End If
 End Sub
 
 Friend Sub Destroy()
-Erase m_tEffect, m_tInstance, m_nInstOrder
+Erase m_tEffect, m_tInstance, m_nInstOrder, m_tAppr
 m_nEffectCount = 0
 m_nEffectMax = 0
 m_nInstCount = 0
-m_nInstMax = 0
+'m_nInstMax = 0
+m_nInstUnused = 0
 m_bInstDirty = False
+m_nApprCount = 0
+m_nApprMax = 0
 End Sub
 
 Friend Sub ClearInstance()
 Erase m_tInstance, m_nInstOrder
 m_nInstCount = 0
-m_nInstMax = 0
+'m_nInstMax = 0
+m_nInstUnused = 0
 m_bInstDirty = False
 End Sub
 
+Friend Sub ClearAppearance()
+Erase m_tAppr
+m_nApprCount = 0
+m_nApprMax = 0
+End Sub
+
+Friend Property Get InstanceCount() As Long
+InstanceCount = m_nInstCount
+End Property
+
+Friend Property Get AppearanceCount() As Long
+AppearanceCount = m_nApprCount
+End Property
+
 Friend Function AddInstance(ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld As D3DMATRIX) As Long
-If nEffectIndex > 0 And nEffectIndex <= m_nEffectCount Then
- m_nInstCount = m_nInstCount + 1
- If m_nInstCount > m_nInstMax Then
-  m_nInstMax = m_nInstMax + 256&
-  ReDim Preserve m_tInstance(1 To m_nInstMax)
-  ReDim Preserve m_nInstOrder(1 To m_nInstMax)
+Dim idx As Long, m As Long
+If nEffectIndex > 0 And nEffectIndex <= m_nEffectCount And nMeshIndex > 0 Then
+ If m_nInstUnused > 0 Then
+  'Debug.Assert m_nInstCount < m_nInstMax
+  idx = m_nInstUnused
+  m_nInstUnused = m_tInstance(idx).nEffectIndex And &H7FFFFFFF
+ Else
+  'Debug.Assert m_nInstCount = m_nInstMax
+  m = m_nInstCount + 256&
+  ReDim Preserve m_tInstance(1 To m)
+  ReDim Preserve m_nInstOrder(1 To m)
+  '///
+  For idx = m_nInstCount + 2 To m - 1
+   m_tInstance(idx).nEffectIndex = (idx + 1) Or &H80000000
+  Next idx
+  '///
+  idx = m_nInstCount + 1
+  m_nInstUnused = m_nInstCount + 2
+  'm_nInstMax = m
  End If
- m_tInstance(m_nInstCount).nEffectIndex = nEffectIndex
- m_tInstance(m_nInstCount).nMeshIndex = nMeshIndex
- m_tInstance(m_nInstCount).matWorld = matWorld
- m_nInstOrder(m_nInstCount) = m_nInstCount
+ m_nInstCount = m_nInstCount + 1
+ m_tInstance(idx).nEffectIndex = nEffectIndex
+ m_tInstance(idx).nMeshIndex = nMeshIndex
+ m_tInstance(idx).matWorld = matWorld
+ m_nInstOrder(m_nInstCount) = idx
  m_bInstDirty = True
- AddInstance = m_nInstCount
+ AddInstance = idx
 End If
 End Function
+
+'only return last created instance if appearance data has more than one objects
+Friend Function AddInstanceFromAppearance(ByVal nIndex As Long, ByRef matWorld As D3DMATRIX) As Long
+Dim i As Long
+Dim t As typeMeshInstanceData
+If nIndex > 0 And nIndex <= m_nApprCount Then
+ For i = 1 To m_tAppr(nIndex).nCount
+  t = m_tAppr(nIndex).tData(i)
+  D3DXMatrixMultiply t.matWorld, t.matWorld, matWorld
+  AddInstanceFromAppearance = AddInstance(t.nEffectIndex, t.nMeshIndex, t.matWorld)
+ Next i
+End If
+End Function
+
+Friend Sub RemoveInstance(ByVal nIndex As Long)
+Dim i As Long
+If m_tInstance(nIndex).nEffectIndex > 0 Then
+ '///
+ For i = 1 To m_nInstCount - 1
+  If m_nInstOrder(i) = nIndex Then
+   m_nInstOrder(i) = m_nInstOrder(m_nInstCount)
+   Exit For
+  End If
+ Next i
+ '///
+ m_tInstance(nIndex).nEffectIndex = m_nInstUnused Or &H80000000
+ m_nInstUnused = nIndex
+ m_nInstCount = m_nInstCount - 1
+ m_bInstDirty = True
+End If
+End Sub
 
 Friend Property Get InstanceEffectIndex(ByVal nIndex As Long) As Long
 InstanceEffectIndex = m_tInstance(nIndex).nEffectIndex
 End Property
 
 Friend Property Let InstanceEffectIndex(ByVal nIndex As Long, ByVal n As Long)
-m_tInstance(nIndex).nEffectIndex = n
-m_bInstDirty = True
+Dim i As Long
+If n > 0 Then
+ i = m_tInstance(nIndex).nEffectIndex
+ If i > 0 And i <> n Then
+  m_tInstance(nIndex).nEffectIndex = n
+  m_bInstDirty = True
+ End If
+End If
 End Property
 
 Friend Property Get InstanceMeshIndex(ByVal nIndex As Long) As Long
@@ -211,16 +288,24 @@ InstanceMeshIndex = m_tInstance(nIndex).nMeshIndex
 End Property
 
 Friend Property Let InstanceMeshIndex(ByVal nIndex As Long, ByVal n As Long)
-m_tInstance(nIndex).nMeshIndex = n
+If n > 0 Then m_tInstance(nIndex).nMeshIndex = n
+End Property
+
+Friend Property Get InstanceTransform(ByVal nIndex As Long) As D3DMATRIX
+InstanceTransform = m_tInstance(nIndex).matWorld
+End Property
+
+Friend Property Let InstanceTransform(ByVal nIndex As Long, ByRef mat As D3DMATRIX)
+m_tInstance(nIndex).matWorld = mat
 End Property
 
 'has some code copied from SetupEffect
-Friend Sub DrawInstance(ByVal objMeshMgr As clsMeshManager, Optional ByVal bSetupLight As Boolean)
+Friend Sub DrawInstance(ByVal objMeshMgr As clsMeshManager, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
 Dim i As Long, ii As Long, j As Long, k As Long
 Dim idx As Long
-Dim nEffectIndex As Long, nMeshIndex As Long
+Dim nEffectIndex As Long ', nMeshIndex As Long
 Dim obj As D3DXEffect, objNew As D3DXEffect
-Dim matBackup As D3DMATRIX
+Dim mat As D3DMATRIX, matBackup As D3DMATRIX
 Dim b As Boolean
 '///
 If m_nEffectCount <= 0 Or m_nInstCount <= 0 Or m_nLastIndex > 0 Then Exit Sub
@@ -257,7 +342,7 @@ For i = 1 To m_nInstCount
    '///SetupParam
    ii = m_tEffect(nEffectIndex).nParamUsed
    If ii > 0 Then _
-   obj.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_tEffect(nEffectIndex).fParams(0), i
+   obj.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_tEffect(nEffectIndex).fParams(0), ii
    '///SetupTexture
    j = 1
    k = m_tEffect(nEffectIndex).nTextureUsedFlag
@@ -281,7 +366,12 @@ For i = 1 To m_nInstCount
   End If
  End If
  '///SetupTransform
- d3dd9.SetTransform D3DTS_WORLD, m_tInstance(idx).matWorld
+ If bUseExistingTransform Then
+  D3DXMatrixMultiply mat, m_tInstance(idx).matWorld, matBackup
+  d3dd9.SetTransform D3DTS_WORLD, mat
+ Else
+  d3dd9.SetTransform D3DTS_WORLD, m_tInstance(idx).matWorld
+ End If
  objRenderTest.SetupTransform obj
  obj.CommitChanges
  '///draw
@@ -1146,8 +1236,74 @@ Case Else
 End Select
 End Function
 
+Friend Function AddAppearanceFromNode(ByVal objNode As clsTreeStorageNode, ByVal objMeshMgr As clsMeshManager) As Long
+Dim i As Long, j As Long, k As Long
+Dim nEffectIndex As Long, nMeshIndex As Long
+Dim s As String
+Dim obj As clsTreeStorageNode
+Dim mat As D3DMATRIX
+'///
+mat.m11 = 1
+mat.m22 = 1
+mat.m33 = 1
+mat.m44 = 1
+'///
+s = objNode.GetNameAsString
+Select Case s
+Case "appearance"
+Case Else
+ Debug.Assert False
+ Exit Function
+End Select
+'///
+m_nApprCount = m_nApprCount + 1
+If m_nApprCount > m_nApprMax Then
+ m_nApprMax = m_nApprMax + 16&
+ ReDim Preserve m_tAppr(1 To m_nApprMax)
+End If
+'///
+For i = 1 To objNode.SubNodeCount
+ Select Case objNode.SubNodeType(i)
+ Case 0
+  'TODO:
+ Case 1
+  Set obj = objNode.SubNodeObject(i)
+  s = obj.GetNameAsString
+  Select Case s
+  Case "shader"
+   nEffectIndex = AddEffectFromNode(obj)
+   Debug.Assert nEffectIndex > 0
+   If nEffectIndex > 0 Then
+    For j = 1 To obj.SubNodeCount
+     If obj.SubNodeType(j) = 1 Then
+      nMeshIndex = objMeshMgr.AddMeshFromNode(obj.SubNodeObject(j))
+      Debug.Assert nMeshIndex > 0
+      If nMeshIndex > 0 Then
+       k = m_tAppr(m_nApprCount).nCount + 1
+       m_tAppr(m_nApprCount).nCount = k
+       ReDim Preserve m_tAppr(m_nApprCount).tData(1 To k)
+       m_tAppr(m_nApprCount).tData(k).nEffectIndex = nEffectIndex
+       m_tAppr(m_nApprCount).tData(k).nMeshIndex = nMeshIndex
+       m_tAppr(m_nApprCount).tData(k).matWorld = mat 'TODO:custom hierarchical transform
+      End If
+     End If
+    Next j
+   End If
+'  Case "mesh"
+'   'TODO:
+'   Debug.Assert False
+  Case Else
+   'TODO:
+   Debug.Assert False
+  End Select
+ End Select
+Next i
+'///
+AddAppearanceFromNode = m_nApprCount
+End Function
+
 Friend Function AddEffectFromNode(ByVal objNode As clsTreeStorageNode) As Long
-On Error Resume Next
+'On Error Resume Next
 Dim t As typeFakeDXEffect
 Dim i As Long, j As Long, k As Long, m As Long
 Dim s As String

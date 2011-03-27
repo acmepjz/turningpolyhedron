@@ -220,17 +220,13 @@ With d3dd9
   If bTestOnly Then
    'objEffectMgr.SetTexture 1, IDA_BaseColor, objTexture
    'objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
-   objEffectMgr.SetupEffect 1, True, True, True, True, , True
+   'objEffectMgr.SetupEffect 1, True, True, True, True, , True
    .BeginScene
    '///TEST TEST TEST
-   If objMeshMgr.Count > 0 Then
-    objMeshMgr.Mesh(1).DrawSubset 0
-   Else
-    objTest.DrawSubset 0
-   End If
+   objEffectMgr.DrawInstance objMeshMgr, True, True
    '///
    .EndScene
-   objEffectMgr.EndEffect
+   'objEffectMgr.EndEffect
   Else
    objRenderTest.SetTexture objTexture
    objRenderTest.SetNormalTexture objNormalTexture
@@ -566,13 +562,22 @@ If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objF
 '////////NEW NEW NEW load effect from memory in archive file using file manager
 'i = objFileMgr.LoadFile("data.tar.lzma\DefaultShaders.xml")
 'If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objFileMgr.FileSize(i), New clsXMLSerializer
-'////////TEST TEST TEST load mesh test
+'////////TEST TEST TEST load appearance, and add instance, and draw
 Dim obj As New clsTreeStorageNode
+Dim j As Long, k As Long
+Dim mat As D3DMATRIX
 With New clsXMLSerializer
  .LoadNodeFromFile App.Path + "\data\test.xml", obj
 End With
-objMeshMgr.AddMeshFromNode obj.SubNodeObject(1)
-'objMeshMgr.Destroy
+i = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr)
+If i > 0 Then
+ For j = -5 To 4 '-50 To 49
+  For k = -5 To 4
+   D3DXMatrixTranslation mat, j, k, 0
+   objEffectMgr.AddInstanceFromAppearance i, mat
+  Next k
+ Next j
+End If
 '////////landscape test
 Dim t As D3DXIMAGE_INFO
 objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
