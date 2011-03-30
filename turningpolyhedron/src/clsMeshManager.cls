@@ -100,8 +100,8 @@ Private Type typeMeshMgrData
  '1=cube
  'TODO:...
  '///
- nVertexCount As Long
- nFaceCount As Long
+' nVertexCount As Long
+' nFaceCount As Long
  FVF As D3DFVFFLAGS 'only used D3DFVF_DIFFUSE, D3DFVF_SPECULAR and D3DFVF_TEX* (&H100& to &H1F00&)
  nVertexSize As Long
  '///
@@ -113,7 +113,11 @@ Private m_nCount As Long
 Private m_nMax As Long
 
 Friend Property Get Mesh(ByVal nIndex As Long) As D3DXMesh
-If nIndex > 0 And nIndex <= m_nCount Then Set Mesh = m_tData(nIndex).objMesh
+Set Mesh = m_tData(nIndex).objMesh
+End Property
+
+Friend Property Get MeshVertexSize(ByVal nIndex As Long) As Long
+MeshVertexSize = m_tData(nIndex).nVertexSize
 End Property
 
 Friend Property Get Count() As Long

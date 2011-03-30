@@ -9,6 +9,8 @@ Option Explicit
 'Private Declare Function WriteFile Lib "kernel32.dll" (ByVal hFile As Long, ByRef lpBuffer As Any, ByVal nNumberOfBytesToWrite As Long, ByRef lpNumberOfBytesWritten As Long, ByRef lpOverlapped As Any) As Long
 'Private Const STD_ERROR_HANDLE As Long = -12&
 
+'Public m_hStdErr As Long
+
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
 Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
 
@@ -69,7 +71,7 @@ Public Type typeVertex_XYZ_Diffuse
  clr1 As Long
 End Type
 
-Public m_tDefVertexDecl() As D3DVERTEXELEMENT9, m_objVertexDecl As Direct3DVertexDeclaration9
+Public m_tDefVertexDecl() As D3DVERTEXELEMENT9
 
 Public objText As New clsGNUGetText
 
@@ -79,6 +81,33 @@ Public FakeDXAppMyGamesPath As String
 
 Public FakeDXAppRequestUnload As Boolean, FakeDXAppCanUnload As Boolean
 
+'////////mesh instance data
+
+Public Type typeMeshInstanceData
+ nEffectIndex As Long '<=0 is unused, if <0 then is &H80000000 or (next unused index)
+ nMeshIndex As Long 'must >0
+ matWorld As D3DMATRIX
+End Type
+
+Public Type typeMeshHWInstanceData
+ nEffectIndex As Long
+ nMeshIndex As Long 'objMesh As D3DXMesh
+ '///
+ nCount As Long
+ nInstanceVertexSize As Long
+ '///
+ objDeclaration As Direct3DVertexDeclaration9
+ objInstanceBuffer As Direct3DVertexBuffer9
+End Type
+
+Public Type typeMeshInstanceCollection
+ tInstance() As typeMeshInstanceData
+ nInstOrder() As Long '1-based
+ nInstCount As Long
+ nInstUnused As Long ', nInstMax As Long
+ bInstDirty As Boolean
+End Type
+
 '////////test
 
 'default camera
@@ -87,8 +116,11 @@ Public objCamera As New clsCamera
 'test
 Public objTest As D3DXMesh
 
-'hardware instancing test
+'vvv hardware instancing test
 Public objInstanceBuffer As Direct3DVertexBuffer9
+Public m_objVertexDecl As Direct3DVertexDeclaration9
+Public m_tHWInst(0) As typeMeshHWInstanceData
+'^^^ hardware instancing test
 
 Public objTextMgr As New clsTextureManager
 Public objRenderTest As New clsRenderPipeline
@@ -110,8 +142,6 @@ Public objMeshMgr As New clsMeshManager
 '////////settings
 Public frmSettings As New frmSettings
 
-Public m_hStdErr As Long
-
 Public Sub CreateVertexDeclaration()
 ReDim m_tDefVertexDecl(0 To 63)
 m_tDefVertexDecl(0) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
@@ -122,7 +152,7 @@ m_tDefVertexDecl(4) = D3DVertexElementCreate(, 48&, D3DDECLTYPE_D3DCOLOR, , D3DD
 m_tDefVertexDecl(5) = D3DVertexElementCreate(, 52&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR, 1)
 m_tDefVertexDecl(6) = D3DVertexElementCreate(, 56&, D3DDECLTYPE_FLOAT2, , D3DDECLUSAGE_TEXCOORD)
 m_tDefVertexDecl(7) = D3DDECL_END '64 bytes
-'///
+'///hardware instancing test
 m_tDefVertexDecl(8) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
 m_tDefVertexDecl(9) = D3DVertexElementCreate(, 12&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_NORMAL)
 m_tDefVertexDecl(10) = D3DVertexElementCreate(, 24&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_BINORMAL)
@@ -134,19 +164,6 @@ m_tDefVertexDecl(15) = D3DVertexElementCreate(1, 0, D3DDECLTYPE_FLOAT4, , D3DDEC
 m_tDefVertexDecl(16) = D3DDECL_END
 Set m_objVertexDecl = d3dd9.CreateVertexDeclaration(m_tDefVertexDecl(8))
 End Sub
-
-'Public Sub CreateCube1(ByVal lp As Long, ByVal clr1 As Long, ByVal clr2 As Long)
-'Dim i As Long
-'Dim d(23) As typeVertex
-'For i = 0 To 23
-' d(i).clr1 = clr1
-' d(i).clr2 = clr2
-'Next i
-''///
-'
-''///
-'CopyMemory ByVal lp, d(0), Len(d(0)) * 24&
-'End Sub
 
 Public Sub FakeDXAppMainLoop(Optional ByVal lpbCancel As Long)
 Dim b As Byte
@@ -238,7 +255,8 @@ With d3dd9
    'objEffectMgr.SetupEffect 1, True, True, True, True, , True
    .BeginScene
    '///TEST TEST TEST
-   objEffectMgr.DrawInstance objMeshMgr, True, True
+   'objEffectMgr.DrawInstance objMeshMgr, True, True
+   objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
    '///
    .EndScene
    'objEffectMgr.EndEffect
@@ -249,7 +267,7 @@ With d3dd9
     .BeginScene
     'objTest.DrawSubset 0
     '///TEST hardware instancing
-    .SetStreamSourceFreq 0, D3DSTREAMSOURCE_INDEXEDDATA Or 400
+    .SetStreamSourceFreq 0, D3DSTREAMSOURCE_INDEXEDDATA Or 100
     .SetStreamSource 0, objTest.GetVertexBuffer, 0, 64&
     .SetStreamSourceFreq 1, D3DSTREAMSOURCE_INSTANCEDATA Or 1
     .SetStreamSource 1, objInstanceBuffer, 0, 16&
@@ -462,8 +480,11 @@ Set objLand = Nothing
 Set objLandTexture = Nothing
 Set objTextMgr = Nothing
 Set objTest = Nothing
+'---
 Set objInstanceBuffer = Nothing
 Set m_objVertexDecl = Nothing
+Erase m_tHWInst
+'---
 Set objTexture = Nothing
 Set objNormalTexture = Nothing
 Set d3dd9 = Nothing
@@ -602,14 +623,27 @@ With New clsXMLSerializer
  .LoadNodeFromFile App.Path + "\data\test.xml", obj
 End With
 i = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr)
-If i > 0 Then
- For j = -5 To 4 '-50 To 49
-  For k = -5 To 4
-   D3DXMatrixTranslation mat, j, k, 0
-   objEffectMgr.AddInstanceFromAppearance i, mat
-  Next k
+'If i > 0 Then
+' For j = -5 To 4 '-50 To 49
+'  For k = -5 To 4
+'   D3DXMatrixTranslation mat, j, k, 0
+'   objEffectMgr.AddInstanceFromAppearance i, mat
+'  Next k
+' Next j
+'End If
+'---
+Dim m() As D3DMATRIX
+ReDim m(1 To 100)
+k = 1
+For i = -5 To 4
+ For j = -5 To 4
+  D3DXMatrixRotationYawPitchRoll m(k), i * -0.1, j * 0.1, 0
+  m(k).m41 = i
+  m(k).m42 = j
+  k = k + 1
  Next j
-End If
+Next i
+objEffectMgr.CreateHWInstance objMeshMgr, 3, 1, m, 1, 100, m_tHWInst(0) '3 and 1 are hardcoded -- test only ...
 '////////landscape test
 Dim t As D3DXIMAGE_INFO
 objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
@@ -675,12 +709,12 @@ Next i
 obj.UnlockVertexBuffer
 '///
 Set pLoadMeshTest = obj
-'///hardware instancing test
+'///--------hardware instancing test
 Dim v As D3DXVECTOR4
-d3dd9.CreateVertexBuffer 6400, 0, 0, D3DPOOL_MANAGED, objInstanceBuffer, ByVal 0
+d3dd9.CreateVertexBuffer 1600, 0, 0, D3DPOOL_MANAGED, objInstanceBuffer, ByVal 0
 objInstanceBuffer.Lock 0, 0, lp, D3DLOCK_DISCARD
-For i = -10 To 9
- For j = -10 To 9
+For i = -5 To 4
+ For j = -5 To 4
   v.x = i * 3
   v.y = j * 3
   CopyMemory ByVal lp, v, 16
@@ -688,6 +722,7 @@ For i = -10 To 9
  Next j
 Next i
 objInstanceBuffer.Unlock
+'///--------
 End Function
 
 Public Sub FakeDXAppCreateUI(ByVal objEventCallback As IFakeDXUIEvent)

@@ -81,6 +81,15 @@ Private Type typeFakeDXEffect
  nFlags As Long '[3]
  '1=advanecd fog enabled (currently can't read from settings)
  '2=shadow map enabled (currently unsupported)
+ '4=
+ '8=
+ '---
+ 'bit 4-7 = hardware instancing mode (will use POSITION4-7)
+ '0=none
+ '1=translation only
+ 'etc...
+ '15=world matrix (full)
+ '---
  '////////
  tArguments(63) As typeFakeDXEffectArgument
  '////////
@@ -119,12 +128,6 @@ End Enum
 
 Private m_tEffect() As typeFakeDXEffect '1-based
 Private m_nEffectCount As Long, m_nEffectMax As Long
-
-Private Type typeMeshInstanceData
- nEffectIndex As Long '<=0 is unused, if <0 then is &H80000000 or (next unused index)
- nMeshIndex As Long 'must >0
- matWorld As D3DMATRIX
-End Type
 
 Private m_tInstance() As typeMeshInstanceData '1-based
 Private m_nInstOrder() As Long '1-based
@@ -300,7 +303,6 @@ m_tInstance(nIndex).matWorld = mat
 End Property
 
 'has some code copied from SetupEffect
-'draw more than 10000 objects is slow ... consider using hardware instancing
 Friend Sub DrawInstance(ByVal objMeshMgr As clsMeshManager, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
 Dim i As Long, ii As Long, j As Long, k As Long
 Dim idx As Long
@@ -384,6 +386,126 @@ If Not obj Is Nothing Then
  obj.End
 End If
 d3dd9.SetTransform D3DTS_WORLD, matBackup
+End Sub
+
+'TODO:per-instance color support, etc.
+Friend Function CreateHWInstance(ByVal objMeshMgr As clsMeshManager, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long, ByRef ret As typeMeshHWInstanceData) As Boolean
+Dim nHWInstancingMode As Long
+Dim obj As Direct3DVertexBuffer9
+Dim objMesh As D3DXMesh
+Dim t(64) As D3DVERTEXELEMENT9
+Dim i As Long, lp As Long
+Dim nSize As Long
+'///
+Set ret.objDeclaration = Nothing
+Set ret.objInstanceBuffer = Nothing
+'///
+nEnd = nEnd - nStart + 1
+If nEnd <= 0 Then Exit Function
+'///
+nHWInstancingMode = (m_tEffect(nEffectIndex).nFlags And &HF0&) \ &H10&
+Select Case nHWInstancingMode
+Case 1
+ d3dd9.CreateVertexBuffer nEnd * 16&, 0, 0, D3DPOOL_MANAGED, obj, ByVal 0
+ obj.Lock 0, 0, lp, D3DLOCK_DISCARD
+ For i = nStart To nStart + nEnd - 1
+  CopyMemory ByVal lp, matWorld(i).m41, 16&
+  lp = lp + 16&
+ Next i
+ obj.Unlock
+ nSize = 16&
+Case 15
+ d3dd9.CreateVertexBuffer nEnd * 64&, 0, 0, D3DPOOL_MANAGED, obj, ByVal 0
+ obj.Lock 0, 0, lp, D3DLOCK_DISCARD
+ CopyMemory ByVal lp, matWorld(nStart), nEnd * 64&
+ obj.Unlock
+ nSize = 64&
+Case Else
+ Exit Function
+End Select
+'///
+Set objMesh = objMeshMgr.Mesh(nMeshIndex)
+objMesh.GetDeclaration t(0)
+For i = 0 To 64
+ If t(i).Stream = &HFF& Then
+  Select Case nHWInstancingMode
+  Case 1
+   t(i) = D3DVertexElementCreate(1, 0, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_POSITION, 4)
+   t(i + 1) = D3DDECL_END
+  Case 15
+   t(i) = D3DVertexElementCreate(1, 0, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_POSITION, 4)
+   t(i + 1) = D3DVertexElementCreate(1, 16, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_POSITION, 5)
+   t(i + 2) = D3DVertexElementCreate(1, 32, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_POSITION, 6)
+   t(i + 3) = D3DVertexElementCreate(1, 48, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_POSITION, 7)
+   t(i + 4) = D3DDECL_END
+  End Select
+  Exit For
+ End If
+Next i
+'///
+ret.nEffectIndex = nEffectIndex
+ret.nMeshIndex = nMeshIndex
+ret.nCount = nEnd
+ret.nInstanceVertexSize = nSize
+Set ret.objDeclaration = d3dd9.CreateVertexDeclaration(t(0))
+Set ret.objInstanceBuffer = obj
+CreateHWInstance = True
+End Function
+
+'has some code copied from SetupEffect
+Friend Sub DrawHWInstance(ByVal objMeshMgr As clsMeshManager, ByRef t As typeMeshHWInstanceData, Optional ByVal bSetupLight As Boolean)
+Dim ii As Long, j As Long, k As Long
+Dim obj As D3DXEffect
+Dim objMesh As D3DXMesh
+'///
+If m_nLastIndex > 0 Or t.nCount <= 0 Then Exit Sub
+If (m_tEffect(t.nEffectIndex).nFlags And &HF0&) = 0 Then Exit Sub
+'///
+ '///SetupEffect
+ Set obj = m_tEffect(t.nEffectIndex).objEffect
+   '///SetupParam
+   ii = m_tEffect(t.nEffectIndex).nParamUsed
+   If ii > 0 Then _
+   obj.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_tEffect(t.nEffectIndex).fParams(0), ii
+   '///SetupTexture
+   j = 1
+   k = m_tEffect(t.nEffectIndex).nTextureUsedFlag
+   For ii = 0 To 15
+    If j And k Then
+     obj.SetTexture StrPtr(StrConv("tex" + CStr(ii), vbFromUnicode)), m_tEffect(t.nEffectIndex).objTextures(ii)
+    End If
+    j = j + j
+   Next ii
+   '///
+    If bSetupLight Then
+     objRenderTest.SetupLight obj
+    End If
+    '///SetupTransform
+    objRenderTest.SetupTransform obj
+    If m_tEffect(t.nEffectIndex).nFlags And 1& Then objRenderTest.SetupZData obj
+    '///
+    obj.SetTechnique StrPtr(StrConv("test", vbFromUnicode))
+    obj.Begin 0, 0
+    obj.BeginPass 0
+    '///TEST hardware instancing
+    Set objMesh = objMeshMgr.Mesh(t.nMeshIndex)
+    d3dd9.SetStreamSourceFreq 0, D3DSTREAMSOURCE_INDEXEDDATA Or t.nCount
+    d3dd9.SetStreamSource 0, objMesh.GetVertexBuffer, 0, objMeshMgr.MeshVertexSize(t.nMeshIndex)
+    d3dd9.SetStreamSourceFreq 1, D3DSTREAMSOURCE_INSTANCEDATA Or 1
+    d3dd9.SetStreamSource 1, t.objInstanceBuffer, 0, t.nInstanceVertexSize
+    '///
+    d3dd9.SetVertexDeclaration t.objDeclaration
+    d3dd9.SetIndices objMesh.GetIndexBuffer
+    d3dd9.DrawIndexedPrimitive D3DPT_TRIANGLELIST, 0, 0, objMesh.GetNumVertices, 0, objMesh.GetNumFaces
+    '///
+    d3dd9.SetStreamSourceFreq 0, 1
+    d3dd9.SetStreamSource 0, Nothing, 0, 0
+    d3dd9.SetStreamSourceFreq 1, 1
+    d3dd9.SetStreamSource 1, Nothing, 0, 0
+    '///
+'///over
+obj.EndPass
+obj.End
 End Sub
 
 Private Sub Class_Initialize()
@@ -931,6 +1053,7 @@ Dim nType As Long
 Dim bMoreNormals As Boolean
 Dim bFogEnabled As Boolean 'currently unsupported
 Dim bShadowMap As Boolean 'currently unsupported
+Dim nHWInstancingMode As Long
 '///
 t.sShaderSourceCode = vbNullString
 t.nParamUsed = 0
@@ -1037,6 +1160,7 @@ Case "standard"
  bMoreNormals = t.tArguments(IDA_NormalMap).nType <> 0 Or t.tArguments(IDA_ParallaxMap).nType <> 0
  bFogEnabled = t.nFlags And 1&
  bShadowMap = t.nFlags And 2&
+ nHWInstancingMode = (t.nFlags And &HF0&) \ &H10&
  '///generate extra input
  If bComment Then
   sInput = sInput + vbTab + "//---" + vbCrLf
@@ -1065,6 +1189,13 @@ Case "standard"
   If i < 0 Then Exit Function
   sOutput = sOutput + vbTab + "float4 vShadow:" + m_sOutputSemantics(i) + ";" + vbCrLf
  End If
+ '///new:hardware instancing
+ Select Case nHWInstancingMode
+ Case 1
+  sInput = sInput + vbTab + "float4 vHWI_Translation:POSITION4;" + vbCrLf
+ Case 15
+  sInput = sInput + vbTab + "row_major float4x4 vHWI_World:POSITION4;" + vbCrLf
+ End Select
  '///
  sInput = sInput + "};" + vbCrLf + vbCrLf
  sOutput = sOutput + "};" + vbCrLf + vbCrLf
@@ -1102,17 +1233,28 @@ Case "standard"
   End If
  Next i
  sParam = sParam + vbCrLf
+ '///new:hardware instancing
+ s1 = "matWorldInv"
+ Select Case nHWInstancingMode
+ Case 1
+  sParam = sParam + vbTab + "cin.vPos+=float4(cin.vHWI_Translation.xyz,0);" + vbCrLf
+ Case 15 'assume vHWI_World is orthogonal TODO:
+  sParam = sParam + vbTab + "cin.vPos=mul(cin.vPos,cin.vHWI_World);" + vbCrLf
+  sParam = sParam + vbTab + "float4x4 matNewInv=mul(float4x4(cin.vHWI_World[0],cin.vHWI_World[1],cin.vHWI_World[2],float4(0,0,0,0)),matWorldInv);" + vbCrLf
+  s1 = "matNewInv"
+ End Select
+ '///
  sParam = sParam + vbTab + "vPos=mul(cin.vPos,matTransform);" + vbCrLf
  If bFogEnabled Then
   sParam = sParam + vbTab + "cout.vPos=float4(mul(cin.vPos,matWorld).xyz,vPos.z);" + vbCrLf
-  sParam = sParam + vbTab + "cout.vNormal=float4(mul(cin.vNormal,matWorldInv).xyz,vPos.w);" + vbCrLf
+  sParam = sParam + vbTab + "cout.vNormal=float4(mul(cin.vNormal," + s1 + ").xyz,vPos.w);" + vbCrLf
  Else
   sParam = sParam + vbTab + "cout.vPos=mul(cin.vPos,matWorld);" + vbCrLf
-  sParam = sParam + vbTab + "cout.vNormal=mul(cin.vNormal,matWorldInv);" + vbCrLf
+  sParam = sParam + vbTab + "cout.vNormal=mul(cin.vNormal," + s1 + ");" + vbCrLf
  End If
  If bMoreNormals Then
-  sParam = sParam + vbTab + "cout.vBinormal=mul(cin.vBinormal,matWorldInv);" + vbCrLf
-  sParam = sParam + vbTab + "cout.vTangent=mul(cin.vTangent,matWorldInv);" + vbCrLf
+  sParam = sParam + vbTab + "cout.vBinormal=mul(cin.vBinormal," + s1 + ");" + vbCrLf
+  sParam = sParam + vbTab + "cout.vTangent=mul(cin.vTangent," + s1 + ");" + vbCrLf
  End If
  If bShadowMap Then
   sParam = sParam + vbTab + "cout.vShadow=mul(cin.vPos,matShadow);" + vbCrLf
@@ -1356,6 +1498,20 @@ For i = 1 To objNode.SubNodeCount
     Debug.Assert False
     Exit Function
    End Select
+  Case "hardwareInstancing"
+   s = objNode.GetSubNodeValueAsString(i)
+   Select Case s
+   Case vbNullString, "none", "default", "disable", "disabled"
+    j = 0
+   Case "translation", "translationOnly"
+    j = 1
+   Case "worldMatrix", "transformMatrix", "matrix"
+    j = 15
+   Case Else
+    Debug.Assert False
+    Exit Function
+   End Select
+   t.nFlags = (t.nFlags And &HFFFFFF0F) Or (j * 16&)
   Case "diffuseAlgorithm"
    s = objNode.GetSubNodeValueAsString(i)
    Select Case s

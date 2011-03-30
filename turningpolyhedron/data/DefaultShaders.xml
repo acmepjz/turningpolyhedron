@@ -20,7 +20,7 @@
       parallaxMapOffset="-0.5" parallaxMapScale="0.02"
     />
     -->
-    <shaderTemplate templateName="simple1" shaderProgram="standard" ambient="0.25,0.25,0.25" diffuse="0.5,0.5,0.5"
+    <shader shaderProgram="standard" ambient="0.25,0.25,0.25" diffuse="0.5,0.5,0.5"
     baseColor="textureArgument0:texcoord0:textureFile:test3.png:MipFilter=LINEAR;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=wrap;AddressV=wrap;"
       normalMap="textureArgument1:texcoord0:textureFile:test3a.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
       parallaxMap="textureArgument2:texcoord0:textureFile:test3h.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
@@ -28,5 +28,7 @@
     specular="1,1,1"
     specularHardness="50" emissive="shaderArgument" effectStates="fillmode=solid;"/>
     <shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument"
-              specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"/>
+specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"
+hardwareInstancing="matrix"
+/>
 </shaders>
