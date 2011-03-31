@@ -83,16 +83,17 @@ Public FakeDXAppRequestUnload As Boolean, FakeDXAppCanUnload As Boolean
 
 '////////mesh instance data
 
-Public Type typeMeshInstanceData
- nEffectIndex As Long '<=0 is unused, if <0 then is &H80000000 or (next unused index)
- nMeshIndex As Long 'must >0
- matWorld As D3DMATRIX
-End Type
-
-Public Type typeMeshHWInstanceData
- nEffectIndex As Long
- nMeshIndex As Long 'objMesh As D3DXMesh
+Public Type typeMeshInstanceData 'N bytes :(
+ nType As Long
+ '0=mesh
+ '1-15=hardware instancing mesh, same as hardware instancing mode
+ 'TODO:etc.
  '///
+ nEffectIndex As Long '<=0 is unused, if <0 then is &H80000000 | (next unused index)
+ nMeshIndex As Long 'must >0
+ '///when nType=0
+ matWorld As D3DMATRIX
+ '///when nType=1-15
  nCount As Long
  nInstanceVertexSize As Long
  '///
@@ -119,7 +120,6 @@ Public objTest As D3DXMesh
 'vvv hardware instancing test
 Public objInstanceBuffer As Direct3DVertexBuffer9
 Public m_objVertexDecl As Direct3DVertexDeclaration9
-Public m_tHWInst(0) As typeMeshHWInstanceData
 '^^^ hardware instancing test
 
 Public objTextMgr As New clsTextureManager
@@ -255,8 +255,8 @@ With d3dd9
    'objEffectMgr.SetupEffect 1, True, True, True, True, , True
    .BeginScene
    '///TEST TEST TEST
-   'objEffectMgr.DrawInstance objMeshMgr, True, True
-   objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
+   objEffectMgr.DrawInstance objMeshMgr, True, True
+   'objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
    '///
    .EndScene
    'objEffectMgr.EndEffect
@@ -475,6 +475,7 @@ On Error Resume Next
 '///
 FakeDXUIDestroy
 objEffectMgr.Destroy
+objMeshMgr.Destroy
 '///
 Set objLand = Nothing
 Set objLandTexture = Nothing
@@ -483,7 +484,6 @@ Set objTest = Nothing
 '---
 Set objInstanceBuffer = Nothing
 Set m_objVertexDecl = Nothing
-Erase m_tHWInst
 '---
 Set objTexture = Nothing
 Set objNormalTexture = Nothing
@@ -615,35 +615,32 @@ If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objF
 '////////NEW NEW NEW load effect from memory in archive file using file manager
 'i = objFileMgr.LoadFile("data.tar.lzma\DefaultShaders.xml")
 'If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objFileMgr.FileSize(i), New clsXMLSerializer
-'////////TEST TEST TEST load appearance, and add instance, and draw
+'////////TEST TEST TEST load appearance, and add instance (software and hardware), and draw
 Dim obj As New clsTreeStorageNode
-Dim j As Long, k As Long
-Dim mat As D3DMATRIX
+Dim j As Long, k As Long, lp As Long
+Dim mat() As D3DMATRIX
+ReDim mat(1 To 100)
+'---
 With New clsXMLSerializer
  .LoadNodeFromFile App.Path + "\data\test.xml", obj
 End With
 i = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr)
-'If i > 0 Then
-' For j = -5 To 4 '-50 To 49
-'  For k = -5 To 4
-'   D3DXMatrixTranslation mat, j, k, 0
-'   objEffectMgr.AddInstanceFromAppearance i, mat
-'  Next k
-' Next j
-'End If
-'---
-Dim m() As D3DMATRIX
-ReDim m(1 To 100)
-k = 1
-For i = -5 To 4
+If i > 0 Then
+ '---software
+ lp = 1
  For j = -5 To 4
-  D3DXMatrixRotationYawPitchRoll m(k), i * -0.1, j * 0.1, 0
-  m(k).m41 = i
-  m(k).m42 = j
-  k = k + 1
+  For k = -5 To 4
+   D3DXMatrixRotationYawPitchRoll mat(lp), j * -0.1, k * 0.1, 0
+   mat(lp).m41 = j
+   mat(lp).m42 = k
+   objEffectMgr.AddInstanceFromAppearance i, mat(lp)
+   mat(lp).m43 = 5
+   lp = lp + 1
+  Next k
  Next j
-Next i
-objEffectMgr.CreateHWInstance objMeshMgr, 3, 1, m, 1, 100, m_tHWInst(0) '3 and 1 are hardcoded -- test only ...
+ '---hardware
+ objEffectMgr.AddHWInstanceFromAppearance objMeshMgr, i, mat, 1, 100
+End If
 '////////landscape test
 Dim t As D3DXIMAGE_INFO
 objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1

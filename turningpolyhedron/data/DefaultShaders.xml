@@ -29,6 +29,6 @@
     specularHardness="50" emissive="shaderArgument" effectStates="fillmode=solid;"/>
     <shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument"
 specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"
-hardwareInstancing="matrix"
+hardwareInstancing="translationOnly"
 />
 </shaders>
