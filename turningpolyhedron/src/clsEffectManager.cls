@@ -453,7 +453,10 @@ Case 15
  objInstanceBuffer.Unlock
  nSize = 64&
 Case Else
- 'TODO:fallback to software instancing
+ '///fallback to software instancing
+ For i = nStart To nStart + nEnd - 1
+  AddHWInstance = AddInstance(nEffectIndex, nMeshIndex, matWorld(i))
+ Next i
  Exit Function
 End Select
 '///
