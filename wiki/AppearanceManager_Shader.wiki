@@ -6,7 +6,8 @@ The `<shader>` describes a shader, and `<shaderTemplate>` describes a shader tem
 
 Currently the shader node supports following attributes:
 
-  * `templateName` _(optional)_ @#^$ ...
+  * `templateName` _(optional)_ If the node is `<shader>`, then it specifies which shader template will used. See below.
+  If the node is `<shaderTemplate>`, then it specifies the shader template name.
 
 ==About Shader Template==
 
@@ -16,12 +17,28 @@ For example:
 
 {{{
 <!-- in DefaultShaders.xml -->
-<shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument"
-specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"/>
+<shaderTemplate templateName="simple1_fixed" shaderProgram="standard"
+ambient="shaderArgument" diffuse="shaderArgument"
+specular="shaderArgument" specularHardness="shaderArgument"
+emissive="shaderArgument"/>
 ...
 <!-- in an appearance node -->
 <!-- will share shader program with "simple1_fixed" instead of creating a new one -->
-<shader templateName="simple1_fixed" ambient="0.4,0.25,0.2" diffuse="0.4,0.35,0.3" specular="0.5,0.5,0.5" specularHardness="50">
+<shader templateName="simple1_fixed" ambient="0.4,0.25,0.2"
+diffuse="0.4,0.35,0.3" specular="0.5,0.5,0.5" specularHardness="50">
   <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+</shader>
+}}}
+
+Note: Currently if you set some shader parameters whose type in the shader template isn't `shaderArgument` or `textureArgument`, then they will be ignored. For example:
+
+{{{
+<shaderTemplate templateName="simple1_fixed" shaderProgram="standard"
+diffuse="shaderArgument"/>
+...
+<!-- "diffuse" will work, but "ambient" will not work -->
+<shader templateName="simple1_fixed"
+ambient="0.4,0.25,0.2" diffuse="0.4,0.35,0.3">
+...
 </shader>
 }}}
