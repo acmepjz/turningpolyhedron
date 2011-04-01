@@ -2,15 +2,15 @@
 
 Shader node (`<shader>` and `<shaderTemplate>`) describes the shading method and arguments of meshes, such as shading program, diffuse and specular color, texture coordinates and texture files, etc.
 
-The `<shader>` describes a shader, and `<shaderTemplate>` describes a shader template (see below).
+The `<shader>` describes a shader, and `<shaderTemplate>` describes a shader template (see [AppearanceManager_Shader#About_Shader_Template below]).
 
 Currently the shader node supports following attributes:
 
   * `templateName` _(optional)_
-  If the node is `<shader>`, then it specifies which shader template will used. See below. If the node is `<shaderTemplate>`, then it specifies the shader template name.
+  If the node is `<shader>`, then it specifies which shader template will used. See [AppearanceManager_Shader#About_Shader_Template below]. If the node is `<shaderTemplate>`, then it specifies the shader template name.
   * `shaderProgram`
   Specifies the shader program. Can be one of following values:
-   * `none`: Don't use programmable rendering pipeline. Sorry, currently unsupported.
+   * `none`: Don't use programmable rendering pipeline. Sorry, currently unsupported :(
    * `standard`: Use a standard shading program, which supports per-pixel lighting (includes ambient, diffuse, specular and emissive), normal mapping, parallax mapping. Some other features are work in progress.
   * `diffuseAlgorithm` _(optional)_
   Specifies the diffuse calculation algorithm. Can be one of following values:
@@ -51,13 +51,13 @@ Following attributes are currently supported shader parameters. They are all opt
 
 Following are currently supported shader parameter's value type:
 
-  * *<Constant>*
+  * *`<`Constant`>`*
   The parameter is a constant scalar/vector contains 1~4 elements. For example, `0.5` or `1,2,3,4`. The constant will be hard-coded into the shader program, so it's unchangable after the creation of shader. One exception is if the shader is inherited from a shader template, and the parameter's type of shader template is `shaderArgument`, then the parameter's type of this shader will automatically convert to `shaderArgument`, instead of hard-coded constant.
-  * `shaderArgument`[:*<Constant>*]
-  Will assign a global variable to store this parameter in shader program. If *<Constant>* is not specified, then the default value of parameter is 0, otherwise the default value is *<Constant>*.
-  * (`color`[*<number>*]|`texcoord`[*<number>*])[:(0|1|x|y|z|w|r|g|b|a|C|A)+[:*<Constant>*]]
+  * `shaderArgument``[`:*`<`Constant`>`*`]`
+  Will assign a global variable to store this parameter in shader program. If *`<`Constant`>`* is not specified, then the default value of parameter is 0, otherwise the default value is *`<`Constant`>`*.
+  * (`color``[`*`<`number`>`*`]`|`texcoord``[`*`<`number`>`*`]`)`[`:(0|1|x|y|z|w|r|g|b|a|C|A)+`[`:*`<`Constant`>`*`]``]`
   Read specified color or texture coordinate from the input vertex data of shader program, using specified order.
-  Currently the valid input type is `color0`, `color1`, and `texcoord0` to `texcoord15`. If the *<number>* is not specified, the default value is 0.
+  Currently the valid input type is `color0`, `color1`, and `texcoord0` to `texcoord15`. If the *`<`number`>`* is not specified, the default value is 0.
   `(0|1|x|y|z|w|r|g|b|a|C|A)+` specifies the order of component. If this is not specified, the default order is `xyzw`.
    * `0`: This component is always 0.
    * `1`: This component is always 1.
@@ -65,17 +65,30 @@ Following are currently supported shader parameter's value type:
    * `y` or `g`: This component is the second component of input value.
    * `z` or `b`: This component is the third component of input value.
    * `w` or `a`: This component is the fourth component of input value.
-   * `C`: This component is a hard-coded constant, reading from *<Constant>* consecutively.
-   * `A`: This component is reading from a global variable, which default value is reading from *<Constant>* consecutively.
+   * `C`: This component is a hard-coded constant, reading from *`<`Constant`>`* consecutively.
+   * `A`: This component is reading from a global variable, which default value is reading from *`<`Constant`>`* consecutively.
   Some examples:
   `texcoord` means read the value from `texcoord0`.
   `texcoord3:zyx` means read the value from `texcoord3` and change the component's order, more clearly, swap the first and third component.
   `color1:wCbA:0.3,0.6` the value is `float4(color1.w,0.3,color1.b,some_global_variable)` and the default value of `some_global_variable` is 0.6.
-  * `textureArgument`*<num1>*[.(x|y|z|w|r|g|b|a)+]:texcoord*<num2>*[.(x|y|z|w|r|g|b|a)+][:`textureFile`:*<FileName>*][:*<SamplerState>*]
+  * `textureArgument`*`<`num1`>`*`[`.(x|y|z|w|r|g|b|a)+`]`:texcoord*`<`num2`>`*`[`.(x|y|z|w|r|g|b|a)+`]``[`:`textureFile`:*`<`FileName`>`*`]``[`:*`<`SamplerState`>`*`]`
   Sample the specified texture using specified texture coordinate in the input vertex data, and change the components' order to specified order.
   Blah blah blah ...
-  If two or more parameters use the same `textureArgument`, then the `textureFile` and *<SamplerState>* only need to set once.
-  For more information about *<SamplerState>*, see [http://msdn.microsoft.com/en-us/library/bb509644(v=VS.85).aspx DirectX SDK].
+  If two or more parameters use the same `textureArgument`, then the `textureFile` and *`<`SamplerState`>`* only need to set once.
+  For more information about *`<`SamplerState`>`*, see [http://msdn.microsoft.com/en-us/library/bb509644(v=VS.85).aspx DirectX SDK].
+
+==An Example==
+
+{{{
+<shader shaderProgram="standard"
+  baseColor="textureArgument0:texcoord0:textureFile:tex1.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
+  ambient="0.5,0.5,0.5" diffuse="0.5,0.5,0.5"
+  specular="0.4,0.4,0.3" specularHardness="20"
+  normalMap="textureArgument1.zyx:texcoord0:textureFile:normal1.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
+  parallaxMap="textureArgument0.y:texcoord0"
+  parallaxMapOffset="-0.5" parallaxMapScale="0.02"
+/>
+}}}
 
 ==About Shader Template==
 

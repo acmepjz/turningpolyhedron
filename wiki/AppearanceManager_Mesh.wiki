@@ -17,7 +17,7 @@ Currently the mesh node supports following attributes:
    * `<num>[%]|<x>[%],<y>[%],<z>[%]` means bevel amount. If using `%` then relative size is used, otherwise it's absolute size. If `<num>` is used, then the bevel amount is same for all direction, otherwise the specified value will be used.
   * `normalSmoothness` Specifies the normal smoothness of ordinal face. `0` means use face normal, `1` means the average normal of adjacent faces. Other values means linear interpolating using these two normals.
   * `bevelNormalSmoothness` Specifies the normal smoothness of bevel face.
-  * (`color`[*<number>*]|`texcoord`[*<number>*])[.(x|y|z|w|r|g|b|a)+]
+  * (`color``[`*`<`number`>`*`]`|`texcoord``[`*`<`number`>`*`]`)`[`.(x|y|z|w|r|g|b|a)+`]`
   Specifies (some components of) the color or texture coordinate of mesh data.
   `(x|y|z|w|r|g|b|a)+` specifies which components need to set value. If this is not specified, the default value is `xyzw`.
    * `x` or `r` means the first component.
@@ -25,8 +25,8 @@ Currently the mesh node supports following attributes:
    * `z` or `b` means the third component.
    * `w` or `a` mans the fourth component.
   The possible values of this attribute are:
-   * *<Constant>*: Use a constant scalar/vector contains 1~4 elements for the value.
-   * `unwrap`[:*<Constant>*] Depends on which type this mesh is. For example, if `type="cube"` then `unwrap` means `rect_unwrap`.
-   * `rect_unwrap`[:*<Constant>*] Assume the mesh is a cube and unwrap it using the size specified in *<Constant>*. If *<Constant>* is not set, then the progeam will use `s` for the size. See picture below.
-   http://turningpolyhedron.googlecode.com/svn/trunk/turningpolyhedron/media/doc/rect-unwrap.png
-   * `rect`[:*<Constant>*] Assume the mesh is a cube and set texture coordinate of each face to (0,0) to (x,y) or (x,z) or (y,z), depending for the orientation of face. The *<Constant>* specifies the size of cube. If *<Constant>* is not set, then the progeam will use `s` for the size.
+   * *`<`Constant`>`*: Use a constant scalar/vector contains 1~4 elements for the value.
+   * `unwrap``[`:*`<`Constant`>`*`]` Depends on which type this mesh is. For example, if `type="cube"` then `unwrap` means `rect_unwrap`.
+   * `rect_unwrap``[`:*`<`Constant`>`*`]` Assume the mesh is a cube and unwrap it using the size specified in *`<`Constant`>`*. If *`<`Constant`>`* is not set, then the progeam will use `s` for the size. See picture below.
+   http://turningpolyhedron.googlecode.com/svn/trunk/turningpolyhedron/doc/rect-unwrap.png
+   * `rect``[`:*`<`Constant`>`*`]` Assume the mesh is a cube and set texture coordinate of each face to (0,0) to (x,y) or (x,z) or (y,z), depending for the orientation of face. The *`<`Constant`>`* specifies the size of cube. If *`<`Constant`>`* is not set, then the progeam will use `s` for the size.
