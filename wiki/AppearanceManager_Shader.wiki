@@ -1,0 +1,27 @@
+#summary Appearance Manager shader node format
+
+Shader node (`<shader>` and `<shaderTemplate>`) describes the shading method and arguments of meshes, such as shading program, diffuse and specular color, texture coordinates and texture files, etc.
+
+The `<shader>` describes a shader, and `<shaderTemplate>` describes a shader template (see below).
+
+Currently the shader node supports following attributes:
+
+  * `templateName` _(optional)_ @#^$ ...
+
+==About Shader Template==
+
+A shader template is a shader whose shader program is fixed, but some parameters can be declared as `shaderArgument` thus can be changed in the inherited shader or when the program is running. Using shader template decreases the loading time, rendering time and memory usage because it prevents the creating of multiple unnecessary shader programs.
+
+For example:
+
+{{{
+<!-- in DefaultShaders.xml -->
+<shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument"
+specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"/>
+...
+<!-- in an appearance node -->
+<!-- will share shader program with "simple1_fixed" instead of creating a new one -->
+<shader templateName="simple1_fixed" ambient="0.4,0.25,0.2" diffuse="0.4,0.35,0.3" specular="0.5,0.5,0.5" specularHardness="50">
+  <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+</shader>
+}}}

@@ -1,0 +1,7 @@
+#summary Appearance Manager mesh node format
+
+Mesh node (`<mesh>`) describes the mesh type and arguments.
+
+Currently the mesh node supports following attributes:
+
+@$@#%@%
