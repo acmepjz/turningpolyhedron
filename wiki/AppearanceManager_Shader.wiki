@@ -2,12 +2,12 @@
 
 Shader node (`<shader>` and `<shaderTemplate>`) describes the shading method and arguments of meshes, such as shading program, diffuse and specular color, texture coordinates and texture files, etc.
 
-The `<shader>` describes a shader, and `<shaderTemplate>` describes a shader template (see [AppearanceManager_Shader#About_Shader_Template below]).
+The `<shader>` describes a shader, and `<shaderTemplate>` describes a shader template (see [AppearanceManager_Shader#About_Shader_Template]).
 
 Currently the shader node supports following attributes:
 
   * `templateName` _(optional)_
-  If the node is `<shader>`, then it specifies which shader template will used. See [AppearanceManager_Shader#About_Shader_Template below]. If the node is `<shaderTemplate>`, then it specifies the shader template name.
+  If the node is `<shader>`, then it specifies which shader template will used. See [AppearanceManager_Shader#About_Shader_Template]. If the node is `<shaderTemplate>`, then it specifies the shader template name.
   * `shaderProgram`
   Specifies the shader program. Can be one of following values:
    * `none`: Don't use programmable rendering pipeline. Sorry, currently unsupported :(
@@ -52,7 +52,7 @@ Following attributes are currently supported shader parameters. They are all opt
 Following are currently supported shader parameter's value type:
 
   * *`<`Constant`>`*
-  The parameter is a constant scalar/vector contains 1~4 elements. For example, `0.5` or `1,2,3,4`. The constant will be hard-coded into the shader program, so it's unchangable after the creation of shader. One exception is if the shader is inherited from a shader template, and the parameter's type of shader template is `shaderArgument`, then the parameter's type of this shader will automatically convert to `shaderArgument`, instead of hard-coded constant.
+  The parameter is a constant scalar/vector contains 1~4 elements. For example, `0.5` or `1,2,3,4`. The constant will be hard-coded into the shader program, so it's unchangeable after the creation of shader. One exception is if the shader is inherited from a shader template, and the parameter's type of shader template is `shaderArgument`, then the parameter's type of this shader will automatically convert to `shaderArgument`, instead of hard-coded constant.
   * `shaderArgument``[`:*`<`Constant`>`*`]`
   Will assign a global variable to store this parameter in shader program. If *`<`Constant`>`* is not specified, then the default value of parameter is 0, otherwise the default value is *`<`Constant`>`*.
   * (`color``[`*`<`number`>`*`]`|`texcoord``[`*`<`number`>`*`]`)`[`:(0|1|x|y|z|w|r|g|b|a|C|A)+`[`:*`<`Constant`>`*`]``]`
