@@ -5,8 +5,7 @@
     <name>Ground</name>
     <description>Normal ground.</description>
     <appearance>
-      <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.25,0.25,0.2" diffuse="0.25,0.25,0.2" specular="0.5,0.5,0.5" specularHardness="50">
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
@@ -16,6 +15,9 @@
     <description>Soft button. Activated when any part of the block presses it.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onEnter event="triggerEvent"/>
   </tileType>
@@ -24,6 +26,9 @@
     <description>Hard button. Activated only when the block standing on it.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onEnter condition="pressure=2~" event="triggerEvent"/>
   </tileType>
@@ -32,6 +37,9 @@
     <description>Teleporter will teleports your block to different locations, optionally splitting it into two smaller blocks at the same time.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onMoveEnter condition="onGroundCount=1" event="teleport"/>
   </tileType>
@@ -39,7 +47,9 @@
     <name>Thin ground</name>
     <description>Thin ground are more fragile than the rest of the land. If your block stands up vertically on it, the tile will give way and your block will fall.</description>
     <appearance>
-      <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.4,0.3,0.2" diffuse="0.5,0.3,0.2" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.2" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onEnter condition="pressure=2~" event="game-over:breakdown"/>
   </tileType>
@@ -48,21 +58,32 @@
     <description>The bridge which is off.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onEnter event="game-over"/>
+    <onCustomEvent condition="eventType=toggle|on" event="convertTo:7"/>
   </tileType>
   <tileType id="bridge-on" index="7">
     <name>Bridge</name>
     <description>The bridge is just the same as normal ground when it is activated.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
+    <onCustomEvent condition="eventType=toggle|off" event="convertTo:6"/>
   </tileType>
   <tileType id="goal" index="8" goal="true">
     <name>Goal</name>
     <description>You'll win the game if you get your block to fall into this square hole after visiting all checkpoints.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onEnter condition="onGroundCount=1" event="game-finished"/>
   </tileType>
@@ -71,6 +92,9 @@
     <description>Ice are slippery. If the block is not rough enough and is completely on the ice, it will slip until get off the ice or hit the wall.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
   </tileType>
   <tileType id="pyramid" index="10">
@@ -78,6 +102,9 @@
     <description>Your block is unstable when standing on the pyramid, so it will lie down immediately unless there is a wall next to your block.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onMoveEnter condition="pressure=2~" event="move"/>
   </tileType>
@@ -86,6 +113,9 @@
     <description>As an obstacle, your block can't pass through the wall, but it can recline on the wall and move around.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
   </tileType>
   <!-- test new floor type -->
@@ -94,6 +124,9 @@
     <description>This ground is so thin that it will break down immediately after you move on it.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onLeave event="breakdown"/>
   </tileType>
@@ -102,6 +135,9 @@
     <description>After you stand on a tricky ground, it will turn to thin ground.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onLeave condition="pressure=2~" event="convertTo:thin-ground"/>
   </tileType>
@@ -110,6 +146,9 @@
     <description>The block can move onto a strange ground, but only if it stands upright on it.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onEnter condition="onGroundCount=2~" event="game-over:immediately"/>
   </tileType>
@@ -118,6 +157,9 @@
     <description>Only black block can pass through black ground.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onEnter condition="objectType!=black" event="game-over:immediately"/>
   </tileType>
@@ -126,6 +168,9 @@
     <description>Only white block can pass through white ground.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onEnter condition="objectType!=white" event="game-over:immediately"/>
   </tileType>
@@ -134,6 +179,9 @@
     <description>Same as normal ground, but it will change to the block's color if a black or white block is leave it.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onLeave condition="objectType=black" event="convertTo:black"/>
     <onLeave condition="objectType=white" event="convertTo:white"/>
@@ -143,6 +191,9 @@
     <description>Same as normal ground, but it will change to the color opposite to the block's color if a black or white block is leave it.</description>
     <appearance>
       <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
     </appearance>
     <onLeave condition="objectType=black" event="convertTo:white"/>
     <onLeave condition="objectType=white" event="convertTo:black"/>

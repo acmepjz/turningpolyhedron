@@ -117,11 +117,6 @@ Public objCamera As New clsCamera
 'test
 Public objTest As D3DXMesh
 
-'vvv hardware instancing test
-Public objInstanceBuffer As Direct3DVertexBuffer9
-Public m_objVertexDecl As Direct3DVertexDeclaration9
-'^^^ hardware instancing test
-
 Public objTextMgr As New clsTextureManager
 Public objRenderTest As New clsRenderPipeline
 Public objLand As New clsRenderLandscape, objLandTexture As Direct3DTexture9
@@ -132,12 +127,12 @@ Public objFontSprite As D3DXSprite
 Public objFont As D3DXFont
 
 Public objEffectMgr As New clsEffectManager
-Public bTestOnly As Boolean
+'Public bTestOnly As Boolean
 '////////
 
 Public objFileMgr As New clsFileManager
-
 Public objMeshMgr As New clsMeshManager
+Public objTileMgr As New clsTileManager
 
 '////////settings
 Public frmSettings As New frmSettings
@@ -152,17 +147,6 @@ m_tDefVertexDecl(4) = D3DVertexElementCreate(, 48&, D3DDECLTYPE_D3DCOLOR, , D3DD
 m_tDefVertexDecl(5) = D3DVertexElementCreate(, 52&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR, 1)
 m_tDefVertexDecl(6) = D3DVertexElementCreate(, 56&, D3DDECLTYPE_FLOAT2, , D3DDECLUSAGE_TEXCOORD)
 m_tDefVertexDecl(7) = D3DDECL_END '64 bytes
-'///hardware instancing test
-m_tDefVertexDecl(8) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
-m_tDefVertexDecl(9) = D3DVertexElementCreate(, 12&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_NORMAL)
-m_tDefVertexDecl(10) = D3DVertexElementCreate(, 24&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_BINORMAL)
-m_tDefVertexDecl(11) = D3DVertexElementCreate(, 36&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_TANGENT)
-m_tDefVertexDecl(12) = D3DVertexElementCreate(, 48&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR)
-m_tDefVertexDecl(13) = D3DVertexElementCreate(, 52&, D3DDECLTYPE_D3DCOLOR, , D3DDECLUSAGE_COLOR, 1)
-m_tDefVertexDecl(14) = D3DVertexElementCreate(, 56&, D3DDECLTYPE_FLOAT2, , D3DDECLUSAGE_TEXCOORD)
-m_tDefVertexDecl(15) = D3DVertexElementCreate(1, 0, D3DDECLTYPE_FLOAT4, , D3DDECLUSAGE_POSITION, 7)
-m_tDefVertexDecl(16) = D3DDECL_END
-Set m_objVertexDecl = d3dd9.CreateVertexDeclaration(m_tDefVertexDecl(8))
 End Sub
 
 Public Sub FakeDXAppMainLoop(Optional ByVal lpbCancel As Long)
@@ -248,39 +232,23 @@ With d3dd9
   End If
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
-  'If bTestOnly Then Set obj = objEffectMgr.EffectObject(1) Else Set obj = Nothing
-  If bTestOnly Then
-   'objEffectMgr.SetTexture 1, IDA_BaseColor, objTexture
-   'objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
-   'objEffectMgr.SetupEffect 1, True, True, True, True, , True
-   .BeginScene
-   '///TEST TEST TEST
-   objEffectMgr.DrawInstance objMeshMgr, True, True
-   'objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
-   '///
-   .EndScene
-   'objEffectMgr.EndEffect
-  Else
+'  If bTestOnly Then
+'   'objEffectMgr.SetTexture 1, IDA_BaseColor, objTexture
+'   'objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
+'   'objEffectMgr.SetupEffect 1, True, True, True, True, , True
+'   .BeginScene
+'   '///TEST TEST TEST
+'   objEffectMgr.DrawInstance objMeshMgr, True, True
+'   'objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
+'   '///
+'   .EndScene
+'   'objEffectMgr.EndEffect
+'  Else
    objRenderTest.SetTexture objTexture
    objRenderTest.SetNormalTexture objNormalTexture
    If objRenderTest.BeginRender(RenderPass_Main) Then
     .BeginScene
-    'objTest.DrawSubset 0
-    '///TEST hardware instancing
-    .SetStreamSourceFreq 0, D3DSTREAMSOURCE_INDEXEDDATA Or 100
-    .SetStreamSource 0, objTest.GetVertexBuffer, 0, 64&
-    .SetStreamSourceFreq 1, D3DSTREAMSOURCE_INSTANCEDATA Or 1
-    .SetStreamSource 1, objInstanceBuffer, 0, 16&
-    '///
-    .SetVertexDeclaration m_objVertexDecl
-    .SetIndices objTest.GetIndexBuffer
-    .DrawIndexedPrimitive D3DPT_TRIANGLELIST, 0, 0, 24&, 0, 12&
-    '///
-    .SetStreamSourceFreq 0, 1
-    .SetStreamSource 0, Nothing, 0, 0
-    .SetStreamSourceFreq 1, 1
-    .SetStreamSource 1, Nothing, 0, 0
-    '///
+    objTest.DrawSubset 0
 '    '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
 '    objRenderTest.SetTexture objLandTexture
 '    .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
@@ -291,7 +259,7 @@ With d3dd9
     .EndScene
     objRenderTest.EndRender
    End If
-  End If
+'  End If
   objRenderTest.EndRenderToPostProcessTarget
   '////////volumetric fog test
   If objRenderTest.BeginRender(RenderPass_FogVolume) Then
@@ -481,10 +449,6 @@ Set objLand = Nothing
 Set objLandTexture = Nothing
 Set objTextMgr = Nothing
 Set objTest = Nothing
-'---
-Set objInstanceBuffer = Nothing
-Set m_objVertexDecl = Nothing
-'---
 Set objTexture = Nothing
 Set objNormalTexture = Nothing
 Set d3dd9 = Nothing
@@ -504,6 +468,7 @@ Public Sub FakeDXAppInit(ByVal frm As Form, ByVal objSubclass As cSubclass, ByVa
 On Error Resume Next
 Dim i As Long
 Dim s As String
+Dim obj As clsTreeStorageNode
 '///
 'FakeDXAppBeginLog
 '///
@@ -607,40 +572,50 @@ If App.LogMode = 1 Then
   .Subclass frm.hwnd, objCallback
  End With
 End If
-'////////new:load effects test
-'objEffectMgr.LoadEffectsFromFile App.Path + "\data\DefaultShaders.xml", New clsXMLSerializer
-'////////NEW NEW     load effect from memory in normal file using file manager
-i = objFileMgr.LoadFile("DefaultShaders.xml")
-If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objFileMgr.FileSize(i), New clsXMLSerializer
-'////////NEW NEW NEW load effect from memory in archive file using file manager
-'i = objFileMgr.LoadFile("data.tar.lzma\DefaultShaders.xml")
-'If i > 0 Then objEffectMgr.LoadEffectsFromMemory objFileMgr.FilePointer(i), objFileMgr.FileSize(i), New clsXMLSerializer
-'////////TEST TEST TEST load appearance, and add instance (software and hardware), and draw
-Dim obj As New clsTreeStorageNode
-Dim j As Long, k As Long, lp As Long
-Dim mat() As D3DMATRIX
-ReDim mat(1 To 100)
-'---
+'///load data
 With New clsXMLSerializer
- .LoadNodeFromFile App.Path + "\data\test.xml", obj
+ '////////load default effects
+ i = objFileMgr.LoadFile("DefaultShaders.xml")
+ If i > 0 Then
+  Set obj = New clsTreeStorageNode
+  If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
+  objEffectMgr.LoadEffectsFromSubNodes obj
+ End If
+ '////////load default object types
+ i = objFileMgr.LoadFile("DefaultObjectTypes.xml")
+ If i > 0 Then
+  Set obj = New clsTreeStorageNode
+  If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
+  objTileMgr.LoadObjectTypesFromSubNodes obj
+ End If
+ '///
 End With
-i = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr)
-If i > 0 Then
- '---software
- lp = 1
- For j = -5 To 4
-  For k = -5 To 4
-   D3DXMatrixRotationYawPitchRoll mat(lp), j * -0.1, k * 0.1, 0
-   mat(lp).m41 = j
-   mat(lp).m42 = k
-   objEffectMgr.AddInstanceFromAppearance i, mat(lp)
-   mat(lp).m43 = 5
-   lp = lp + 1
-  Next k
- Next j
- '---hardware
- objEffectMgr.AddHWInstanceFromAppearance objMeshMgr, i, mat, 1, 100
-End If
+''////////TEST TEST TEST load appearance, and add instance (software and hardware), and draw
+'Dim obj As New clsTreeStorageNode
+'Dim j As Long, k As Long, lp As Long
+'Dim mat() As D3DMATRIX
+'ReDim mat(1 To 100)
+''---
+'With New clsXMLSerializer
+' .LoadNodeFromFile App.Path + "\data\test.xml", obj
+'End With
+'i = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr)
+'If i > 0 Then
+' '---software
+' lp = 1
+' For j = -5 To 4
+'  For k = -5 To 4
+'   D3DXMatrixRotationYawPitchRoll mat(lp), j * -0.1, k * 0.1, 0
+'   mat(lp).m41 = j
+'   mat(lp).m42 = k
+'   objEffectMgr.AddInstanceFromAppearance i, mat(lp)
+'   mat(lp).m43 = 3
+'   lp = lp + 1
+'  Next k
+' Next j
+' '---hardware
+' objEffectMgr.AddHWInstanceFromAppearance objMeshMgr, i, mat, 1, 100
+'End If
 '////////landscape test
 Dim t As D3DXIMAGE_INFO
 objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
@@ -706,20 +681,6 @@ Next i
 obj.UnlockVertexBuffer
 '///
 Set pLoadMeshTest = obj
-'///--------hardware instancing test
-Dim v As D3DXVECTOR4
-d3dd9.CreateVertexBuffer 1600, 0, 0, D3DPOOL_MANAGED, objInstanceBuffer, ByVal 0
-objInstanceBuffer.Lock 0, 0, lp, D3DLOCK_DISCARD
-For i = -5 To 4
- For j = -5 To 4
-  v.x = i * 3
-  v.y = j * 3
-  CopyMemory ByVal lp, v, 16
-  lp = lp + 16
- Next j
-Next i
-objInstanceBuffer.Unlock
-'///--------
 End Function
 
 Public Sub FakeDXAppCreateUI(ByVal objEventCallback As IFakeDXUIEvent)

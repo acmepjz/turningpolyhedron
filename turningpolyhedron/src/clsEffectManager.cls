@@ -459,7 +459,7 @@ Case Else
  Next i
  Exit Function
 End Select
-'///
+'///create vertex declaration
 Set objMesh = objMeshMgr.Mesh(nMeshIndex)
 objMesh.GetDeclaration t(0)
 For i = 0 To 64

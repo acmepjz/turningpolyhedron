@@ -5,7 +5,7 @@
 	normalSmoothness="1.00" texcoord0.xy="unwrap" texcoord0.zw="rect"/>
 -->
       <!-- TEST -->
-      <shader templateName="simple1_fixed" ambient="0.4,0.25,0.2" diffuse="0.4,0.35,0.3" specular="0.5,0.5,0.5" specularHardness="50">
-        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      <shader templateName="simple1_fixed" ambient="0.4,0.3,0.2" diffuse="0.5,0.3,0.2" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.2" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
 </appearance>

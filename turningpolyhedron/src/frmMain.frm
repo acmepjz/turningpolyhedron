@@ -180,8 +180,8 @@ Case FakeCtl_Event_Click
  Case "Check1"
   i = FakeDXUIFindControl("Check2")
   If i Then FakeDXUIControls(i).Enabled = obj.Value
- Case "Check2"
-  bTestOnly = obj.Value
+' Case "Check2"
+'  bTestOnly = obj.Value
  Case "cmdOptions"
   frmSettings.Show
  End Select
