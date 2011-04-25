@@ -12,7 +12,7 @@ Option Explicit
 'Public m_hStdErr As Long
 
 Private Declare Function SHGetSpecialFolderPath Lib "shell32.dll" Alias "SHGetSpecialFolderPathA" (ByVal hwnd As Long, ByVal pszPath As String, ByVal csidl As Long, ByVal fCreate As Long) As Long
-Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
+Private Declare Function SHCreateDirectory Lib "shell32.dll" (ByVal hwnd As Long, ByVal pszPath As Long) As Long
 
 Private Const CSIDL_PERSONAL As Long = &H5
 Private Const CSIDL_DESKTOP As Long = &H0
@@ -475,7 +475,7 @@ Dim obj As clsTreeStorageNode
 FakeDXAppMyGamesPath = Space(1024)
 SHGetSpecialFolderPath 0, FakeDXAppMyGamesPath, CSIDL_PERSONAL, 1
 FakeDXAppMyGamesPath = Left(FakeDXAppMyGamesPath, InStr(1, FakeDXAppMyGamesPath, vbNullChar) - 1) + "\My Games\Turning Polyhedron\"
-MakeSureDirectoryPathExists FakeDXAppMyGamesPath
+SHCreateDirectory 0, StrPtr(FakeDXAppMyGamesPath)
 '///init file manager
 objFileMgr.AddPath App.Path + "\data\|" + FakeDXAppMyGamesPath
 '///load config
@@ -587,6 +587,13 @@ With New clsXMLSerializer
   Set obj = New clsTreeStorageNode
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
   objTileMgr.LoadObjectTypesFromSubNodes obj
+ End If
+ '////////load default tile types
+ i = objFileMgr.LoadFile("DefaultTileTypes.xml")
+ If i > 0 Then
+  Set obj = New clsTreeStorageNode
+  If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
+  objTileMgr.LoadTileTypesFromSubNodes obj, objEffectMgr, objMeshMgr
  End If
  '///
 End With
