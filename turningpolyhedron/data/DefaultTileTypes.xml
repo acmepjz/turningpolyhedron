@@ -51,7 +51,7 @@
         <mesh type="cube" s="1,1,0.2" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
-    <onEnter condition="pressure=2~" event="game-over:breakdown"/>
+    <onEnter condition="pressure=2~" event="game-over:breakdown:2"/>
   </tileType>
   <tileType id="bridge-off" index="6" invisibleAtRuntime="true">
     <name>Bridge (off)</name>
@@ -76,7 +76,7 @@
     </appearance>
     <onCustomEvent condition="eventType=toggle|off" event="convertTo:6"/>
   </tileType>
-  <tileType id="goal" index="8" goal="true">
+  <tileType id="goal" index="8">
     <name>Goal</name>
     <description>You'll win the game if you get your block to fall into this square hole after visiting all checkpoints.</description>
     <appearance>
@@ -85,7 +85,7 @@
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
-    <onEnter condition="onGroundCount=1" event="game-finished"/>
+    <onEnter condition="onGroundCount=1;main=true" event="game-finished"/>
   </tileType>
   <tileType id="ice" index="9" type="ice">
     <name>Ice</name>
@@ -115,6 +115,7 @@
       <!-- TODO: -->
       <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+        <mesh type="cube" s="1,1,1" c="0,0,0" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
   </tileType>
@@ -128,7 +129,7 @@
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
-    <onLeave event="breakdown"/>
+    <onLeave event="game-over:breakdown:2"/>
   </tileType>
   <tileType id="tricky">
     <name>Tricky ground</name>
