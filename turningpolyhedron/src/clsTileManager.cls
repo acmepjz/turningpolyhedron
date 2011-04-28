@@ -272,12 +272,13 @@ If nIndex1 >= 0 And nIndex1 <= m_nObjTypeCount And nIndex2 >= 0 And nIndex2 <= m
 End If
 End Function
 
-Friend Sub pParseInteraction(ByRef t As typeObjectInteractionType, ByVal s As String)
-Dim i As Long, s1 As String
-i = InStr(1, s, ":")
-If i > 0 Then
- s1 = Mid(s, i + 1)
- s = Left(s, i - 1)
+'internal
+Friend Sub ParseInteraction(ByRef t As typeObjectInteractionType, ByVal s As String)
+Dim j As Long, s1 As String
+j = InStr(1, s, ":")
+If j > 0 Then
+ s1 = Mid(s, j + 1)
+ s = Left(s, j - 1)
 End If
 Select Case s
 Case "moveable"
@@ -289,20 +290,20 @@ Case "slippery"
 Case "superSlippery"
  t.nType = 3
 Case "game-over"
- i = 0
+ j = 0
  Select Case s1
  Case "immediately"
-  i = 1
+  j = 1
  Case "breakdown"
-  i = 2
+  j = 2
  Case "breakdown:2"
-  i = 3
+  j = 3
  Case "melting"
-  i = 4
+  j = 4
  Case "melting:2"
-  i = 5
+  j = 5
  End Select
- t.nType = &H100 Or i
+ t.nType = &H100 Or j
 Case Else
  Debug.Assert False
 End Select
@@ -344,7 +345,7 @@ For i = 1 To objNode.SubNodeCount
      s = obj.GetSubNodeNameAsString(j)
      Select Case s
      Case "default"
-      pParseInteraction m_tObjType(m_nObjTypeCount).tInteraction(0), obj.GetSubNodeValueAsString(j)
+      ParseInteraction m_tObjType(m_nObjTypeCount).tInteraction(0), obj.GetSubNodeValueAsString(j)
      Case Else
       nCount = nCount + 1
       If nCount > nMax Then
@@ -353,7 +354,7 @@ For i = 1 To objNode.SubNodeCount
       End If
       m_tObjType(m_nObjTypeCount).nInteractionCount = nCount
       m_tObjType(m_nObjTypeCount).tInteraction(nCount).sName2 = s
-      pParseInteraction m_tObjType(m_nObjTypeCount).tInteraction(nCount), obj.GetSubNodeValueAsString(j)
+      ParseInteraction m_tObjType(m_nObjTypeCount).tInteraction(nCount), obj.GetSubNodeValueAsString(j)
      End Select
     End If
    Next j
@@ -480,7 +481,7 @@ For i = 1 To ret.nConditionCount
    Else
     If s1 <> "" Then
      ret.tCondition(i).nValue1 = -1E+30
-     ret.tCondition(i).nValue2 = Val(s)
+     ret.tCondition(i).nValue2 = Val(s1)
     Else
      'ERR
      Debug.Assert False
@@ -493,14 +494,89 @@ For i = 1 To ret.nConditionCount
   End If
  Case 3 'string
   ret.tCondition(i).sStringValue = Split(s1, "|")
-  ret.tCondition(i).nStringValueCount = UBound(ret.tCondition(i).sStringValue) - 1
+  ret.tCondition(i).nStringValueCount = UBound(ret.tCondition(i).sStringValue) + 1
  End Select
  '///
  ret.tCondition(i).nType = nType
  ret.tCondition(i).nCompareType = nCompareType
 Next i
 '///process events
-'TODO:
+v = Split(Trim(objNode.GetSubNodeValueAsStringByName("event")), ";")
+ret.nEventCount = UBound(v) + 1
+If ret.nEventCount > 0 Then ReDim ret.tEvent(1 To ret.nEventCount)
+For i = 1 To ret.nEventCount
+ s = Trim(v(i - 1))
+ lps = InStr(1, s, ":")
+ If lps > 0 Then
+  s1 = Trim(Mid(s, lps + 1))
+  s = Trim(Left(s, lps - 1))
+ Else
+  s1 = vbNullString
+ End If
+ '///
+ Select Case s
+ Case "triggerEvent"
+  nType = 1
+  j = Val(s1)
+  If j <= 0 Then j = 1
+  ret.tEvent(i).nParam = j
+ Case "sendEvent"
+  nType = 2
+  ret.tEvent(i).sStringParam = Split(s1, ":")
+  ret.tEvent(i).nStringParamCount = UBound(ret.tEvent(i).sStringParam) + 1
+ Case "teleport"
+  nType = 3
+  'TODO:
+ Case "convertTo"
+  nType = 4
+  ret.tEvent(i).nStringParamCount = 1
+  ReDim ret.tEvent(i).sStringParam(0)
+  ret.tEvent(i).sStringParam(0) = s1
+ Case "move"
+  Select Case s1
+  Case "left"
+   nType = 6
+  Case "right"
+   nType = 7
+  Case "back"
+   nType = 8
+  Case Else
+   nType = 5
+  End Select
+ Case "absolute-move"
+  nType = 9
+  'TODO:
+ Case "game-finished"
+  Select Case s1
+  Case "unconditional"
+   nType = 11
+  Case Else
+   nType = 10
+  End Select
+ Case "checkpoint"
+  nType = 12
+ Case "game-over"
+  j = 0
+  Select Case s1
+  Case "immediately"
+   j = 1
+  Case "breakdown"
+   j = 2
+  Case "breakdown:2"
+   j = 3
+  Case "melting"
+   j = 4
+  Case "melting:2"
+   j = 5
+  End Select
+  nType = &H100 Or j
+ Case Else
+  Debug.Assert False
+  Exit Function
+ End Select
+ '///
+ ret.tEvent(i).nType = nType
+Next i
 '///over
 ParseEventFromNode = True
 End Function
