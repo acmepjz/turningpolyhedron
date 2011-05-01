@@ -15,99 +15,6 @@ Option Explicit
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
-Private Type typeMeshParamData
- nType As Long
- '///
- 'bit0-4:
- '1,2=color0-1
- '&H10-&H1F=texcoord0-15
- '---
- 'bit 6-7 = used count (0-3 --> 1-4)
- '---
- 'bit8-15:xyzw (0=x 1=y 2=z 3=w)
- '///
- nValueType As Long
- '0=constant
- '&H10=rect_unwrap
- '&H11=rect
- '///
- fValue(3) As D3DXVECTOR4
-End Type
-
-Private Type typeMeshVertex_Temp
- nParent As Integer
- '>0=has parent (shared index) note: must < current index
- '=0=no parent
- '<0=this is the parent (shared index) node
- nFlags As Integer
- '&H1=bevel face vertex
- '&H4000=normal initialized
- '///
- fPos As D3DXVECTOR4
- fNormal(1) As D3DXVECTOR4 'must follow fPos ;)
- '0=average normal (if nParent=0) or result
- '1=per-face normal
- fTexcoord As D3DXVECTOR4 'w=index
-End Type
-
-Private Type typeMeshEdge_Temp
- nFlags As Long
- 'bit 0-1=bevel index (0-x 1-y 2-z 3-w) for vertex 0-1
- 'bit 2-3=bevel index for vertex 2-3
- nVertexIndex(3) As Long
- nVertexB As Long 'optional (whel nBevel=2)
- '|   F  |
- '3------2
- '(B+1) (B)
- '0------1
- '|   F  |
-End Type
-
-Private Type typeMeshFace_Temp
- nFlags As Long
- 'bit 0-7=edge(0-3) bevel index (0-x 1-y 2-z 3-w)
- 'edge N = vertex N to vertex N+1
- '///
- nCount As Long '3 or 4
- nVertex(3) As Long
- 'note: order(??)=
- '0-1  -x
- ' /  |
- '2-3 y
-End Type
-
-Private Type typeMeshOptionalData
- nFlags As Long
- 'bit 0-1=bevel (0-2)
- '///
- fNormalSmoothness As Single
- fBevelNormalSmoothness As Single
- '///
- nParamCount As Long
- tParams() As typeMeshParamData '1-based
- '///
- fPos(3) As D3DXVECTOR4
- fRotation As D3DXVECTOR4
- fScale As D3DXVECTOR4
- fCenter As D3DXVECTOR4
- '///
- fBevel As D3DXVECTOR4 '>0=relative <0=absolute
-End Type
-
-Private Type typeMeshMgrData
- nType As Long
- '0=unused
- '1=cube
- 'TODO:...
- '///
-' nVertexCount As Long
-' nFaceCount As Long
- FVF As D3DFVFFLAGS 'only used D3DFVF_DIFFUSE, D3DFVF_SPECULAR and D3DFVF_TEX* (&H100& to &H1F00&)
- nVertexSize As Long
- '///
- objMesh As D3DXMesh
-End Type
-
 Private m_tData() As typeMeshMgrData
 Private m_nCount As Long
 Private m_nMax As Long
@@ -129,28 +36,6 @@ Erase m_tData
 m_nCount = 0
 m_nMax = 0
 End Sub
-
-Friend Function pReadVec4(ByVal s As String, ByRef t As D3DXVECTOR4) As Boolean
-Dim v As Variant, i As Long
-Dim f(3) As Double
-'///
-v = Split(s, ",")
-For i = 0 To UBound(v)
- s = Trim(v(i))
- f(i) = Val(s)
- If LCase(Right(s, 1)) = "d" Then
-  f(i) = f(i) * 1.74532925199433E-02
- End If
- If i >= 3 Then Exit For
-Next i
-'///
-t.x = f(0)
-t.y = f(1)
-t.z = f(2)
-t.w = f(3)
-'///
-pReadVec4 = True
-End Function
 
 Friend Function pReadComponent(ByVal s As String, ByRef n As Long) As Boolean
 Dim i As Long, j As Long, k As Long, m As Long
@@ -209,7 +94,7 @@ End Select
 t.tParams(nIndex).nValueType = nType
 '///
 If i > 0 Then
- pReadComponentValue = pReadVec4(s1, t.tParams(nIndex).fValue(0))
+ pReadComponentValue = FakeDXUtilReadVec4(s1, t.tParams(nIndex).fValue(0))
 Else
  Select Case nType
  Case &H10&, &H11&
@@ -1295,13 +1180,13 @@ For i = 1 To objNode.SubNodeCount
     Exit Function
    End Select
   Case "p", "p1", "p2", "p3"
-   If Not pReadVec4(objNode.GetSubNodeValueAsString(i), t2.fPos(Val(Mid(s, 2)))) Then Exit Function
+   If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), t2.fPos(Val(Mid(s, 2)))) Then Exit Function
   Case "r"
-   If Not pReadVec4(objNode.GetSubNodeValueAsString(i), t2.fRotation) Then Exit Function
+   If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), t2.fRotation) Then Exit Function
   Case "s"
-   If Not pReadVec4(objNode.GetSubNodeValueAsString(i), t2.fScale) Then Exit Function
+   If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), t2.fScale) Then Exit Function
   Case "c"
-   If Not pReadVec4(objNode.GetSubNodeValueAsString(i), t2.fCenter) Then Exit Function
+   If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), t2.fCenter) Then Exit Function
   Case "bevel"
    s = objNode.GetSubNodeValueAsString(i)
    j = Val(s)

@@ -81,34 +81,6 @@ Public FakeDXAppMyGamesPath As String
 
 Public FakeDXAppRequestUnload As Boolean, FakeDXAppCanUnload As Boolean
 
-'////////mesh instance data
-
-Public Type typeMeshInstanceData 'N bytes :(
- nType As Long
- '0=mesh
- '1-15=hardware instancing mesh, same as hardware instancing mode
- 'TODO:etc.
- '///
- nEffectIndex As Long '<=0 is unused, if <0 then is &H80000000 | (next unused index)
- nMeshIndex As Long 'must >0
- '///when nType=0
- matWorld As D3DMATRIX
- '///when nType=1-15
- nCount As Long
- nInstanceVertexSize As Long
- '///
- objDeclaration As Direct3DVertexDeclaration9
- objInstanceBuffer As Direct3DVertexBuffer9
-End Type
-
-Public Type typeMeshInstanceCollection
- tInstance() As typeMeshInstanceData
- nInstOrder() As Long '1-based
- nInstCount As Long
- nInstUnused As Long ', nInstMax As Long
- bInstDirty As Boolean
-End Type
-
 '////////test
 
 'default camera
@@ -132,7 +104,7 @@ Public objEffectMgr As New clsEffectManager
 
 Public objFileMgr As New clsFileManager
 Public objMeshMgr As New clsMeshManager
-Public objTileMgr As New clsTileManager
+Public objGameMgr As New clsGameManager
 
 '////////settings
 Public frmSettings As New frmSettings
@@ -586,14 +558,21 @@ With New clsXMLSerializer
  If i > 0 Then
   Set obj = New clsTreeStorageNode
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
-  objTileMgr.LoadObjectTypesFromSubNodes obj
+  objGameMgr.LoadObjectTypesFromSubNodes obj
  End If
  '////////load default tile types
  i = objFileMgr.LoadFile("DefaultTileTypes.xml")
  If i > 0 Then
   Set obj = New clsTreeStorageNode
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
-  objTileMgr.LoadTileTypesFromSubNodes obj, objEffectMgr, objMeshMgr
+  objGameMgr.LoadTileTypesFromSubNodes obj, objEffectMgr, objMeshMgr
+ End If
+ '///TEST:load level
+ i = objFileMgr.LoadFile("lvltest.xml")
+ If i > 0 Then
+  Set obj = New clsTreeStorageNode
+  If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
+  objGameMgr.AddLevelDataFromNode obj
  End If
  '///
 End With
@@ -861,6 +840,28 @@ End With
 '///
 Set FakeDXUIEvent = objEventCallback
 End Sub
+
+Public Function FakeDXUtilReadVec4(ByVal s As String, ByRef t As D3DXVECTOR4) As Boolean
+Dim v As Variant, i As Long
+Dim f(3) As Double
+'///
+v = Split(s, ",")
+For i = 0 To UBound(v)
+ s = Trim(v(i))
+ f(i) = Val(s)
+ If LCase(Right(s, 1)) = "d" Then
+  f(i) = f(i) * 1.74532925199433E-02
+ End If
+ If i >= 3 Then Exit For
+Next i
+'///
+t.x = f(0)
+t.y = f(1)
+t.z = f(2)
+t.w = f(3)
+'///
+FakeDXUtilReadVec4 = True
+End Function
 
 'Public Sub FakeDXAppBeginLog()
 'If m_hStdErr = 0 Then

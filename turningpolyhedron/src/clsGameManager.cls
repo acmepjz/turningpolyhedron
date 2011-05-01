@@ -6,39 +6,14 @@ BEGIN
   DataSourceBehavior  = 0  'vbNone
   MTSTransactionMode  = 0  'NotAnMTSObject
 END
-Attribute VB_Name = "clsTileManager"
+Attribute VB_Name = "clsGameManager"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = True
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-Private Type typeObjectInteractionType
- sName2 As String
- '///
- nType As Long
- '---should use only 31 bits
- '0=moveable (default)
- '1=not-moveable
- '2=slippery
- '3=superSlippery
- '&H100=game-over
- '&H101=game-over:immediately
- '&H102=game-over:breakdown
- '&H103=game-over:breakdown:2
- '&H104=game-over:melting
- '&H105=game-over:melting:2
- 'etc...
- '---
- '&H80000000 reserved for internal use
- '///
-End Type
-
-Private Type typeObjectType
- sName As String
- nInteractionCount As Long
- tInteraction() As typeObjectInteractionType '0 to nInteractionCount; 0="default"
-End Type
+'////////object type data
 
 Private m_tObjType() As typeObjectType
 Private m_nObjTypeCount As Long, m_nObjTypeMax As Long
@@ -46,98 +21,7 @@ Private m_nObjTypeCount As Long, m_nObjTypeMax As Long
 Private m_nObjInteraction() As Long '0 to nInteractionCount,0 to nInteractionCount; 0="default"
 Private m_bObjInteractionDirty As Boolean
 
-Private Type typeTileEventCondition
- nType As Long
- '========
- '0=unused
- '1=pressure[n]
- '2=onGroundCount[n]
- '3=onDifferentType[b]
- '4=eventType[s]
- '5=eventIndex[n]
- '----polyhedron properties[b]
- '--&H101=discardable
- '--&H102=main
- '--&H103=fragile
- '--&H104=supportable
- '--&H105=supporter
- '--&H106=tiltable
- '--&H107=tilt-supporter
- '--&H108=spannable
- '----other polyhedron properties
- '--&H121=objectType[s] (string??)
- '========data type
- '1 [b]=boolean
- '2 [n]=number(integer or float)
- '3 [s]=string
- nCompareType As Long
- '0="=" (default)
- '1="!="
- nValue1 As Single
- nValue2 As Single
- nStringValueCount As Long
- sStringValue() As String '0-based
-End Type
-
-Private Type typeTileEventAction
- nType As Long
- '0=unused
- '1=triggerEvent
- '2=sendEvent
- '3=teleport (currently unsupported TODO:)
- '4=convertTo
- '5=move:straight
- '6=move:left
- '7=move:right
- '8=move:back
- '9=absolute-move:* (currently unsupported TODO:)
- '10=game-finished
- '11=game-finished:unconditional
- '12=checkpoint
- '&H100-x=game-over:*
- nParam As Long
- nStringParamCount As Long
- sStringParam() As String '0-based
-End Type
-
-Private Type typeTileEvent
- nEventType As Long
- '1=onEnter
- '2=onLeave
- '3=onMoveEnter
- '4=onMoveLeave
- '5=onPressKey
- '6=onCustomEvent
- '7=onTriggeredEvent
- nConditionCount As Long
- tCondition() As typeTileEventCondition '1-based
- nEventCount As Long
- tEvent() As typeTileEventAction '1-based
-End Type
-
-Private Type typeTileType
- nIndex As Long '???
- sID As String
- sName As String
- sDesc As String
- '///
- nFlags As Long
- '1=invisibleAtRuntime (? TODO:)
- '2=checkpoint
- '4=elevator (currently unsupported TODO:)
- '&H100=blocked
- '  &H200=not tiltable
- '  &H400=not supportable
- nObjType As Long '0 to nInteractionCount; 0="default"
- nReserved3 As Long 'block height ??? (currently unused and unsupported)
- nReserved4 As Long
- '///
- 'TODO:multiple appearances
- nApprIndex As Long
- '///events
- nEventCount As Long
- tEvent() As typeTileEvent '1-based
-End Type
+'////////tile type data
 
 Private Const m_nTileTypeCount_Max As Long = 1024&
 
@@ -146,11 +30,216 @@ Private m_nTileTypeCount As Long 'fixed index, start with 1 (this is not count, 
 Private m_nTileTypeCount2 As Long 'dynamic index, srart with m_nTileTypeCount_Max+1
 Private m_nTileTypeMax As Long
 
+'////////level data (TEST ONLY)
+
+Private m_tLevel As typeLevelData
+
+Friend Sub ClearLevelData()
+Dim t As typeLevelData
+m_tLevel = t
+'TODO: reset dynamic-mapped tile index
+End Sub
+
+Friend Sub AddLevelDataFromNode(ByVal objNode As clsTreeStorageNode)
+AddLevelDataFromNodeEx objNode, m_tLevel
+End Sub
+
+Friend Function ParseMapDataFromNode(ByVal objNode As clsTreeStorageNode, ByRef tLevel As typeLevelData, ByVal nIndex As Long) As Boolean
+Dim i As Long, j As Long, k As Long, m As Long
+Dim v As Variant
+Dim s As String
+Dim nFlags As Long
+Dim obj As clsTreeStorageNode
+'///
+tLevel.tMapData(nIndex).fScale.x = 1
+tLevel.tMapData(nIndex).fScale.y = 1
+tLevel.tMapData(nIndex).fScale.z = 1
+tLevel.tMapData(nIndex).fStep.x = 1
+tLevel.tMapData(nIndex).fStep.y = 1
+tLevel.tMapData(nIndex).fStep.z = 1
+tLevel.tMapData(nIndex).fPos(1).x = 1
+tLevel.tMapData(nIndex).fPos(2).y = 1
+tLevel.tMapData(nIndex).fPos(3).z = 1
+'///
+nFlags = tLevel.tMapData(nIndex).nFlags
+'///
+For i = 1 To objNode.SubNodeCount
+ If objNode.SubNodeType(i) = 0 Then
+  Select Case objNode.GetSubNodeNameAsString(i)
+  Case "id"
+   'TODO:check duplicated ID
+   tLevel.tMapData(nIndex).sID = objNode.GetSubNodeValueAsString(i)
+  Case "shape"
+   s = objNode.GetSubNodeValueAsString(i)
+   Select Case s
+   Case "rect"
+    j = 0
+   Case Else 'currently unsupported
+    Debug.Assert False
+    Exit Function
+   End Select
+   nFlags = (nFlags And &HFFFFFFF0) Or j
+  Case "size"
+   nFlags = nFlags Or &H10&
+   v = Split(Trim(objNode.GetSubNodeValueAsString(i)), ",")
+   m = UBound(v)
+   If m >= 0 Then
+    For j = 0 To m
+     If j > 2 Then Exit For
+     k = Val(v(j))
+     If k <= 0 Then
+      nFlags = nFlags And Not &H10&
+      Exit For
+     End If
+     tLevel.tMapData(nIndex).nSize(j) = k
+    Next j
+    For j = m + 1 To 2
+     tLevel.tMapData(nIndex).nSize(j) = 1
+    Next j
+   Else
+    nFlags = nFlags And Not &H10&
+   End If
+   tLevel.tMapData(nIndex).nFlags = nFlags
+  Case "p", "p1", "p2", "p3"
+   If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), tLevel.tMapData(nIndex).fPos(Val(Mid(s, 2)))) Then Exit Function
+  Case "r"
+   If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), tLevel.tMapData(nIndex).fRotation) Then Exit Function
+  Case "s"
+   If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), tLevel.tMapData(nIndex).fScale) Then Exit Function
+  Case "c"
+   If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), tLevel.tMapData(nIndex).fCenter) Then Exit Function
+  Case "step"
+   If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), tLevel.tMapData(nIndex).fStep) Then Exit Function
+  End Select
+ Else
+  Set obj = objNode.SubNodeObject(i)
+  Select Case obj.GetNameAsString
+  Case "typeArray"
+   'TODO:
+   Debug.Assert False
+  Case "property"
+   'TODO:
+   Debug.Assert False
+  Case "polyhedron"
+   tLevel.nPolyhedronCount = tLevel.nPolyhedronCount + 1
+   ReDim Preserve tLevel.tPolyhedron(1 To tLevel.nPolyhedronCount)
+   If Not ParseMapPolyhedronDataFromNode(obj, tLevel.tPolyhedron(tLevel.nPolyhedronCount), CStr(nIndex)) Then Exit Function
+  Case Else
+   'TODO:adjacent,etc.
+   Debug.Assert False
+   Exit Function
+  End Select
+ End If
+Next i
+'///over
+tLevel.tMapData(nIndex).nFlags = nFlags
+ParseMapDataFromNode = True
+End Function
+
+Friend Function pFlagsFromBooleanString(ByRef s As String, ByVal nFlags As Long, ByVal nMask As Long) As Long
+Dim j As Long
+If s = "true" Then j = -1 Else If Val(s) <> 0 Then j = -1
+pFlagsFromBooleanString = (nFlags And Not nMask) Or (j And nMask)
+End Function
+
+Friend Function ParseMapPolyhedronDataFromNode(ByVal objNode As clsTreeStorageNode, ByRef tPoly As typeMapData_Polyhedron, Optional ByVal sBasePosition As String) As Boolean
+Dim i As Long
+Dim s As String
+Dim obj As clsTreeStorageNode
+Dim nFlags As Long
+'///
+nFlags = &HFE&
+'///
+For i = 1 To objNode.SubNodeCount
+ If objNode.SubNodeType(i) = 0 Then
+  s = Trim(objNode.GetSubNodeValueAsString(i))
+  Select Case objNode.GetSubNodeNameAsString(i)
+  Case "id"
+   'TODO:check duplicated ID
+   tPoly.sID = s
+  Case "p"
+   If sBasePosition = "" Then
+    tPoly.sPos = s
+   Else
+    Select Case Left(s, 1)
+    Case ".", "("
+    Case Else
+     s = "." + s
+    End Select
+    tPoly.sPos = sBasePosition + s
+   End If
+  Case "discardable"
+   nFlags = pFlagsFromBooleanString(s, nFlags, &H1&)
+  Case "main"
+   nFlags = pFlagsFromBooleanString(s, nFlags, &H2&)
+  Case "fragile"
+   nFlags = pFlagsFromBooleanString(s, nFlags, &H4&)
+  Case "supportable"
+   nFlags = pFlagsFromBooleanString(s, nFlags, &H8&)
+  Case "supporter"
+   nFlags = pFlagsFromBooleanString(s, nFlags, &H10&)
+  Case "tiltable"
+   nFlags = pFlagsFromBooleanString(s, nFlags, &H20&)
+  Case "tilt-supporter"
+   nFlags = pFlagsFromBooleanString(s, nFlags, &H40&)
+  Case "spannable"
+   nFlags = pFlagsFromBooleanString(s, nFlags, &H80&)
+  End Select
+ Else
+  Debug.Assert False
+'  'TODO:
+'  Set obj = objNode.SubNodeObject(i)
+'  Select Case obj.GetNameAsString
+'  Case "mapData"
+'  End Select
+ End If
+Next i
+'///over
+tPoly.nFlags = nFlags
+ParseMapPolyhedronDataFromNode = True
+End Function
+
+Friend Function AddLevelDataFromNodeEx(ByVal objNode As clsTreeStorageNode, ByRef tLevel As typeLevelData) As Boolean
+Dim i As Long
+Dim s As String
+Dim obj As clsTreeStorageNode
+'///
+Select Case objNode.GetNameAsString
+Case "level"
+Case Else
+ Exit Function
+End Select
+'///
+For i = 1 To objNode.SubNodeCount
+ If objNode.SubNodeType(i) = 0 Then
+  'TODO:
+  Debug.Assert False
+'  Select Case objNode.GetSubNodeNameAsString(i)
+'  Case "name"
+'  End Select
+ Else
+  Set obj = objNode.SubNodeObject(i)
+  Select Case obj.GetNameAsString
+  Case "mapData"
+   tLevel.nMapDataCount = tLevel.nMapDataCount + 1
+   ReDim Preserve tLevel.tMapData(1 To tLevel.nMapDataCount)
+   If Not ParseMapDataFromNode(obj, tLevel, tLevel.nMapDataCount) Then Exit Function
+  Case "polyhedron"
+   tLevel.nPolyhedronCount = tLevel.nPolyhedronCount + 1
+   ReDim Preserve tLevel.tPolyhedron(1 To tLevel.nPolyhedronCount)
+   If Not ParseMapPolyhedronDataFromNode(obj, tLevel.tPolyhedron(tLevel.nPolyhedronCount)) Then Exit Function
+  End Select
+ End If
+Next i
+'///
+End Function
+
 Friend Sub Destroy()
-Erase m_tObjType, m_nObjInteraction, m_tTileType
+Erase m_tObjType, m_nObjInteraction
 m_nObjTypeCount = 0
 m_nObjTypeMax = 0
 m_bObjInteractionDirty = False
+Erase m_tTileType
 m_nTileTypeCount = 0
 m_nTileTypeCount2 = 0
 m_nTileTypeMax = 0
@@ -375,6 +464,25 @@ For i = 1 To objNode.SubNodeCount
 Next i
 End Sub
 
+Friend Function ParseEventType(ByRef s As String) As Long
+Select Case s
+Case "onEnter"
+ ParseEventType = 1
+Case "onLeave"
+ ParseEventType = 2
+Case "onMoveEnter"
+ ParseEventType = 3
+Case "onMoveLeave"
+ ParseEventType = 4
+Case "onPressKey"
+ ParseEventType = 5
+Case "onCustomEvent"
+ ParseEventType = 6
+Case "onTriggeredEvent"
+ ParseEventType = 7
+End Select
+End Function
+
 'internal
 Friend Function ParseEventFromNode(ByRef ret As typeTileEvent, ByVal objNode As clsTreeStorageNode, ByVal nEventType As Long) As Boolean
 On Error Resume Next
@@ -454,11 +562,7 @@ For i = 1 To ret.nConditionCount
  Select Case nDataType
  Case 1 'boolean
   j = 0
-  If s1 = "true" Then
-   j = 1
-  ElseIf Val(s1) <> 0 Then
-   j = 1
-  End If
+  If s1 = "true" Then j = 1 Else If Val(s1) <> 0 Then j = 1
   If nCompareType And 1& Then
    nCompareType = 0
    j = j Xor 1
@@ -584,6 +688,7 @@ End Function
 'internal
 Friend Function AddTileTypeFromNode(ByVal objNode As clsTreeStorageNode, ByVal objEffectMgr As clsEffectManager, ByVal objMeshMgr As clsMeshManager) As Long
 Dim i As Long, j As Long
+Dim s As String
 Dim obj As clsTreeStorageNode
 Dim nIndex As Long
 Dim nFlags As Long
@@ -624,6 +729,7 @@ For i = 1 To objNode.SubNodeCount
  If objNode.SubNodeType(i) = 0 Then
   Select Case objNode.GetSubNodeNameAsString(i)
   Case "id"
+   'TODO:check duplicated ID
    m_tTileType(nIndex).sID = objNode.GetSubNodeValueAsString(i)
   Case "invisibleAtRuntime" '? TODO:
    nFlags = nFlags Or ((objNode.GetSubNodeValueAsString(i) = "true") And &H1&)
@@ -643,7 +749,8 @@ For i = 1 To objNode.SubNodeCount
  Else
   nEventType = 0
   Set obj = objNode.SubNodeObject(i)
-  Select Case obj.GetNameAsString
+  s = obj.GetNameAsString
+  Select Case s
   Case "name"
    m_tTileType(nIndex).sName = obj.GetValueAsString
   Case "description"
@@ -655,20 +762,8 @@ For i = 1 To objNode.SubNodeCount
     Exit Function
    End If
    m_tTileType(nIndex).nApprIndex = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr)
-  Case "onEnter"
-   nEventType = 1
-  Case "onLeave"
-   nEventType = 2
-  Case "onMoveEnter"
-   nEventType = 3
-  Case "onMoveLeave"
-   nEventType = 4
-  Case "onPressKey"
-   nEventType = 5
-  Case "onCustomEvent"
-   nEventType = 6
-  Case "onTriggeredEvent"
-   nEventType = 7
+  Case Else
+   nEventType = ParseEventType(s)
   End Select
   '///event?
   If nEventType > 0 Then

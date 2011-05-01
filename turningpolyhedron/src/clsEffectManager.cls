@@ -17,135 +17,28 @@ Option Explicit
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
-Private Type typeFakeDXEffectArgument
- nType As Long '[3]
- '0=undefined
- '1=hard-coded constant[1]
- '2=shader argument constant[2]
- '&HF1=texture(2D) file[2][b]
- '---read vertex shader input = &H10000-&H1FFFFF
- '&H10000,&H20000=color0-1
- '&H100000-&H1F0000=texcoord0-15
- 'bit0-3,4-7,8-11,12-15=components1,2,3,4 if all 0 then default order = &H4321
- '0=undefined/zero
- '1,2,3,4=components1,2,3,4
- '5=hard-coded constant[1]
- '6=shader argument constant[2]
- '7=one
- '---(2D)texture[1][2][a] = &H1000000-&H1FFFFFF
- '&H1xyzzww
- 'x=texture sampler index (0-15)
- 'y=texcoord index (0-15)
- 'zz=output components (default=&HE4)
- 'ww=input components (default=&HE4)
- '---
- 'TODO:other (eg. expression, volume texture, etc.)
- '--------
- '[1] uses sData
- '[2] uses sOptionalData
- '[a] sData format = sampler properties ['\x01' ...]
- '    sOptionalData = file name (???)
- '[b] doesn't generate any argument code
- '////////following strings are BINARY data !!!
- sData As String '[3]
- sOptionalData As String '[4]
- '////////if use shader argument
- nParamOffset As Byte
- nParamSize As Byte
- '////////
- nReserved1 As Byte
- nReserved2 As Byte
-End Type
-
-'TODO:light type
-Private Type typeFakeDXEffect
- nReferenceIndex As Long
- '0=no
- '>0=has same effect with nReferenceIndex
- '////////
- nTemplateIndex As Long
- '-1=this is a template
- '0=no template
- '>0=template index
- sTemplateName As String 'if this is a template
- '////////
- sShaderProgram As String '[3]
- '""         = don't use shader (alias "default" "none")
- '"standard" = standard shader
- nDiffuseAlgorithm As Long '[3]
- '0=default=Lambertian
- '1=Oren-Nayar
- nSpecularAlgorithm As Long '[3]
- '0=default=Blinn-Phong
- '1=Phong
- nFlags As Long '[3]
- '1=advanecd fog enabled (currently can't read from settings)
- '2=shadow map enabled (currently unsupported)
- '4=
- '8=
- '---
- 'bit 4-7 = hardware instancing mode (will use POSITION4-7)
- '0=none
- '1=translation only
- 'etc...
- '15=world matrix (full)
- '---
- '////////
- tArguments(63) As typeFakeDXEffectArgument
- '////////
- sEffectStates As String '[3]
- sShaderSourceCode As String 'optional
- '////////
- nParamUsed As Long 'used float4
- fParams(63) As D3DXVECTOR4
- '////////
- nTextureUsedFlag As Long 'bit 0-15
- objTextures(15) As Direct3DBaseTexture9
- '////////
- objEffect As D3DXEffect
-End Type
-'--------
-'[3] compare (pCompareFakeDXEffect value=1)
-'[4] optional compare (pCompareFakeDXEffect value=2)
-'--------
-
-Public Enum enumFakeDXEffectArgumentType
- IDA_BaseColor
- IDA_Ambient
- IDA_Diffuse
- IDA_Specular
- IDA_SpecularHardness
- IDA_OrenNayarRoughness
- IDA_Emissive
- '///
- IDA_NormalMap
- IDA_NormalMapScale
- '///
- IDA_ParallaxMap
- IDA_ParallaxMapOffset
- IDA_ParallaxMapScale
-End Enum
+'////////effects
 
 Private m_tEffect() As typeFakeDXEffect '1-based
 Private m_nEffectCount As Long, m_nEffectMax As Long
 
+Private m_nLastIndex As Long
+
+'////////mesh instance
+
 Private m_tInst As typeMeshInstanceCollection
 
-Private Type typeAppearanceData
- nCount As Long
- tData() As typeMeshInstanceData
- 'nType should always be 0 (?)
-End Type
+'////////appearances
 
 Private m_tAppr() As typeAppearanceData '1-based
 Private m_nApprCount As Long, m_nApprMax As Long
+
+'////////constants
 
 Private m_sParamName(63) As String
 Private m_nParamSize(63) As Long
 Private m_sOutputName(31) As String
 Private m_sOutputSemantics(31) As String
-
-Private m_nLastIndex As Long
 
 Implements ISort2
 
