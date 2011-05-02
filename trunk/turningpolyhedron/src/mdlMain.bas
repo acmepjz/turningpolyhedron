@@ -99,12 +99,16 @@ Public objFontSprite As D3DXSprite
 Public objFont As D3DXFont
 
 Public objEffectMgr As New clsEffectManager
-'Public bTestOnly As Boolean
+Public bTestOnly As Boolean
 '////////
 
 Public objFileMgr As New clsFileManager
 Public objMeshMgr As New clsMeshManager
 Public objGameMgr As New clsGameManager
+
+'test
+Public m_tLevelTest As typeLevelData
+Public m_tInstTest As typeMeshInstanceCollection
 
 '////////settings
 Public frmSettings As New frmSettings
@@ -204,18 +208,18 @@ With d3dd9
   End If
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
-'  If bTestOnly Then
-'   'objEffectMgr.SetTexture 1, IDA_BaseColor, objTexture
-'   'objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
-'   'objEffectMgr.SetupEffect 1, True, True, True, True, , True
-'   .BeginScene
-'   '///TEST TEST TEST
-'   objEffectMgr.DrawInstance objMeshMgr, True, True
-'   'objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
-'   '///
-'   .EndScene
-'   'objEffectMgr.EndEffect
-'  Else
+  If bTestOnly Then
+   'objEffectMgr.SetTexture 1, IDA_BaseColor, objTexture
+   'objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
+   'objEffectMgr.SetupEffect 1, True, True, True, True, , True
+   .BeginScene
+   '///TEST TEST TEST
+   objEffectMgr.DrawInstanceEx m_tInstTest, objMeshMgr, True, True
+   'objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
+   '///
+   .EndScene
+   'objEffectMgr.EndEffect
+  Else
    objRenderTest.SetTexture objTexture
    objRenderTest.SetNormalTexture objNormalTexture
    If objRenderTest.BeginRender(RenderPass_Main) Then
@@ -231,7 +235,7 @@ With d3dd9
     .EndScene
     objRenderTest.EndRender
    End If
-'  End If
+  End If
   objRenderTest.EndRenderToPostProcessTarget
   '////////volumetric fog test
   If objRenderTest.BeginRender(RenderPass_FogVolume) Then
@@ -571,8 +575,11 @@ With New clsXMLSerializer
  i = objFileMgr.LoadFile("lvltest.xml")
  If i > 0 Then
   Set obj = New clsTreeStorageNode
-  If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
-  objGameMgr.AddLevelDataFromNode obj
+  If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then
+   If objGameMgr.AddLevelDataFromNodeEx(obj, m_tLevelTest) Then
+    objGameMgr.GenerateMeshFromLevelDataEx m_tLevelTest, objEffectMgr, m_tInstTest
+   End If
+  End If
  End If
  '///
 End With

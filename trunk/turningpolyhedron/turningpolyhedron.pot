@@ -2,181 +2,40 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
+#.   s = objText.GetText("Abort")
+msgid "Abort"
+msgstr ""
+
+#.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
+msgid "Apply"
+msgstr ""
+
+#.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+msgid "Apply changes and close dialog."
+msgstr ""
+
+#.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
+msgid "Apply changes immediately."
+msgstr ""
+
 #.  '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 msgid "Are you sure?"
 msgstr ""
 
-#.  '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
-msgid "Exit game"
-msgstr ""
-
-#. frm.Caption = objText.GetText("Initalizing...")
-msgid "Initalizing..."
+#.        s = CStr(j) + " " + objText.GetText("Bytes")
+msgid "Bytes"
 msgstr ""
 
 #.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
 msgid "Can't create D3D9!!!"
 msgstr ""
 
-#.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
-#.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
-#. MsgBox "libmini error at " + s + " line " + CStr(nLine), vbCritical, objText.GetText("Fatal Error")
-msgid "Fatal Error"
+#.  s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
+msgid "Can't create D3DXEffect!! Error number: "
 msgstr ""
 
 #.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
 msgid "Can't create device!!!"
-msgstr ""
-
-#. s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
-msgid "Tahoma"
-msgstr ""
-
-#. frm.Caption = objText.GetText("Turning Polyhedron")
-msgid "Turning Polyhedron"
-msgstr ""
-
-#.  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
-msgid "Exit"
-msgstr ""
-
-#.  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
-msgid "Exit the game and return to desktop."
-msgstr ""
-
-#.  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
-#. 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
-msgid "Options"
-msgstr ""
-
-#.  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
-#.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
-msgid "Change the game settings."
-msgstr ""
-
-#.    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
-#.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
-msgid "Close"
-msgstr ""
-
-#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
-#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
-msgid "Restore"
-msgstr ""
-
-#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Maximize"), x, y
-msgid "Maximize"
-msgstr ""
-
-#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Minimize"), x, y
-msgid "Minimize"
-msgstr ""
-
-#.    .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
-msgid "Resolution"
-msgstr ""
-
-#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
-msgid "Change the screen resolution."
-msgstr ""
-
-#.    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
-msgid "Fullscreen"
-msgstr ""
-
-#.    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
-msgid "Determines whether the program should run in full screen mode."
-msgstr ""
-
-#.    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
-msgid "Shadow"
-msgstr ""
-
-#.    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
-msgid "Enables shadow effect."
-msgstr ""
-
-#.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
-msgid "Post process"
-msgstr ""
-
-#.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
-msgid "Enables post process effects."
-msgstr ""
-
-#.    .AddNewChildren FakeCtl_Label, 20, 110, 198, 128, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
-msgid "HDR quality"
-msgstr ""
-
-#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 110, 298, 128, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
-msgid "Set the quality of HDR blur."
-msgstr ""
-
-#.      .AddItem objText.GetText("Low")
-msgid "Low"
-msgstr ""
-
-#.      .AddItem objText.GetText("Medium")
-msgid "Medium"
-msgstr ""
-
-#.      .AddItem objText.GetText("High")
-msgid "High"
-msgstr ""
-
-#.    objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
-msgid "Fog"
-msgstr ""
-
-#.    objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
-msgid "Enables fog effect."
-msgstr ""
-
-#.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
-msgid "Volumetric fog"
-msgstr ""
-
-#.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
-msgid "Enables volumetric fog effect."
-msgstr ""
-
-#.    objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
-msgid "Depth of field"
-msgstr ""
-
-#.    objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
-msgid "Enables depth of field effect."
-msgstr ""
-
-#.    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
-msgid "Radial blur"
-msgstr ""
-
-#.    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
-msgid "Enables radial blur effect."
-msgstr ""
-
-#.    .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
-msgid "Graphics"
-msgstr ""
-
-#.    .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
-msgid "Change the graphics settings."
-msgstr ""
-
-#.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
-msgid "Game"
-msgstr ""
-
-#.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
-#.   s = objText.GetText("OK")
-#.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
-#.   s = objText.GetText("OK")
-msgid "OK"
-msgstr ""
-
-#.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
-msgid "Apply changes and close dialog."
 msgstr ""
 
 #.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
@@ -186,69 +45,96 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
-msgid "Discard changes and close dialog."
+#.  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
+msgid "Change the game settings."
 msgstr ""
 
-#.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
-msgid "Apply"
+#.    .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
+msgid "Change the graphics settings."
 msgstr ""
 
-#.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
-msgid "Apply changes immediately."
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
+msgid "Change the screen resolution."
 msgstr ""
 
-#.   s = objText.GetText("Abort")
-msgid "Abort"
+#. If DlgTitle = € Then m_sTitle = objText.GetText("Choose folder") Else m_sTitle = DlgTitle
+msgid "Choose folder"
 msgstr ""
 
-#.   s = objText.GetText("Retry")
-msgid "Retry"
+#.    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
+#.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
+msgid "Close"
 msgstr ""
 
-#.   s = objText.GetText("Ignore")
-msgid "Ignore"
-msgstr ""
-
-#.   s = objText.GetText("Yes")
-msgid "Yes"
-msgstr ""
-
-#.   s = objText.GetText("No")
-msgid "No"
-msgstr ""
-
-#.  s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
-msgid "Can't create D3DXEffect!! Error number: "
-msgstr ""
-
-#.  MsgBox s2, vbExclamation, objText.GetText("Error")
-#.      .MsgBox InitDir + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
-#.    .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
-#.        objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
-#.        .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
-msgid "Error"
+#.    objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+msgid "Depth of field"
 msgstr ""
 
 #.        .AddItem objText.GetText("Desktop"), , -1
 msgid "Desktop"
 msgstr ""
 
-#.        .AddItem objText.GetText("My Documents"), , -2
-msgid "My Documents"
+#.    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
+msgid "Determines whether the program should run in full screen mode."
 msgstr ""
 
-#.      obj.AddItem vbTab + .sName, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(.nTime, "yyyy-mm-dd hh:mm:ss"))
-#.        .EnsureVisible .AddItem(vbTab + s, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(f, "yyyy-mm-dd hh:mm:ss")))
-msgid "Folder"
+#.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
+msgid "Discard changes and close dialog."
 msgstr ""
 
-#.        s = CStr(j) + " " + objText.GetText("Bytes")
-msgid "Bytes"
+#.    objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+msgid "Enables depth of field effect."
 msgstr ""
 
-#.   .AddNewChildren FakeCtl_Label, 8, -32, 96, -8, , , , , objText.GetText("Folder name"), , , , 1, , 1
-msgid "Folder name"
+#.    objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
+msgid "Enables fog effect."
+msgstr ""
+
+#.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
+msgid "Enables post process effects."
+msgstr ""
+
+#.    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
+msgid "Enables radial blur effect."
+msgstr ""
+
+#.    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
+msgid "Enables shadow effect."
+msgstr ""
+
+#.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
+msgid "Enables volumetric fog effect."
+msgstr ""
+
+#.  MsgBox s2, vbExclamation, objText.GetText("Error")
+#.      .MsgBox sPath + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#.    .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#.        objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
+#.        .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+msgid "Error"
+msgstr ""
+
+#.  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+msgid "Exit"
+msgstr ""
+
+#.  '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
+msgid "Exit game"
+msgstr ""
+
+#.  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+msgid "Exit the game and return to desktop."
+msgstr ""
+
+#.    .AddColumn objText.GetText("Extension"), , , efcfSizable Or efcfSortable Or (efcfHidden And m_nType = 3), 128
+msgid "Extension"
+msgstr ""
+
+#.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
+#.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
+#. MsgBox "libmini error at " + s + " line " + CStr(nLine), vbCritical, objText.GetText("Fatal Error")
+msgid "Fatal Error"
 msgstr ""
 
 #.   .AddNewChildren FakeCtl_Label, 8, -64, 80, -40, , , , , objText.GetText("File name"), , , , 1, , 1
@@ -256,29 +142,81 @@ msgstr ""
 msgid "File name"
 msgstr ""
 
-#.   .AddNewChildren FakeCtl_Label, 8, -32, 80, -8, , , , , objText.GetText("File type"), , , , 1, , 1
-msgid "File type"
-msgstr ""
-
-#.   If m_nType = 2 Then s = objText.GetText("Save") _
-msgid "Save"
-msgstr ""
-
-#.   Else s = objText.GetText("Open")
-#. If DlgTitle = € Then m_sTitle = objText.GetText("Open") Else m_sTitle = DlgTitle
-msgid "Open"
-msgstr ""
-
 #.    .AddColumn objText.GetText("File size"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData Or efcfAlignRight Or (efcfHidden And m_nType = 3), 128
 msgid "File size"
 msgstr ""
 
-#.    .AddColumn objText.GetText("Extension"), , , efcfSizable Or efcfSortable Or (efcfHidden And m_nType = 3), 128
-msgid "Extension"
+#.   .AddNewChildren FakeCtl_Label, 8, -32, 80, -8, , , , , objText.GetText("File type"), , , , 1, , 1
+msgid "File type"
+msgstr ""
+
+#.    objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
+msgid "Fog"
+msgstr ""
+
+#.      obj.AddItem vbTab + .sName, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(.nTime, "yyyy-mm-dd hh:mm:ss"))
+#.        .EnsureVisible .AddItem(vbTab + s, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(f, "yyyy-mm-dd hh:mm:ss")))
+msgid "Folder"
+msgstr ""
+
+#.   .AddNewChildren FakeCtl_Label, 8, -32, 96, -8, , , , , objText.GetText("Folder name"), , , , 1, , 1
+msgid "Folder name"
+msgstr ""
+
+#.    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
+msgid "Fullscreen"
+msgstr ""
+
+#.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
+msgid "Game"
+msgstr ""
+
+#.    .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
+msgid "Graphics"
+msgstr ""
+
+#.    .AddNewChildren FakeCtl_Label, 20, 110, 198, 128, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+msgid "HDR quality"
+msgstr ""
+
+#.      .AddItem objText.GetText("High")
+msgid "High"
+msgstr ""
+
+#.   s = objText.GetText("Ignore")
+msgid "Ignore"
+msgstr ""
+
+#. frm.Caption = objText.GetText("Initalizing...")
+msgid "Initalizing..."
+msgstr ""
+
+#.     s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
+msgid "Input folder name"
+msgstr ""
+
+#.      .AddItem objText.GetText("Low")
+msgid "Low"
+msgstr ""
+
+#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Maximize"), x, y
+msgid "Maximize"
+msgstr ""
+
+#.      .AddItem objText.GetText("Medium")
+msgid "Medium"
+msgstr ""
+
+#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Minimize"), x, y
+msgid "Minimize"
 msgstr ""
 
 #.    .AddColumn objText.GetText("Modification time"), , , efcfSizable Or efcfSortable, 128
 msgid "Modification time"
+msgstr ""
+
+#.        .AddItem objText.GetText("My Documents"), , -2
+msgid "My Documents"
 msgstr ""
 
 #.  .AddNewChildren FakeCtl_Button, -88, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("New folder"), , "cmdNewFolder", 1, , 1
@@ -286,23 +224,85 @@ msgstr ""
 msgid "New folder"
 msgstr ""
 
+#.   s = objText.GetText("No")
+msgid "No"
+msgstr ""
+
+#.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+#.   s = objText.GetText("OK")
+#.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
+#.   s = objText.GetText("OK")
+msgid "OK"
+msgstr ""
+
+#.   Else s = objText.GetText("Open")
+#. If DlgTitle = € Then m_sTitle = objText.GetText("Open") Else m_sTitle = DlgTitle
+msgid "Open"
+msgstr ""
+
+#.  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#. 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
+msgid "Options"
+msgstr ""
+
+#.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
+msgid "Post process"
+msgstr ""
+
+#.    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
+msgid "Radial blur"
+msgstr ""
+
+#.    .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
+msgid "Resolution"
+msgstr ""
+
+#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
+#.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
+msgid "Restore"
+msgstr ""
+
+#.   s = objText.GetText("Retry")
+msgid "Retry"
+msgstr ""
+
+#.   If m_nType = 2 Then s = objText.GetText("Save") _
+msgid "Save"
+msgstr ""
+
 #. If DlgTitle = € Then m_sTitle = objText.GetText("Save as") Else m_sTitle = DlgTitle
 msgid "Save as"
 msgstr ""
 
-#. If DlgTitle = € Then m_sTitle = objText.GetText("Choose folder") Else m_sTitle = DlgTitle
-msgid "Choose folder"
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 110, 298, 128, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+msgid "Set the quality of HDR blur."
+msgstr ""
+
+#.    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
+msgid "Shadow"
+msgstr ""
+
+#. s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
+msgid "Tahoma"
 msgstr ""
 
 #.   If .MsgBox(s + vbCrLf + objText.GetText("The file already exists. Do you want to overwrite it?"), _
 msgid "The file already exists. Do you want to overwrite it?"
 msgstr ""
 
-#.     s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
-msgid "Input folder name"
-msgstr ""
-
 #.        objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 msgid "The folder already exists. Please input a different name."
+msgstr ""
+
+#. frm.Caption = objText.GetText("Turning Polyhedron")
+msgid "Turning Polyhedron"
+msgstr ""
+
+#.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
+msgid "Volumetric fog"
+msgstr ""
+
+#.   s = objText.GetText("Yes")
+msgid "Yes"
 msgstr ""
 
