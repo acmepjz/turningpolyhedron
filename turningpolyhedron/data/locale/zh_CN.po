@@ -11,182 +11,41 @@ msgstr ""
 "X-Poedit-Language: Chinese\n"
 "X-Poedit-Country: CHINA\n"
 
+#. s = objText.GetText("Abort")
+msgid "Abort"
+msgstr "终止"
+
+#. objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
+msgid "Apply"
+msgstr "应用"
+
+#. objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+msgid "Apply changes and close dialog."
+msgstr "应用变更并且关闭对话框。"
+
+#. objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
+msgid "Apply changes immediately."
+msgstr "立即应用选项变更。"
+
 #. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 msgid "Are you sure?"
 msgstr "你确定吗？"
 
-#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
-msgid "Exit game"
-msgstr "退出游戏"
-
-#. frm.Caption = objText.GetText("Initalizing...")
-msgid "Initalizing..."
-msgstr "正在初始化..."
+#. s = CStr(j) + " " + objText.GetText("Bytes")
+msgid "Bytes"
+msgstr "字节"
 
 #. MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
 msgid "Can't create D3D9!!!"
 msgstr "初始化D3D9失败!!!"
 
-#. MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
-#. MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
-#. MsgBox "libmini error at " + s + " line " + CStr(nLine), vbCritical, objText.GetText("Fatal Error")
-msgid "Fatal Error"
-msgstr "严重错误"
+#. s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
+msgid "Can't create D3DXEffect!! Error number: "
+msgstr "初始化D3DXEffect失败!! 错误代码: "
 
 #. MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
 msgid "Can't create device!!!"
 msgstr "初始化D3D9设备失败!!!"
-
-#. s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
-msgid "Tahoma"
-msgstr "文泉驿微米黑;文泉驿正黑;微软雅黑;黑体;宋体"
-
-#. frm.Caption = objText.GetText("Turning Polyhedron")
-msgid "Turning Polyhedron"
-msgstr "摇立体"
-
-#. .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
-msgid "Exit"
-msgstr "退出"
-
-#. .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
-msgid "Exit the game and return to desktop."
-msgstr "退出游戏并返回桌面。"
-
-#. .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
-#. 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
-msgid "Options"
-msgstr "选项"
-
-#. .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
-#. .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
-msgid "Change the game settings."
-msgstr "修改游戏设置选项。"
-
-#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
-#. .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
-msgid "Close"
-msgstr "关闭"
-
-#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
-#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
-msgid "Restore"
-msgstr "还原"
-
-#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Maximize"), x, y
-msgid "Maximize"
-msgstr "最大化"
-
-#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Minimize"), x, y
-msgid "Minimize"
-msgstr "最小化"
-
-#. .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
-msgid "Resolution"
-msgstr "分辨率"
-
-#. With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
-msgid "Change the screen resolution."
-msgstr "设置屏幕分辨率。"
-
-#. objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
-msgid "Fullscreen"
-msgstr "全屏幕"
-
-#. objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
-msgid "Determines whether the program should run in full screen mode."
-msgstr "设置程序是否以全屏模式运行。"
-
-#. objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
-msgid "Shadow"
-msgstr "阴影"
-
-#. objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
-msgid "Enables shadow effect."
-msgstr "启用阴影效果。"
-
-#. objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
-msgid "Post process"
-msgstr "后期处理"
-
-#. objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
-msgid "Enables post process effects."
-msgstr "启用后期处理特效。"
-
-#. .AddNewChildren FakeCtl_Label, 20, 110, 198, 128, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
-msgid "HDR quality"
-msgstr "HDR质量"
-
-#. With .AddNewChildren(FakeCtl_ComboBox, 100, 110, 298, 128, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
-msgid "Set the quality of HDR blur."
-msgstr "设置HDR模糊的质量。"
-
-#. .AddItem objText.GetText("Low")
-msgid "Low"
-msgstr "低"
-
-#. .AddItem objText.GetText("Medium")
-msgid "Medium"
-msgstr "中"
-
-#. .AddItem objText.GetText("High")
-msgid "High"
-msgstr "高"
-
-#. objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
-msgid "Fog"
-msgstr "雾化"
-
-#. objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
-msgid "Enables fog effect."
-msgstr "启用雾化效果。"
-
-#. objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
-msgid "Volumetric fog"
-msgstr "体积雾"
-
-#. objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
-msgid "Enables volumetric fog effect."
-msgstr "启用体积雾效果。"
-
-#. objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
-msgid "Depth of field"
-msgstr "景深"
-
-#. objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
-msgid "Enables depth of field effect."
-msgstr "启用景深效果。"
-
-#. objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
-msgid "Radial blur"
-msgstr "径向模糊"
-
-#. objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
-msgid "Enables radial blur effect."
-msgstr "启用径向模糊效果。"
-
-#. .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
-msgid "Graphics"
-msgstr "图像"
-
-#. .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
-msgid "Change the graphics settings."
-msgstr "修改图形选项。"
-
-#. .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
-msgid "Game"
-msgstr "游戏"
-
-#. objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
-#. s = objText.GetText("OK")
-#. .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
-#. s = objText.GetText("OK")
-msgid "OK"
-msgstr "确定"
-
-#. objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
-msgid "Apply changes and close dialog."
-msgstr "应用变更并且关闭对话框。"
 
 #. objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
 #. s = objText.GetText("Cancel")
@@ -195,125 +54,266 @@ msgstr "应用变更并且关闭对话框。"
 msgid "Cancel"
 msgstr "取消"
 
+#. .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#. .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
+msgid "Change the game settings."
+msgstr "修改游戏设置选项。"
+
+#. .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
+msgid "Change the graphics settings."
+msgstr "修改图形选项。"
+
+#. With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
+msgid "Change the screen resolution."
+msgstr "设置屏幕分辨率。"
+
+#. If DlgTitle = € Then m_sTitle = objText.GetText("Choose folder") Else m_sTitle = DlgTitle
+msgid "Choose folder"
+msgstr "选择文件夹"
+
+#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
+#. .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
+msgid "Close"
+msgstr "关闭"
+
+#. objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+msgid "Depth of field"
+msgstr "景深"
+
+#. .AddItem objText.GetText("Desktop"), , -1
+msgid "Desktop"
+msgstr "桌面"
+
+#. objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
+msgid "Determines whether the program should run in full screen mode."
+msgstr "设置程序是否以全屏模式运行。"
+
 #. objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
 msgid "Discard changes and close dialog."
 msgstr "放弃变更并且关闭对话框。"
 
-#. objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
-msgid "Apply"
-msgstr "应用"
+#. objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+msgid "Enables depth of field effect."
+msgstr "启用景深效果。"
 
-#. objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
-msgid "Apply changes immediately."
-msgstr "立即应用选项变更。"
+#. objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
+msgid "Enables fog effect."
+msgstr "启用雾化效果。"
 
-#. s = objText.GetText("Abort")
-msgid "Abort"
-msgstr "终止"
+#. objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
+msgid "Enables post process effects."
+msgstr "启用后期处理特效。"
 
-#. s = objText.GetText("Retry")
-msgid "Retry"
-msgstr "重试"
+#. objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
+msgid "Enables radial blur effect."
+msgstr "启用径向模糊效果。"
 
-#. s = objText.GetText("Ignore")
-msgid "Ignore"
-msgstr "忽略"
+#. objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
+msgid "Enables shadow effect."
+msgstr "启用阴影效果。"
 
-#. s = objText.GetText("Yes")
-msgid "Yes"
-msgstr "是"
-
-#. s = objText.GetText("No")
-msgid "No"
-msgstr "否"
-
-#. s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
-msgid "Can't create D3DXEffect!! Error number: "
-msgstr "初始化D3DXEffect失败!! 错误代码: "
+#. objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
+msgid "Enables volumetric fog effect."
+msgstr "启用体积雾效果。"
 
 #. MsgBox s2, vbExclamation, objText.GetText("Error")
-#. .MsgBox InitDir + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#. .MsgBox sPath + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #. .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #. objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 #. .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 msgid "Error"
 msgstr "错误"
 
-#. .AddItem objText.GetText("Desktop"), , -1
-msgid "Desktop"
-msgstr "桌面"
+#. .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+msgid "Exit"
+msgstr "退出"
 
-#. .AddItem objText.GetText("My Documents"), , -2
-msgid "My Documents"
-msgstr "我的文档"
+#. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
+msgid "Exit game"
+msgstr "退出游戏"
 
-#. obj.AddItem vbTab + .sName, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(.nTime, "yyyy-mm-dd hh:mm:ss"))
-#. .EnsureVisible .AddItem(vbTab + s, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(f, "yyyy-mm-dd hh:mm:ss")))
-msgid "Folder"
-msgstr "文件夹"
+#. .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+msgid "Exit the game and return to desktop."
+msgstr "退出游戏并返回桌面。"
 
-#. s = CStr(j) + " " + objText.GetText("Bytes")
-msgid "Bytes"
-msgstr "字节"
+#. .AddColumn objText.GetText("Extension"), , , efcfSizable Or efcfSortable Or (efcfHidden And m_nType = 3), 128
+msgid "Extension"
+msgstr "扩展名"
 
-#. .AddNewChildren FakeCtl_Label, 8, -32, 96, -8, , , , , objText.GetText("Folder name"), , , , 1, , 1
-msgid "Folder name"
-msgstr "文件夹名"
+#. MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
+#. MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
+#. MsgBox "libmini error at " + s + " line " + CStr(nLine), vbCritical, objText.GetText("Fatal Error")
+msgid "Fatal Error"
+msgstr "严重错误"
 
 #. .AddNewChildren FakeCtl_Label, 8, -64, 80, -40, , , , , objText.GetText("File name"), , , , 1, , 1
 #. .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
 msgid "File name"
 msgstr "文件名"
 
-#. .AddNewChildren FakeCtl_Label, 8, -32, 80, -8, , , , , objText.GetText("File type"), , , , 1, , 1
-msgid "File type"
-msgstr "文件类型"
-
-#. If m_nType = 2 Then s = objText.GetText("Save") _
-msgid "Save"
-msgstr "保存"
-
-#. Else s = objText.GetText("Open")
-#. If DlgTitle = € Then m_sTitle = objText.GetText("Open") Else m_sTitle = DlgTitle
-msgid "Open"
-msgstr "打开"
-
 #. .AddColumn objText.GetText("File size"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData Or efcfAlignRight Or (efcfHidden And m_nType = 3), 128
 msgid "File size"
 msgstr "文件大小"
 
-#. .AddColumn objText.GetText("Extension"), , , efcfSizable Or efcfSortable Or (efcfHidden And m_nType = 3), 128
-msgid "Extension"
-msgstr "扩展名"
+#. .AddNewChildren FakeCtl_Label, 8, -32, 80, -8, , , , , objText.GetText("File type"), , , , 1, , 1
+msgid "File type"
+msgstr "文件类型"
+
+#. objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
+msgid "Fog"
+msgstr "雾化"
+
+#. obj.AddItem vbTab + .sName, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(.nTime, "yyyy-mm-dd hh:mm:ss"))
+#. .EnsureVisible .AddItem(vbTab + s, , i, Array(Array(€, -1), vbTab + objText.GetText("Folder"), vbTab + Format(f, "yyyy-mm-dd hh:mm:ss")))
+msgid "Folder"
+msgstr "文件夹"
+
+#. .AddNewChildren FakeCtl_Label, 8, -32, 96, -8, , , , , objText.GetText("Folder name"), , , , 1, , 1
+msgid "Folder name"
+msgstr "文件夹名"
+
+#. objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
+msgid "Fullscreen"
+msgstr "全屏幕"
+
+#. .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
+msgid "Game"
+msgstr "游戏"
+
+#. .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
+msgid "Graphics"
+msgstr "图像"
+
+#. .AddNewChildren FakeCtl_Label, 20, 110, 198, 128, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+msgid "HDR quality"
+msgstr "HDR质量"
+
+#. .AddItem objText.GetText("High")
+msgid "High"
+msgstr "高"
+
+#. s = objText.GetText("Ignore")
+msgid "Ignore"
+msgstr "忽略"
+
+#. frm.Caption = objText.GetText("Initalizing...")
+msgid "Initalizing..."
+msgstr "正在初始化..."
+
+#. s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
+msgid "Input folder name"
+msgstr "输入文件夹名称"
+
+#. .AddItem objText.GetText("Low")
+msgid "Low"
+msgstr "低"
+
+#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Maximize"), x, y
+msgid "Maximize"
+msgstr "最大化"
+
+#. .AddItem objText.GetText("Medium")
+msgid "Medium"
+msgstr "中"
+
+#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Minimize"), x, y
+msgid "Minimize"
+msgstr "最小化"
 
 #. .AddColumn objText.GetText("Modification time"), , , efcfSizable Or efcfSortable, 128
 msgid "Modification time"
 msgstr "修改时间"
+
+#. .AddItem objText.GetText("My Documents"), , -2
+msgid "My Documents"
+msgstr "我的文档"
 
 #. .AddNewChildren FakeCtl_Button, -88, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("New folder"), , "cmdNewFolder", 1, , 1
 #. s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
 msgid "New folder"
 msgstr "新建文件夹"
 
+#. s = objText.GetText("No")
+msgid "No"
+msgstr "否"
+
+#. objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
+#. s = objText.GetText("OK")
+#. .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
+#. s = objText.GetText("OK")
+msgid "OK"
+msgstr "确定"
+
+#. Else s = objText.GetText("Open")
+#. If DlgTitle = € Then m_sTitle = objText.GetText("Open") Else m_sTitle = DlgTitle
+msgid "Open"
+msgstr "打开"
+
+#. .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#. 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
+msgid "Options"
+msgstr "选项"
+
+#. objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
+msgid "Post process"
+msgstr "后期处理"
+
+#. objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
+msgid "Radial blur"
+msgstr "径向模糊"
+
+#. .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
+msgid "Resolution"
+msgstr "分辨率"
+
+#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
+#. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
+msgid "Restore"
+msgstr "还原"
+
+#. s = objText.GetText("Retry")
+msgid "Retry"
+msgstr "重试"
+
+#. If m_nType = 2 Then s = objText.GetText("Save") _
+msgid "Save"
+msgstr "保存"
+
 #. If DlgTitle = € Then m_sTitle = objText.GetText("Save as") Else m_sTitle = DlgTitle
 msgid "Save as"
 msgstr "另存为"
 
-#. If DlgTitle = € Then m_sTitle = objText.GetText("Choose folder") Else m_sTitle = DlgTitle
-msgid "Choose folder"
-msgstr "选择文件夹"
+#. With .AddNewChildren(FakeCtl_ComboBox, 100, 110, 298, 128, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+msgid "Set the quality of HDR blur."
+msgstr "设置HDR模糊的质量。"
+
+#. objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
+msgid "Shadow"
+msgstr "阴影"
+
+#. s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
+msgid "Tahoma"
+msgstr "文泉驿微米黑;文泉驿正黑;微软雅黑;黑体;宋体"
 
 #. If .MsgBox(s + vbCrLf + objText.GetText("The file already exists. Do you want to overwrite it?"), _
 msgid "The file already exists. Do you want to overwrite it?"
 msgstr "文件已经存在。要覆盖它吗？"
 
-#. s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
-msgid "Input folder name"
-msgstr "输入文件夹名称"
-
 #. objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 msgid "The folder already exists. Please input a different name."
 msgstr "文件夹已经存在。请输入一个不同的名称。"
+
+#. frm.Caption = objText.GetText("Turning Polyhedron")
+msgid "Turning Polyhedron"
+msgstr "摇立体"
+
+#. objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
+msgid "Volumetric fog"
+msgstr "体积雾"
+
+#. s = objText.GetText("Yes")
+msgid "Yes"
+msgstr "是"
 
 #~ msgid "Exit the program."
 #~ msgstr "退出程序。"

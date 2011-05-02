@@ -15,7 +15,9 @@ Option Explicit
 
 'TODO:use collection for fast look up (?)
 
+Private Declare Function VarPtrArray Lib "msvbvm60.dll" Alias "VarPtr" (Ptr() As Any) As Long
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+Private Declare Sub ZeroMemory Lib "kernel32.dll" Alias "RtlZeroMemory" (ByRef Destination As Any, ByVal Length As Long)
 
 '////////effects
 
@@ -27,6 +29,9 @@ Private m_nLastIndex As Long
 '////////mesh instance
 
 Private m_tInst As typeMeshInstanceCollection
+
+'WARNING:dirty array, only avaliable during DrawInstanceEx --> ISort2_Compare
+Private m_tInstDirty() As typeMeshInstanceData
 
 '////////appearances
 
@@ -123,35 +128,42 @@ pAddEmptyInstance = idx
 End Function
 
 Friend Function AddInstance(ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld As D3DMATRIX) As Long
+AddInstance = AddInstanceEx(m_tInst, nEffectIndex, nMeshIndex, matWorld)
+End Function
+
+Friend Function AddInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld As D3DMATRIX) As Long
 Dim idx As Long
 If nEffectIndex > 0 And nEffectIndex <= m_nEffectCount And nMeshIndex > 0 Then
- idx = pAddEmptyInstance(m_tInst)
- m_tInst.tInstance(idx).nEffectIndex = nEffectIndex
- m_tInst.tInstance(idx).nMeshIndex = nMeshIndex
- m_tInst.tInstance(idx).matWorld = matWorld
- AddInstance = idx
+ idx = pAddEmptyInstance(tInst)
+ tInst.tInstance(idx).nEffectIndex = nEffectIndex
+ tInst.tInstance(idx).nMeshIndex = nMeshIndex
+ tInst.tInstance(idx).matWorld = matWorld
+ AddInstanceEx = idx
 End If
 End Function
 
-'only return last created instance if appearance data has more than one objects
 Friend Function AddInstanceFromAppearance(ByVal nIndex As Long, ByRef matWorld As D3DMATRIX) As Long
+AddInstanceFromAppearance = AddInstanceFromAppearanceEx(m_tInst, nIndex, matWorld)
+End Function
+
+'only return last created instance if appearance data has more than one objects
+Friend Function AddInstanceFromAppearanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nIndex As Long, ByRef matWorld As D3DMATRIX) As Long
 Dim i As Long
 Dim t As typeMeshInstanceData
 If nIndex > 0 And nIndex <= m_nApprCount Then
  For i = 1 To m_tAppr(nIndex).nCount
   t = m_tAppr(nIndex).tData(i)
   D3DXMatrixMultiply t.matWorld, t.matWorld, matWorld
-  AddInstanceFromAppearance = AddInstance(t.nEffectIndex, t.nMeshIndex, t.matWorld)
+  AddInstanceFromAppearanceEx = AddInstanceEx(tInst, t.nEffectIndex, t.nMeshIndex, t.matWorld)
  Next i
 End If
 End Function
 
 Friend Sub RemoveInstance(ByVal nIndex As Long)
-pRemoveInstance m_tInst, nIndex
+RemoveInstanceEx m_tInst, nIndex
 End Sub
 
-'internal use only
-Friend Sub pRemoveInstance(ByRef tInst As typeMeshInstanceCollection, ByVal nIndex As Long)
+Friend Sub RemoveInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nIndex As Long)
 Dim i As Long
 Dim t As typeMeshInstanceData
 If tInst.tInstance(nIndex).nEffectIndex > 0 Then
@@ -207,8 +219,12 @@ Friend Property Let InstanceTransform(ByVal nIndex As Long, ByRef mat As D3DMATR
 m_tInst.tInstance(nIndex).matWorld = mat
 End Property
 
-'has some code copied from SetupEffect
 Friend Sub DrawInstance(ByVal objMeshMgr As clsMeshManager, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
+DrawInstanceEx m_tInst, objMeshMgr, bSetupLight, bUseExistingTransform
+End Sub
+
+'has some code copied from SetupEffect
+Friend Sub DrawInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal objMeshMgr As clsMeshManager, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
 Dim i As Long, ii As Long, j As Long, k As Long
 Dim idx As Long
 Dim nEffectIndex As Long
@@ -217,21 +233,29 @@ Dim obj As D3DXEffect, objNew As D3DXEffect
 Dim mat As D3DMATRIX, matBackup As D3DMATRIX
 Dim b As Boolean
 '///
-If m_nEffectCount <= 0 Or m_tInst.nInstCount <= 0 Or m_nLastIndex > 0 Then Exit Sub
+If m_nEffectCount <= 0 Or tInst.nInstCount <= 0 Or m_nLastIndex > 0 Then Exit Sub
 '///
-If m_tInst.bInstDirty Then
+If tInst.bInstDirty Then
+ '///DIRTY CODE
+ On Error Resume Next
+ CopyMemory ByVal VarPtrArray(m_tInstDirty), tInst, 4&
+ '///END DIRTY CODE
  With New ISort2
-  .QuickSort m_tInst.nInstOrder, 1, m_tInst.nInstCount, Me
+  .QuickSort tInst.nInstOrder, 1, tInst.nInstCount, Me
  End With
- m_tInst.bInstDirty = False
+ '///DIRTY CODE
+ ZeroMemory ByVal VarPtrArray(m_tInstDirty), 4&
+ On Error GoTo 0
+ '///END DIRTY CODE
+ tInst.bInstDirty = False
 End If
 '///
 d3dd9.GetTransform D3DTS_WORLD, matBackup
 '///
-For i = 1 To m_tInst.nInstCount
- idx = m_tInst.nInstOrder(i)
+For i = 1 To tInst.nInstCount
+ idx = tInst.nInstOrder(i)
  '///SetupEffect
- j = m_tInst.tInstance(idx).nEffectIndex
+ j = tInst.tInstance(idx).nEffectIndex
  If nEffectIndex <> j Then
   nEffectIndex = j
   Set objNew = m_tEffect(j).objEffect
@@ -276,25 +300,25 @@ For i = 1 To m_tInst.nInstCount
  End If
  '///SetupTransform
  If bUseExistingTransform Then
-  D3DXMatrixMultiply mat, m_tInst.tInstance(idx).matWorld, matBackup
+  D3DXMatrixMultiply mat, tInst.tInstance(idx).matWorld, matBackup
   d3dd9.SetTransform D3DTS_WORLD, mat
  Else
-  d3dd9.SetTransform D3DTS_WORLD, m_tInst.tInstance(idx).matWorld
+  d3dd9.SetTransform D3DTS_WORLD, tInst.tInstance(idx).matWorld
  End If
  objRenderTest.SetupTransform obj
  obj.CommitChanges
  '///draw
- j = m_tInst.tInstance(idx).nMeshIndex
+ j = tInst.tInstance(idx).nMeshIndex
  Set objMesh = objMeshMgr.Mesh(j)
- Select Case m_tInst.tInstance(idx).nType
+ Select Case tInst.tInstance(idx).nType
  Case 1 To 15
   '///TEST hardware instancing
-  d3dd9.SetStreamSourceFreq 0, D3DSTREAMSOURCE_INDEXEDDATA Or m_tInst.tInstance(idx).nCount
+  d3dd9.SetStreamSourceFreq 0, D3DSTREAMSOURCE_INDEXEDDATA Or tInst.tInstance(idx).nCount
   d3dd9.SetStreamSource 0, objMesh.GetVertexBuffer, 0, objMeshMgr.MeshVertexSize(j)
   d3dd9.SetStreamSourceFreq 1, D3DSTREAMSOURCE_INSTANCEDATA Or 1
-  d3dd9.SetStreamSource 1, m_tInst.tInstance(idx).objInstanceBuffer, 0, m_tInst.tInstance(idx).nInstanceVertexSize
+  d3dd9.SetStreamSource 1, tInst.tInstance(idx).objInstanceBuffer, 0, tInst.tInstance(idx).nInstanceVertexSize
   '///
-  d3dd9.SetVertexDeclaration m_tInst.tInstance(idx).objDeclaration
+  d3dd9.SetVertexDeclaration tInst.tInstance(idx).objDeclaration
   d3dd9.SetIndices objMesh.GetIndexBuffer
   d3dd9.DrawIndexedPrimitive D3DPT_TRIANGLELIST, 0, 0, objMesh.GetNumVertices, 0, objMesh.GetNumFaces
   '///
@@ -314,8 +338,12 @@ End If
 d3dd9.SetTransform D3DTS_WORLD, matBackup
 End Sub
 
-'TODO:per-instance color support, etc.
 Friend Function AddHWInstance(ByVal objMeshMgr As clsMeshManager, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
+AddHWInstance = AddHWInstanceEx(m_tInst, objMeshMgr, nEffectIndex, nMeshIndex, matWorld, nStart, nEnd)
+End Function
+
+'TODO:per-instance color support, etc.
+Friend Function AddHWInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal objMeshMgr As clsMeshManager, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
 Dim nHWInstancingMode As Long
 Dim objInstanceBuffer As Direct3DVertexBuffer9
 Dim objMesh As D3DXMesh
@@ -348,7 +376,7 @@ Case 15
 Case Else
  '///fallback to software instancing
  For i = nStart To nStart + nEnd - 1
-  AddHWInstance = AddInstance(nEffectIndex, nMeshIndex, matWorld(i))
+  AddHWInstanceEx = AddInstanceEx(tInst, nEffectIndex, nMeshIndex, matWorld(i))
  Next i
  Exit Function
 End Select
@@ -372,21 +400,25 @@ For i = 0 To 64
  End If
 Next i
 '///
-i = pAddEmptyInstance(m_tInst)
-m_tInst.tInstance(i).nType = nHWInstancingMode
-m_tInst.tInstance(i).nEffectIndex = nEffectIndex
-m_tInst.tInstance(i).nMeshIndex = nMeshIndex
-m_tInst.tInstance(i).matWorld = D3DXMatrixIdentity 'TODO:custom base matrix
-m_tInst.tInstance(i).nCount = nEnd
-m_tInst.tInstance(i).nInstanceVertexSize = nSize
-Set m_tInst.tInstance(i).objDeclaration = d3dd9.CreateVertexDeclaration(t(0))
-Set m_tInst.tInstance(i).objInstanceBuffer = objInstanceBuffer
-AddHWInstance = i
+i = pAddEmptyInstance(tInst)
+tInst.tInstance(i).nType = nHWInstancingMode
+tInst.tInstance(i).nEffectIndex = nEffectIndex
+tInst.tInstance(i).nMeshIndex = nMeshIndex
+tInst.tInstance(i).matWorld = D3DXMatrixIdentity 'TODO:custom base matrix
+tInst.tInstance(i).nCount = nEnd
+tInst.tInstance(i).nInstanceVertexSize = nSize
+Set tInst.tInstance(i).objDeclaration = d3dd9.CreateVertexDeclaration(t(0))
+Set tInst.tInstance(i).objInstanceBuffer = objInstanceBuffer
+AddHWInstanceEx = i
+End Function
+
+Friend Function AddHWInstanceFromAppearance(ByVal objMeshMgr As clsMeshManager, ByVal nIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
+AddHWInstanceFromAppearance = AddHWInstanceFromAppearanceEx(m_tInst, objMeshMgr, nIndex, matWorld, nStart, nEnd)
 End Function
 
 'only return last created instance if appearance data has more than one objects
 'TODO:per-instance color support, etc.
-Friend Function AddHWInstanceFromAppearance(ByVal objMeshMgr As clsMeshManager, ByVal nIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
+Friend Function AddHWInstanceFromAppearanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal objMeshMgr As clsMeshManager, ByVal nIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
 Dim i As Long
 'Dim t As typeMeshInstanceData
 If nIndex > 0 And nIndex <= m_nApprCount Then
@@ -394,7 +426,7 @@ If nIndex > 0 And nIndex <= m_nApprCount Then
   '///TODO:custom base matrix (important if m_tAppr(nIndex).tData(i).matWorld is not identity)
   't = m_tAppr(nIndex).tData(i)
   'D3DXMatrixMultiply t.matWorld, t.matWorld, matWorld
-  AddHWInstanceFromAppearance = AddHWInstance(objMeshMgr, m_tAppr(nIndex).tData(i).nEffectIndex, _
+  AddHWInstanceFromAppearanceEx = AddHWInstanceEx(tInst, objMeshMgr, m_tAppr(nIndex).tData(i).nEffectIndex, _
   m_tAppr(nIndex).tData(i).nMeshIndex, matWorld, nStart, nEnd)
  Next i
 End If
@@ -1641,8 +1673,8 @@ End Sub
 Private Function ISort2_Compare(ByVal Index1 As Long, ByVal Index2 As Long, ByVal nUserData As Long) As Long
 Dim i As Long, j As Long
 Dim ii As Long, jj As Long
-i = m_tInst.tInstance(Index1).nEffectIndex
-j = m_tInst.tInstance(Index2).nEffectIndex
+i = m_tInstDirty(Index1).nEffectIndex
+j = m_tInstDirty(Index2).nEffectIndex
 ii = m_tEffect(i).nReferenceIndex
 jj = m_tEffect(j).nReferenceIndex
 If ii = 0 Then ii = i
@@ -1657,8 +1689,8 @@ ElseIf i < j Then
 ElseIf i > j Then
  ISort2_Compare = 1
 'Else
-' i = m_tInst.tInstance(Index1).nMeshIndex
-' j = m_tInst.tInstance(Index2).nMeshIndex
+' i = m_tInstDirty(Index1).nMeshIndex
+' j = m_tInstDirty(Index2).nMeshIndex
 ' If i < j Then ISort2_Compare = -1 _
 ' Else If i > j Then ISort2_Compare = 1
 End If

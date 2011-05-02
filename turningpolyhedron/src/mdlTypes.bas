@@ -22,7 +22,7 @@ Public Type typeMeshInstanceData 'N bytes :(
 End Type
 
 Public Type typeMeshInstanceCollection
- tInstance() As typeMeshInstanceData
+ tInstance() As typeMeshInstanceData 'WARNING: use some dirty code so this member must be the first one
  nInstOrder() As Long '1-based
  nInstCount As Long
  nInstUnused As Long ', nInstMax As Long
@@ -345,6 +345,9 @@ End Type
 
 Public Type typeTileType
  nIndex As Long '???
+ 'if actual index<m_nTileTypeCount_Max then it should be actual index
+ 'if =0 and actual index<m_nTileTypeCount_Max then it's unused
+ 'if <0 then it's dynamic-mapped index (&H80000000 or actual index)
  sID As String
  sName As String
  sDesc As String
@@ -370,6 +373,7 @@ End Type
 '////////level data
 
 Public Type typeMapData_Properties
+ nIndex As Long '???
  sTag As String
  '///events
  nEventCount As Long

@@ -13,6 +13,8 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+
 '////////object type data
 
 Private m_tObjType() As typeObjectType
@@ -28,7 +30,7 @@ Private Const m_nTileTypeCount_Max As Long = 1024&
 Private m_tTileType() As typeTileType
 Private m_nTileTypeCount As Long 'fixed index, start with 1 (this is not count, but just max index)
 Private m_nTileTypeCount2 As Long 'dynamic index, srart with m_nTileTypeCount_Max+1
-Private m_nTileTypeMax As Long
+Private m_nTileTypeMax As Long '=UBound(m_tTileType)
 
 '////////level data (TEST ONLY)
 
@@ -36,13 +38,247 @@ Private m_tLevel As typeLevelData
 
 Friend Sub ClearLevelData()
 Dim t As typeLevelData
+Dim i As Long
 m_tLevel = t
-'TODO: reset dynamic-mapped tile index
+'reset dynamic-mapped tile index
+If m_nTileTypeMax >= m_nTileTypeCount_Max Then
+ For i = 1 To m_nTileTypeCount_Max
+  If m_tTileType(i).nIndex < 0 Then m_tTileType(i).nIndex = 0
+ Next i
+End If
 End Sub
 
-Friend Sub AddLevelDataFromNode(ByVal objNode As clsTreeStorageNode)
-AddLevelDataFromNodeEx objNode, m_tLevel
-End Sub
+Friend Function AddLevelDataFromNode(ByVal objNode As clsTreeStorageNode) As Boolean
+AddLevelDataFromNode = AddLevelDataFromNodeEx(objNode, m_tLevel)
+End Function
+
+Friend Function ParseMapTypeArrayFromNode(ByVal objNode As clsTreeStorageNode, ByRef tMap As typeMapData) As Boolean
+Dim s As String
+Dim b As Boolean
+Dim d() As Integer, lp As Long, lps As Long, m As Long
+Dim c As Long
+Dim i As Long, j As Long, k As Long
+'///
+Dim nIndex As Long
+Dim sID As String
+Dim nNewIndex As Long
+Dim nPropertyIndex As Long
+Dim sTag As String
+Dim nCount As Long
+'///
+s = Replace(Replace(Replace(Replace(objNode.GetValueAsString, _
+vbCr, ""), vbLf, ""), vbTab, ""), " ", "")
+m = Len(s)
+If m > 0 Then
+ ReDim d(m - 1)
+ CopyMemory d(0), ByVal StrPtr(s), m * 2&
+ '///format: [<index>|<id>[@<new_index>]]["["<property_index>|<tag>"]"]["*"<count>]
+ Do
+  nIndex = 0
+  sID = ""
+  nNewIndex = 0
+  nPropertyIndex = 0
+  sTag = ""
+  nCount = 1
+  '///get [<index>|<id>]
+  lps = lp
+  b = True
+  Do While lp < m
+   c = d(lp)
+   Select Case c
+   Case 44, 59, 124, 64, 91, 42
+    Exit Do
+   End Select
+   b = b And (c >= &H30& And c <= &H39&)
+   lp = lp + 1
+  Loop
+  If lp > lps Then
+   sID = Space(lp - lps)
+   CopyMemory ByVal StrPtr(sID), d(lps), (lp - lps) * 2&
+   If b Then
+    nIndex = Val(sID)
+    If nIndex >= 0 Then sID = "" Else nIndex = 0
+   End If
+  End If
+  '///get [@<new_index>]
+  If c = 64 Then
+   lp = lp + 1
+   lps = lp
+   Do While lp < m
+    c = d(lp)
+    Select Case c
+    Case 44, 59, 124, 91, 42
+     Exit Do
+    End Select
+    lp = lp + 1
+   Loop
+   If lp > lps Then
+    s = Space(lp - lps)
+    CopyMemory ByVal StrPtr(s), d(lps), (lp - lps) * 2&
+    nNewIndex = Val(s)
+   End If
+  End If
+  '///get ["["<property_index>|<tag>"]"]
+  If c = 91 Then
+   lp = lp + 1
+   lps = lp
+   b = True
+   Do While lp < m
+    c = d(lp)
+    If c = 93 Then Exit Do
+    b = b And (c >= &H30& And c <= &H39&)
+    lp = lp + 1
+   Loop
+   If lp > lps Then
+    sTag = Space(lp - lps)
+    CopyMemory ByVal StrPtr(sTag), d(lps), (lp - lps) * 2&
+    If b Then
+     nPropertyIndex = Val(sTag)
+     If nPropertyIndex > 0 Then sTag = "" Else nPropertyIndex = 0
+    End If
+   End If
+   lp = lp + 1
+   If lp < m Then c = d(lp)
+  End If
+  '///get ["*"<count>]
+  If c = 42 Then
+   lp = lp + 1
+   lps = lp
+   Do While lp < m
+    c = d(lp)
+    Select Case c
+    Case 44, 59, 124
+     Exit Do
+    End Select
+    lp = lp + 1
+   Loop
+   If lp > lps Then
+    s = Space(lp - lps)
+    CopyMemory ByVal StrPtr(s), d(lps), (lp - lps) * 2&
+    nCount = Val(s)
+    If nCount <= 0 Then 'invalid count
+     Debug.Assert False
+     Exit Function
+    End If
+   End If
+  End If
+  '///
+  If nIndex > m_nTileTypeCount_Max Then 'out of range?
+   For lps = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
+    If m_tTileType(lps).nIndex = nIndex Then
+     nIndex = lps
+     Exit For
+    End If
+   Next lps
+  ElseIf nIndex > 0 Then 'use dynamic mapping index?
+   lps = m_tTileType(nIndex).nIndex
+   If lps < 0 Then
+    nIndex = lps And &H7FFFFFFF
+   ElseIf lps = 0 Then 'invalid index
+    Debug.Assert False
+    Exit Function
+   End If
+  End If
+  'find tile named with sID? TODO:use a collection to look up
+  If sID <> "" Then
+   For lps = 1 To m_nTileTypeCount
+    If m_tTileType(lps).nIndex > 0 Then
+     If m_tTileType(lps).sID = sID Then
+      nIndex = lps
+      Exit For
+     End If
+    End If
+   Next lps
+   If nIndex = 0 Then
+    For lps = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
+     If m_tTileType(lps).sID = sID Then
+      nIndex = lps
+      Exit For
+     End If
+    Next lps
+   End If
+   If nIndex = 0 Then 'not found
+    Debug.Assert False
+    Exit Function
+   End If
+  End If
+  'create dynamic mapping index?
+  If nNewIndex > 0 And nNewIndex <= m_nTileTypeCount_Max Then
+   If m_tTileType(nNewIndex).nIndex <= 0 Then
+    m_tTileType(nNewIndex).nIndex = &H80000000 Or nIndex
+   Else 'invalid remapping
+    Debug.Assert False
+    Exit Function
+   End If
+  End If
+  '///put data
+  For lps = 1 To nCount
+   tMap.nTypeArray(i, j, k) = nIndex
+   tMap.sTagArray(i, j, k) = sTag
+   tMap.nPropertyArray(i, j, k) = nPropertyIndex
+   'next pos
+   If lps < nCount Then
+    i = i + 1
+    If i >= tMap.nSize(0) Then
+     i = 0
+     j = j + 1
+     If j >= tMap.nSize(1) Then
+      j = 0
+      k = k + 1
+      If k >= tMap.nSize(2) Then Exit Do
+     End If
+    End If
+   End If
+  Next lps
+  '///
+  If lp >= m Then c = 44
+  Select Case c
+  Case 44 '[","]
+   'next pos
+   i = i + 1
+   If i >= tMap.nSize(0) Then
+    i = 0
+    j = j + 1
+    If j >= tMap.nSize(1) Then
+     j = 0
+     k = k + 1
+     If k >= tMap.nSize(2) Then Exit Do
+    End If
+   End If
+  Case 59 '[";"]
+   'next row
+   i = 0
+   j = j + 1
+   If j >= tMap.nSize(1) Then
+    j = 0
+    k = k + 1
+    If k >= tMap.nSize(2) Then Exit Do
+   End If
+  Case 124 '["|"]
+   'next plane
+   i = 0
+   j = 0
+   k = k + 1
+   If k >= tMap.nSize(2) Then Exit Do
+  Case Else 'invalid character
+   Debug.Assert False
+   Exit Function
+  End Select
+  '///over
+  lp = lp + 1
+ Loop While lp < m
+ '///
+End If
+'///debug
+'For j = 0 To tMap.nSize(1) - 1
+' For i = 0 To tMap.nSize(0) - 1
+'  Debug.Print tMap.nTypeArray(i, j, 0);
+' Next i
+' Debug.Print
+'Next j
+'///
+ParseMapTypeArrayFromNode = True
+End Function
 
 Friend Function ParseMapDataFromNode(ByVal objNode As clsTreeStorageNode, ByRef tLevel As typeLevelData, ByVal nIndex As Long) As Boolean
 Dim i As Long, j As Long, k As Long, m As Long
@@ -50,6 +286,7 @@ Dim v As Variant
 Dim s As String
 Dim nFlags As Long
 Dim obj As clsTreeStorageNode
+Dim obj1 As clsTreeStorageNode
 '///
 tLevel.tMapData(nIndex).fScale.x = 1
 tLevel.tMapData(nIndex).fScale.y = 1
@@ -62,6 +299,9 @@ tLevel.tMapData(nIndex).fPos(2).y = 1
 tLevel.tMapData(nIndex).fPos(3).z = 1
 '///
 nFlags = tLevel.tMapData(nIndex).nFlags
+ReDim tLevel.tMapData(nIndex).nTypeArray(0, 0, 0)
+ReDim tLevel.tMapData(nIndex).sTagArray(0, 0, 0)
+ReDim tLevel.tMapData(nIndex).nPropertyArray(0, 0, 0)
 '///
 For i = 1 To objNode.SubNodeCount
  If objNode.SubNodeType(i) = 0 Then
@@ -74,7 +314,7 @@ For i = 1 To objNode.SubNodeCount
    Select Case s
    Case "rect"
     j = 0
-   Case Else 'currently unsupported
+   Case Else 'currently unsupported TODO:
     Debug.Assert False
     Exit Function
    End Select
@@ -99,7 +339,18 @@ For i = 1 To objNode.SubNodeCount
    Else
     nFlags = nFlags And Not &H10&
    End If
-   tLevel.tMapData(nIndex).nFlags = nFlags
+   If nFlags And &H10& Then
+    j = tLevel.tMapData(nIndex).nSize(0) - 1
+    k = tLevel.tMapData(nIndex).nSize(1) - 1
+    m = tLevel.tMapData(nIndex).nSize(2) - 1
+    ReDim tLevel.tMapData(nIndex).nTypeArray(j, k, m)
+    ReDim tLevel.tMapData(nIndex).sTagArray(j, k, m)
+    ReDim tLevel.tMapData(nIndex).nPropertyArray(j, k, m)
+   Else
+    tLevel.tMapData(nIndex).nSize(0) = 1
+    tLevel.tMapData(nIndex).nSize(1) = 1
+    tLevel.tMapData(nIndex).nSize(2) = 1
+   End If
   Case "p", "p1", "p2", "p3"
    If Not FakeDXUtilReadVec4(objNode.GetSubNodeValueAsString(i), tLevel.tMapData(nIndex).fPos(Val(Mid(s, 2)))) Then Exit Function
   Case "r"
@@ -115,11 +366,45 @@ For i = 1 To objNode.SubNodeCount
   Set obj = objNode.SubNodeObject(i)
   Select Case obj.GetNameAsString
   Case "typeArray"
-   'TODO:
-   Debug.Assert False
+   If Not ParseMapTypeArrayFromNode(obj, tLevel.tMapData(nIndex)) Then
+    Exit Function
+   End If
   Case "property"
-   'TODO:
-   Debug.Assert False
+   m = Val(obj.GetSubNodeValueAsStringByName("index"))
+   If m <= 0 Then 'invalid or unspecified index
+    Debug.Assert False
+    Exit Function
+   End If
+   If m > tLevel.tMapData(nIndex).nPropertyCount Then
+    tLevel.tMapData(nIndex).nPropertyCount = m
+    ReDim Preserve tLevel.tMapData(nIndex).tProperties(1 To m)
+   End If
+   tLevel.tMapData(nIndex).tProperties(m).nIndex = m
+   tLevel.tMapData(nIndex).tProperties(m).sTag = obj.GetSubNodeValueAsStringByName("tag")
+   '///
+   For j = 1 To obj.SubNodeCount
+    If obj.SubNodeType(j) = 1 Then
+     Set obj1 = obj.SubNodeObject(j)
+'     k = 0
+'     s = obj1.GetNameAsString
+'     Select Case s
+'     Case Else
+'      k = ParseEventType(s)
+'     End Select
+     k = ParseEventType(obj1.GetNameAsString)
+     '///event?
+     If k > 0 Then
+      tLevel.tMapData(nIndex).tProperties(m).nEventCount = _
+      tLevel.tMapData(nIndex).tProperties(m).nEventCount + 1
+      ReDim Preserve tLevel.tMapData(nIndex).tProperties(m).tEvent(1 To _
+      tLevel.tMapData(nIndex).tProperties(m).nEventCount)
+      If Not ParseEventFromNode(tLevel.tMapData(nIndex).tProperties(m).tEvent( _
+      tLevel.tMapData(nIndex).tProperties(m).nEventCount), obj1, k) Then
+       Exit Function
+      End If
+     End If
+    End If
+   Next j
   Case "polyhedron"
    tLevel.nPolyhedronCount = tLevel.nPolyhedronCount + 1
    ReDim Preserve tLevel.tPolyhedron(1 To tLevel.nPolyhedronCount)
@@ -131,10 +416,66 @@ For i = 1 To objNode.SubNodeCount
   End Select
  End If
 Next i
+'///calc world matrix
+CalcMapDataWorldMatrix tLevel.tMapData(nIndex)
+'///apply map array properties (?)
+If nFlags And &H10& Then
+ For k = 0 To tLevel.tMapData(nIndex).nSize(2) - 1
+  For j = 0 To tLevel.tMapData(nIndex).nSize(1) - 1
+   For i = 0 To tLevel.tMapData(nIndex).nSize(0) - 1
+    m = tLevel.tMapData(nIndex).nPropertyArray(i, j, k)
+    If m > 0 And m <= tLevel.tMapData(nIndex).nPropertyCount Then
+     s = tLevel.tMapData(nIndex).tProperties(m).sTag
+     If s <> "" Then tLevel.tMapData(nIndex).sTagArray(i, j, k) = s
+    End If
+   Next i
+  Next j
+ Next k
+End If
 '///over
 tLevel.tMapData(nIndex).nFlags = nFlags
 ParseMapDataFromNode = True
 End Function
+
+Friend Sub CalcMapDataWorldMatrix(ByRef t2 As typeMapData)
+Dim p(3) As D3DXVECTOR4
+Dim mat As D3DMATRIX
+'///scale
+t2.fPos(1).x = t2.fPos(1).x * t2.fScale.x
+t2.fPos(1).y = t2.fPos(1).y * t2.fScale.x
+t2.fPos(1).z = t2.fPos(1).z * t2.fScale.x
+t2.fPos(2).x = t2.fPos(2).x * t2.fScale.y
+t2.fPos(2).y = t2.fPos(2).y * t2.fScale.y
+t2.fPos(2).z = t2.fPos(2).z * t2.fScale.y
+t2.fPos(3).x = t2.fPos(3).x * t2.fScale.z
+t2.fPos(3).y = t2.fPos(3).y * t2.fScale.z
+t2.fPos(3).z = t2.fPos(3).z * t2.fScale.z
+'///rotate
+D3DXMatrixRotationYawPitchRoll mat, t2.fRotation.x, t2.fRotation.y, t2.fRotation.z
+D3DXVec4TransformArray p(1), 16&, t2.fPos(1), 16&, mat, 3
+'///multiply by step
+t2.fPos(1).x = p(1).x * t2.fStep.x
+t2.fPos(1).y = p(1).y * t2.fStep.x
+t2.fPos(1).z = p(1).z * t2.fStep.x
+t2.fPos(2).x = p(2).x * t2.fStep.y
+t2.fPos(2).y = p(2).y * t2.fStep.y
+t2.fPos(2).z = p(2).z * t2.fStep.y
+t2.fPos(3).x = p(3).x * t2.fStep.z
+t2.fPos(3).y = p(3).y * t2.fStep.z
+t2.fPos(3).z = p(3).z * t2.fStep.z
+'///calc center
+p(0).x = t2.fPos(0).x - t2.fCenter.x * t2.fPos(1).x * t2.nSize(0) _
+- t2.fCenter.y * t2.fPos(2).x * t2.nSize(1) - t2.fCenter.z * t2.fPos(3).x * t2.nSize(2)
+p(0).y = t2.fPos(0).y - t2.fCenter.x * t2.fPos(1).y * t2.nSize(0) _
+- t2.fCenter.y * t2.fPos(2).y * t2.nSize(1) - t2.fCenter.z * t2.fPos(3).y * t2.nSize(2)
+p(0).z = t2.fPos(0).z - t2.fCenter.x * t2.fPos(1).z * t2.nSize(0) _
+- t2.fCenter.y * t2.fPos(2).z * t2.nSize(1) - t2.fCenter.z * t2.fPos(3).z * t2.nSize(2)
+'///over
+CopyMemory t2.matWorld.m11, p(1), 48&
+CopyMemory t2.matWorld.m41, p(0), 16&
+t2.matWorld.m44 = 1
+t2.fPos(0) = p(0)
+End Sub
 
 Friend Function pFlagsFromBooleanString(ByRef s As String, ByVal nFlags As Long, ByVal nMask As Long) As Long
 Dim j As Long
@@ -158,16 +499,24 @@ For i = 1 To objNode.SubNodeCount
    'TODO:check duplicated ID
    tPoly.sID = s
   Case "p"
+   If s = "" Then
+    Debug.Assert False
+    Exit Function
+   End If
    If sBasePosition = "" Then
     tPoly.sPos = s
    Else
-    Select Case Left(s, 1)
-    Case ".", "("
+    Select Case AscW(s)
+    Case 40, 46 '["."], ["("]
+    Case &H30 To &H39 '["0"] To ["9"]
+     s = "(" + s + ")"
     Case Else
      s = "." + s
     End Select
     tPoly.sPos = sBasePosition + s
    End If
+   '///debug
+   'Debug.Print "Polyhedron start:" + tPoly.sPos
   Case "discardable"
    nFlags = pFlagsFromBooleanString(s, nFlags, &H1&)
   Case "main"
@@ -186,8 +535,8 @@ For i = 1 To objNode.SubNodeCount
    nFlags = pFlagsFromBooleanString(s, nFlags, &H80&)
   End Select
  Else
+  'TODO:
   Debug.Assert False
-'  'TODO:
 '  Set obj = objNode.SubNodeObject(i)
 '  Select Case obj.GetNameAsString
 '  Case "mapData"
@@ -232,6 +581,54 @@ For i = 1 To objNode.SubNodeCount
  End If
 Next i
 '///
+AddLevelDataFromNodeEx = True
+End Function
+
+Friend Function GenerateMeshFromLevelData(ByVal objEffectMgr As clsEffectManager, ByRef tInst As typeMeshInstanceCollection) As Boolean
+GenerateMeshFromLevelData = GenerateMeshFromLevelDataEx(m_tLevel, objEffectMgr, tInst)
+End Function
+
+'test only
+Friend Function GenerateMeshFromLevelDataEx(ByRef tLevel As typeLevelData, ByVal objEffectMgr As clsEffectManager, ByRef tInst As typeMeshInstanceCollection) As Boolean
+Dim idx As Long
+Dim i As Long, j As Long, k As Long
+Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
+Dim nIndex As Long
+'///
+For idx = 1 To tLevel.nMapDataCount
+ Select Case tLevel.tMapData(idx).nFlags And &HF&
+ Case 0 'rect
+  mat = tLevel.tMapData(idx).matWorld
+  For k = 0 To tLevel.tMapData(idx).nSize(2) - 1
+   mat1 = mat
+   For j = 0 To tLevel.tMapData(idx).nSize(1) - 1
+    mat2 = mat1
+    For i = 0 To tLevel.tMapData(idx).nSize(0) - 1
+     '///
+     nIndex = tLevel.tMapData(idx).nTypeArray(i, j, k)
+     If nIndex > 0 And nIndex <= m_nTileTypeMax Then
+      'TODO:invisibleAtRuntime (?)
+      objEffectMgr.AddInstanceFromAppearanceEx tInst, m_tTileType(nIndex).nApprIndex, mat2
+     End If
+     '///
+     mat2.m41 = mat2.m41 + tLevel.tMapData(idx).fPos(1).x
+     mat2.m42 = mat2.m42 + tLevel.tMapData(idx).fPos(1).y
+     mat2.m43 = mat2.m43 + tLevel.tMapData(idx).fPos(1).z
+    Next i
+    mat1.m41 = mat1.m41 + tLevel.tMapData(idx).fPos(2).x
+    mat1.m42 = mat1.m42 + tLevel.tMapData(idx).fPos(2).y
+    mat1.m43 = mat1.m43 + tLevel.tMapData(idx).fPos(2).z
+   Next j
+   mat.m41 = mat.m41 + tLevel.tMapData(idx).fPos(3).x
+   mat.m42 = mat.m42 + tLevel.tMapData(idx).fPos(3).y
+   mat.m43 = mat.m43 + tLevel.tMapData(idx).fPos(3).z
+  Next k
+ Case Else
+  'TODO:
+  Debug.Assert False
+ End Select
+Next idx
+GenerateMeshFromLevelDataEx = True
 End Function
 
 Friend Sub Destroy()
