@@ -29,7 +29,7 @@ Private Const m_nTileTypeCount_Max As Long = 1024&
 
 Private m_tTileType() As typeTileType
 Private m_nTileTypeCount As Long 'fixed index, start with 1 (this is not count, but just max index)
-Private m_nTileTypeCount2 As Long 'dynamic index, srart with m_nTileTypeCount_Max+1
+Private m_nTileTypeCount2 As Long 'dynamic index, start with m_nTileTypeCount_Max+1
 Private m_nTileTypeMax As Long '=UBound(m_tTileType)
 
 '////////level data (TEST ONLY)
@@ -305,7 +305,8 @@ ReDim tLevel.tMapData(nIndex).nPropertyArray(0, 0, 0)
 '///
 For i = 1 To objNode.SubNodeCount
  If objNode.SubNodeType(i) = 0 Then
-  Select Case objNode.GetSubNodeNameAsString(i)
+  s = objNode.GetSubNodeNameAsString(i)
+  Select Case s
   Case "id"
    'TODO:check duplicated ID
    tLevel.tMapData(nIndex).sID = objNode.GetSubNodeValueAsString(i)
@@ -490,6 +491,7 @@ Dim obj As clsTreeStorageNode
 Dim nFlags As Long
 '///
 nFlags = &HFE&
+tPoly.nShape = &H112&
 '///
 For i = 1 To objNode.SubNodeCount
  If objNode.SubNodeType(i) = 0 Then
@@ -498,6 +500,12 @@ For i = 1 To objNode.SubNodeCount
   Case "id"
    'TODO:check duplicated ID
    tPoly.sID = s
+  Case "shape"
+   'TODO:nShape
+   Debug.Assert False
+  Case "type"
+   'TODO:nObjType
+   Debug.Assert False
   Case "p"
    If s = "" Then
     Debug.Assert False
@@ -535,7 +543,7 @@ For i = 1 To objNode.SubNodeCount
    nFlags = pFlagsFromBooleanString(s, nFlags, &H80&)
   End Select
  Else
-  'TODO:
+  'TODO:appearance,etc.
   Debug.Assert False
 '  Set obj = objNode.SubNodeObject(i)
 '  Select Case obj.GetNameAsString

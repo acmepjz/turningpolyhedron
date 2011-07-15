@@ -71,7 +71,7 @@ Public Type typeMeshEdge_Temp
  'bit 0-1=bevel index (0-x 1-y 2-z 3-w) for vertex 0-1
  'bit 2-3=bevel index for vertex 2-3
  nVertexIndex(3) As Long
- nVertexB As Long 'optional (whel nBevel=2)
+ nVertexB As Long 'optional (when nBevel=2)
  '|   F  |
  '3------2
  '(B+1) (B)

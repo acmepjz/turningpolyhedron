@@ -72,13 +72,15 @@ With MyMini_Vertices(MyMini_VertexCount)
  .clr1 = -1
  .clr2 = -1
  '///!!!TEST ONLY!!!
- If MyMini_FanCount = 0 Then
-  .t.x = 0
-  .t.y = 0
- Else
-  .t.x = MyMini_FanCount And 1&
-  .t.y = 1
- End If
+' If MyMini_FanCount = 0 Then
+'  .t.x = 0
+'  .t.y = 0
+' Else
+'  .t.x = MyMini_FanCount And 1&
+'  .t.y = 1
+' End If
+ .t.x = i / 256
+ .t.y = 1 - j / 256
  '///
 End With
 '///

@@ -6,6 +6,10 @@ msgstr ""
 msgid "Abort"
 msgstr ""
 
+#.    .AddNewChildren FakeCtl_Label, 10, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Antialiasing")
+msgid "Antialiasing"
+msgstr ""
+
 #.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
 msgid "Apply"
 msgstr ""
@@ -45,6 +49,10 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Change the antialiasing settings."))
+msgid "Change the antialiasing settings."
+msgstr ""
+
 #.  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
 #.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
 msgid "Change the game settings."
@@ -54,7 +62,7 @@ msgstr ""
 msgid "Change the graphics settings."
 msgstr ""
 
-#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
 msgid "Change the screen resolution."
 msgstr ""
 
@@ -175,7 +183,7 @@ msgstr ""
 msgid "Graphics"
 msgstr ""
 
-#.    .AddNewChildren FakeCtl_Label, 20, 110, 198, 128, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+#.    .AddNewChildren FakeCtl_Label, 20, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
 msgid "HDR quality"
 msgstr ""
 
@@ -235,6 +243,10 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
+#.      .AddItem objText.GetText("Off")
+msgid "Off"
+msgstr ""
+
 #.   Else s = objText.GetText("Open")
 #. If DlgTitle = € Then m_sTitle = objText.GetText("Open") Else m_sTitle = DlgTitle
 msgid "Open"
@@ -253,7 +265,7 @@ msgstr ""
 msgid "Radial blur"
 msgstr ""
 
-#.    .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
+#.    .AddNewChildren FakeCtl_Label, 10, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
 msgid "Resolution"
 msgstr ""
 
@@ -274,7 +286,7 @@ msgstr ""
 msgid "Save as"
 msgstr ""
 
-#.    With .AddNewChildren(FakeCtl_ComboBox, 100, 110, 298, 128, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+#.    With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
 msgid "Set the quality of HDR blur."
 msgstr ""
 
