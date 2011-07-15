@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlMain"
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclass = True
 
 'Private Declare Function GetStdHandle Lib "kernel32.dll" (ByVal nStdHandle As Long) As Long
 'Private Declare Function AllocConsole Lib "kernel32.dll" () As Long
@@ -53,7 +53,7 @@ Private Const WM_MOUSEWHEEL As Long = &H20A
 Public d3d9 As Direct3D9
 Public d3dd9 As Direct3DDevice9
 
-Public d3dpp As D3DPRESENT_PARAMETERS
+Public d3dpp As D3DPRESENT_PARAMETERS, m_nRefreshRate As Long
 Public d3dc9 As D3DCAPS9
 
 Public Type typeVertex
@@ -225,15 +225,15 @@ With d3dd9
    If objRenderTest.BeginRender(RenderPass_Main) Then
     .BeginScene
     objTest.DrawSubset 0
-'    '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
-'    objRenderTest.SetTexture objLandTexture
-'    .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
-'    objRenderTest.UpdateRenderState
-'    objLand.Render objRenderTest, objCamera
-'    .SetTransform D3DTS_WORLD, mat
-'    '////////
+    objRenderTest.EndRender 'xx
+    '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
+    d3dd9.SetTexture 0, objLandTexture
+    .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
+    objRenderTest.UpdateRenderState
+    objLand.Render objRenderTest, objCamera
+    .SetTransform D3DTS_WORLD, mat
+    '////////
     .EndScene
-    objRenderTest.EndRender
    End If
   End If
   objRenderTest.EndRenderToPostProcessTarget
@@ -355,7 +355,7 @@ If FakeDXUIControlCount > 0 Then
 End If
 End Sub
 
-Public Sub FakeDXAppChangeResolution(Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal bFullscreen As VbTriState = vbUseDefault)
+Public Sub FakeDXAppChangeResolution(Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal bFullscreen As VbTriState = vbUseDefault, Optional ByVal nRefreshRate As Long, Optional ByVal nMultiSample As Long)
 On Error Resume Next
 '///
 Select Case bFullscreen
@@ -368,12 +368,22 @@ Case Else
 End Select
 If nWidth <= 0 Then nWidth = d3dpp.BackBufferWidth
 If nHeight <= 0 Then nHeight = d3dpp.BackBufferHeight
-If nWidth <> d3dpp.BackBufferWidth Or nHeight <> d3dpp.BackBufferHeight Or d3dpp.Windowed <> 1 - bFullscreen Then
+If nRefreshRate <= 0 Then nRefreshRate = m_nRefreshRate _
+Else m_nRefreshRate = nRefreshRate
+If bFullscreen = 0 Then nRefreshRate = 0
+'///
+If nWidth <> d3dpp.BackBufferWidth Or nHeight <> d3dpp.BackBufferHeight _
+Or d3dpp.Windowed <> 1 - bFullscreen _
+Or nRefreshRate <> d3dpp.FullScreen_RefreshRateInHz _
+Or nMultiSample <> d3dpp.MultiSampleType _
+Then
  '///
  With d3dpp
   .BackBufferWidth = nWidth
   .BackBufferHeight = nHeight
   .Windowed = 1 - bFullscreen
+  .FullScreen_RefreshRateInHz = nRefreshRate
+  .MultiSampleType = nMultiSample
  End With
  '///it works!
  FakeDXAppOnLostDevice
@@ -480,7 +490,7 @@ With d3dpp
  .AutoDepthStencilFormat = D3DFMT_D24S8
  '.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
  .PresentationInterval = D3DPRESENT_INTERVAL_ONE
- '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES
+ '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES 'already loaded
 End With
 '///
 FakeDXAppAdjustWindowPos
@@ -493,6 +503,7 @@ Else i = D3DCREATE_SOFTWARE_VERTEXPROCESSING
 Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, frm.hwnd, i, d3dpp)
 If d3dd9 Is Nothing Then
  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
+ frmSettings.ResetAndSaveFile
  End
 End If
 '///

@@ -16,6 +16,8 @@ Option Explicit
 Private m_nAdapterModeCount As Long
 Private m_tAdapterModes() As D3DDISPLAYMODE '0-based
 
+Private m_nFSAAMode As Long
+
 'dirty workaround for show in center of screen. TODO:
 Private m_tDefaultPos As typeFakeDXUIRectEx
 
@@ -26,6 +28,7 @@ Private Enum enumSettingsDialogControls
  IDC_Main = 0
  IDC_Resolution
  IDC_Fullscreen
+ IDC_Antialiasing
  IDC_PostProcess
  IDC_HDRBlurQuality
  IDC_ShadowMap
@@ -61,11 +64,13 @@ End With
 With obj.GetSubNodeObjectByName("GraphicsConfig", True)
  d3dpp.BackBufferWidth = Val(.GetSubNodeValueAsStringByName("Width", 640))
  d3dpp.BackBufferHeight = Val(.GetSubNodeValueAsStringByName("Height", 480))
- d3dpp.FullScreen_RefreshRateInHz = Val(.GetSubNodeValueAsStringByName("RefreshRate", 0))
+ m_nRefreshRate = Val(.GetSubNodeValueAsStringByName("RefreshRate", 0))
+ d3dpp.MultiSampleType = Val(.GetSubNodeValueAsStringByName("Antialiasing", 0))
  '///
  b = False
  b = CBool(.GetSubNodeValueAsStringByName("Fullscreen", False))
  d3dpp.Windowed = (b And 1&) Xor 1&
+ If b Then d3dpp.FullScreen_RefreshRateInHz = m_nRefreshRate
  '///
  objRenderTest.PostProcessEnabled = CBool(.GetSubNodeValueAsStringByName("PostProcessEnabled", False))
  objRenderTest.HDRBlurQuality = Val(.GetSubNodeValueAsStringByName("HDRBlurQuality", 0))
@@ -84,8 +89,9 @@ obj.SetNameFromString "Config"
 With obj.GetSubNodeObjectByName("GraphicsConfig", True)
  .AddSubNode , , "Width", CStr(d3dpp.BackBufferWidth)
  .AddSubNode , , "Height", CStr(d3dpp.BackBufferHeight)
- .AddSubNode , , "RefreshRate", CStr(d3dpp.FullScreen_RefreshRateInHz)
+ .AddSubNode , , "RefreshRate", CStr(m_nRefreshRate)
  .AddSubNode , , "Fullscreen", CStr(d3dpp.Windowed = 0)
+ .AddSubNode , , "Antialiasing", CStr(d3dpp.MultiSampleType)
  '///
  .AddSubNode , , "PostProcessEnabled", CStr(objRenderTest.PostProcessEnabled)
  .AddSubNode , , "HDRBlurQuality", CStr(objRenderTest.HDRBlurQuality)
@@ -101,8 +107,10 @@ With New clsXMLSerializer
 End With
 End Sub
 
-Friend Sub GetAdapterModes()
-Dim i As Long
+Friend Sub GetDXModes()
+On Error Resume Next
+Dim i As Long, j As Long
+'///adapter modes
 m_nAdapterModeCount = d3d9.GetAdapterModeCount(0, D3DFMT_X8R8G8B8)
 If m_nAdapterModeCount > 0 Then
  ReDim m_tAdapterModes(m_nAdapterModeCount - 1)
@@ -110,14 +118,28 @@ If m_nAdapterModeCount > 0 Then
   d3d9.EnumAdapterModes 0, D3DFMT_X8R8G8B8, i, m_tAdapterModes(i)
  Next i
 End If
+'///FSAA modes
+m_nFSAAMode = 0
+j = 1
+For i = 2 To 30
+ Err.Clear
+ d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, d3dpp.BackBufferFormat, 0, i
+ d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, d3dpp.AutoDepthStencilFormat, 0, i
+ d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, d3dpp.BackBufferFormat, 1, i
+ d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, d3dpp.AutoDepthStencilFormat, 1, i
+ If Err.Number = 0 Then m_nFSAAMode = m_nFSAAMode Or j
+ '///
+ j = j + j
+Next i
 End Sub
 
 Friend Sub Create()
-Dim i As Long
+Dim i As Long, j As Long
+Dim y As Long
 '///
 If m_idx(0) Then Exit Sub
 '///
-GetAdapterModes
+GetDXModes
 '///
 'TODO:
 '///
@@ -129,10 +151,11 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
  '///tab control
  With .AddNewChildren(FakeCtl_TabStrip, 8, 8, -8, -40, &H3003000, , , , , , , , , 1, 1)
   '///graphics
+  y = 10
   With .AddNewChildren(FakeCtl_None, 0, 0, 320, 320, , , False)
    'resolution
-   .AddNewChildren FakeCtl_Label, 10, 10, 198, 28, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
-   With .AddNewChildren(FakeCtl_ComboBox, 100, 10, 298, 28, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
+   .AddNewChildren FakeCtl_Label, 10, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
+   With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
     m_idx(IDC_Resolution) = .Index
     With .ListViewObject
      .FullRowSelect = True
@@ -142,24 +165,46 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
      Next i
     End With
    End With
+   y = y + 20
    'fullscreen?
-   With .AddNewChildren(FakeCtl_Button, 10, 30, 198, 48, FBS_CheckBox, , , , _
+   With .AddNewChildren(FakeCtl_Button, 10, y, 198, y + 18, FBS_CheckBox, , , , _
    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
     m_idx(2) = .Index
    End With
+   y = y + 20
+   'antialiasing?
+   .AddNewChildren FakeCtl_Label, 10, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Antialiasing")
+   With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Change the antialiasing settings."))
+    m_idx(IDC_Antialiasing) = .Index
+    With .ListViewObject
+     .FullRowSelect = True
+     .AddColumn ""
+     .AddItem objText.GetText("Off")
+     j = 1
+     For i = 2 To 30
+      If m_nFSAAMode And j Then
+       .AddItem CStr(i) + "x", , i
+      End If
+      j = j + j
+     Next i
+    End With
+   End With
+   y = y + 20
    'shadow map?
-   With .AddNewChildren(FakeCtl_Button, 10, 60, 198, 78, FBS_CheckBox, , , , _
+   With .AddNewChildren(FakeCtl_Button, 10, y, 198, y + 18, FBS_CheckBox, , , , _
    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
     m_idx(IDC_ShadowMap) = .Index
    End With
+   y = y + 20
    'post process?
-   With .AddNewChildren(FakeCtl_Button, 10, 90, 198, 108, FBS_CheckBox, , , , _
+   With .AddNewChildren(FakeCtl_Button, 10, y, 198, y + 18, FBS_CheckBox, , , , _
    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
     m_idx(IDC_PostProcess) = .Index
    End With
+   y = y + 20
    'HDR blur quality
-   .AddNewChildren FakeCtl_Label, 20, 110, 198, 128, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
-   With .AddNewChildren(FakeCtl_ComboBox, 100, 110, 298, 128, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+   .AddNewChildren FakeCtl_Label, 20, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+   With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
     m_idx(IDC_HDRBlurQuality) = .Index
     With .ListViewObject
      .FullRowSelect = True
@@ -169,26 +214,31 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
      .AddItem objText.GetText("High")
     End With
    End With
+   y = y + 20
    'fog?
-   With .AddNewChildren(FakeCtl_Button, 20, 130, 198, 148, FBS_CheckBox, , , , _
+   With .AddNewChildren(FakeCtl_Button, 20, y, 198, y + 18, FBS_CheckBox, , , , _
    objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
     m_idx(IDC_Fog) = .Index
    End With
+   y = y + 20
    'volumetric fog?
-   With .AddNewChildren(FakeCtl_Button, 30, 150, 198, 168, FBS_CheckBox, , , , _
+   With .AddNewChildren(FakeCtl_Button, 30, y, 198, y + 18, FBS_CheckBox, , , , _
    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
     m_idx(IDC_VolumetricFog) = .Index
    End With
+   y = y + 20
    'DOF?
-   With .AddNewChildren(FakeCtl_Button, 20, 170, 198, 188, FBS_CheckBox, , , , _
+   With .AddNewChildren(FakeCtl_Button, 20, y, 198, y + 18, FBS_CheckBox, , , , _
    objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
     m_idx(IDC_DepthOfField) = .Index
    End With
+   y = y + 20
    'radial blur?
-   With .AddNewChildren(FakeCtl_Button, 20, 190, 198, 208, FBS_CheckBox, , , , _
+   With .AddNewChildren(FakeCtl_Button, 20, y, 198, y + 18, FBS_CheckBox, , , , _
    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
     m_idx(IDC_RadialBlur) = .Index
    End With
+   y = y + 20
   End With
   '///
   With .TabObject
@@ -222,12 +272,22 @@ If idx = 0 Then Exit Sub
 'screen resolution
 For i = 0 To m_nAdapterModeCount - 1
  If d3dpp.BackBufferWidth = m_tAdapterModes(i).Width And d3dpp.BackBufferHeight = m_tAdapterModes(i).Height Then
-  If d3dpp.FullScreen_RefreshRateInHz = 0 Or d3dpp.FullScreen_RefreshRateInHz = m_tAdapterModes(i).RefreshRate Then
+  If m_nRefreshRate = 0 Or m_nRefreshRate = m_tAdapterModes(i).RefreshRate Then
    FakeDXUIControls(m_idx(IDC_Resolution)).ListViewObject.SelectedRow = i + 1
    Exit For
   End If
  End If
 Next i
+'antialiasing
+With FakeDXUIControls(m_idx(IDC_Antialiasing)).ListViewObject
+ .SelectedRow = 0
+ For i = 1 To .RowCount
+  If d3dpp.MultiSampleType = .ItemData(i, 1) Then
+   .SelectedRow = i
+   Exit For
+  End If
+ Next i
+End With
 'fullscreen?
 FakeDXUIControls(m_idx(IDC_Fullscreen)).Value = (d3dpp.Windowed = 0) And 1&
 'other
@@ -260,25 +320,33 @@ End Sub
 'TODO:
 Friend Sub Apply()
 Dim i As Long
-Dim w As Long, h As Long
+Dim w As Long, h As Long, r As Long
 Dim nFull As Long
+Dim nMultiSample As Long
 '///
 If m_idx(0) = 0 Then Exit Sub
 '///graphics
-'resolution and fullscreen
+'resolution
 With FakeDXUIControls(m_idx(IDC_Resolution)).ListViewObject
  i = .SelectedRow
  If i > 0 And i <= m_nAdapterModeCount Then
   With m_tAdapterModes(i - 1)
    w = .Width
    h = .Height
-   'TODO:refresh rate
+   r = .RefreshRate
   End With
  End If
 End With
+'antialiasing
+With FakeDXUIControls(m_idx(IDC_Antialiasing)).ListViewObject
+ i = .SelectedRow
+ If i > 0 And i <= .RowCount Then nMultiSample = .ItemData(i, 1) _
+ Else nMultiSample = d3dpp.MultiSampleType
+End With
+'fullscreen
 nFull = FakeDXUIControls(m_idx(IDC_Fullscreen)).Value
 If w > 0 And h > 0 Then
- FakeDXAppChangeResolution w, h, nFull
+ FakeDXAppChangeResolution w, h, nFull, r, nMultiSample
 End If
 '///other
 objRenderTest.PostProcessEnabled = FakeDXUIControls(m_idx(IDC_PostProcess)).Value
@@ -307,3 +375,14 @@ Case FakeCtl_Event_Unload
  IFakeDXUIEvent_OnEvent = 1
 End Select
 End Function
+
+Friend Sub ResetAndSaveFile()
+d3dpp.BackBufferWidth = 640
+d3dpp.BackBufferHeight = 480
+d3dpp.Windowed = 1
+d3dpp.MultiSampleType = 0
+m_nRefreshRate = 0
+objRenderTest.PostProcessEnabled = False
+'///
+SaveFile
+End Sub

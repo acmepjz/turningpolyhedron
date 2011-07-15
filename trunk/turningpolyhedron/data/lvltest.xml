@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <level>
   <!-- TEST ONLY -->
-  <mapData id="m1" format="???" shape="rect" c="0.5,0.5,0" size="10,6,1">
+  <mapData id="m1" format="???" shape="rect" c="0.5,0.5,0" step="1.05,1.05,1" size="10,6,1">
     <!--
     format: [<index>|<id>[@<new_index>]]["["<property_index>|<tag>"]"]["*"<count>]
     ","=next pos (x++)
