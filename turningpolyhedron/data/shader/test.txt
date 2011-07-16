@@ -363,6 +363,15 @@ technique process_lerp{
 pass{PixelShader=compile ps_2_0 ps_lerp();}
 }
 
+float4 ps_lerp_ex(float2 t:TEXCOORD0):COLOR0{
+	float4 clr=tex2D(samp,t);
+	return lerp(clr,tex2D(samp2,t),max(clr.w*_fParam[0].x,_fParam[0].y));
+}
+
+technique process_lerp_ex{
+pass{PixelShader=compile ps_2_0 ps_lerp_ex();}
+}
+
 float4 ps_linear(float2 t:TEXCOORD0):COLOR0{
 return _fParam[0]+tex2D(samp,t)*_fParam[1];
 }
@@ -462,8 +471,9 @@ pass{PixelShader=compile ps_2_0 ps_convolve_v_symmetric4_ex(sampBorder);}
 ////////////////////////////////////////
 
 float4 ps_to_luminance(float2 t:TEXCOORD0):COLOR0{
-float f=exp((dot(tex2D(samp,t),float4(0.222,0.707,0.071,0))-1.0f)*_fParam[0].x);
-return float4(f,f,f,1);
+	//float f=exp((dot(tex2D(samp,t),float4(0.222,0.707,0.071,0))-1.0f)*_fParam[0].x);
+	float f=log(dot(tex2D(samp,t),float4(0.222,0.707,0.071,0))+0.0001f);
+	return float4(f,f,f,1);
 }
 
 technique fx_to_luminance{
@@ -471,7 +481,8 @@ pass{PixelShader=compile ps_2_0 ps_to_luminance();}
 }
 
 float4 ps_from_luminance_bias(float2 t:TEXCOORD0):COLOR0{
-	float f=log(tex2Dbias(sampM,float4(t.x,t.y,0,_fParam[0].w)).x)/_fParam[0].x+1.0f;
+	//float f=log(tex2Dbias(sampM,float4(t.x,t.y,0,_fParam[0].w)).x)/_fParam[0].x+1.0f;
+	float f=exp(tex2Dbias(sampM,float4(t.x,t.y,0,_fParam[0].w)).x);
 	return float4(f,f,f,1);
 }
 
@@ -501,6 +512,17 @@ technique simple_brightpass{
 pass{PixelShader=compile ps_2_0 simple_brightpass_func();}
 }
 
+float4 normalized_brightpass_func(float2 t:TEXCOORD0):COLOR0{
+	float3 clr=tex2D(samp,t).xyz;
+	float average=tex2D(samp2,t).x+_fParam[0].y;
+	float f=max((dot(clr,float3(0.222,0.707,0.071))-average)/(1.0f-average),0.0f);
+	return float4(clr*f*_fParam[0].x,1);
+}
+
+technique normalized_brightpass{
+pass{PixelShader=compile ps_2_0 normalized_brightpass_func();}
+}
+
 float4 simple_radial_blur5_func(float2 t:TEXCOORD0):COLOR0{
 	float2 t1=t-0.5f;
 	return (tex2D(samp,t)+tex2D(samp,t1*_fParam[0].x+0.5f)
@@ -520,7 +542,7 @@ pass{PixelShader=compile ps_2_0 simple_radial_blur5_func();}
 float4 ps_linear_with_fog(float2 t:TEXCOORD0,uniform bool bVolumeFog):COLOR0{
 	float4 clr=tex2D(samp,t);
 	float fogvalue=clr.w;
-	//depth of field
+	//depth of fieldz
 	float dof_value=abs(_fParam[1].x+_fParam[1].y/fogvalue);
 	//
 	if(bVolumeFog){
@@ -533,6 +555,15 @@ float4 ps_linear_with_fog(float2 t:TEXCOORD0,uniform bool bVolumeFog):COLOR0{
 	fogvalue=smoothstep(_fParam[2].x,_fParam[2].y,fogvalue)*_fParam[2].z;
 	//fogvalue=saturate((fogvalue-_fParam[2].x)/(_fParam[2].y-_fParam[2].x))*_fParam[2].z;
 	return float4(lerp(clr,_fParam[0],fogvalue).xyz,dof_value);
+}
+
+float4 ps_depth_of_field_only(float2 t:TEXCOORD0):COLOR0{
+	float4 clr=tex2D(samp,t);
+	return float4(clr.xyz,abs(_fParam[1].x+_fParam[1].y/clr.w));
+}
+
+technique fx_depth_of_field_only{
+pass{PixelShader=compile ps_2_0 ps_depth_of_field_only();}
 }
 
 technique fx_linear_with_fog{

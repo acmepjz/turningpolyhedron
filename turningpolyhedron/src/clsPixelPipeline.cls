@@ -13,13 +13,27 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-Private Const m_nFormat1 = D3DFMT_A8R8G8B8 'D3DFMT_A32B32G32R32F
+#Const UseMultiSample = True
+
+Private Const m_nFormat8UC1 As Long = D3DFMT_L8
+Private Const m_nFormat8UC3 As Long = D3DFMT_X8R8G8B8
+Private Const m_nFormat8UC4 As Long = D3DFMT_A8R8G8B8
+
+Private Const m_nFormat32FC1 As Long = D3DFMT_R32F
+Private Const m_nFormat32FC2 As Long = D3DFMT_G32R32F
+Private Const m_nFormat32FC4 As Long = D3DFMT_A32B32G32R32F
+
+Private Const m_nFormat1 As Long = m_nFormat8UC4 'm_nFormat32FC4
 
 Private objEffect As D3DXEffect
 Private objCustomEffect As D3DXEffect '? test only
 
 Private m_tLightDir As D3DXVECTOR4, m_tLightPos As D3DXVECTOR4, m_tViewPos As D3DXVECTOR4
 Private m_nLightType As Long
+
+#If UseMultiSample Then
+Private objFloatTarget As Direct3DSurface9
+#End If
 
 Private objOldTarget As Direct3DSurface9
 Private objOldTarget_1 As Direct3DSurface9
@@ -41,12 +55,26 @@ Private m_nLastType As Long
 
 '////////post process
 
+Private Enum enumPostProcessTargetType
+ IDR_Main = 0
+ IDR_BlurPass1
+ IDR_Luminance
+ IDR_AverageLuminance
+ IDR_BlurPass2
+ IDR_Reserved
+ 'IDR_BlurPass3
+ IDR_VolumetricFogTarget
+ IDR_Auxiliary
+End Enum
+
 Private m_bPostProcessEnabled As Boolean
 Private objPostProcessTarget(15) As Direct3DTexture9
 'HDR
 Private m_nHDRBlurQuality As Long
 'radial blur
 Private m_bRadialBlur As Boolean
+'fog
+Private m_bFog As Boolean
 'volumetric fog
 Private m_bVolumeFog As Boolean
 'depth of field
@@ -80,6 +108,14 @@ End Property
 
 Friend Property Let RadialBlurEnabled(ByVal b As Boolean)
 m_bRadialBlur = b
+End Property
+
+Friend Property Get FogEnabled() As Boolean
+FogEnabled = m_bFog
+End Property
+
+Friend Property Let FogEnabled(ByVal b As Boolean)
+m_bFog = b
 End Property
 
 Friend Property Get VolumetricFogEnabled() As Boolean
@@ -133,41 +169,51 @@ If m_nHDRBlurQuality <> n Or bForceRefresh Then
  '///new
  If d3dd9 Is Nothing Then Exit Property
  '///
- Set objPostProcessTarget(1) = Nothing
- Set objPostProcessTarget(4) = Nothing
- Set objPostProcessTarget(5) = Nothing
+ Set objPostProcessTarget(IDR_BlurPass1) = Nothing
+ Set objPostProcessTarget(IDR_BlurPass2) = Nothing
+ 'Set objPostProcessTarget(IDR_BlurPass3) = Nothing
  If m_bPostProcessEnabled Then
   If n <= 0 Then k = 8 _
   Else If n = 1 Then k = 4 _
   Else k = 2
-  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(1)
-  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(4)
-  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(5)
+  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(IDR_BlurPass1)
+  D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(IDR_BlurPass2)
+  'D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth \ k, d3dpp.BackBufferHeight \ k, 1, D3DUSAGE_RENDERTARGET, m_nFormat1, D3DPOOL_DEFAULT, objPostProcessTarget(IDR_BlurPass3)
  End If
 End If
 End Property
 
 Friend Sub CreatePostProcessTarget()
 Erase objPostProcessTarget
+#If UseMultiSample Then
+Set objFloatTarget = Nothing
+#End If
 '///new
 If d3dd9 Is Nothing Then Exit Sub
 '///
 '/!\ we need 30M video memory if 1024x768, 80M if 1920x1080 :-3
 If m_bPostProcessEnabled Then
+ #If UseMultiSample Then
+ '///FSAA
+ If d3dpp.MultiSampleType > 1 Then
+  d3dd9.CreateRenderTarget d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, D3DFMT_A32B32G32R32F, d3dpp.MultiSampleType, 0, 0, objFloatTarget, ByVal 0
+ End If
+ #End If
+ '///
  '0=main render target BGR=color A=depth (0=0 zf=1)
- D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(0)
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, m_nFormat32FC4, D3DPOOL_DEFAULT, objPostProcessTarget(IDR_Main)
  '6=volumetric fog target
  'VolumetricFogEnabled = m_bVolumeFog
- D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(6)
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, m_nFormat32FC2, D3DPOOL_DEFAULT, objPostProcessTarget(IDR_VolumetricFogTarget)
  '7=auxiliary render target (for volumetric fog+HDR and depth of field)
- D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A32B32G32R32F, D3DPOOL_DEFAULT, objPostProcessTarget(7)
+ D3DXCreateTexture d3dd9, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, 1, D3DUSAGE_RENDERTARGET, m_nFormat32FC4, D3DPOOL_DEFAULT, objPostProcessTarget(IDR_Auxiliary)
  'bright-pass (1,4,5)
  HDRBlurQuality(True) = m_nHDRBlurQuality
  '///
  '2=luminance
- D3DXCreateTexture d3dd9, 128, 128, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_R32F, D3DPOOL_DEFAULT, objPostProcessTarget(2)
+ D3DXCreateTexture d3dd9, 128, 128, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, m_nFormat32FC1, D3DPOOL_DEFAULT, objPostProcessTarget(IDR_Luminance)
  '3=average luminance
- D3DXCreateTexture d3dd9, 1, 1, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, D3DPOOL_DEFAULT, objPostProcessTarget(3)
+ D3DXCreateTexture d3dd9, 1, 1, 1, D3DUSAGE_RENDERTARGET, m_nFormat32FC1, D3DPOOL_DEFAULT, objPostProcessTarget(IDR_AverageLuminance)
 End If
 End Sub
 
@@ -231,6 +277,9 @@ End Sub
 Friend Sub OnLostDevice()
 Set objOldTarget = Nothing
 Set objOldTarget_1 = Nothing
+#If UseMultiSample Then
+Set objFloatTarget = Nothing
+#End If
 Set objOldStencil = Nothing
 Set objShadowMap = Nothing
 Set objShadowStencil = Nothing
@@ -405,16 +454,36 @@ End Sub
 
 Friend Sub BeginRenderToPostProcessTarget()
 If m_bPostProcessEnabled Then
+ '///this code is not compatible with FSAA
  Set objOldTarget = d3dd9.GetRenderTarget(0)
- d3dd9.SetRenderTarget 0, objPostProcessTarget(0).GetSurfaceLevel(0)
+ #If UseMultiSample Then
+ If d3dpp.MultiSampleType > 1 Then
+  Debug.Assert Not objFloatTarget Is Nothing
+  d3dd9.SetRenderTarget 0, objFloatTarget
+ Else
+ #End If
+  d3dd9.SetRenderTarget 0, objPostProcessTarget(0).GetSurfaceLevel(0)
+ #If UseMultiSample Then
+ End If
+ #End If
 End If
 d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000010, 1, 0 '??? TODO:backcolor,etc.
 End Sub
 
 Friend Sub EndRenderToPostProcessTarget()
 If m_bPostProcessEnabled Then
+ '///this code is not compatible with FSAA
  d3dd9.SetRenderTarget 0, objOldTarget
  Set objOldTarget = Nothing
+ '///
+ #If UseMultiSample Then
+ 'it looks ugly
+ If d3dpp.MultiSampleType > 1 Then
+  Debug.Assert Not objFloatTarget Is Nothing
+  d3dd9.StretchRect objFloatTarget, ByVal 0, objPostProcessTarget(0).GetSurfaceLevel(0), ByVal 0, D3DTEXF_NONE
+ End If
+ #End If
+ '///
 End If
 End Sub
 
@@ -424,42 +493,57 @@ Dim i As Long, j As Long
 Dim f As Single
 Dim v As D3DXVECTOR4, v2 As D3DXVECTOR4, v3 As D3DXVECTOR4
 Dim tDesc As D3DSURFACE_DESC
+'///
+If Not m_bPostProcessEnabled Then Exit Sub
 '///convolve kernel
 'v = Vec4(0.275591!, 0.220472!, 0.110236!, 0.0314961!) 'bimonial8
 v = Vec4(0.251497!, 0.209581!, 0.11976!, 0.0449102!) 'bimonial10
-'///
-If Not m_bPostProcessEnabled Then Exit Sub
 '///
 nOldState = d3dd9.GetRenderState(D3DRS_ALPHABLENDENABLE)
 d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, 1
 d3dd9.SetRenderState D3DRS_SRCBLEND, D3DBLEND_ONE
 d3dd9.SetRenderState D3DRS_DESTBLEND, D3DBLEND_ONE
 '///changed:render fog first
-v2 = m_vDepthOfField
-v2.y = v2.y / m_zf
-'fog test
-If m_bVolumeFog And Not objPostProcessTarget(6) Is Nothing Then
- objDraw.ProcessTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(6), objPostProcessTarget(7), _
- "fx_linear_with_volume_fog", 0, 0, 0, 0, Vec4, v2, Vec4(0, 200, 1), m_vDistCorrection
+If m_bFog Then
+ v2 = m_vDepthOfField
+ v2.y = v2.y / m_zf
+ 'fog test
+ 'it looks ugly when FSAA is enabled. TODO:
+ If m_bVolumeFog And Not objPostProcessTarget(IDR_VolumetricFogTarget) Is Nothing Then
+  objDraw.ProcessTwoTextureEx objPostProcessTarget(IDR_Main), _
+  objPostProcessTarget(IDR_VolumetricFogTarget), _
+  objPostProcessTarget(IDR_Auxiliary), _
+  "fx_linear_with_volume_fog", 0, 0, 0, 0, Vec4, v2, Vec4(0, 200, 1), m_vDistCorrection
+ Else
+  objDraw.ProcessTextureEx objPostProcessTarget(IDR_Main), _
+  objPostProcessTarget(IDR_Auxiliary), _
+  "fx_linear_with_fog", 0, 0, 0, 0, Vec4, v2, Vec4(0, 200, 1), m_vDistCorrection
+ End If
+ElseIf m_bDetphOfField Then
+ v2 = m_vDepthOfField
+ v2.y = v2.y / m_zf
+ objDraw.ProcessTextureEx objPostProcessTarget(IDR_Main), _
+ objPostProcessTarget(IDR_Auxiliary), _
+ "fx_depth_of_field_only", 0, 0, 0, 0, v2, v2, v2, v2 'Vec4, v2, Vec4, Vec4
 Else
- objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), _
- "fx_linear_with_fog", 0, 0, 0, 0, Vec4, v2, Vec4(0, 200, 1), m_vDistCorrection
+ d3dd9.StretchRect objPostProcessTarget(IDR_Main).GetSurfaceLevel(0), ByVal 0, _
+ objPostProcessTarget(IDR_Auxiliary).GetSurfaceLevel(0), ByVal 0, D3DTEXF_NONE
 End If
 '///depth of field test
 If m_bDetphOfField Then
- objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(0), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
- objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
- objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(0), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
- objDraw.ProcessTextureEx objPostProcessTarget(0), objPostProcessTarget(7), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
+ objDraw.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_Main), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+ objDraw.ProcessTextureEx objPostProcessTarget(IDR_Main), objPostProcessTarget(IDR_Auxiliary), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+ objDraw.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_Main), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
+ objDraw.ProcessTextureEx objPostProcessTarget(IDR_Main), objPostProcessTarget(IDR_Auxiliary), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
 End If
 '////////////////HDR
 f = 4 '8
 '///calc luminance
-objDraw.ProcessTextureEx objPostProcessTarget(7), objPostProcessTarget(2), "fx_to_luminance", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
-objDraw.ProcessTextureEx objPostProcessTarget(2), objPostProcessTarget(3), "fx_from_luminance_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 16), Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_Luminance), "fx_to_luminance", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
+objDraw.ProcessTextureEx objPostProcessTarget(IDR_Luminance), objPostProcessTarget(IDR_AverageLuminance), "fx_from_luminance_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 16), Vec4, Vec4, Vec4
 '///bright pass
-objDraw.ProcessTwoTextureEx objPostProcessTarget(7), objPostProcessTarget(3), objPostProcessTarget(1), _
-"simple_brightpass", 0, 0, 0, 0, Vec4(1), Vec4, Vec4, Vec4  'Vec4(1, 0.25)
+objDraw.ProcessTwoTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_AverageLuminance), objPostProcessTarget(IDR_BlurPass1), _
+"normalized_brightpass", 0, 0, 0, 0, Vec4(1), Vec4, Vec4, Vec4  'Vec4(1, 0.25) 'simple_brightpass
 '////////////////
 '///blur - see documentation
 If m_bRadialBlur Then
@@ -471,8 +555,8 @@ Else
  Else j = &H110502
 End If
 For i = 0 To 2
- objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
- objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
+ objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass1), objPostProcessTarget(IDR_BlurPass2), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
+ objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass2), objPostProcessTarget(IDR_BlurPass1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
  j = j \ &H100&
  If j <= 0 Then Exit For
 Next i
@@ -480,11 +564,11 @@ Next i
 'the coefficients:
 'Table[ToString[(ToString[#]<>"!")&/@N[z^-Table[n*t/5,{n,4}]/.{t->5^-k,z->10},10]],{k,0,3}]
 If m_bRadialBlur Then
- objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.6309574!, 0.3981072!, 0.2511886!, 0.1584893!), Vec4, Vec4, Vec4
- objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9120108!, 0.8317637!, 0.7585776!, 0.691831!), Vec4, Vec4, Vec4
+ objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass1), objPostProcessTarget(IDR_BlurPass2), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.6309574!, 0.3981072!, 0.2511886!, 0.1584893!), Vec4, Vec4, Vec4
+ objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass2), objPostProcessTarget(IDR_BlurPass1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9120108!, 0.8317637!, 0.7585776!, 0.691831!), Vec4, Vec4, Vec4
  If m_nHDRBlurQuality > 1 Then
-  objDraw.ProcessTextureEx objPostProcessTarget(1), objPostProcessTarget(4), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9817479!, 0.963829!, 0.9462371!, 0.9289664!), Vec4, Vec4, Vec4
-  objDraw.ProcessTextureEx objPostProcessTarget(4), objPostProcessTarget(1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9963226!, 0.9926588!, 0.9890084!, 0.9853715!), Vec4, Vec4, Vec4
+  objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass1), objPostProcessTarget(IDR_BlurPass2), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9817479!, 0.963829!, 0.9462371!, 0.9289664!), Vec4, Vec4, Vec4
+  objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass2), objPostProcessTarget(IDR_BlurPass1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9963226!, 0.9926588!, 0.9890084!, 0.9853715!), Vec4, Vec4, Vec4
  End If
 End If
 '////////////////
@@ -493,9 +577,9 @@ End If
 d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
 d3dd9.BeginScene
 '///
-objDraw.DrawTextureEx objPostProcessTarget(7), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
+objDraw.DrawTextureEx objPostProcessTarget(IDR_Auxiliary), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 'objDraw.DrawTwoTextureEx objPostProcessTarget(0), objPostProcessTarget(3), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.1, 3), Vec4, Vec4, Vec4 'ugly
-objDraw.DrawTextureEx objPostProcessTarget(1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
+objDraw.DrawTextureEx objPostProcessTarget(IDR_BlurPass1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 '///
 d3dd9.EndScene
 d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, nOldState
@@ -574,6 +658,9 @@ End Sub
 
 Private Sub Class_Terminate()
 Erase objPostProcessTarget
+#If UseMultiSample Then
+Set objFloatTarget = Nothing
+#End If
 Set objShadowMap = Nothing
 Set objShadowStencil = Nothing
 Set texNoise = Nothing
@@ -606,3 +693,13 @@ zn = m_zn
 zf = m_zf
 End Sub
 
+Friend Property Get ShadowEnabled() As Boolean
+ShadowEnabled = m_bShadowEnabled
+End Property
+
+'TODO:
+Friend Property Let ShadowEnabled(ByVal b As Boolean)
+If b <> m_bShadowEnabled Then
+ 'TODO:
+End If
+End Property

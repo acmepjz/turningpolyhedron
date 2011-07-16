@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlMain"
 Option Explicit
 
-#Const UseSubclass = True
+#Const UseSubclass = False
 
 'Private Declare Function GetStdHandle Lib "kernel32.dll" (ByVal nStdHandle As Long) As Long
 'Private Declare Function AllocConsole Lib "kernel32.dll" () As Long
@@ -542,7 +542,6 @@ objCamera.LinearDamping = 0.5
 'objRenderTest.SetShadowState True, 16, -100, 100  'directional
 objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 50, -0.5, 0.02
 objRenderTest.OrenNayarRoughness = 0
-objRenderTest.VolumetricFogEnabled = True
 '////////new:subclass
 #If UseSubclass Then
 If True Then
@@ -583,7 +582,7 @@ With New clsXMLSerializer
   objGameMgr.LoadTileTypesFromSubNodes obj, objEffectMgr, objMeshMgr
  End If
  '///TEST:load level
- i = objFileMgr.LoadFile("lvltest.xml")
+ i = objFileMgr.LoadFile("lvltest2.xml")
  If i > 0 Then
   Set obj = New clsTreeStorageNode
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then

@@ -74,6 +74,8 @@ With obj.GetSubNodeObjectByName("GraphicsConfig", True)
  '///
  objRenderTest.PostProcessEnabled = CBool(.GetSubNodeValueAsStringByName("PostProcessEnabled", False))
  objRenderTest.HDRBlurQuality = Val(.GetSubNodeValueAsStringByName("HDRBlurQuality", 0))
+ objRenderTest.ShadowEnabled = CBool(.GetSubNodeValueAsStringByName("ShadowMapEnabled", False))
+ objRenderTest.FogEnabled = CBool(.GetSubNodeValueAsStringByName("FogEnabled", False))
  objRenderTest.VolumetricFogEnabled = CBool(.GetSubNodeValueAsStringByName("VolumetricFogEnabled", False))
  objRenderTest.DepthOfFiendEnabled = CBool(.GetSubNodeValueAsStringByName("DepthOfFieldEnabled", False))
  objRenderTest.RadialBlurEnabled = CBool(.GetSubNodeValueAsStringByName("RadialBlurEnabled", False))
@@ -95,8 +97,8 @@ With obj.GetSubNodeObjectByName("GraphicsConfig", True)
  '///
  .AddSubNode , , "PostProcessEnabled", CStr(objRenderTest.PostProcessEnabled)
  .AddSubNode , , "HDRBlurQuality", CStr(objRenderTest.HDRBlurQuality)
- .AddSubNode , , "ShadowMapEnabled", False 'TODO:
- .AddSubNode , , "FogEnabled", True 'TODO:
+ .AddSubNode , , "ShadowMapEnabled", CStr(objRenderTest.ShadowEnabled)
+ .AddSubNode , , "FogEnabled", CStr(objRenderTest.FogEnabled)
  .AddSubNode , , "VolumetricFogEnabled", CStr(objRenderTest.VolumetricFogEnabled)
  .AddSubNode , , "DepthOfFieldEnabled", CStr(objRenderTest.DepthOfFiendEnabled)
  .AddSubNode , , "RadialBlurEnabled", CStr(objRenderTest.RadialBlurEnabled)
@@ -123,10 +125,13 @@ m_nFSAAMode = 0
 j = 1
 For i = 2 To 30
  Err.Clear
+ '///
  d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, d3dpp.BackBufferFormat, 0, i
- d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, d3dpp.AutoDepthStencilFormat, 0, i
  d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, d3dpp.BackBufferFormat, 1, i
+ '///
+ d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, d3dpp.AutoDepthStencilFormat, 0, i
  d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, d3dpp.AutoDepthStencilFormat, 1, i
+ '///
  If Err.Number = 0 Then m_nFSAAMode = m_nFSAAMode Or j
  '///
  j = j + j
@@ -294,8 +299,8 @@ FakeDXUIControls(m_idx(IDC_Fullscreen)).Value = (d3dpp.Windowed = 0) And 1&
 FakeDXUIControls(m_idx(IDC_PostProcess)).Value = objRenderTest.PostProcessEnabled And 1&
 FakeDXUIControls(m_idx(IDC_HDRBlurQuality)).ListViewObject.SelectedRow = objRenderTest.HDRBlurQuality + 1
 '///
-FakeDXUIControls(m_idx(IDC_ShadowMap)).Value = 0 'TODO:
-FakeDXUIControls(m_idx(IDC_Fog)).Value = 1 'TODO:
+FakeDXUIControls(m_idx(IDC_ShadowMap)).Value = objRenderTest.ShadowEnabled And 1&
+FakeDXUIControls(m_idx(IDC_Fog)).Value = objRenderTest.FogEnabled And 1&
 FakeDXUIControls(m_idx(IDC_VolumetricFog)).Value = objRenderTest.VolumetricFogEnabled And 1&
 FakeDXUIControls(m_idx(IDC_DepthOfField)).Value = objRenderTest.DepthOfFiendEnabled And 1&
 FakeDXUIControls(m_idx(IDC_RadialBlur)).Value = objRenderTest.RadialBlurEnabled And 1&
@@ -323,6 +328,7 @@ Dim i As Long
 Dim w As Long, h As Long, r As Long
 Dim nFull As Long
 Dim nMultiSample As Long
+Dim b As Boolean
 '///
 If m_idx(0) = 0 Then Exit Sub
 '///graphics
@@ -337,11 +343,40 @@ With FakeDXUIControls(m_idx(IDC_Resolution)).ListViewObject
   End With
  End If
 End With
+'post processing
+b = FakeDXUIControls(m_idx(IDC_PostProcess)).Value
 'antialiasing
 With FakeDXUIControls(m_idx(IDC_Antialiasing)).ListViewObject
  i = .SelectedRow
- If i > 0 And i <= .RowCount Then nMultiSample = .ItemData(i, 1) _
- Else nMultiSample = d3dpp.MultiSampleType
+ If i > 0 And i <= .RowCount Then
+  nMultiSample = .ItemData(i, 1)
+  i = i - 1
+ Else
+  nMultiSample = d3dpp.MultiSampleType
+  For i = .RowCount To 1 Step -1
+   If .ItemData(i, 1) < nMultiSample Then Exit For
+  Next i
+ End If
+ '///check if it is compatible with post processing
+ On Error Resume Next
+ If nMultiSample > 0 And i > 0 And b Then
+  Do
+   Err.Clear
+   d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, D3DFMT_A32B32G32R32F, 0, nMultiSample
+   d3d9.CheckDeviceMultiSampleType 0, D3DDEVTYPE_HAL, D3DFMT_A32B32G32R32F, 1, nMultiSample
+   If Err.Number = 0 Then Exit Do
+   .SelectedRow = i
+   If i > 1 Then
+    nMultiSample = .ItemData(i, 1)
+    i = i - 1
+   Else
+    nMultiSample = 0
+    Exit Do
+   End If
+  Loop
+ End If
+ On Error GoTo 0
+ '///
 End With
 'fullscreen
 nFull = FakeDXUIControls(m_idx(IDC_Fullscreen)).Value
@@ -349,8 +384,10 @@ If w > 0 And h > 0 Then
  FakeDXAppChangeResolution w, h, nFull, r, nMultiSample
 End If
 '///other
-objRenderTest.PostProcessEnabled = FakeDXUIControls(m_idx(IDC_PostProcess)).Value
+objRenderTest.PostProcessEnabled = b
 objRenderTest.HDRBlurQuality = FakeDXUIControls(m_idx(IDC_HDRBlurQuality)).ListViewObject.SelectedRow - 1
+objRenderTest.ShadowEnabled = FakeDXUIControls(m_idx(IDC_ShadowMap)).Value
+objRenderTest.FogEnabled = FakeDXUIControls(m_idx(IDC_Fog)).Value
 objRenderTest.VolumetricFogEnabled = FakeDXUIControls(m_idx(IDC_VolumetricFog)).Value
 objRenderTest.DepthOfFiendEnabled = FakeDXUIControls(m_idx(IDC_DepthOfField)).Value
 objRenderTest.RadialBlurEnabled = FakeDXUIControls(m_idx(IDC_RadialBlur)).Value
