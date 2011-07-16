@@ -597,7 +597,7 @@ GenerateMeshFromLevelData = GenerateMeshFromLevelDataEx(m_tLevel, objEffectMgr, 
 End Function
 
 'test only
-Friend Function GenerateMeshFromLevelDataEx(ByRef tLevel As typeLevelData, ByVal objEffectMgr As clsEffectManager, ByRef tInst As typeMeshInstanceCollection) As Boolean
+Friend Function GenerateMeshFromLevelDataEx(ByRef tLevel As typeLevelData, ByVal objEffectMgr As clsEffectManager, ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
 Dim idx As Long
 Dim i As Long, j As Long, k As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
@@ -615,8 +615,10 @@ For idx = 1 To tLevel.nMapDataCount
      '///
      nIndex = tLevel.tMapData(idx).nTypeArray(i, j, k)
      If nIndex > 0 And nIndex <= m_nTileTypeMax Then
-      'TODO:invisibleAtRuntime (?)
-      objEffectMgr.AddInstanceFromAppearanceEx tInst, m_tTileType(nIndex).nApprIndex, mat2
+      'invisibleAtRuntime (?)
+      If (bRuntime And m_tTileType(nIndex).nFlags And 1&) = 0 Then
+       objEffectMgr.AddInstanceFromAppearanceEx tInst, m_tTileType(nIndex).nApprIndex, mat2
+      End If
      End If
      '///
      mat2.m41 = mat2.m41 + tLevel.tMapData(idx).fPos(1).x
@@ -883,7 +885,7 @@ Case "onPressKey"
  ParseEventType = 5
 Case "onCustomEvent"
  ParseEventType = 6
-Case "onTriggeredEvent"
+Case "onTriggeredEvent", "onEvent" 'onEvent????????
  ParseEventType = 7
 End Select
 End Function

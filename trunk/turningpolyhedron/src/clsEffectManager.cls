@@ -1375,7 +1375,7 @@ Dim t As typeFakeDXEffect
 Dim i As Long, j As Long, k As Long, m As Long
 Dim s As String
 '///
-'?? TODO
+'?? TODO:adjustable fog and shadow map support
 t.nFlags = 1
 '///
 s = objNode.GetNameAsString
