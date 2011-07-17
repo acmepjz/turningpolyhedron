@@ -365,7 +365,7 @@ pass{PixelShader=compile ps_2_0 ps_lerp();}
 
 float4 ps_lerp_ex(float2 t:TEXCOORD0):COLOR0{
 	float4 clr=tex2D(samp,t);
-	return lerp(clr,tex2D(samp2,t),max(clr.w*_fParam[0].x,_fParam[0].y));
+	return lerp(clr,tex2D(samp2,t),min(clr.w*_fParam[0].x,_fParam[0].y));
 }
 
 technique process_lerp_ex{

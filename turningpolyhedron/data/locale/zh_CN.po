@@ -15,7 +15,11 @@ msgstr ""
 msgid "Abort"
 msgstr "终止"
 
-#. .AddNewChildren FakeCtl_Label, 10, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Antialiasing")
+#. .AddItem objText.GetText("Accurate algorithm")
+msgid "Accurate algorithm"
+msgstr "精确算法"
+
+#. .AddNewChildren FakeCtl_Label, 10, y, 198, y + Height, , , , , objText.GetText("Antialiasing")
 msgid "Antialiasing"
 msgstr "消除锯齿"
 
@@ -30,6 +34,10 @@ msgstr "应用变更并且关闭对话框。"
 #. objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
 msgid "Apply changes immediately."
 msgstr "立即应用选项变更。"
+
+#. .AddItem objText.GetText("Approximate algorithm")
+msgid "Approximate algorithm"
+msgstr "近似算法"
 
 #. '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 msgid "Are you sure?"
@@ -58,7 +66,7 @@ msgstr "初始化D3D9设备失败!!!"
 msgid "Cancel"
 msgstr "取消"
 
-#. With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Change the antialiasing settings."))
+#. , , , , , , , , , , , , objText.GetText("Change the antialiasing settings."))
 msgid "Change the antialiasing settings."
 msgstr "修改消除锯齿选项。"
 
@@ -71,7 +79,7 @@ msgstr "修改游戏设置选项。"
 msgid "Change the graphics settings."
 msgstr "修改图形选项。"
 
-#. With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
+#. , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
 msgid "Change the screen resolution."
 msgstr "设置屏幕分辨率。"
 
@@ -84,7 +92,7 @@ msgstr "选择文件夹"
 msgid "Close"
 msgstr "关闭"
 
-#. objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+#. .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("Depth of field")
 msgid "Depth of field"
 msgstr "景深"
 
@@ -100,7 +108,7 @@ msgstr "设置程序是否以全屏模式运行。"
 msgid "Discard changes and close dialog."
 msgstr "放弃变更并且关闭对话框。"
 
-#. objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+#. , , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
 msgid "Enables depth of field effect."
 msgstr "启用景深效果。"
 
@@ -119,6 +127,14 @@ msgstr "启用径向模糊效果。"
 #. objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
 msgid "Enables shadow effect."
 msgstr "启用阴影效果。"
+
+#. objText.GetText("Max FPS"), , , , , , , , , objText.GetText("Enables the restriction of max FPS."))
+msgid "Enables the restriction of max FPS."
+msgstr "启用对最大帧速率的限制。"
+
+#. objText.GetText("Vertical synchronization"), , , , , , , , , objText.GetText("Enables vertical synchronization."))
+msgid "Enables vertical synchronization."
+msgstr "启用垂直同步。"
 
 #. objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
 msgid "Enables volumetric fog effect."
@@ -192,7 +208,7 @@ msgstr "游戏"
 msgid "Graphics"
 msgstr "图像"
 
-#. .AddNewChildren FakeCtl_Label, 20, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+#. .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("HDR quality")
 msgid "HDR quality"
 msgstr "HDR质量"
 
@@ -215,6 +231,11 @@ msgstr "输入文件夹名称"
 #. .AddItem objText.GetText("Low")
 msgid "Low"
 msgstr "低"
+
+#. objText.GetText("Max FPS"), , , , , , , , , objText.GetText("Enables the restriction of max FPS."))
+#. , , , , , , , , , , , , objText.GetText("Max FPS"))
+msgid "Max FPS"
+msgstr "最大帧速率"
 
 #. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Maximize"), x, y
 msgid "Maximize"
@@ -253,6 +274,7 @@ msgid "OK"
 msgstr "确定"
 
 #. .AddItem objText.GetText("Off")
+#. .AddItem objText.GetText("Off")
 msgid "Off"
 msgstr "关"
 
@@ -274,7 +296,7 @@ msgstr "后期处理"
 msgid "Radial blur"
 msgstr "径向模糊"
 
-#. .AddNewChildren FakeCtl_Label, 10, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
+#. .AddNewChildren FakeCtl_Label, 10, y, 198, y + Height, , , , , objText.GetText("Resolution")
 msgid "Resolution"
 msgstr "分辨率"
 
@@ -295,7 +317,7 @@ msgstr "保存"
 msgid "Save as"
 msgstr "另存为"
 
-#. With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+#. , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
 msgid "Set the quality of HDR blur."
 msgstr "设置HDR模糊的质量。"
 
@@ -318,6 +340,10 @@ msgstr "文件夹已经存在。请输入一个不同的名称。"
 #. frm.Caption = objText.GetText("Turning Polyhedron")
 msgid "Turning Polyhedron"
 msgstr "摇立体"
+
+#. objText.GetText("Vertical synchronization"), , , , , , , , , objText.GetText("Enables vertical synchronization."))
+msgid "Vertical synchronization"
+msgstr "垂直同步"
 
 #. objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
 msgid "Volumetric fog"

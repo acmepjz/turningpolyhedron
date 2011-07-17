@@ -30,6 +30,16 @@ Private bRun As Boolean
 Private m_nMinPeriod As Double
 Private m_nFPS As Double
 
+Private m_bAverageFPS As Boolean, m_nFPS_1 As Long, m_nFPS_T As Double
+
+Friend Property Get AverageFPSEnabled() As Boolean
+AverageFPSEnabled = m_bAverageFPS
+End Property
+
+Friend Property Let AverageFPSEnabled(ByVal b As Boolean)
+m_bAverageFPS = b
+End Property
+
 Friend Property Get FPS() As Double
 FPS = m_nFPS
 End Property
@@ -38,25 +48,39 @@ Friend Sub WaitForNextFrame()
 Dim a As Currency, a_1 As Long
 Dim f As Double
 Dim i As Long
-If m_nMinPeriod <= 0 Then Exit Sub
 If bRun Then
- Do
+ If m_nMinPeriod > 0 Then
+  Do
+   QueryPerformanceCounter a
+'   a_1 = GetTickCount
+   f = (a - t2) / nFreq * 1000
+   i = (m_nMinPeriod - f) / 2
+   If i <= 1 Then Exit Do
+   Sleep i
+  Loop
+'  '///bad code:spinlock
+'  If i > 0 Then
+'   Do Until f > m_nMinPeriod
+'    QueryPerformanceCounter a
+'    f = (a - t2) / nFreq * 1000
+'   Loop
+'  End If
+'  '///
+ Else
   QueryPerformanceCounter a
-'  a_1 = GetTickCount
   f = (a - t2) / nFreq * 1000
-  i = (m_nMinPeriod - f) / 2
-  If i <= 1 Then Exit Do
-  Sleep i
- Loop
-' '///bad code:spinlock
-' If i > 0 Then
-'  Do Until f > m_nMinPeriod
-'   QueryPerformanceCounter a
-'   f = (a - t2) / nFreq * 1000
-'  Loop
-' End If
-' '///
- m_nFPS = (1000 / f + m_nFPS * 7) / 8
+ End If
+ If m_bAverageFPS Then
+  m_nFPS_T = m_nFPS_T + f
+  m_nFPS_1 = m_nFPS_1 + 1
+  If m_nFPS_T > 500 Then
+   m_nFPS = 1000 / m_nFPS_T * m_nFPS_1
+   m_nFPS_T = 0
+   m_nFPS_1 = 0
+  End If
+ Else
+  m_nFPS = (1000 / f + m_nFPS * 7) / 8
+ End If
 ' m_nFPS = (1000 / (a_1 - t2_1 + 1) + m_nFPS * 7) / 8
  t2 = a
 ' t2_1 = a_1
