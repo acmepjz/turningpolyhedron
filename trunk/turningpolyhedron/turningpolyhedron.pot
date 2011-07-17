@@ -6,7 +6,11 @@ msgstr ""
 msgid "Abort"
 msgstr ""
 
-#.    .AddNewChildren FakeCtl_Label, 10, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Antialiasing")
+#.      .AddItem objText.GetText("Accurate algorithm")
+msgid "Accurate algorithm"
+msgstr ""
+
+#.    .AddNewChildren FakeCtl_Label, 10, y, 198, y + Height, , , , , objText.GetText("Antialiasing")
 msgid "Antialiasing"
 msgstr ""
 
@@ -20,6 +24,10 @@ msgstr ""
 
 #.  objText.GetText("Apply"), , "cmdApply", 1, 1, 1, 1, , , objText.GetText("Apply changes immediately.")
 msgid "Apply changes immediately."
+msgstr ""
+
+#.      .AddItem objText.GetText("Approximate algorithm")
+msgid "Approximate algorithm"
 msgstr ""
 
 #.  '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
@@ -49,7 +57,7 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#.    With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Change the antialiasing settings."))
+#.    , , , , , , , , , , , , objText.GetText("Change the antialiasing settings."))
 msgid "Change the antialiasing settings."
 msgstr ""
 
@@ -62,7 +70,7 @@ msgstr ""
 msgid "Change the graphics settings."
 msgstr ""
 
-#.    With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
+#.    , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
 msgid "Change the screen resolution."
 msgstr ""
 
@@ -75,7 +83,7 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#.    objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+#.    .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("Depth of field")
 msgid "Depth of field"
 msgstr ""
 
@@ -91,7 +99,7 @@ msgstr ""
 msgid "Discard changes and close dialog."
 msgstr ""
 
-#.    objText.GetText("Depth of field"), , , , , , , , , objText.GetText("Enables depth of field effect."))
+#.    , , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
 msgid "Enables depth of field effect."
 msgstr ""
 
@@ -109,6 +117,14 @@ msgstr ""
 
 #.    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
 msgid "Enables shadow effect."
+msgstr ""
+
+#.    objText.GetText("Max FPS"), , , , , , , , , objText.GetText("Enables the restriction of max FPS."))
+msgid "Enables the restriction of max FPS."
+msgstr ""
+
+#.    objText.GetText("Vertical synchronization"), , , , , , , , , objText.GetText("Enables vertical synchronization."))
+msgid "Enables vertical synchronization."
 msgstr ""
 
 #.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
@@ -183,7 +199,7 @@ msgstr ""
 msgid "Graphics"
 msgstr ""
 
-#.    .AddNewChildren FakeCtl_Label, 20, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("HDR quality")
+#.    .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("HDR quality")
 msgid "HDR quality"
 msgstr ""
 
@@ -205,6 +221,11 @@ msgstr ""
 
 #.      .AddItem objText.GetText("Low")
 msgid "Low"
+msgstr ""
+
+#.    objText.GetText("Max FPS"), , , , , , , , , objText.GetText("Enables the restriction of max FPS."))
+#.    , , , , , , , , , , , , objText.GetText("Max FPS"))
+msgid "Max FPS"
 msgstr ""
 
 #.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Maximize"), x, y
@@ -244,6 +265,7 @@ msgid "OK"
 msgstr ""
 
 #.      .AddItem objText.GetText("Off")
+#.      .AddItem objText.GetText("Off")
 msgid "Off"
 msgstr ""
 
@@ -265,7 +287,7 @@ msgstr ""
 msgid "Radial blur"
 msgstr ""
 
-#.    .AddNewChildren FakeCtl_Label, 10, y, 198, y + 18, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Resolution")
+#.    .AddNewChildren FakeCtl_Label, 10, y, 198, y + Height, , , , , objText.GetText("Resolution")
 msgid "Resolution"
 msgstr ""
 
@@ -286,7 +308,7 @@ msgstr ""
 msgid "Save as"
 msgstr ""
 
-#.    With .AddNewChildren(FakeCtl_ComboBox, 100, y, 298, y + 18, , , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+#.    , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
 msgid "Set the quality of HDR blur."
 msgstr ""
 
@@ -308,6 +330,10 @@ msgstr ""
 
 #. frm.Caption = objText.GetText("Turning Polyhedron")
 msgid "Turning Polyhedron"
+msgstr ""
+
+#.    objText.GetText("Vertical synchronization"), , , , , , , , , objText.GetText("Enables vertical synchronization."))
+msgid "Vertical synchronization"
 msgstr ""
 
 #.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))

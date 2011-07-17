@@ -89,7 +89,6 @@ End Sub
 Private Sub Form_Load()
 FakeDXAppInit Me, cSub, Me, Me
 '///
-objTiming.MinPeriod = 1000 / 30
 FakeDXAppMainLoop
 '///
 FakeDXAppDestroy

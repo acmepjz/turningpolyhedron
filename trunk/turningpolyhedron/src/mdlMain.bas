@@ -75,6 +75,7 @@ Public m_tDefVertexDecl() As D3DVERTEXELEMENT9
 
 Public objText As New clsGNUGetText
 
+Public m_nMaxFPS As Long, m_bMaxFPSEnabled As Boolean
 Public objTiming As New clsTiming
 
 Public FakeDXAppMyGamesPath As String
@@ -355,7 +356,7 @@ If FakeDXUIControlCount > 0 Then
 End If
 End Sub
 
-Public Sub FakeDXAppChangeResolution(Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal bFullscreen As VbTriState = vbUseDefault, Optional ByVal nRefreshRate As Long, Optional ByVal nMultiSample As Long)
+Public Sub FakeDXAppChangeResolution(Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal bFullscreen As VbTriState = vbUseDefault, Optional ByVal nRefreshRate As Long = -1, Optional ByVal nMultiSample As Long = -1, Optional ByVal nPresentationInterval As Long = -1)
 On Error Resume Next
 '///
 Select Case bFullscreen
@@ -371,11 +372,14 @@ If nHeight <= 0 Then nHeight = d3dpp.BackBufferHeight
 If nRefreshRate <= 0 Then nRefreshRate = m_nRefreshRate _
 Else m_nRefreshRate = nRefreshRate
 If bFullscreen = 0 Then nRefreshRate = 0
+If nMultiSample < 0 Then nMultiSample = d3dpp.MultiSampleType
+If nPresentationInterval = -1 Then nPresentationInterval = d3dpp.PresentationInterval
 '///
 If nWidth <> d3dpp.BackBufferWidth Or nHeight <> d3dpp.BackBufferHeight _
 Or d3dpp.Windowed <> 1 - bFullscreen _
 Or nRefreshRate <> d3dpp.FullScreen_RefreshRateInHz _
 Or nMultiSample <> d3dpp.MultiSampleType _
+Or nPresentationInterval <> d3dpp.PresentationInterval _
 Then
  '///
  With d3dpp
@@ -384,6 +388,7 @@ Then
   .Windowed = 1 - bFullscreen
   .FullScreen_RefreshRateInHz = nRefreshRate
   .MultiSampleType = nMultiSample
+  .PresentationInterval = nPresentationInterval
  End With
  '///it works!
  FakeDXAppOnLostDevice
@@ -467,6 +472,8 @@ objFileMgr.AddPath App.Path + "\data\|" + FakeDXAppMyGamesPath
 '///load config
 frmSettings.FileName = FakeDXAppMyGamesPath + "config.xml"
 frmSettings.LoadFile
+'///init timer
+objTiming.AverageFPSEnabled = True
 '///
 objText.LoadFileWithLocale App.Path + "\data\locale\*.mo", , True
 '///
@@ -488,8 +495,7 @@ With d3dpp
  '.BackBufferHeight = 480 'already loaded
  .EnableAutoDepthStencil = 1
  .AutoDepthStencilFormat = D3DFMT_D24S8
- '.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
- .PresentationInterval = D3DPRESENT_INTERVAL_ONE
+ '.PresentationInterval = D3DPRESENT_INTERVAL_ONE 'already loaded
  '.MultiSampleType = D3DMULTISAMPLE_4_SAMPLES 'already loaded
 End With
 '///
