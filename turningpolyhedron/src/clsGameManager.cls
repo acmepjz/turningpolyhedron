@@ -485,7 +485,7 @@ pFlagsFromBooleanString = (nFlags And Not nMask) Or (j And nMask)
 End Function
 
 Friend Function ParseMapPolyhedronDataFromNode(ByVal objNode As clsTreeStorageNode, ByRef tPoly As typeMapData_Polyhedron, Optional ByVal sBasePosition As String) As Boolean
-Dim i As Long
+Dim i As Long, j As Long, k As Long
 Dim s As String
 Dim obj As clsTreeStorageNode
 Dim nFlags As Long
@@ -501,11 +501,74 @@ For i = 1 To objNode.SubNodeCount
    'TODO:check duplicated ID
    tPoly.sID = s
   Case "shape"
-   'TODO:nShape
-   Debug.Assert False
+   Select Case s
+   Case "cube"
+    tPoly.nShape = &H111&
+   Case "cuboid", "classical"
+    tPoly.nShape = &H112&
+   Case "tetrahedron"
+    tPoly.nShape = 1
+   Case "octahedron"
+    tPoly.nShape = 2
+   Case "icosahedron"
+    tPoly.nShape = 3
+   Case "triangularBipyramid"
+    tPoly.nShape = 4
+   Case "pentagonalBipyramid"
+    tPoly.nShape = 5
+   Case "rhomboid"
+    tPoly.nShape = 6
+   Case "heptahedron"
+    tPoly.nShape = 7
+   Case "snubDisphenoid"
+    tPoly.nShape = 8
+   Case "triaugmentedTriangularPrism"
+    tPoly.nShape = 9
+   Case "gyroelongatedSquareDipyramid"
+    tPoly.nShape = 10
+   Case "truncatedTetrahedron"
+    tPoly.nShape = 11
+   Case Else
+    s = Replace(s, "x", "*")
+    s = Replace(s, "X", "*")
+    k = Val(s) And &HF&
+    If k = 0 Then
+     Debug.Assert False
+     Exit Function
+    End If
+    tPoly.nShape = k * &H100&
+    j = InStr(1, s, "*")
+    If j = 0 Then
+     Debug.Assert False
+     Exit Function
+    End If
+    s = Mid(s, j + 1)
+    k = Val(s) And &HF&
+    If k = 0 Then
+     Debug.Assert False
+     Exit Function
+    End If
+    tPoly.nShape = tPoly.nShape Or (k * &H10&)
+    j = InStr(1, s, "*")
+    If j = 0 Then
+     Debug.Assert False
+     Exit Function
+    End If
+    s = Mid(s, j + 1)
+    k = Val(s) And &HF&
+    If k = 0 Then
+     Debug.Assert False
+     Exit Function
+    End If
+    tPoly.nShape = tPoly.nShape Or k
+   End Select
   Case "type"
-   'TODO:nObjType
-   Debug.Assert False
+   j = FindObjectType(s)
+   If j = 0 Then
+    Debug.Assert False
+    Exit Function
+   End If
+   tPoly.nObjType = j
   Case "p"
    If s = "" Then
     Debug.Assert False
@@ -517,7 +580,9 @@ For i = 1 To objNode.SubNodeCount
     Select Case AscW(s)
     Case 40, 46 '["."], ["("]
     Case &H30 To &H39 '["0"] To ["9"]
-     s = "(" + s + ")"
+     j = InStr(1, s, ":")
+     If j > 0 Then s = "(" + Left(s, j - 1) + ")" + Mid(s, j) _
+     Else s = "(" + s + ")"
     Case Else
      s = "." + s
     End Select
@@ -1152,6 +1217,13 @@ For i = 1 To objNode.SubNodeCount
    nFlags = nFlags Or ((objNode.GetSubNodeValueAsString(i) <> "true") And &H400&)
   Case "block-height"
    'currently unsupported TODO:
+  Case "type"
+   j = FindObjectType(objNode.GetSubNodeValueAsString(i))
+   If j = 0 Then
+    Debug.Assert False
+    Exit Function
+   End If
+   m_tTileType(nIndex).nObjType = j
   End Select
  Else
   nEventType = 0

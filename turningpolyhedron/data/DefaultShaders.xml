@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- TEST ONLY -->
 <shaders>
-    <shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument"
-specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"
-hardwareInstancing="translationOnly"/>
+	<shaderTemplate templateName="simple1_fixed" shaderProgram="standard" ambient="shaderArgument" diffuse="shaderArgument" 
+		specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"/>
+	<shaderTemplate templateName="simple1_fixed_with_texture" shaderProgram="standard"
+		baseColor="textureArgument0:texcoord0:MipFilter=LINEAR;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
+		ambient="shaderArgument" diffuse="shaderArgument" 
+		specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"/>
+	<shaderTemplate templateName="simple1_fixed_with_normal" shaderProgram="standard"
+		normalMap="textureArgument1:texcoord0:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
+		ambient="shaderArgument" diffuse="shaderArgument" 
+		specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"/>
+	<shaderTemplate templateName="simple1_fixed_with_texture_normal" shaderProgram="standard"
+		baseColor="textureArgument0:texcoord0:MipFilter=LINEAR;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
+		normalMap="textureArgument1:texcoord0:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
+		ambient="shaderArgument" diffuse="shaderArgument" 
+		specular="shaderArgument" specularHardness="shaderArgument" emissive="shaderArgument"/>
 </shaders>

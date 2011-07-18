@@ -642,9 +642,6 @@ If m > 0 Then
   If i >= 0 And i < 16 Then ret.nType = (i + 16) * &H100000 _
   Else Exit Function
   'TODO:other texture
- ElseIf Left(s, 11) = "textureFile" Then
-  ret.nType = &HF1&
-  If m > 1 Then ret.sOptionalData = Trim(v(1))
  End If
  If ret.nType >= &H10000 And ret.nType < &H200000 Then
   '////////////////shader input
@@ -707,6 +704,9 @@ If m > 0 Then
    End If
   End If
   ret.sOptionalData = Left(ret.sOptionalData + String(nDesiredSize * 2&, vbNullChar), nDesiredSize * 2&)
+ ElseIf s = "textureFile" Then
+  ret.nType = &HF1&
+  If m > 1 Then ret.sOptionalData = Trim(v(1))
  ElseIf ret.nType >= &H1000000 And ret.nType < &H2000000 Then
   '////////////////texture
   'TODO:other texture

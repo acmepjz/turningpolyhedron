@@ -192,10 +192,10 @@ With d3dd9
   '///init
   FakeDXAppOnInitalize
   '///
-  D3DXMatrixRotationZ mat1, 0.005
+'  D3DXMatrixRotationZ mat1, 0.005
   .GetTransform D3DTS_WORLD, mat
-  D3DXMatrixMultiply mat, mat1, mat
-  .SetTransform D3DTS_WORLD, mat
+'  D3DXMatrixMultiply mat, mat1, mat
+'  .SetTransform D3DTS_WORLD, mat
   objCamera.Apply objRenderTest
   '///
   objRenderTest.SetDepthOfFieldParams objCamera.RealDistance, 0.01, 0.1, 40
@@ -588,7 +588,7 @@ With New clsXMLSerializer
   objGameMgr.LoadTileTypesFromSubNodes obj, objEffectMgr, objMeshMgr
  End If
  '///TEST:load level
- i = objFileMgr.LoadFile("lvltest2.xml")
+ i = objFileMgr.LoadFile("lvltest3.xml")
  If i > 0 Then
   Set obj = New clsTreeStorageNode
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then

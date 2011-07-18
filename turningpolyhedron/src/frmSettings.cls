@@ -235,7 +235,7 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
    End With
    y = y + HeightStep
    'shadow map?
-   With .AddNewChildren(FakeCtl_Button, 10, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , _
+   With .AddNewChildren(FakeCtl_Button, 10, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, False, , , _
    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
     m_idx(IDC_ShadowMap) = .Index
    End With
