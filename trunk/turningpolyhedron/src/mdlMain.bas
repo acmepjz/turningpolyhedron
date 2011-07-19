@@ -108,7 +108,6 @@ Public objMeshMgr As New clsMeshManager
 Public objGameMgr As New clsGameManager
 
 'test
-Public m_tLevelTest As typeLevelData
 Public m_tInstTest As typeMeshInstanceCollection
 
 '////////settings
@@ -592,8 +591,9 @@ With New clsXMLSerializer
  If i > 0 Then
   Set obj = New clsTreeStorageNode
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then
-   If objGameMgr.AddLevelDataFromNodeEx(obj, m_tLevelTest) Then
-    objGameMgr.GenerateMeshFromLevelDataEx m_tLevelTest, objEffectMgr, m_tInstTest
+   If objGameMgr.AddLevelDataFromNode(obj) Then
+    objGameMgr.CreateLevelRuntimeData
+    objGameMgr.GenerateMeshFromLevelData objEffectMgr, m_tInstTest
    End If
   End If
  End If

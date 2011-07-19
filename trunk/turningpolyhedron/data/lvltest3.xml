@@ -9,6 +9,6 @@
     1*9,11;
     11,1*9;1*20;
     ]]></typeArray>
-    <polyhedron shape="2x3x4" p="6,2:0:0:0" supportable="false" spannable="false"/>
+    <polyhedron shape="2x3x4" p="6,2:0:0:0" tiltable="false" spannable="false"/>
   </mapData>
 </level>

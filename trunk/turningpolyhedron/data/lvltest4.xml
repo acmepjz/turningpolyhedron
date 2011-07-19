@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<level>
+  <!-- TEST ONLY -->
+  <tileMapping id="block-ground" index="-1"/>
+  <mapData id="m1" format="???" shape="rect" c="0.5,0.5,0" size="8,8,3">
+    <!--
+    format: [<index>|<id>[@<new_index>]]["["<property_index>|<tag>"]"]["*"<count>]
+    ","=next pos (x++)
+    ";"=next row (y++)
+    "|"=next plane (z++)
+    <new_index> should be a negative integer
+    -->
+    <typeArray><![CDATA[
+    	1*64,-1,0,0,-1,-1,-1,0,-1;;
+    	-1;-1,-1,0,0,-1,-1;;;0*3,-1;0*6,-1;
+    	-1,0,0,-1,0*3,-1;;-1
+    	]]></typeArray>
+    <polyhedron shape="cube" p="7,0,2" tiltable="false" spannable="false"/>
+    <polyhedron p="7,6,1" tiltable="false" spannable="false" main="false"/>
+    <polyhedron shape="2x1x2" p="5,5,0" tiltable="false" spannable="false" main="false"/>
+  </mapData>
+</level>
