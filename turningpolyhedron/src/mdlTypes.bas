@@ -347,7 +347,7 @@ Public Type typeTileType
  nIndex As Long '???
  'if actual index<m_nTileTypeCount_Max then it should be actual index
  'if =0 and actual index<m_nTileTypeCount_Max then it's unused
- 'if <0 then it's dynamic-mapped index (&H80000000 or actual index)
+ 'obsolete ==> if <0 then it's dynamic-mapped index (&H80000000 or actual index) <=== obsolete
  sID As String
  sName As String
  sDesc As String
@@ -436,17 +436,49 @@ Public Type typeMapData_Polyhedron
  '&H40=tilt-supporter
  '&H80=spannable
  'TODO:etc.
- sPos As String 'start pos
- 'TODO:start direction
+ sPos As String 'start pos (and start direction)
  'TODO:controller, etc.
 End Type
 
 Public Type typeLevelData
  'map data (tiles)
  nMapDataCount As Long
- tMapData() As typeMapData
+ tMapData() As typeMapData '1-based
  'polyhedrons
  nPolyhedronCount As Long
- tPolyhedron() As typeMapData_Polyhedron
+ tPolyhedron() As typeMapData_Polyhedron '1-based
 End Type
 
+Public Type typePolyhedronFaceLogic
+ nType As Integer
+ '0=rect
+ 'etc.
+ '///
+ nEdgeCount As Integer
+ nSize(2) As Long
+ 'rect: w,h (length of edge 0, length of edge 1)
+ 'etc.
+ '///
+ nAdjacentFace(7) As Byte
+ nAdjacentFaceEdge(7) As Byte
+ '///
+End Type
+
+Public Type typePolyhedronLogic
+ nFaceCount As Long
+ tFace() As typePolyhedronFaceLogic '0-based
+End Type
+
+Public Type typePolyhedronPosition
+ '///pos
+ nMapDataIndex As Long
+ x As Long
+ y As Long
+ z As Long
+ '///edge 0 on ground --> edge ? on polyhedron
+ nFirstEdgeIndex As Long
+ '///which face is on ground
+ nGroundFaceIndex As Long
+ '///which edge is on ground
+ nGroundEdgeIndex As Long
+End Type

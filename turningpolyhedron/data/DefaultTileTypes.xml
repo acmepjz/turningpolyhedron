@@ -10,6 +10,13 @@
       </shader>
     </appearance>
   </tileType>
+  <tileType id="block-ground">
+    <appearance>
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,1" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
+    </appearance>
+  </tileType>
   <tileType id="soft-button" index="2">
     <name>Soft button</name>
     <description>Soft button. Activated when any part of the block presses it.</description>

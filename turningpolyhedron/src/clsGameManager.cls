@@ -32,21 +32,54 @@ Private m_nTileTypeCount As Long 'fixed index, start with 1 (this is not count, 
 Private m_nTileTypeCount2 As Long 'dynamic index, start with m_nTileTypeCount_Max+1
 Private m_nTileTypeMax As Long '=UBound(m_tTileType)
 
+'////////tile mapping data
+Private m_nTileTypeMap(1 To m_nTileTypeCount_Max) As Long
+
 '////////level data (TEST ONLY)
 
 Private m_tLevel As typeLevelData
+Private m_objPoly() As New clsPolyhedron '1-based
+
+Friend Function CreateLevelRuntimeData() As Boolean
+Dim i As Long
+'///
+ClearLevelRuntimeData
+'///
+If m_tLevel.nPolyhedronCount > 0 Then
+ ReDim m_objPoly(1 To m_tLevel.nPolyhedronCount)
+ For i = 1 To m_tLevel.nPolyhedronCount
+  If Not m_objPoly(i).CreateIndirect(m_tLevel.tPolyhedron(i), m_tLevel) Then Exit Function
+ Next i
+End If
+'///
+CreateLevelRuntimeData = True
+End Function
+
+Friend Sub ClearLevelRuntimeData()
+Erase m_objPoly
+End Sub
 
 Friend Sub ClearLevelData()
 Dim t As typeLevelData
 Dim i As Long
 m_tLevel = t
 'reset dynamic-mapped tile index
-If m_nTileTypeMax >= m_nTileTypeCount_Max Then
- For i = 1 To m_nTileTypeCount_Max
-  If m_tTileType(i).nIndex < 0 Then m_tTileType(i).nIndex = 0
- Next i
-End If
+Erase m_nTileTypeMap
+'reset runtime
+ClearLevelRuntimeData
 End Sub
+
+Friend Sub ClearTileMapData()
+Erase m_nTileTypeMap
+End Sub
+
+Friend Property Get TileMapData(ByVal nIndex As Long) As Long
+TileMapData = m_nTileTypeMap(nIndex)
+End Property
+
+Friend Property Let TileMapData(ByVal nIndex As Long, ByVal n As Long)
+m_nTileTypeMap(nIndex) = n
+End Property
 
 Friend Function AddLevelDataFromNode(ByVal objNode As clsTreeStorageNode) As Boolean
 AddLevelDataFromNode = AddLevelDataFromNodeEx(objNode, m_tLevel)
@@ -89,7 +122,7 @@ If m > 0 Then
    Case 44, 59, 124, 64, 91, 42
     Exit Do
    End Select
-   b = b And (c >= &H30& And c <= &H39&)
+   b = b And ((c >= &H30& And c <= &H39&) Or c = 45)
    lp = lp + 1
   Loop
   If lp > lps Then
@@ -97,7 +130,7 @@ If m > 0 Then
    CopyMemory ByVal StrPtr(sID), d(lps), (lp - lps) * 2&
    If b Then
     nIndex = Val(sID)
-    If nIndex >= 0 Then sID = "" Else nIndex = 0
+    sID = ""
    End If
   End If
   '///get [@<new_index>]
@@ -170,11 +203,14 @@ If m > 0 Then
      Exit For
     End If
    Next lps
-  ElseIf nIndex > 0 Then 'use dynamic mapping index?
-   lps = m_tTileType(nIndex).nIndex
-   If lps < 0 Then
-    nIndex = lps And &H7FFFFFFF
-   ElseIf lps = 0 Then 'invalid index
+  ElseIf nIndex > 0 Then
+   If nIndex <> m_tTileType(nIndex).nIndex Then 'invalid index
+    Debug.Assert False
+    Exit Function
+   End If
+  ElseIf nIndex < 0 And nIndex >= -m_nTileTypeCount_Max Then 'use dynamic mapping index?
+   nIndex = m_nTileTypeMap(-nIndex)
+   If nIndex <= 0 Then 'invalid index
     Debug.Assert False
     Exit Function
    End If
@@ -203,13 +239,8 @@ If m > 0 Then
    End If
   End If
   'create dynamic mapping index?
-  If nNewIndex > 0 And nNewIndex <= m_nTileTypeCount_Max Then
-   If m_tTileType(nNewIndex).nIndex <= 0 Then
-    m_tTileType(nNewIndex).nIndex = &H80000000 Or nIndex
-   Else 'invalid remapping
-    Debug.Assert False
-    Exit Function
-   End If
+  If nNewIndex < 0 And nNewIndex >= -m_nTileTypeCount_Max Then
+   m_nTileTypeMap(-nNewIndex) = nIndex
   End If
   '///put data
   For lps = 1 To nCount
@@ -622,7 +653,7 @@ ParseMapPolyhedronDataFromNode = True
 End Function
 
 Friend Function AddLevelDataFromNodeEx(ByVal objNode As clsTreeStorageNode, ByRef tLevel As typeLevelData) As Boolean
-Dim i As Long
+Dim i As Long, j As Long, k As Long
 Dim s As String
 Dim obj As clsTreeStorageNode
 '///
@@ -650,6 +681,31 @@ For i = 1 To objNode.SubNodeCount
    tLevel.nPolyhedronCount = tLevel.nPolyhedronCount + 1
    ReDim Preserve tLevel.tPolyhedron(1 To tLevel.nPolyhedronCount)
    If Not ParseMapPolyhedronDataFromNode(obj, tLevel.tPolyhedron(tLevel.nPolyhedronCount)) Then Exit Function
+  Case "tileMapping"
+   s = obj.GetSubNodeValueAsStringByName("id")
+   If s <> "" Then
+    k = -Val(obj.GetSubNodeValueAsStringByName("index"))
+    If k > 0 And k <= m_nTileTypeCount_Max Then
+     j = 0
+     For j = 1 To m_nTileTypeCount
+      If m_tTileType(j).nIndex > 0 Then
+       If m_tTileType(j).sID = s Then
+        j = -j
+        Exit For
+       End If
+      End If
+     Next j
+     If j >= 0 Then
+      For j = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
+       If m_tTileType(j).sID = s Then
+        j = -j
+        Exit For
+       End If
+      Next j
+     End If
+     If j < 0 Then m_nTileTypeMap(k) = -j
+    End If
+   End If
   End Select
  End If
 Next i
@@ -715,6 +771,8 @@ Erase m_tTileType
 m_nTileTypeCount = 0
 m_nTileTypeCount2 = 0
 m_nTileTypeMax = 0
+'///
+ClearLevelData
 End Sub
 
 'Friend Sub ClearObjectTypes()
@@ -749,7 +807,7 @@ End Property
 Friend Function FindTileType(ByVal sID As String) As Long
 Dim i As Long
 For i = 1 To m_nTileTypeCount
- If m_tTileType(i).nIndex > 0 Then
+ If m_tTileType(i).nIndex = i Then
   If sID = m_tTileType(i).sID Then
    FindTileType = i
    Exit Function
@@ -1272,3 +1330,10 @@ For i = 1 To objNode.SubNodeCount
 Next i
 End Sub
 
+Friend Function GetAdjacentTile() As Long
+'TODO:
+End Function
+
+Friend Function HitTest() As Long
+'TODO:
+End Function
