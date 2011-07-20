@@ -63,6 +63,8 @@ Call FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4)
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
+Dim obj As clsPolyhedron
+Dim i As Long
 '///
 If FakeDXUIOnKeyEvent(KeyCode, Shift, 1) Then Exit Sub
 '///
@@ -71,6 +73,24 @@ If KeyCode = vbKeyS And Shift = vbCtrlMask Then
    D3DXSaveTextureToFileW CStr(App.Path) + "\test.bmp", D3DXIFF_BMP, objTexture, ByVal 0
    D3DXSaveTextureToFileW CStr(App.Path) + "\testnormal.bmp", D3DXIFF_BMP, objNormalTexture, ByVal 0
    '///
+End If
+'///TEST ONLY
+i = -1
+Select Case KeyCode
+Case vbKeyUp
+ i = 0
+Case vbKeyLeft
+ i = 1
+Case vbKeyDown
+ i = 2
+Case vbKeyRight
+ i = 3
+End Select
+If i >= 0 Then
+ Set obj = objGameMgr.PolyhedronObject(1)
+ If Not obj Is Nothing Then
+  obj.Move i, objGameMgr
+ End If
 End If
 End Sub
 

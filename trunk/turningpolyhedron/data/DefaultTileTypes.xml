@@ -68,7 +68,7 @@
     </appearance>
     <onEnter condition="pressure=2~" event="game-over:breakdown:2"/>
   </tileType>
-  <tileType id="bridge-off" index="6" invisibleAtRuntime="true">
+  <tileType id="bridge-off" index="6" invisibleAtRuntime="true" supporter="false" tilt-supporter="false" non-block="true">
     <name>Bridge (off)</name>
     <description>The bridge which is off.</description>
     <appearance>
@@ -77,7 +77,6 @@
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
-    <onEnter event="game-over"/>
     <onCustomEvent condition="eventType=toggle|on" event="convertTo:7"/>
   </tileType>
   <tileType id="bridge-on" index="7">

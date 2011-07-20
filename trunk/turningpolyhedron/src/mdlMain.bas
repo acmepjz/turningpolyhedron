@@ -215,6 +215,7 @@ With d3dd9
    .BeginScene
    '///TEST TEST TEST
    objEffectMgr.DrawInstanceEx m_tInstTest, objMeshMgr, True, True
+   objGameMgr.DrawPolyhedron
    'objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
    '///
    .EndScene

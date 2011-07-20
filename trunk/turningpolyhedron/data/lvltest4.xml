@@ -15,8 +15,8 @@
     	-1;-1,-1,0,0,-1,-1;;;0*3,-1;0*6,-1;
     	-1,0,0,-1,0*3,-1;;-1
     	]]></typeArray>
-    <polyhedron shape="cube" p="7,0,2" tiltable="false" spannable="false"/>
-    <polyhedron p="7,6,1" tiltable="false" spannable="false" main="false"/>
-    <polyhedron shape="2x1x2" p="5,5,0" tiltable="false" spannable="false" main="false"/>
+    <polyhedron shape="cube" p="7,0,2" tiltable="false" supportable="false"/>
+    <polyhedron p="6,7,1" tiltable="false" supportable="false" main="false"/>
+    <polyhedron shape="2x1x2" p="5,5,0" tiltable="false" supportable="false" main="false"/>
   </mapData>
 </level>
