@@ -356,11 +356,15 @@ Public Type typeTileType
  '1=invisibleAtRuntime (? TODO:)
  '2=checkpoint
  '4=elevator (currently unsupported TODO:)
+ '---
+ '8=non-block
+ '---
  '&H100=blocked
- '  &H200=not tiltable
- '  &H400=not supportable
+ '---
+ '&H200=not tiltable
+ '&H400=not supportable
  nObjType As Long '0 to nInteractionCount; 0="default"
- nReserved3 As Long 'block height ??? (currently unused and unsupported)
+ nBlockHeight As Long 'used when "blocked" is set; <=0 means infinity
  nReserved4 As Long
  '///
  'TODO:multiple appearances
@@ -465,9 +469,24 @@ Public Type typePolyhedronFaceLogic
 End Type
 
 Public Type typePolyhedronLogic
+ '///
+ nShape As Long 'same as typeMapData_Polyhedron::nShape
+ nObjType As Long 'same as ...
+ nFlags As Long 'same as ...
+ nSize(2) As Long
+ 'rect: x,y,z
+ 'etc.
+ '///
  nFaceCount As Long
  tFace() As typePolyhedronFaceLogic '0-based
 End Type
+
+'Public Type typeMapPosition
+' nMapDataIndex As Long
+' x As Long
+' y As Long
+' z As Long
+'End Type
 
 Public Type typePolyhedronPosition
  '///pos

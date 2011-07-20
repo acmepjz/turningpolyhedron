@@ -40,6 +40,73 @@ Private m_nTileTypeMap(1 To m_nTileTypeCount_Max) As Long
 Private m_tLevel As typeLevelData
 Private m_objPoly() As New clsPolyhedron '1-based
 
+Private m_bRuntimeDirty As Boolean
+
+Friend Property Get PolyhedronObject(ByVal nPolyhedronIndex As Long) As clsPolyhedron
+If m_bRuntimeDirty Then Exit Property
+If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then _
+Set PolyhedronObject = m_objPoly(nPolyhedronIndex)
+End Property
+
+Friend Function DrawPolyhedron(Optional ByVal nPolyhedronIndex As Long) As Boolean
+Dim idx As Long
+'///TEST ONLY
+Dim f(31) As Single
+Dim d(23) As Integer
+Dim i As Long, j As Long, k As Long, l As Long
+Dim tmp As Long
+Dim p As typePolyhedronPosition
+'///
+If m_bRuntimeDirty Then Exit Function
+'///
+d(0) = 0: d(1) = 1: d(2) = 1: d(3) = 3: d(4) = 3: d(5) = 2: d(6) = 2: d(7) = 0
+d(8) = 4: d(9) = 5: d(10) = 5: d(11) = 7: d(12) = 7: d(13) = 6: d(14) = 6: d(15) = 4
+d(16) = 0: d(17) = 4: d(18) = 1: d(19) = 5: d(20) = 2: d(21) = 6: d(22) = 3: d(23) = 7
+f(3) = LongToSingle(&HFFFFFF)
+For i = 1 To 7
+ f(i * 4 + 3) = f(3)
+Next i
+'///
+tmp = d3dd9.GetTextureStageState(0, D3DTSS_COLOROP)
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
+d3dd9.SetFVF D3DFVF_XYZ Or D3DFVF_DIFFUSE
+'///
+For idx = 1 To m_tLevel.nPolyhedronCount
+ If idx = nPolyhedronIndex Or nPolyhedronIndex <= 0 Then
+  '///TEST ONLY
+  m_objPoly(idx).GetCurrentSize i, j, k
+  p = m_objPoly(idx).Position
+  If p.nMapDataIndex > 0 And p.nMapDataIndex <= m_tLevel.nMapDataCount Then
+   '///
+   With m_tLevel.tMapData(p.nMapDataIndex)
+    For l = 0 To 7
+     f(l * 4) = .fPos(0).x + _
+     (p.x + i * (l And 1&)) * .fPos(1).x + _
+     (p.y + j * ((l \ 2&) And 1&)) * .fPos(2).x + _
+     (p.z + k * ((l \ 4&) And 1&)) * .fPos(3).x
+     f(l * 4 + 1) = .fPos(0).y + _
+     (p.x + i * (l And 1&)) * .fPos(1).y + _
+     (p.y + j * ((l \ 2&) And 1&)) * .fPos(2).y + _
+     (p.z + k * ((l \ 4&) And 1&)) * .fPos(3).y
+     f(l * 4 + 2) = .fPos(0).z + _
+     (p.x + i * (l And 1&)) * .fPos(1).z + _
+     (p.y + j * ((l \ 2&) And 1&)) * .fPos(2).z + _
+     (p.z + k * ((l \ 4&) And 1&)) * .fPos(3).z
+    Next l
+   End With
+   '///
+   d3dd9.DrawIndexedPrimitiveUP D3DPT_LINELIST, 0, 8, 12, d(0), D3DFMT_INDEX16, f(0), 16&
+  End If
+  '///
+  'TODO:
+ End If
+Next idx
+'///
+d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, tmp
+'///
+DrawPolyhedron = True
+End Function
+
 Friend Function CreateLevelRuntimeData() As Boolean
 Dim i As Long
 '///
@@ -48,15 +115,18 @@ ClearLevelRuntimeData
 If m_tLevel.nPolyhedronCount > 0 Then
  ReDim m_objPoly(1 To m_tLevel.nPolyhedronCount)
  For i = 1 To m_tLevel.nPolyhedronCount
-  If Not m_objPoly(i).CreateIndirect(m_tLevel.tPolyhedron(i), m_tLevel) Then Exit Function
+  If Not m_objPoly(i).CreateIndirect(m_tLevel, i) Then Exit Function
  Next i
 End If
 '///
+m_bRuntimeDirty = False
 CreateLevelRuntimeData = True
 End Function
 
 Friend Sub ClearLevelRuntimeData()
 Erase m_objPoly
+'///
+m_bRuntimeDirty = True
 End Sub
 
 Friend Sub ClearLevelData()
@@ -67,6 +137,8 @@ m_tLevel = t
 Erase m_nTileTypeMap
 'reset runtime
 ClearLevelRuntimeData
+'///
+m_bRuntimeDirty = False
 End Sub
 
 Friend Sub ClearTileMapData()
@@ -83,6 +155,7 @@ End Property
 
 Friend Function AddLevelDataFromNode(ByVal objNode As clsTreeStorageNode) As Boolean
 AddLevelDataFromNode = AddLevelDataFromNodeEx(objNode, m_tLevel)
+m_bRuntimeDirty = True
 End Function
 
 Friend Function ParseMapTypeArrayFromNode(ByVal objNode As clsTreeStorageNode, ByRef tMap As typeMapData) As Boolean
@@ -1267,14 +1340,16 @@ For i = 1 To objNode.SubNodeCount
    nFlags = nFlags Or ((objNode.GetSubNodeValueAsString(i) = "true") And &H2&)
   Case "elevator"
    nFlags = nFlags Or ((objNode.GetSubNodeValueAsString(i) = "true") And &H4&)
+  Case "non-block"
+   nFlags = nFlags Or ((objNode.GetSubNodeValueAsString(i) = "true") And &H8&)
   Case "blocked"
    nFlags = nFlags Or ((objNode.GetSubNodeValueAsString(i) = "true") And &H100&)
-  Case "tiltable"
+  Case "tilt-supporter", "tiltable" '<== obsolete
    nFlags = nFlags Or ((objNode.GetSubNodeValueAsString(i) <> "true") And &H200&)
-  Case "supportable"
+  Case "supporter", "supportable" '<== obsolete
    nFlags = nFlags Or ((objNode.GetSubNodeValueAsString(i) <> "true") And &H400&)
   Case "block-height"
-   'currently unsupported TODO:
+   m_tTileType(nIndex).nBlockHeight = Val(objNode.GetSubNodeValueAsString(i))
   Case "type"
    j = FindObjectType(objNode.GetSubNodeValueAsString(i))
    If j = 0 Then
@@ -1330,10 +1405,168 @@ For i = 1 To objNode.SubNodeCount
 Next i
 End Sub
 
-Friend Function GetAdjacentTile() As Long
-'TODO:
+Friend Function IsOtherPolyhedronOn(ByVal nPolyhedronIndex As Long) As Boolean
+Dim idx As Long
+Dim i1 As Long, j1 As Long, k1 As Long, p1 As typePolyhedronPosition
+Dim i2 As Long, j2 As Long, k2 As Long, p2 As typePolyhedronPosition
+Select Case m_tLevel.tPolyhedron(nPolyhedronIndex).nShape
+Case &H111 To &HFFF
+ m_objPoly(nPolyhedronIndex).GetCurrentSize i1, j1, k1
+ p1 = m_objPoly(nPolyhedronIndex).Position
+ For idx = 1 To m_tLevel.nPolyhedronCount
+  If idx <> nPolyhedronIndex Then
+   Select Case m_tLevel.tPolyhedron(idx).nShape
+   Case &H111 To &HFFF
+    m_objPoly(idx).GetCurrentSize i2, j2, k2
+    p2 = m_objPoly(idx).Position
+    If p1.nMapDataIndex = p2.nMapDataIndex Then
+     If p2.x > p1.x - i2 And p2.x < p1.x + i1 Then
+      If p2.y > p1.y - j2 And p2.y < p1.y + j1 Then
+       If p2.z = p1.z + k1 Then
+        IsOtherPolyhedronOn = True
+        Exit Function
+       End If
+      End If
+     End If
+    End If
+   End Select
+  End If
+ Next idx
+Case Else
+ 'TODO:
+ Debug.Assert False
+End Select
 End Function
 
-Friend Function HitTest() As Long
-'TODO:
+Friend Function GetAdjacentPosition(ByRef tPos As typePolyhedronPosition, ByVal nDirection As Long, ByRef tNewPos As typePolyhedronPosition, Optional ByRef nNewDirection As Long) As Boolean
+tNewPos = tPos
+GetAdjacentPosition = GetAdjacentPositionInPlace(tPos, nDirection, nNewDirection)
+End Function
+
+'direction:
+'0=up
+'1=left
+'2=down
+'3=right
+'4=
+'5=
+'6=bottom
+'7=top
+Friend Function GetAdjacentPositionInPlace(ByRef tPos As typePolyhedronPosition, ByVal nDirection As Long, Optional ByRef nNewDirection As Long) As Boolean
+'///
+nNewDirection = nDirection
+'///
+If tPos.nMapDataIndex > 0 And tPos.nMapDataIndex <= m_tLevel.nMapDataCount Then
+ 'TODO:check adjacent data and change nNewDirection
+ Select Case m_tLevel.tMapData(tPos.nMapDataIndex).nFlags And &HF&
+ Case 0 'rect
+  Select Case nDirection
+  Case 0
+   tPos.y = tPos.y - 1
+  Case 1
+   tPos.x = tPos.x - 1
+  Case 2
+   tPos.y = tPos.y + 1
+  Case 3
+   tPos.x = tPos.x + 1
+  Case 6
+   tPos.z = tPos.z - 1
+  Case 7
+   tPos.z = tPos.z + 1
+  Case Else
+   Debug.Assert False
+  End Select
+ Case Else
+  'TODO:
+  Debug.Assert False
+ End Select
+End If
+'///
+GetAdjacentPositionInPlace = True '???
+End Function
+
+'return value:
+'-3 : blocked and not tiltable
+'-2 : this position is blocked
+'-1 : can't stand on there (maybe no supporter or something's supporter=false)
+'>=0: stand on something, return value is nObjType
+'---
+'TODO:return more info
+Friend Function HitTest(ByRef tPos As typePolyhedronPosition, Optional ByVal nExcludePolyhedronIndex As Long) As Long
+Dim idx As Long
+Dim i As Long, j As Long, k As Long
+Dim sz As Long, ez As Long
+Dim t As typePolyhedronPosition
+Dim ret As Long
+'///
+ret = -1
+'///check if it's on some polyhedron
+For idx = 1 To m_tLevel.nPolyhedronCount
+ If idx <> nExcludePolyhedronIndex Then
+  'TODO: if it's not a supporter then there should be some event
+  Select Case m_tLevel.tPolyhedron(idx).nShape
+  Case &H111 To &HFFF
+   m_objPoly(idx).GetCurrentSize i, j, k
+   t = m_objPoly(idx).Position
+   '///
+   'TODO: wrong code if there are adjacency data
+   If t.nMapDataIndex = tPos.nMapDataIndex Then
+    If tPos.x >= t.x And tPos.x < t.x + i Then
+     If tPos.y >= t.y And tPos.y < t.y + j Then
+      If tPos.z >= t.z And tPos.z < t.z + k Then
+       If m_tLevel.tPolyhedron(idx).nFlags And &H40& Then HitTest = -2 _
+       Else HitTest = -3
+       Exit Function
+      ElseIf tPos.z = t.z + k And (m_tLevel.tPolyhedron(idx).nFlags And &H10&) <> 0 Then
+       If ret < 0 Then ret = m_tLevel.tPolyhedron(idx).nObjType
+      End If
+     End If
+    End If
+   End If
+  Case Else
+   'TODO:
+   Debug.Assert False
+  End Select
+ End If
+Next idx
+'///check if it's on some tile
+idx = tPos.nMapDataIndex
+If idx > 0 And idx <= m_tLevel.nMapDataCount Then
+ 'TODO:adjacency data
+ If tPos.x >= 0 And tPos.x < m_tLevel.tMapData(idx).nSize(0) Then
+  If tPos.y >= 0 And tPos.y < m_tLevel.tMapData(idx).nSize(1) Then
+   k = m_tLevel.tMapData(idx).nSize(2) - 1
+   If k > tPos.z + 1 Then k = tPos.z + 1 'TODO:higher
+   Do While k >= 0
+    i = m_tLevel.tMapData(idx).nTypeArray(tPos.x, tPos.y, k)
+    If i > 0 And i <= m_nTileTypeMax Then
+     j = m_tTileType(i).nFlags
+     '///
+     If j And &H8& Then sz = k _
+     Else sz = k - 1
+     If j And &H100& Then
+      ez = m_tTileType(i).nBlockHeight
+      If ez <= 0 Then ez = &H7FFFFFFF _
+      Else ez = ez + k
+     Else
+      ez = k
+     End If
+     '///
+     If tPos.z >= sz And tPos.z < ez Then 'blocked
+      If (j And &H200&) = 0 Then HitTest = -2 _
+      Else HitTest = -3
+      Exit Function
+     ElseIf tPos.z = ez And (j And &H400&) = 0 Then 'supported
+      If ret < 0 Then ret = m_tTileType(i).nObjType
+     End If
+     '///
+    End If
+    '///
+    k = k - 1
+   Loop
+  End If
+ End If
+End If
+'///
+HitTest = ret
 End Function
