@@ -83,10 +83,14 @@ m_nApprMax = 0
 End Sub
 
 Friend Sub ClearInstance()
-Erase m_tInst.tInstance, m_tInst.nInstOrder
-m_tInst.nInstCount = 0
-m_tInst.nInstUnused = 0
-m_tInst.bInstDirty = False
+ClearInstanceEx m_tInst
+End Sub
+
+Friend Sub ClearInstanceEx(ByRef tInst As typeMeshInstanceCollection)
+Erase tInst.tInstance, tInst.nInstOrder
+tInst.nInstCount = 0
+tInst.nInstUnused = 0
+tInst.bInstDirty = False
 End Sub
 
 Friend Sub ClearAppearance()
@@ -146,16 +150,20 @@ Friend Function AddInstanceFromAppearance(ByVal nIndex As Long, ByRef matWorld A
 AddInstanceFromAppearance = AddInstanceFromAppearanceEx(m_tInst, nIndex, matWorld)
 End Function
 
-'only return last created instance if appearance data has more than one objects
+'returns root node
 Friend Function AddInstanceFromAppearanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nIndex As Long, ByRef matWorld As D3DMATRIX) As Long
-Dim i As Long
+Dim i As Long, j As Long, k As Long
 Dim t As typeMeshInstanceData
 If nIndex > 0 And nIndex <= m_nApprCount Then
  For i = 1 To m_tAppr(nIndex).nCount
   t = m_tAppr(nIndex).tData(i)
   D3DXMatrixMultiply t.matWorld, t.matWorld, matWorld
-  AddInstanceFromAppearanceEx = AddInstanceEx(tInst, t.nEffectIndex, t.nMeshIndex, t.matWorld)
+  k = AddInstanceEx(tInst, t.nEffectIndex, t.nMeshIndex, t.matWorld)
+  '///
+  tInst.tInstance(k).nNextInstIndex = j
+  j = k
  Next i
+ AddInstanceFromAppearanceEx = k
 End If
 End Function
 
@@ -163,23 +171,79 @@ Friend Sub RemoveInstance(ByVal nIndex As Long)
 RemoveInstanceEx m_tInst, nIndex
 End Sub
 
-Friend Sub RemoveInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nIndex As Long)
-Dim i As Long
+'WARNING: Don't use this function to remove non-root node, or there will be severe bug!
+Friend Sub RemoveInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nIndex As Long, Optional ByVal bRefreshInstOrder As Boolean = True)
+Dim i As Long, j As Long, m As Long
 Dim t As typeMeshInstanceData
-If tInst.tInstance(nIndex).nEffectIndex > 0 Then
+'///
+If tInst.nInstCount <= 0 Then Exit Sub
+m = UBound(tInst.tInstance)
+If nIndex <= 0 Or nIndex > m Then Exit Sub
+'///
+Do
+ If tInst.tInstance(nIndex).nEffectIndex <= 0 Then Exit Do
  '///
- For i = 1 To tInst.nInstCount - 1
-  If tInst.nInstOrder(i) = nIndex Then
-   tInst.nInstOrder(i) = tInst.nInstOrder(tInst.nInstCount)
-   Exit For
-  End If
- Next i
+ j = tInst.tInstance(nIndex).nChildInstIndex
+ i = tInst.tInstance(nIndex).nNextInstIndex
  '///
  t.nEffectIndex = tInst.nInstUnused Or &H80000000
  tInst.tInstance(nIndex) = t
  tInst.nInstUnused = nIndex
  tInst.nInstCount = tInst.nInstCount - 1
  tInst.bInstDirty = True
+ '///
+ If j > 0 And j <= m Then RemoveInstanceEx tInst, j, False
+ If i > 0 And i <= m Then nIndex = i Else Exit Do
+Loop
+'///
+If bRefreshInstOrder And tInst.bInstDirty Then
+ For i = 1 To m
+  If tInst.tInstance(i).nEffectIndex >= 0 Then
+   j = j + 1
+   tInst.nInstOrder(j) = i
+  End If
+ Next i
+ Debug.Assert j = tInst.nInstCount
+End If
+End Sub
+
+Friend Sub RemoveInstanceArrayEx(ByRef tInst As typeMeshInstanceCollection, ByRef nIndexArray() As Long, ByVal nStart As Long, ByVal nEnd As Long, Optional ByVal bRefreshInstOrder As Boolean = True)
+Dim i As Long, j As Long, m As Long
+Dim nIndex As Long
+Dim t As typeMeshInstanceData
+'///
+If tInst.nInstCount <= 0 Then Exit Sub
+m = UBound(tInst.tInstance)
+'///
+Do While nStart <= nEnd
+ nIndex = nIndexArray(nStart)
+ Do
+  If nIndex <= 0 Or nIndex > m Then Exit Do
+  If tInst.tInstance(nIndex).nEffectIndex <= 0 Then Exit Do
+  '///
+  j = tInst.tInstance(nIndex).nChildInstIndex
+  i = tInst.tInstance(nIndex).nNextInstIndex
+  '///
+  t.nEffectIndex = tInst.nInstUnused Or &H80000000
+  tInst.tInstance(nIndex) = t
+  tInst.nInstUnused = nIndex
+  tInst.nInstCount = tInst.nInstCount - 1
+  tInst.bInstDirty = True
+  '///
+  If j > 0 And j <= m Then RemoveInstanceEx tInst, j, False
+  nIndex = i
+ Loop
+ nStart = nStart + 1
+Loop
+'///
+If bRefreshInstOrder And tInst.bInstDirty Then
+ For i = 1 To m
+  If tInst.tInstance(i).nEffectIndex >= 0 Then
+   j = j + 1
+   tInst.nInstOrder(j) = i
+  End If
+ Next i
+ Debug.Assert j = tInst.nInstCount
 End If
 End Sub
 
@@ -343,7 +407,7 @@ AddHWInstance = AddHWInstanceEx(m_tInst, objMeshMgr, nEffectIndex, nMeshIndex, m
 End Function
 
 'TODO:per-instance color support, etc.
-Friend Function AddHWInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal objMeshMgr As clsMeshManager, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
+Friend Function AddHWInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal objMeshMgr As clsMeshManager, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long, Optional ByRef nLastInstIndex As Long) As Long
 Dim nHWInstancingMode As Long
 Dim objInstanceBuffer As Direct3DVertexBuffer9
 Dim objMesh As D3DXMesh
@@ -351,6 +415,7 @@ Dim t(64) As D3DVERTEXELEMENT9
 Dim i As Long, lp As Long
 Dim nSize As Long
 '///
+nLastInstIndex = 0
 If nEffectIndex <= 0 Or nEffectIndex > m_nEffectCount Or nMeshIndex <= 0 Then Exit Function
 '///
 nEnd = nEnd - nStart + 1
@@ -375,9 +440,16 @@ Case 15
  nSize = 64&
 Case Else
  '///fallback to software instancing
+ lp = 0
+ nSize = 0
  For i = nStart To nStart + nEnd - 1
-  AddHWInstanceEx = AddInstanceEx(tInst, nEffectIndex, nMeshIndex, matWorld(i))
+  lp = AddInstanceEx(tInst, nEffectIndex, nMeshIndex, matWorld(i))
+  If i = nStart Then nLastInstIndex = lp
+  '///
+  tInst.tInstance(lp).nNextInstIndex = nSize
+  nSize = lp
  Next i
+ AddHWInstanceEx = lp
  Exit Function
 End Select
 '///create vertex declaration
@@ -416,19 +488,22 @@ Friend Function AddHWInstanceFromAppearance(ByVal objMeshMgr As clsMeshManager, 
 AddHWInstanceFromAppearance = AddHWInstanceFromAppearanceEx(m_tInst, objMeshMgr, nIndex, matWorld, nStart, nEnd)
 End Function
 
-'only return last created instance if appearance data has more than one objects
 'TODO:per-instance color support, etc.
 Friend Function AddHWInstanceFromAppearanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal objMeshMgr As clsMeshManager, ByVal nIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
-Dim i As Long
+Dim i As Long, j As Long, k As Long, idx As Long
 'Dim t As typeMeshInstanceData
 If nIndex > 0 And nIndex <= m_nApprCount Then
  For i = 1 To m_tAppr(nIndex).nCount
   '///TODO:custom base matrix (important if m_tAppr(nIndex).tData(i).matWorld is not identity)
   't = m_tAppr(nIndex).tData(i)
   'D3DXMatrixMultiply t.matWorld, t.matWorld, matWorld
-  AddHWInstanceFromAppearanceEx = AddHWInstanceEx(tInst, objMeshMgr, m_tAppr(nIndex).tData(i).nEffectIndex, _
-  m_tAppr(nIndex).tData(i).nMeshIndex, matWorld, nStart, nEnd)
+  k = AddHWInstanceEx(tInst, objMeshMgr, m_tAppr(nIndex).tData(i).nEffectIndex, _
+  m_tAppr(nIndex).tData(i).nMeshIndex, matWorld, nStart, nEnd, idx)
+  If idx = 0 Then idx = k
+  tInst.tInstance(idx).nNextInstIndex = j
+  j = k
  Next i
+ AddHWInstanceFromAppearanceEx = k
 End If
 End Function
 

@@ -357,7 +357,7 @@ Case &H111 To &HFFF
      Debug.Assert False
      Exit Function
     End If
-   Case -2 'block tiltable
+   Case &H80000000 To &H8000FFFF 'block tiltable
     If j = 1 Then
      CheckPolyhedronStateEx = 0 '???
      Exit Function
@@ -369,7 +369,8 @@ Case &H111 To &HFFF
      Debug.Assert False
      Exit Function
     End If
-   Case -3 'block not tiltable
+   Case &H80010000 To &H8001FFFF 'block not tiltable
+    'TODO:
     CheckPolyhedronStateEx = 0 '???
     Exit Function
    Case Else

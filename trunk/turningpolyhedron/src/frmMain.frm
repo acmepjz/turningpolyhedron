@@ -55,6 +55,9 @@ Private cSub As New cSubclass
 
 Implements iSubclass
 
+'TEST ONLY
+Private m_nCurrentPolyhedron As Long
+
 Private Sub Form_DblClick()
 Dim p As POINTAPI
 GetCursorPos p
@@ -63,7 +66,8 @@ Call FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4)
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
-Dim obj As clsPolyhedron
+'///TEST ONLY
+Dim obj As clsPolyhedron, v1 As D3DVECTOR, v2 As D3DVECTOR, v3 As D3DVECTOR
 Dim i As Long
 '///
 If FakeDXUIOnKeyEvent(KeyCode, Shift, 1) Then Exit Sub
@@ -75,21 +79,48 @@ If KeyCode = vbKeyS And Shift = vbCtrlMask Then
    '///
 End If
 '///TEST ONLY
-i = -1
-Select Case KeyCode
-Case vbKeyUp
- i = 0
-Case vbKeyLeft
- i = 1
-Case vbKeyDown
- i = 2
-Case vbKeyRight
- i = 3
-End Select
-If i >= 0 Then
- Set obj = objGameMgr.PolyhedronObject(1)
- If Not obj Is Nothing Then
-  obj.Move i, objGameMgr
+If bTestOnly Then
+ i = -1
+ Select Case KeyCode
+ Case vbKeyUp
+  i = 0
+ Case vbKeyLeft
+  i = 1
+ Case vbKeyDown
+  i = 2
+ Case vbKeyRight
+  i = 3
+ Case vbKeySpace
+  m_nCurrentPolyhedron = m_nCurrentPolyhedron + 1
+  If m_nCurrentPolyhedron >= objGameMgr.PolyhedronCount Then m_nCurrentPolyhedron = 0
+  If Not objGameMgr.PolyhedronObject(m_nCurrentPolyhedron + 1) Is Nothing Then
+   v1 = objGameMgr.GetPolyhedronCenterPos(m_nCurrentPolyhedron + 1)
+   objCamera.MoveTargetTo v1
+  End If
+  Exit Sub
+ End Select
+ If i >= 0 Then
+  Set obj = objGameMgr.PolyhedronObject(m_nCurrentPolyhedron + 1)
+  If Not obj Is Nothing Then
+   '///
+   objCamera.GetRealCamera v1, v2, v3
+   v1.x = v1.x - v2.x
+   v1.y = v1.y - v2.y
+   v2.x = v1.x - v1.y
+   v2.y = v1.x + v1.y
+   If v2.x > 0 Then
+    If v2.y > 0 Then i = i + 1 _
+    Else i = i + 2
+   Else
+    If v2.y < 0 Then i = i - 1
+   End If
+   i = i And 3&
+   '///
+   If obj.Move(i, objGameMgr) = 1 Then
+    v1 = objGameMgr.GetPolyhedronCenterPos(m_nCurrentPolyhedron + 1)
+    objCamera.MoveTargetTo v1
+   End If
+  End If
  End If
 End If
 End Sub
@@ -151,9 +182,10 @@ Cancel = &H1& And Not FakeDXAppCanUnload
 End Sub
 
 Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
-Dim i As Long
-Dim obj1 As New clsFakeDXUIInputBox
+Dim i As Long, bErr As Boolean
+Dim obj1 As clsTreeStorageNode, v1 As D3DVECTOR
 Dim s As String
+'///
 Select Case nType
 Case FakeCtl_Event_Click
  Select Case obj.Name
@@ -166,36 +198,43 @@ Case FakeCtl_Event_Click
  ' End With
   Unload Me
  Case "cmdDanger"
- ' With New clsFakeDXUIMsgBox
- '  For i = 1 To 8
- '   .AddButton , i
- '  Next i
- '  .MsgBox CStr(.MsgBox( _
- '  "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W"), &H1000000F Or vbInformation)), 15 Or vbExclamation
- '  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", "OXZ"), 15 Or vbCritical
- '  .MsgBox obj1.InputBox("HEHEHE", "LKS 123", , , True, vbBoth), &H40000000
- ' End With
-'  With New clsFakeCommonDialog
-'   s = ""
-'   If .VBGetOpenFileName(s, , , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
-'    Debug.Print s
-'   End If
-'   s = ""
-'   If .VBGetSaveFileName(s, , , , "Text file|*.txt|All files|*.*", , FakeDXAppMyGamesPath) Then
-'    Debug.Print s
-'   End If
-'   s = ""
-'   If .VBChooseFolder(s, , , FakeDXAppMyGamesPath) Then
-'    Debug.Print s
-'   End If
-'  End With
- ' frmSettings.Show
- ' Randomize Timer
- ' For i = 1 To 1
- '  With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 160 + 160 * Rnd, 120 + 120 * Rnd, 480 + 160 * Rnd, 360 + 120 * Rnd, &HFFFFFF, , , , CStr(Rnd))
- '   .AddNewChildren FakeCtl_Button, 16, 32, 80, 48, , , , , "Danger!!!", , "cmdDanger"
- '  End With
- ' Next i
+  With New clsFakeCommonDialog
+   If .VBGetOpenFileName(s, , , , , "XML Level file|*.xml", , App.Path + "\data\") Then
+    i = objFileMgr.LoadFile(s)
+    If i > 0 Then
+     Set obj1 = New clsTreeStorageNode
+     With New clsXMLSerializer
+      If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj1) Then
+       objGameMgr.ClearLevelData
+       If objGameMgr.AddLevelDataFromNode(obj1) Then
+        objGameMgr.CreateLevelRuntimeData objEffectMgr, objMeshMgr
+        '///
+        bTestOnly = True 'change mode
+        '///
+        m_nCurrentPolyhedron = 0
+        If Not objGameMgr.PolyhedronObject(1) Is Nothing Then
+         v1 = objGameMgr.GetPolyhedronCenterPos(1)
+         objCamera.MoveTargetTo v1
+        End If
+        '///
+       Else
+        bErr = True
+       End If
+      Else
+       bErr = True
+      End If
+     End With
+     objFileMgr.CloseFile i
+    Else
+     bErr = True
+    End If
+   End If
+  End With
+  If bErr Then
+   With New clsFakeDXUIMsgBox
+    .MsgBox "Error when loading level file:" + vbCrLf + s, vbExclamation, "Error"
+   End With
+  End If
  Case "Check1"
   i = FakeDXUIFindControl("Check2")
   If i Then FakeDXUIControls(i).Enabled = obj.Value

@@ -41,6 +41,7 @@ Class=clsFileManager; src\clsFileManager.cls
 Class=clsTextureManager; src\clsTextureManager.cls
 Class=clsGameManager; src\clsGameManager.cls
 Module=mdlTypes; src\mdlTypes.bas
+Class=clsPolyhedron; src\clsPolyhedron.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""

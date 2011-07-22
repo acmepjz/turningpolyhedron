@@ -8,6 +8,9 @@ Public Type typeMeshInstanceData 'N bytes :(
  '0=mesh
  '1-15=hardware instancing mesh, same as hardware instancing mode
  'TODO:etc.
+ '///???
+ nNextInstIndex As Long
+ nChildInstIndex As Long
  '///
  nEffectIndex As Long '<=0 is unused, if <0 then is &H80000000 | (next unused index)
  nMeshIndex As Long 'must >0
@@ -22,10 +25,11 @@ Public Type typeMeshInstanceData 'N bytes :(
 End Type
 
 Public Type typeMeshInstanceCollection
- tInstance() As typeMeshInstanceData 'WARNING: use some dirty code so this member must be the first one
+ tInstance() As typeMeshInstanceData '1-based. WARNING: use some dirty code so this member must be the first one
  nInstOrder() As Long '1-based
  nInstCount As Long
- nInstUnused As Long ', nInstMax As Long
+ nInstUnused As Long 'first unused index
+ 'nInstMax As Long
  bInstDirty As Boolean
 End Type
 
@@ -442,6 +446,8 @@ Public Type typeMapData_Polyhedron
  'TODO:etc.
  sPos As String 'start pos (and start direction)
  'TODO:controller, etc.
+ '///
+ nApprIndex As Long 'TODO:
 End Type
 
 Public Type typeLevelData
