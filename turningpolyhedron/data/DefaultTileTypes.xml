@@ -98,6 +98,17 @@
       <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
+      <shader shaderProgram="standard" ambient="1,1,0" effectStates="FillMode=WIREFRAME;">
+        <mesh type="cube" s="1,1,1"/>
+      </shader>
+    </appearance>
+    <onEnter condition="onGroundCount=1;main=true" event="game-finished"/>
+  </tileType>
+  <tileType id="floating-goal" supporter="false" tilt-supporter="false" non-block="true">
+    <appearance><!-- TODO: particle system -->
+      <shader shaderProgram="standard" ambient="1,1,0" effectStates="FillMode=WIREFRAME;">
+        <mesh type="cube" s="1,1,1"/>
+      </shader>
     </appearance>
     <onEnter condition="onGroundCount=1;main=true" event="game-finished"/>
   </tileType>
@@ -172,7 +183,7 @@
     <description>Only black block can pass through black ground.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+      <shader templateName="simple1_fixed" ambient="0.1,0.1,0.1" diffuse="0.1,0.1,0.1" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
@@ -183,7 +194,7 @@
     <description>Only white block can pass through white ground.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+      <shader templateName="simple1_fixed" ambient="0.7,0.7,0.7" diffuse="0.1,0.1,0.1" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>

@@ -107,9 +107,6 @@ Public objFileMgr As New clsFileManager
 Public objMeshMgr As New clsMeshManager
 Public objGameMgr As New clsGameManager
 
-'test
-Public m_tInstTest As typeMeshInstanceCollection
-
 '////////settings
 Public frmSettings As New frmSettings
 
@@ -214,9 +211,15 @@ With d3dd9
    'objEffectMgr.SetupEffect 1, True, True, True, True, , True
    .BeginScene
    '///TEST TEST TEST
-   objEffectMgr.DrawInstanceEx m_tInstTest, objMeshMgr, True, True
-   objGameMgr.DrawPolyhedron
+   objGameMgr.DrawLevel objEffectMgr, objMeshMgr
    'objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
+   '////////draw landscape
+   d3dd9.SetTexture 0, objLandTexture
+   .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
+   objRenderTest.UpdateRenderState
+   objLand.Render objRenderTest, objCamera
+   .SetTransform D3DTS_WORLD, mat
+   '////////
    '///
    .EndScene
    'objEffectMgr.EndEffect
@@ -282,6 +285,7 @@ End Sub
 
 Public Sub FakeDXAppOnInitalize(Optional ByVal bReset As Boolean)
 Static bInit As Boolean
+Const nSize As Long = 512
 'If bReset Then bInit = False Else _
 'If bInit Then Exit Sub
 '///
@@ -297,14 +301,14 @@ If bReset Then
 End If
 If bInit Then Exit Sub
 '///modified: generate texture and copy to managed memory pool (slow?)
-'D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objTexture
-'D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objNormalTexture
+'D3DXCreateTexture d3dd9, nSize, nSize, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objTexture
+'D3DXCreateTexture d3dd9, nSize, nSize, 1, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objNormalTexture
 '///
 Dim obj As Direct3DTexture9
 Dim obj2 As Direct3DTexture9
 '///
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj2
+D3DXCreateTexture d3dd9, nSize, nSize, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj
+D3DXCreateTexture d3dd9, nSize, nSize, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, obj2
 objTextMgr.ProcessTextureEx Nothing, obj, "process_lerp", 0, 0, 0, 0, Vec4(-1024), Vec4(-1024), Vec4, Vec4
 objTextMgr.BeginRenderToTexture obj, "gen_simplexnoise", 6, 0, 0, 0, Vec4(1, 1, 0.86, 1.85), Vec4, Vec4, Vec4
 d3dd9.BeginScene
@@ -318,9 +322,9 @@ objTextMgr.ProcessTexture obj2, obj, "expand8_r32f"
 objTextMgr.ProcessTextureEx obj, obj2, "process_smoothstep", 0, 0, 0, 0, Vec4(-1, 1, 0, 1), Vec4, Vec4, Vec4
 Set obj = Nothing
 '///
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, obj
-D3DXCreateTexture d3dd9, 1024, 512, 0, D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, objTexture
-D3DXCreateTexture d3dd9, 1024, 512, 1, D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, objNormalTexture
+D3DXCreateTexture d3dd9, nSize, nSize, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, 0, obj
+D3DXCreateTexture d3dd9, nSize, nSize, 0, D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, objTexture
+D3DXCreateTexture d3dd9, nSize, nSize, 1, D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, objNormalTexture
 objTextMgr.ProcessTextureEx obj2, obj, "process_lerp", 0, 0, 0, 0, Vec4(44 / 255, 36 / 255, 35 / 255, 1), Vec4(211 / 255, 120 / 255, 93 / 255, 1), Vec4, Vec4
 CopyRenderTargetData obj, objTexture
 '///
@@ -588,15 +592,15 @@ With New clsXMLSerializer
   objGameMgr.LoadTileTypesFromSubNodes obj, objEffectMgr, objMeshMgr
  End If
  '///TEST:load level
- i = objFileMgr.LoadFile("lvltest3.xml")
+ i = objFileMgr.LoadFile("lvltest.xml")
  If i > 0 Then
   Set obj = New clsTreeStorageNode
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then
    If objGameMgr.AddLevelDataFromNode(obj) Then
-    objGameMgr.CreateLevelRuntimeData
-    objGameMgr.GenerateMeshFromLevelData objEffectMgr, m_tInstTest
+    objGameMgr.CreateLevelRuntimeData objEffectMgr, objMeshMgr
    End If
   End If
+  objFileMgr.CloseFile i
  End If
  '///
 End With
@@ -628,7 +632,7 @@ End With
 'End If
 '////////landscape test
 Dim t As D3DXIMAGE_INFO
-objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
+objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -50 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
 'objLand.CreateFromFile App.Path + "\heightmap_test.png", 3, 5, 0.05, , , -15, App.Path + "\fogmap_test.png", 3, 0.05, 2
 'objLand.FogEnabled = True
 D3DXCreateTextureFromFileExW d3dd9, App.Path + "\test0.png", D3DX_DEFAULT, D3DX_DEFAULT, 1, 0, D3DFMT_FROM_FILE, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, t, ByVal 0, objLandTexture

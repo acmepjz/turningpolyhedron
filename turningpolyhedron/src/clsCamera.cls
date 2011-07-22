@@ -73,6 +73,22 @@ m_tViewAt.z = m_tViewAt.z + dz
 If bStopAnimation Then StopAnimation '???
 End Sub
 
+Friend Sub MoveCameraTo(ByRef v As D3DVECTOR, Optional ByVal bStopAnimation As Boolean)
+m_tViewAt.x = m_tViewAt.x + v.x - m_tViewPos.x
+m_tViewAt.y = m_tViewAt.y + v.y - m_tViewPos.y
+m_tViewAt.z = m_tViewAt.z + v.z - m_tViewPos.z
+m_tViewPos = v
+If bStopAnimation Then StopAnimation '???
+End Sub
+
+Friend Sub MoveTargetTo(ByRef v As D3DVECTOR, Optional ByVal bStopAnimation As Boolean)
+m_tViewPos.x = m_tViewPos.x + v.x - m_tViewAt.x
+m_tViewPos.y = m_tViewPos.y + v.y - m_tViewAt.y
+m_tViewPos.z = m_tViewPos.z + v.z - m_tViewAt.z
+m_tViewAt = v
+If bStopAnimation Then StopAnimation '???
+End Sub
+
 Friend Sub MoveByLocalCoordinatesLH(ByVal dx As Single, ByVal dy As Single, ByVal dz As Single, Optional ByVal bStopAnimation As Boolean)
 Dim xx As D3DVECTOR, yy As D3DVECTOR, zz As D3DVECTOR
 Dim x1 As Single, y1 As Single, z1 As Single
