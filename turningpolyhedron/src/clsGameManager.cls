@@ -56,6 +56,7 @@ If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then _
 Set PolyhedronObject = m_objPoly(nPolyhedronIndex)
 End Property
 
+'TODO:animation
 Friend Function GetPolyhedronCenterPos(ByVal nPolyhedronIndex As Long) As D3DVECTOR
 Dim ret As D3DVECTOR
 Dim i As Long, j As Long, k As Long
@@ -84,7 +85,10 @@ End Function
 Friend Sub DrawLevel(ByVal objEffectMgr As clsEffectManager, ByVal objMeshMgr As clsMeshManager)
 '///TEST ONLY
 Dim idx As Long
-Dim mat As D3DMATRIX
+Dim mat As D3DMATRIX, mat1 As D3DMATRIX
+Dim vBase As D3DVECTOR, vNormal As D3DVECTOR, vAxis As D3DVECTOR
+Dim v As D3DVECTOR
+Dim matWorld() As D3DMATRIX
 Dim f(31) As Single
 Dim d(23) As Integer
 Dim i As Long, j As Long, k As Long, l As Long
@@ -92,19 +96,93 @@ Dim tmp As Long
 Dim p As typePolyhedronPosition
 '///
 If m_bRuntimeDirty Then Exit Sub
-'///TODO: setup polyhedron world matrix
-''TODO:animation, etc.
-'For idx = 1 To m_tLevel.nPolyhedronCount
-' If m_nPolyInstIndex(idx) > 0 Then
-'  p = m_objPoly(idx).Position
-'  '///
-'  Select Case m_tLevel.tPolyhedron(idx).nShape
-'  Case &H111 To &HFFF
-'  Case Else
-'   Debug.Assert False
-'  End Select
-' End If
-'Next idx
+If m_tLevel.nPolyhedronCount <= 0 Then Exit Sub
+ReDim matWorld(1 To m_tLevel.nPolyhedronCount) 'TODO:global array
+'///setup polyhedron world matrix
+'TODO:adjacency data; animation, etc.
+For idx = 1 To m_tLevel.nPolyhedronCount
+ matWorld(idx) = D3DXMatrixIdentity
+ p = m_objPoly(idx).Position
+ If p.nMapDataIndex > 0 And p.nMapDataIndex <= m_tLevel.nMapDataCount Then
+  Select Case m_tLevel.tPolyhedron(idx).nShape
+  Case &H111 To &HFFF
+   m_objPoly(idx).GetCurrentSize i, j, k
+   m_objPoly(idx).GetPolyhedronCoordinates vBase, vNormal, vAxis
+   v = D3DXVec3Cross(vAxis, vNormal)
+   mat.m11 = vNormal.x
+   mat.m12 = vNormal.y
+   mat.m13 = vNormal.z
+   mat.m21 = vAxis.x
+   mat.m22 = vAxis.y
+   mat.m23 = vAxis.z
+   mat.m31 = v.x
+   mat.m32 = v.y
+   mat.m33 = v.z
+   mat.m41 = vBase.x
+   mat.m42 = vBase.y
+   mat.m43 = vBase.z
+   mat.m44 = 1
+   D3DXMatrixInverse mat, 0, mat
+   '///
+   With m_tLevel.tMapData(p.nMapDataIndex)
+    mat1.m11 = -.fPos(3).x
+    mat1.m12 = -.fPos(3).y
+    mat1.m13 = -.fPos(3).z
+    Select Case (p.nGroundEdgeIndex - p.nFirstEdgeIndex) And 3&
+    Case 0
+     mat1.m21 = .fPos(1).x
+     mat1.m22 = .fPos(1).y
+     mat1.m23 = .fPos(1).z
+     mat1.m31 = .fPos(2).x
+     mat1.m32 = .fPos(2).y
+     mat1.m33 = .fPos(2).z
+     mat1.m41 = .fPos(0).x + p.x * .fPos(1).x + p.y * .fPos(2).x + p.z * .fPos(3).x
+     mat1.m42 = .fPos(0).y + p.x * .fPos(1).y + p.y * .fPos(2).y + p.z * .fPos(3).y
+     mat1.m43 = .fPos(0).z + p.x * .fPos(1).z + p.y * .fPos(2).z + p.z * .fPos(3).z
+    Case 1
+     mat1.m21 = -.fPos(2).x
+     mat1.m22 = -.fPos(2).y
+     mat1.m23 = -.fPos(2).z
+     mat1.m31 = .fPos(1).x
+     mat1.m32 = .fPos(1).y
+     mat1.m33 = .fPos(1).z
+     mat1.m41 = .fPos(0).x + p.x * .fPos(1).x + (p.y + j) * .fPos(2).x + p.z * .fPos(3).x
+     mat1.m42 = .fPos(0).y + p.x * .fPos(1).y + (p.y + j) * .fPos(2).y + p.z * .fPos(3).y
+     mat1.m43 = .fPos(0).z + p.x * .fPos(1).z + (p.y + j) * .fPos(2).z + p.z * .fPos(3).z
+    Case 2
+     mat1.m21 = -.fPos(1).x
+     mat1.m22 = -.fPos(1).y
+     mat1.m23 = -.fPos(1).z
+     mat1.m31 = -.fPos(2).x
+     mat1.m32 = -.fPos(2).y
+     mat1.m33 = -.fPos(2).z
+     mat1.m41 = .fPos(0).x + (p.x + i) * .fPos(1).x + (p.y + j) * .fPos(2).x + p.z * .fPos(3).x
+     mat1.m42 = .fPos(0).y + (p.x + i) * .fPos(1).y + (p.y + j) * .fPos(2).y + p.z * .fPos(3).y
+     mat1.m43 = .fPos(0).z + (p.x + i) * .fPos(1).z + (p.y + j) * .fPos(2).z + p.z * .fPos(3).z
+    Case 3
+     mat1.m21 = .fPos(2).x
+     mat1.m22 = .fPos(2).y
+     mat1.m23 = .fPos(2).z
+     mat1.m31 = -.fPos(1).x
+     mat1.m32 = -.fPos(1).y
+     mat1.m33 = -.fPos(1).z
+     mat1.m41 = .fPos(0).x + (p.x + i) * .fPos(1).x + p.y * .fPos(2).x + p.z * .fPos(3).x
+     mat1.m42 = .fPos(0).y + (p.x + i) * .fPos(1).y + p.y * .fPos(2).y + p.z * .fPos(3).y
+     mat1.m43 = .fPos(0).z + (p.x + i) * .fPos(1).z + p.y * .fPos(2).z + p.z * .fPos(3).z
+    End Select
+    mat1.m44 = 1
+   End With
+   '///
+   D3DXMatrixMultiply matWorld(idx), mat, mat1
+  Case Else
+   Debug.Assert False
+  End Select
+ End If
+ If m_nPolyInstIndex(idx) > 0 Then
+  'TODO:multiple objects
+  m_tLevelInst.tInstance(m_nPolyInstIndex(idx)).matWorld = matWorld(idx)
+ End If
+Next idx
 '///draw level
 objEffectMgr.DrawInstanceEx m_tLevelInst, objMeshMgr, True, True
 '///draw polyhedron which doesn't have appearance
@@ -121,34 +199,30 @@ d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
 d3dd9.SetFVF D3DFVF_XYZ Or D3DFVF_DIFFUSE
 '///
 For idx = 1 To m_tLevel.nPolyhedronCount
- 'If m_nPolyInstIndex(idx) = 0 Then
+ If m_nPolyInstIndex(idx) = 0 Then
   '///TEST ONLY
-  m_objPoly(idx).GetCurrentSize i, j, k
-  p = m_objPoly(idx).Position
-  If p.nMapDataIndex > 0 And p.nMapDataIndex <= m_tLevel.nMapDataCount Then
-   '///
-   With m_tLevel.tMapData(p.nMapDataIndex)
-    For l = 0 To 7
-     f(l * 4) = .fPos(0).x + _
-     (p.x + i * (l And 1&)) * .fPos(1).x + _
-     (p.y + j * ((l \ 2&) And 1&)) * .fPos(2).x + _
-     (p.z + k * ((l \ 4&) And 1&)) * .fPos(3).x
-     f(l * 4 + 1) = .fPos(0).y + _
-     (p.x + i * (l And 1&)) * .fPos(1).y + _
-     (p.y + j * ((l \ 2&) And 1&)) * .fPos(2).y + _
-     (p.z + k * ((l \ 4&) And 1&)) * .fPos(3).y
-     f(l * 4 + 2) = .fPos(0).z + _
-     (p.x + i * (l And 1&)) * .fPos(1).z + _
-     (p.y + j * ((l \ 2&) And 1&)) * .fPos(2).z + _
-     (p.z + k * ((l \ 4&) And 1&)) * .fPos(3).z
-    Next l
-   End With
-   '///
-   d3dd9.DrawIndexedPrimitiveUP D3DPT_LINELIST, 0, 8, 12, d(0), D3DFMT_INDEX16, f(0), 16&
-  End If
+  '///assume it's cuboid
+  m_objPoly(idx).GetSize i, j, k
+  With matWorld(idx)
+   For l = 0 To 7
+    f(l * 4) = .m41 + _
+    (i * (l And 1&)) * .m11 + _
+    (j * ((l \ 2&) And 1&)) * .m21 + _
+    (k * ((l \ 4&) And 1&)) * .m31
+    f(l * 4 + 1) = .m42 + _
+    (i * (l And 1&)) * .m12 + _
+    (j * ((l \ 2&) And 1&)) * .m22 + _
+    (k * ((l \ 4&) And 1&)) * .m32
+    f(l * 4 + 2) = .m43 + _
+    (i * (l And 1&)) * .m13 + _
+    (j * ((l \ 2&) And 1&)) * .m23 + _
+    (k * ((l \ 4&) And 1&)) * .m33
+   Next l
+  End With
   '///
-  'TODO:
- 'End If
+  d3dd9.DrawIndexedPrimitiveUP D3DPT_LINELIST, 0, 8, 12, d(0), D3DFMT_INDEX16, f(0), 16&
+  '///
+ End If
 Next idx
 '///
 d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, tmp
@@ -652,6 +726,8 @@ Dim i As Long, j As Long, k As Long
 Dim s As String
 Dim obj As clsTreeStorageNode
 Dim nFlags As Long
+Dim nSizeX As Single, nSizeY As Single, nSizeZ As Single
+Dim bAutoSize As Boolean
 '///
 nFlags = &HFE&
 tPoly.nShape = &H112&
@@ -753,6 +829,8 @@ For i = 1 To objNode.SubNodeCount
    End If
    '///debug
    'Debug.Print "Polyhedron start:" + tPoly.sPos
+  Case "autoSize"
+   bAutoSize = pFlagsFromBooleanString(s, 0, 1)
   Case "discardable"
    nFlags = pFlagsFromBooleanString(s, nFlags, &H1&)
   Case "main"
@@ -775,7 +853,21 @@ For i = 1 To objNode.SubNodeCount
   Set obj = objNode.SubNodeObject(i)
   Select Case obj.GetNameAsString
   Case "appearance"
-   tPoly.nApprIndex = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr)
+   nSizeX = 1
+   nSizeY = 1
+   nSizeZ = 1
+   If bAutoSize Then
+    Select Case tPoly.nShape
+    Case &H111 To &HFFF
+     'new: default size
+     nSizeX = (tPoly.nShape And &HF00&) \ &H100&
+     nSizeY = (tPoly.nShape And &HF0&) \ &H10&
+     nSizeZ = tPoly.nShape And &HF&
+    Case Else
+     '??? TODO:
+    End Select
+   End If
+   tPoly.nApprIndex = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr, nSizeX, nSizeY, nSizeZ)
   End Select
  End If
 Next i

@@ -468,10 +468,14 @@ Public Type typePolyhedronFaceLogic
  nSize(2) As Long
  'rect: w,h (length of edge 0, length of edge 1)
  'etc.
+ '///normal vector
+ vNormal As D3DVECTOR
  '///
  nAdjacentFace(7) As Byte
  nAdjacentFaceEdge(7) As Byte
  '///
+ vBase(7) As D3DVECTOR 'base point
+ 'vAxis(7) As D3DVECTOR 'axis of rotation <==doesn't need, equals to vBase(i-1)-vBase(i) (???)
 End Type
 
 Public Type typePolyhedronLogic

@@ -1135,7 +1135,7 @@ tFace(nFaceIndex).nVertex(1) = nVertexIndex2
 tFace(nFaceIndex).nVertex(2) = nVertexIndex3
 End Sub
 
-Friend Function AddMeshFromNode(ByVal objNode As clsTreeStorageNode) As Long
+Friend Function AddMeshFromNode(ByVal objNode As clsTreeStorageNode, Optional ByVal DefaultSizeX As Single = 1, Optional ByVal DefaultSizeY As Single = 1, Optional ByVal DefaultSizeZ As Single = 1) As Long
 On Error Resume Next
 Dim t As typeMeshMgrData, t2 As typeMeshOptionalData
 Dim i As Long, j As Long, k As Long, m As Long
@@ -1170,7 +1170,7 @@ For i = 1 To objNode.SubNodeCount
    Case "cube"
     t.nType = 1
     '///
-    t2.fScale = Vec4(1, 1, 1, 1)
+    t2.fScale = Vec4(DefaultSizeX, DefaultSizeY, DefaultSizeZ, 1)
     t2.fPos(1) = Vec4(1)
     t2.fPos(2) = Vec4(, 1)
     t2.fPos(3) = Vec4(, , 1)
