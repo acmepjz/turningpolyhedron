@@ -1378,7 +1378,7 @@ Case Else
 End Select
 End Function
 
-Friend Function AddAppearanceFromNode(ByVal objNode As clsTreeStorageNode, ByVal objMeshMgr As clsMeshManager) As Long
+Friend Function AddAppearanceFromNode(ByVal objNode As clsTreeStorageNode, ByVal objMeshMgr As clsMeshManager, Optional ByVal DefaultSizeX As Single = 1, Optional ByVal DefaultSizeY As Single = 1, Optional ByVal DefaultSizeZ As Single = 1) As Long
 Dim i As Long, j As Long, k As Long
 Dim nEffectIndex As Long, nMeshIndex As Long
 Dim s As String
@@ -1418,7 +1418,7 @@ For i = 1 To objNode.SubNodeCount
    If nEffectIndex > 0 Then
     For j = 1 To obj.SubNodeCount
      If obj.SubNodeType(j) = 1 Then
-      nMeshIndex = objMeshMgr.AddMeshFromNode(obj.SubNodeObject(j))
+      nMeshIndex = objMeshMgr.AddMeshFromNode(obj.SubNodeObject(j), DefaultSizeX, DefaultSizeY, DefaultSizeZ)
       Debug.Assert nMeshIndex > 0
       If nMeshIndex > 0 Then
        k = m_tAppr(m_nApprCount).nCount + 1

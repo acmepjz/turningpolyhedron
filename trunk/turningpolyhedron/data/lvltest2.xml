@@ -19,5 +19,9 @@
     <property index="3" tag="a"/>
     <property index="4" tag="b"/>
   </mapData>
-  <polyhedron p="m1(1,4)"/>
+  <polyhedron p="m1(1,4)" autoSize="true">
+      <appearance><shader templateName="simple1_fixed" ambient="0.2,0.2,0.2" diffuse="0.2,0.2,0.2" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader></appearance>
+    </polyhedron>
 </level>

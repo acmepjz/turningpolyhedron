@@ -225,16 +225,22 @@ Case &H111 To &HFFF
  ReDim tLogic.tFace(0 To 5)
  '///bottom
  CreatePolyhedronFaceLogic tLogic.tFace(0), 4, i, j, , &H3254&, &H1232&
+ SetPolyhedronFaceNormal4 tLogic.tFace(0), Vec3(, , -1), Vec3, Vec3(, j), Vec3(i, j), Vec3(i)
  '///top
  CreatePolyhedronFaceLogic tLogic.tFace(1), 4, i, j, , &H5234&, &H1030&
+ SetPolyhedronFaceNormal4 tLogic.tFace(1), Vec3(, , 1), Vec3(i, , k), Vec3(i, j, k), Vec3(, j, k), Vec3(, , k)
  '///front
  CreatePolyhedronFaceLogic tLogic.tFace(2), 4, i, k, , &H5031&, &H2222&
+ SetPolyhedronFaceNormal4 tLogic.tFace(2), Vec3(, 1), Vec3(i, j, k), Vec3(i, j), Vec3(, j), Vec3(, j, k)
  '///right
  CreatePolyhedronFaceLogic tLogic.tFace(3), 4, k, j, , &H1204&, &H1133&
+ SetPolyhedronFaceNormal4 tLogic.tFace(3), Vec3(1), Vec3(i), Vec3(i, j), Vec3(i, j, k), Vec3(i, , k)
  '///back
  CreatePolyhedronFaceLogic tLogic.tFace(4), 4, i, k, , &H3051&, 0
+ SetPolyhedronFaceNormal4 tLogic.tFace(4), Vec3(, -1), Vec3(, , k), Vec3, Vec3(i), Vec3(i, , k)
  '///left
  CreatePolyhedronFaceLogic tLogic.tFace(5), 4, k, j, , &H214&, &H1331&
+ SetPolyhedronFaceNormal4 tLogic.tFace(5), Vec3(-1), Vec3(, , k), Vec3(, j, k), Vec3(, j), Vec3
 Case Else
  'TODO:
  Debug.Assert False
@@ -256,6 +262,30 @@ For i = 0 To nEdgeCount - 1
  nAdjacentFace = nAdjacentFace \ &H10&
  nAdjacentFaceEdge = nAdjacentFaceEdge \ &H10&
 Next i
+End Sub
+
+'vNormal should be normalized
+Friend Sub SetPolyhedronFaceNormal4(ByRef tFace As typePolyhedronFaceLogic, ByRef vNormal As D3DVECTOR, ByRef p0 As D3DVECTOR, ByRef p1 As D3DVECTOR, ByRef p2 As D3DVECTOR, ByRef p3 As D3DVECTOR)
+tFace.vNormal = vNormal
+tFace.vBase(0) = p0
+tFace.vBase(1) = p1
+tFace.vBase(2) = p2
+tFace.vBase(3) = p3
+End Sub
+
+Friend Sub GetPolyhedronCoordinates(ByRef vBase As D3DVECTOR, ByRef vNormal As D3DVECTOR, ByRef vRotationAxis As D3DVECTOR)
+GetPolyhedronCoordinatesEx m_tPos, vBase, vNormal, vRotationAxis
+End Sub
+
+Friend Sub GetPolyhedronCoordinatesEx(ByRef tPos As typePolyhedronPosition, ByRef vBase As D3DVECTOR, ByRef vNormal As D3DVECTOR, ByRef vRotationAxis As D3DVECTOR)
+Dim idx As Long, i As Long, j As Long
+idx = tPos.nGroundFaceIndex
+i = tPos.nGroundEdgeIndex
+j = i - 1
+If j < 0 Then j = j + m_tLogic.tFace(idx).nEdgeCount
+vBase = m_tLogic.tFace(idx).vBase(i)
+vNormal = m_tLogic.tFace(idx).vNormal
+D3DXVec3Normalize vRotationAxis, D3DXVec3Subtract(m_tLogic.tFace(idx).vBase(j), vBase)
 End Sub
 
 Friend Function CanChangeGroundEdgeIndex(ByVal nNewIndex As Long, ByVal objGameMgr As clsGameManager) As Boolean
@@ -358,6 +388,7 @@ Case &H111 To &HFFF
      Exit Function
     End If
    Case &H80000000 To &H8000FFFF 'block tiltable
+    'TODO:check tilt angle
     If j = 1 Then
      CheckPolyhedronStateEx = 0 '???
      Exit Function
