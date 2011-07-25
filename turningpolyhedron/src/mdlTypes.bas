@@ -474,7 +474,7 @@ Public Type typePolyhedronFaceLogic
  nAdjacentFace(7) As Byte
  nAdjacentFaceEdge(7) As Byte
  '///
- vBase(7) As D3DVECTOR 'base point
+ vBase(7) As D3DVECTOR 'base point: vBase(i)=intersection of edge(i) and edge(i+1)
  'vAxis(7) As D3DVECTOR 'axis of rotation <==doesn't need, equals to vBase(i-1)-vBase(i) (???)
 End Type
 

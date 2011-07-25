@@ -283,12 +283,12 @@ Friend Property Let InstanceTransform(ByVal nIndex As Long, ByRef mat As D3DMATR
 m_tInst.tInstance(nIndex).matWorld = mat
 End Property
 
-Friend Sub DrawInstance(ByVal objMeshMgr As clsMeshManager, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
-DrawInstanceEx m_tInst, objMeshMgr, bSetupLight, bUseExistingTransform
+Friend Sub DrawInstance(Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
+DrawInstanceEx m_tInst, bSetupLight, bUseExistingTransform
 End Sub
 
 'has some code copied from SetupEffect
-Friend Sub DrawInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal objMeshMgr As clsMeshManager, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
+Friend Sub DrawInstanceEx(ByRef tInst As typeMeshInstanceCollection, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
 Dim i As Long, ii As Long, j As Long, k As Long
 Dim idx As Long
 Dim nEffectIndex As Long
@@ -402,12 +402,12 @@ End If
 d3dd9.SetTransform D3DTS_WORLD, matBackup
 End Sub
 
-Friend Function AddHWInstance(ByVal objMeshMgr As clsMeshManager, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
-AddHWInstance = AddHWInstanceEx(m_tInst, objMeshMgr, nEffectIndex, nMeshIndex, matWorld, nStart, nEnd)
+Friend Function AddHWInstance(ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
+AddHWInstance = AddHWInstanceEx(m_tInst, nEffectIndex, nMeshIndex, matWorld, nStart, nEnd)
 End Function
 
 'TODO:per-instance color support, etc.
-Friend Function AddHWInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal objMeshMgr As clsMeshManager, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long, Optional ByRef nLastInstIndex As Long) As Long
+Friend Function AddHWInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long, Optional ByRef nLastInstIndex As Long) As Long
 Dim nHWInstancingMode As Long
 Dim objInstanceBuffer As Direct3DVertexBuffer9
 Dim objMesh As D3DXMesh
@@ -484,12 +484,12 @@ Set tInst.tInstance(i).objInstanceBuffer = objInstanceBuffer
 AddHWInstanceEx = i
 End Function
 
-Friend Function AddHWInstanceFromAppearance(ByVal objMeshMgr As clsMeshManager, ByVal nIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
-AddHWInstanceFromAppearance = AddHWInstanceFromAppearanceEx(m_tInst, objMeshMgr, nIndex, matWorld, nStart, nEnd)
+Friend Function AddHWInstanceFromAppearance(ByVal nIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
+AddHWInstanceFromAppearance = AddHWInstanceFromAppearanceEx(m_tInst, nIndex, matWorld, nStart, nEnd)
 End Function
 
 'TODO:per-instance color support, etc.
-Friend Function AddHWInstanceFromAppearanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal objMeshMgr As clsMeshManager, ByVal nIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
+Friend Function AddHWInstanceFromAppearanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
 Dim i As Long, j As Long, k As Long, idx As Long
 'Dim t As typeMeshInstanceData
 If nIndex > 0 And nIndex <= m_nApprCount Then
@@ -497,7 +497,7 @@ If nIndex > 0 And nIndex <= m_nApprCount Then
   '///TODO:custom base matrix (important if m_tAppr(nIndex).tData(i).matWorld is not identity)
   't = m_tAppr(nIndex).tData(i)
   'D3DXMatrixMultiply t.matWorld, t.matWorld, matWorld
-  k = AddHWInstanceEx(tInst, objMeshMgr, m_tAppr(nIndex).tData(i).nEffectIndex, _
+  k = AddHWInstanceEx(tInst, m_tAppr(nIndex).tData(i).nEffectIndex, _
   m_tAppr(nIndex).tData(i).nMeshIndex, matWorld, nStart, nEnd, idx)
   If idx = 0 Then idx = k
   tInst.tInstance(idx).nNextInstIndex = j
@@ -1378,7 +1378,7 @@ Case Else
 End Select
 End Function
 
-Friend Function AddAppearanceFromNode(ByVal objNode As clsTreeStorageNode, ByVal objMeshMgr As clsMeshManager, Optional ByVal DefaultSizeX As Single = 1, Optional ByVal DefaultSizeY As Single = 1, Optional ByVal DefaultSizeZ As Single = 1) As Long
+Friend Function AddAppearanceFromNode(ByVal objNode As clsTreeStorageNode, Optional ByVal DefaultSizeX As Single = 1, Optional ByVal DefaultSizeY As Single = 1, Optional ByVal DefaultSizeZ As Single = 1) As Long
 Dim i As Long, j As Long, k As Long
 Dim nEffectIndex As Long, nMeshIndex As Long
 Dim s As String

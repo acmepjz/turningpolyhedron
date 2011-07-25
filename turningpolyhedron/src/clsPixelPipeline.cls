@@ -501,7 +501,7 @@ If m_bPostProcessEnabled Then
 End If
 End Sub
 
-Friend Sub PerformPostProcess(ByVal objDraw As clsTextureManager)
+Friend Sub PerformPostProcess()
 Dim nOldState As Long
 Dim i As Long, j As Long
 Dim f As Single
@@ -524,19 +524,19 @@ If m_bFog Then
  'fog test
  'it looks ugly when FSAA is enabled. TODO:
  If m_bVolumeFog And Not objPostProcessTarget(IDR_VolumetricFogTarget) Is Nothing Then
-  objDraw.ProcessTwoTextureEx objPostProcessTarget(IDR_Main), _
+  objTextMgr.ProcessTwoTextureEx objPostProcessTarget(IDR_Main), _
   objPostProcessTarget(IDR_VolumetricFogTarget), _
   objPostProcessTarget(IDR_Auxiliary), _
   "fx_linear_with_volume_fog", 0, 0, 0, 0, Vec4, v2, Vec4(0, 200, 1), m_vDistCorrection
  Else
-  objDraw.ProcessTextureEx objPostProcessTarget(IDR_Main), _
+  objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_Main), _
   objPostProcessTarget(IDR_Auxiliary), _
   "fx_linear_with_fog", 0, 0, 0, 0, Vec4, v2, Vec4(0, 200, 1), m_vDistCorrection
  End If
 ElseIf m_nDOFType > 0 Then
  v2 = m_vDepthOfField
  v2.y = v2.y / m_zf
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_Main), _
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_Main), _
  objPostProcessTarget(IDR_Auxiliary), _
  "fx_depth_of_field_only", 0, 0, 0, 0, v2, v2, v2, v2 'Vec4, v2, Vec4, Vec4
 Else
@@ -546,33 +546,33 @@ End If
 '///depth of field test
 If m_nDOFType = 1 Then
  '///
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_DOF2), _
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_DOF2), _
  "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 2
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_DOF2), objPostProcessTarget(IDR_DOF1), _
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_DOF2), objPostProcessTarget(IDR_DOF1), _
  "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 1
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_DOF1), objPostProcessTarget(IDR_DOF2), _
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_DOF1), objPostProcessTarget(IDR_DOF2), _
  "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_DOF2), objPostProcessTarget(IDR_DOF1), _
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_DOF2), objPostProcessTarget(IDR_DOF1), _
  "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
  '///
- objDraw.ProcessTwoTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_DOF1), _
+ objTextMgr.ProcessTwoTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_DOF1), _
  objPostProcessTarget(IDR_Main), "process_lerp_ex", 0, 0, 0, 0, Vec4(2, 1), Vec4, Vec4, Vec4
  '///
  d3dd9.StretchRect objPostProcessTarget(IDR_Main).GetSurfaceLevel(0), ByVal 0, _
  objPostProcessTarget(IDR_Auxiliary).GetSurfaceLevel(0), ByVal 0, D3DTEXF_NONE
 ElseIf m_nDOFType >= 2 Then
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_Main), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_Main), objPostProcessTarget(IDR_Auxiliary), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_Main), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_Main), objPostProcessTarget(IDR_Auxiliary), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_Main), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_Main), objPostProcessTarget(IDR_Auxiliary), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_Main), "convolve_h_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_Main), objPostProcessTarget(IDR_Auxiliary), "convolve_v_symmetric4_ex", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, 3
 End If
 '////////////////HDR
 f = 4 '8
 '///calc luminance
-objDraw.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_Luminance), "fx_to_luminance", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
-objDraw.ProcessTextureEx objPostProcessTarget(IDR_Luminance), objPostProcessTarget(IDR_AverageLuminance), "fx_from_luminance_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 16), Vec4, Vec4, Vec4
+objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_Luminance), "fx_to_luminance", 0, 0, 0, 0, Vec4(f), Vec4, Vec4, Vec4
+objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_Luminance), objPostProcessTarget(IDR_AverageLuminance), "fx_from_luminance_bias", 0, 0, 0, 0, Vec4(f, 0, 0, 16), Vec4, Vec4, Vec4
 '///bright pass
-objDraw.ProcessTwoTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_AverageLuminance), objPostProcessTarget(IDR_BlurPass1), _
+objTextMgr.ProcessTwoTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_AverageLuminance), objPostProcessTarget(IDR_BlurPass1), _
 "normalized_brightpass", 0, 0, 0, 0, Vec4(1), Vec4, Vec4, Vec4  'Vec4(1, 0.25) 'simple_brightpass
 '////////////////
 '///blur - see documentation
@@ -585,8 +585,8 @@ Else
  Else j = &H110502
 End If
 For i = 0 To 2
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass1), objPostProcessTarget(IDR_BlurPass2), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass2), objPostProcessTarget(IDR_BlurPass1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_BlurPass1), objPostProcessTarget(IDR_BlurPass2), "convolve_h_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_BlurPass2), objPostProcessTarget(IDR_BlurPass1), "convolve_v_symmetric4", 0, 0, 0, 0, v, Vec4, Vec4, Vec4, j And &HFF&
  j = j \ &H100&
  If j <= 0 Then Exit For
 Next i
@@ -594,11 +594,11 @@ Next i
 'the coefficients:
 'Table[ToString[(ToString[#]<>"!")&/@N[z^-Table[n*t/5,{n,4}]/.{t->5^-k,z->10},10]],{k,0,3}]
 If m_bRadialBlur Then
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass1), objPostProcessTarget(IDR_BlurPass2), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.6309574!, 0.3981072!, 0.2511886!, 0.1584893!), Vec4, Vec4, Vec4
- objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass2), objPostProcessTarget(IDR_BlurPass1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9120108!, 0.8317637!, 0.7585776!, 0.691831!), Vec4, Vec4, Vec4
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_BlurPass1), objPostProcessTarget(IDR_BlurPass2), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.6309574!, 0.3981072!, 0.2511886!, 0.1584893!), Vec4, Vec4, Vec4
+ objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_BlurPass2), objPostProcessTarget(IDR_BlurPass1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9120108!, 0.8317637!, 0.7585776!, 0.691831!), Vec4, Vec4, Vec4
  If m_nHDRBlurQuality > 1 Then
-  objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass1), objPostProcessTarget(IDR_BlurPass2), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9817479!, 0.963829!, 0.9462371!, 0.9289664!), Vec4, Vec4, Vec4
-  objDraw.ProcessTextureEx objPostProcessTarget(IDR_BlurPass2), objPostProcessTarget(IDR_BlurPass1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9963226!, 0.9926588!, 0.9890084!, 0.9853715!), Vec4, Vec4, Vec4
+  objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_BlurPass1), objPostProcessTarget(IDR_BlurPass2), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9817479!, 0.963829!, 0.9462371!, 0.9289664!), Vec4, Vec4, Vec4
+  objTextMgr.ProcessTextureEx objPostProcessTarget(IDR_BlurPass2), objPostProcessTarget(IDR_BlurPass1), "simple_radial_blur5", 0, 0, 0, 0, Vec4(0.9963226!, 0.9926588!, 0.9890084!, 0.9853715!), Vec4, Vec4, Vec4
  End If
 End If
 '////////////////
@@ -607,9 +607,9 @@ End If
 d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET, 0, 1, 0
 d3dd9.BeginScene
 '///
-objDraw.DrawTextureEx objPostProcessTarget(IDR_Auxiliary), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
-'objDraw.DrawTwoTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_AverageLuminance), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.1, 3), Vec4, Vec4, Vec4 'ugly
-objDraw.DrawTextureEx objPostProcessTarget(IDR_BlurPass1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
+objTextMgr.DrawTextureEx objPostProcessTarget(IDR_Auxiliary), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
+'objTextMgr.DrawTwoTextureEx objPostProcessTarget(IDR_Auxiliary), objPostProcessTarget(IDR_AverageLuminance), "simple_tonemapping", 0, 0, 0, 0, Vec4(0.1, 3), Vec4, Vec4, Vec4 'ugly
+objTextMgr.DrawTextureEx objPostProcessTarget(IDR_BlurPass1), "process_linear", 0, 0, 0, 0, Vec4, Vec4(1, 1, 1, 1), Vec4, Vec4
 '///
 d3dd9.EndScene
 d3dd9.SetRenderState D3DRS_ALPHABLENDENABLE, nOldState

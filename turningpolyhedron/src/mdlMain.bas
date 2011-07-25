@@ -211,7 +211,7 @@ With d3dd9
    'objEffectMgr.SetupEffect 1, True, True, True, True, , True
    .BeginScene
    '///TEST TEST TEST
-   objGameMgr.DrawLevel objEffectMgr, objMeshMgr
+   objGameMgr.DrawLevel
    'objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
    '////////draw landscape
    d3dd9.SetTexture 0, objLandTexture
@@ -255,7 +255,7 @@ With d3dd9
    .SetTransform D3DTS_WORLD, mat
   End If
   '////////perform post process
-  objRenderTest.PerformPostProcess objTextMgr
+  objRenderTest.PerformPostProcess
   '////////draw text test
   .BeginScene
   s = "FPS:" + Format(objTiming.FPS, "0.0")
@@ -589,7 +589,7 @@ With New clsXMLSerializer
  If i > 0 Then
   Set obj = New clsTreeStorageNode
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
-  objGameMgr.LoadTileTypesFromSubNodes obj, objEffectMgr, objMeshMgr
+  objGameMgr.LoadTileTypesFromSubNodes obj
  End If
  '///TEST:load level
  i = objFileMgr.LoadFile("lvltest.xml")
@@ -597,7 +597,7 @@ With New clsXMLSerializer
   Set obj = New clsTreeStorageNode
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then
    If objGameMgr.AddLevelDataFromNode(obj) Then
-    objGameMgr.CreateLevelRuntimeData objEffectMgr, objMeshMgr
+    objGameMgr.CreateLevelRuntimeData
    End If
   End If
   objFileMgr.CloseFile i
@@ -613,7 +613,7 @@ End With
 'With New clsXMLSerializer
 ' .LoadNodeFromFile App.Path + "\data\test.xml", obj
 'End With
-'i = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr)
+'i = objEffectMgr.AddAppearanceFromNode(obj)
 'If i > 0 Then
 ' '---software
 ' lp = 1
