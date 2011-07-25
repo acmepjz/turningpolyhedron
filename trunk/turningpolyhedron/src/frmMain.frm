@@ -55,9 +55,6 @@ Private cSub As New cSubclass
 
 Implements iSubclass
 
-'TEST ONLY
-Private m_nCurrentPolyhedron As Long
-
 Private Sub Form_DblClick()
 Dim p As POINTAPI
 GetCursorPos p
@@ -67,7 +64,7 @@ End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
 '///TEST ONLY
-Dim obj As clsPolyhedron, v1 As D3DVECTOR, v2 As D3DVECTOR, v3 As D3DVECTOR
+Dim v1 As D3DVECTOR, v2 As D3DVECTOR, v3 As D3DVECTOR
 Dim i As Long
 '///
 If FakeDXUIOnKeyEvent(KeyCode, Shift, 1) Then Exit Sub
@@ -91,17 +88,13 @@ If bTestOnly Then
  Case vbKeyRight
   i = 3
  Case vbKeySpace
-  m_nCurrentPolyhedron = m_nCurrentPolyhedron + 1
-  If m_nCurrentPolyhedron >= objGameMgr.PolyhedronCount Then m_nCurrentPolyhedron = 0
-  If Not objGameMgr.PolyhedronObject(m_nCurrentPolyhedron + 1) Is Nothing Then
-   v1 = objGameMgr.GetPolyhedronCenterPos(m_nCurrentPolyhedron + 1)
-   objCamera.MoveTargetTo v1
-  End If
+  i = objGameMgr.CurrentPolyhedron + 1
+  If i > objGameMgr.PolyhedronCount Then i = 1
+  objGameMgr.CurrentPolyhedron = i
   Exit Sub
  End Select
  If i >= 0 Then
-  Set obj = objGameMgr.PolyhedronObject(m_nCurrentPolyhedron + 1)
-  If Not obj Is Nothing Then
+  If Not objGameMgr.CurrentPolyhedronObject Is Nothing Then
    '///
    objCamera.GetRealCamera v1, v2, v3
    v1.x = v1.x - v2.x
@@ -116,10 +109,9 @@ If bTestOnly Then
    End If
    i = i And 3&
    '///
-   If Not obj.Moving Then
-    If obj.Move(i, objGameMgr) = 1 Then
-     v1 = objGameMgr.GetPolyhedronCenterPos(m_nCurrentPolyhedron + 1)
-     objCamera.MoveTargetTo v1
+   If Not objGameMgr.IsCurrentPolyhedronMoving Then
+    If objGameMgr.MoveCurrentPolyhedron(i) = 1 Then
+     'nothing need to do
     End If
    End If
   End If
@@ -212,12 +204,6 @@ Case FakeCtl_Event_Click
         objGameMgr.CreateLevelRuntimeData
         '///
         bTestOnly = True 'change mode
-        '///
-        m_nCurrentPolyhedron = 0
-        If Not objGameMgr.PolyhedronObject(1) Is Nothing Then
-         v1 = objGameMgr.GetPolyhedronCenterPos(1)
-         objCamera.MoveTargetTo v1
-        End If
         '///
        Else
         bErr = True

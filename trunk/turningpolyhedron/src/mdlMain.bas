@@ -205,7 +205,7 @@ With d3dd9
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
   If bTestOnly Then
-   objGameMgr.UpdateLevelAnimation objTiming.GetDelta
+   objGameMgr.UpdateLevelAnimationAndPosition objTiming.GetDelta
    .BeginScene
    '///TEST TEST TEST
    objGameMgr.DrawLevel
@@ -584,6 +584,7 @@ With New clsXMLSerializer
   objGameMgr.LoadTileTypesFromSubNodes obj
  End If
  '///TEST:load level
+ objGameMgr.FollowCurrentPolyhedron = True
  i = objFileMgr.LoadFile("lvltest.xml")
  If i > 0 Then
   Set obj = New clsTreeStorageNode
