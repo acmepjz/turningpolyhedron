@@ -38,7 +38,7 @@ Private m_bFogEnabled As Boolean
 
 Private m_fResolution As Single
 
-Implements IRenderableObject
+'Implements IRenderableObject
 
 Friend Property Get FogEnabled() As Boolean
 FogEnabled = m_bFogEnabled
@@ -246,8 +246,8 @@ Private Sub Class_Terminate()
 Destroy
 End Sub
 
-Private Sub IRenderableObject_Render(ByVal nType As enumRenderPassType, ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera)
-If nType = RenderPass_Main Then
- Render objRender, objCamera
-End If
-End Sub
+'Private Sub IRenderableObject_Render(ByVal nType As enumRenderPassType, ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera)
+'If nType = RenderPass_Main Then
+' Render objRender, objCamera
+'End If
+'End Sub

@@ -277,6 +277,10 @@ Friend Sub GetPolyhedronCoordinates(ByRef vBase As D3DVECTOR, ByRef vNormal As D
 GetPolyhedronCoordinatesEx m_tPos, vBase, vNormal, vRotationAxis
 End Sub
 
+'returns which point and edge is on ground
+'vBase=which point is on ground
+'vNormal=the normal of face which is on ground
+'vRotationAxis=which edge is on ground
 Friend Sub GetPolyhedronCoordinatesEx(ByRef tPos As typePolyhedronPosition, ByRef vBase As D3DVECTOR, ByRef vNormal As D3DVECTOR, ByRef vRotationAxis As D3DVECTOR)
 Dim idx As Long, i As Long, j As Long
 idx = tPos.nGroundFaceIndex

@@ -82,7 +82,7 @@ If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
 End If
 End Function
 
-Friend Sub DrawLevel(ByVal objEffectMgr As clsEffectManager, ByVal objMeshMgr As clsMeshManager)
+Friend Sub DrawLevel()
 '///TEST ONLY
 Dim idx As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
@@ -184,7 +184,7 @@ For idx = 1 To m_tLevel.nPolyhedronCount
  End If
 Next idx
 '///draw level
-objEffectMgr.DrawInstanceEx m_tLevelInst, objMeshMgr, True, True
+objEffectMgr.DrawInstanceEx m_tLevelInst, True, True
 '///draw polyhedron which doesn't have appearance
 d(0) = 0: d(1) = 1: d(2) = 1: d(3) = 3: d(4) = 3: d(5) = 2: d(6) = 2: d(7) = 0
 d(8) = 4: d(9) = 5: d(10) = 5: d(11) = 7: d(12) = 7: d(13) = 6: d(14) = 6: d(15) = 4
@@ -229,12 +229,12 @@ d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, tmp
 '///
 End Sub
 
-Friend Function CreateLevelRuntimeData(ByVal objEffectMgr As clsEffectManager, ByVal objMeshMgr As clsMeshManager, Optional ByVal bRuntime As Boolean = True) As Boolean
+Friend Function CreateLevelRuntimeData(Optional ByVal bRuntime As Boolean = True) As Boolean
 Dim i As Long, idx As Long
 '///
 ClearLevelRuntimeData
 '///
-If Not GenerateMeshFromLevelDataEx(m_tLevel, objEffectMgr, m_tLevelInst, bRuntime) Then Exit Function
+If Not GenerateMeshFromLevelDataEx(m_tLevel, m_tLevelInst, bRuntime) Then Exit Function
 '///
 If m_tLevel.nPolyhedronCount > 0 Then
  ReDim m_objPoly(1 To m_tLevel.nPolyhedronCount)
@@ -867,7 +867,7 @@ For i = 1 To objNode.SubNodeCount
      '??? TODO:
     End Select
    End If
-   tPoly.nApprIndex = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr, nSizeX, nSizeY, nSizeZ)
+   tPoly.nApprIndex = objEffectMgr.AddAppearanceFromNode(obj, nSizeX, nSizeY, nSizeZ)
   End Select
  End If
 Next i
@@ -937,12 +937,12 @@ Next i
 AddLevelDataFromNodeEx = True
 End Function
 
-Friend Function GenerateMeshFromLevelData(ByVal objEffectMgr As clsEffectManager, ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
-GenerateMeshFromLevelData = GenerateMeshFromLevelDataEx(m_tLevel, objEffectMgr, tInst, bRuntime)
+Friend Function GenerateMeshFromLevelData(ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
+GenerateMeshFromLevelData = GenerateMeshFromLevelDataEx(m_tLevel, tInst, bRuntime)
 End Function
 
 'test only
-Friend Function GenerateMeshFromLevelDataEx(ByRef tLevel As typeLevelData, ByVal objEffectMgr As clsEffectManager, ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
+Friend Function GenerateMeshFromLevelDataEx(ByRef tLevel As typeLevelData, ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
 Dim idx As Long
 Dim i As Long, j As Long, k As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
@@ -1440,7 +1440,7 @@ ParseEventFromNode = True
 End Function
 
 'internal
-Friend Function AddTileTypeFromNode(ByVal objNode As clsTreeStorageNode, ByVal objEffectMgr As clsEffectManager, ByVal objMeshMgr As clsMeshManager) As Long
+Friend Function AddTileTypeFromNode(ByVal objNode As clsTreeStorageNode) As Long
 Dim i As Long, j As Long
 Dim s As String
 Dim obj As clsTreeStorageNode
@@ -1524,7 +1524,7 @@ For i = 1 To objNode.SubNodeCount
     Debug.Assert False
     Exit Function
    End If
-   m_tTileType(nIndex).nApprIndex = objEffectMgr.AddAppearanceFromNode(obj, objMeshMgr)
+   m_tTileType(nIndex).nApprIndex = objEffectMgr.AddAppearanceFromNode(obj)
   Case Else
    nEventType = ParseEventType(s)
   End Select
@@ -1547,12 +1547,12 @@ m_tTileType(nIndex).nFlags = nFlags
 AddTileTypeFromNode = nIndex
 End Function
 
-Friend Sub LoadTileTypesFromSubNodes(ByVal objNode As clsTreeStorageNode, ByVal objEffectMgr As clsEffectManager, ByVal objMeshMgr As clsMeshManager)
+Friend Sub LoadTileTypesFromSubNodes(ByVal objNode As clsTreeStorageNode)
 Dim i As Long
 Dim obj As clsTreeStorageNode
 For i = 1 To objNode.SubNodeCount
  Set obj = objNode.SubNodeObject(i)
- If Not obj Is Nothing Then AddTileTypeFromNode obj, objEffectMgr, objMeshMgr
+ If Not obj Is Nothing Then AddTileTypeFromNode obj
 Next i
 End Sub
 

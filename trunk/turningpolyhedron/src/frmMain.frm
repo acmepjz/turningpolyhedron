@@ -207,7 +207,7 @@ Case FakeCtl_Event_Click
       If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj1) Then
        objGameMgr.ClearLevelData
        If objGameMgr.AddLevelDataFromNode(obj1) Then
-        objGameMgr.CreateLevelRuntimeData objEffectMgr, objMeshMgr
+        objGameMgr.CreateLevelRuntimeData
         '///
         bTestOnly = True 'change mode
         '///
