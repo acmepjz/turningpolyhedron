@@ -44,6 +44,8 @@ Private m_tLevelInst As typeMeshInstanceCollection
 Private m_objPoly() As New clsPolyhedron '1-based
 Private m_nPolyInstIndex() As Long '1-based
 
+Private m_fPolyAnimValue() As Single '1-based
+
 Private m_bRuntimeDirty As Boolean
 
 Friend Property Get PolyhedronCount() As Long
@@ -82,6 +84,28 @@ If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
 End If
 End Function
 
+Friend Sub UpdateLevelAnimation(ByVal dt As Single)
+Dim idx As Long
+Dim f As Single
+'///
+If m_bRuntimeDirty Then Exit Sub
+'///polyhedron animation
+For idx = 1 To m_tLevel.nPolyhedronCount
+ 'TODO:tilt angle, etc.
+ If m_objPoly(idx).Moving Then
+  f = m_fPolyAnimValue(idx) + dt
+  If f > 250 Then
+   f = 0
+   m_objPoly(idx).Moving = False
+  End If
+  m_fPolyAnimValue(idx) = f
+ Else
+  m_fPolyAnimValue(idx) = 0
+ End If
+Next idx
+'///TODO:other
+End Sub
+
 Friend Sub DrawLevel()
 '///TEST ONLY
 Dim idx As Long
@@ -94,12 +118,14 @@ Dim d(23) As Integer
 Dim i As Long, j As Long, k As Long, l As Long
 Dim tmp As Long
 Dim p As typePolyhedronPosition
+Dim p1 As typePolyhedronPosition
 '///
 If m_bRuntimeDirty Then Exit Sub
 If m_tLevel.nPolyhedronCount <= 0 Then Exit Sub
 ReDim matWorld(1 To m_tLevel.nPolyhedronCount) 'TODO:global array
 '///setup polyhedron world matrix
-'TODO:adjacency data; animation, etc.
+'TODO:adjacency data
+'TODO:animation: tilt angle, interpolation of mat1, interpolation of vAxis and vBase, etc.
 For idx = 1 To m_tLevel.nPolyhedronCount
  matWorld(idx) = D3DXMatrixIdentity
  p = m_objPoly(idx).Position
@@ -108,6 +134,11 @@ For idx = 1 To m_tLevel.nPolyhedronCount
   Case &H111 To &HFFF
    m_objPoly(idx).GetCurrentSize i, j, k
    m_objPoly(idx).GetPolyhedronCoordinates vBase, vNormal, vAxis
+   If m_objPoly(idx).Moving Then
+    m_objPoly(idx).GetOldPolyhedronCoordinates Vec3, v, Vec3
+    f(0) = m_fPolyAnimValue(idx) / 250
+    D3DXVec3Normalize vNormal, D3DXVec3Lerp(v, vNormal, f(0))
+   End If
    v = D3DXVec3Cross(vAxis, vNormal)
    mat.m11 = vNormal.x
    mat.m12 = vNormal.y
@@ -239,6 +270,7 @@ If Not GenerateMeshFromLevelDataEx(m_tLevel, m_tLevelInst, bRuntime) Then Exit F
 If m_tLevel.nPolyhedronCount > 0 Then
  ReDim m_objPoly(1 To m_tLevel.nPolyhedronCount)
  ReDim m_nPolyInstIndex(1 To m_tLevel.nPolyhedronCount)
+ ReDim m_fPolyAnimValue(1 To m_tLevel.nPolyhedronCount)
  For i = 1 To m_tLevel.nPolyhedronCount
   If Not m_objPoly(i).CreateIndirect(m_tLevel, i) Then Exit Function
   '///
@@ -257,6 +289,7 @@ Dim t As typeMeshInstanceCollection
 '///
 Erase m_objPoly
 Erase m_nPolyInstIndex
+Erase m_fPolyAnimValue
 m_tLevelInst = t
 '///
 m_bRuntimeDirty = True

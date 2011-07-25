@@ -116,9 +116,11 @@ If bTestOnly Then
    End If
    i = i And 3&
    '///
-   If obj.Move(i, objGameMgr) = 1 Then
-    v1 = objGameMgr.GetPolyhedronCenterPos(m_nCurrentPolyhedron + 1)
-    objCamera.MoveTargetTo v1
+   If Not obj.Moving Then
+    If obj.Move(i, objGameMgr) = 1 Then
+     v1 = objGameMgr.GetPolyhedronCenterPos(m_nCurrentPolyhedron + 1)
+     objCamera.MoveTargetTo v1
+    End If
    End If
   End If
  End If

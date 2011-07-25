@@ -164,7 +164,6 @@ Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
 Dim r(3) As Long
 Dim f(3) As Single
 Dim s As String
-'Dim obj As D3DXEffect
 '///
 If IsIconic(d3dpp.hDeviceWindow) Then
  Sleep 20
@@ -206,13 +205,10 @@ With d3dd9
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
   If bTestOnly Then
-   'objEffectMgr.SetTexture 1, IDA_BaseColor, objTexture
-   'objEffectMgr.SetTexture 1, IDA_NormalMap, objNormalTexture
-   'objEffectMgr.SetupEffect 1, True, True, True, True, , True
+   objGameMgr.UpdateLevelAnimation objTiming.GetDelta
    .BeginScene
    '///TEST TEST TEST
    objGameMgr.DrawLevel
-   'objEffectMgr.DrawHWInstance objMeshMgr, m_tHWInst(0), True
    '////////draw landscape
    d3dd9.SetTexture 0, objLandTexture
    .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
@@ -220,9 +216,7 @@ With d3dd9
    objLand.Render objRenderTest, objCamera
    .SetTransform D3DTS_WORLD, mat
    '////////
-   '///
    .EndScene
-   'objEffectMgr.EndEffect
   Else
    objRenderTest.SetTexture objTexture
    objRenderTest.SetNormalTexture objNormalTexture
@@ -274,8 +268,6 @@ End With
 End Sub
 
 Public Sub FakeDXAppOnLostDevice()
-'Set objTexture = Nothing
-'Set objNormalTexture = Nothing
 objRenderTest.OnLostDevice
 objTextMgr.OnLostDevice
 objFontSprite.OnLostDevice
