@@ -18,8 +18,24 @@ Private m_nIndex As Long
 Private m_tLogic As typePolyhedronLogic
 Private m_tPos As typePolyhedronPosition
 
+Private m_tOldPos As typePolyhedronPosition
+Private m_bMoving As Boolean
+
+'a variable indicates whether a move animation is avaliable
+Friend Property Get Moving() As Boolean
+Moving = m_bMoving
+End Property
+
+Friend Property Let Moving(ByVal b As Boolean)
+m_bMoving = b
+End Property
+
 Friend Property Get Position() As typePolyhedronPosition
 Position = m_tPos
+End Property
+
+Friend Property Get OldPosition() As typePolyhedronPosition
+OldPosition = m_tOldPos
 End Property
 
 Friend Sub GetSize(Optional ByRef nSize0 As Long, Optional ByRef nSize1 As Long, Optional ByRef nSize2 As Long)
@@ -64,15 +80,15 @@ Case Else
 End Select
 End Sub
 
-Friend Sub Destroy()
-Dim t1 As typePolyhedronLogic
-Dim t2 As typePolyhedronPosition
-'///
-m_nIndex = 0
-m_tLogic = t1
-m_tPos = t2
-'///
-End Sub
+'Friend Sub Destroy()
+'Dim t1 As typePolyhedronLogic
+'Dim t2 As typePolyhedronPosition
+''///
+'m_nIndex = 0
+'m_tLogic = t1
+'m_tPos = t2
+''///
+'End Sub
 
 Friend Function CreateIndirect(ByRef tLevel As typeLevelData, ByVal nPolyhedronIndex As Long) As Boolean
 '///get index
@@ -275,6 +291,10 @@ End Sub
 
 Friend Sub GetPolyhedronCoordinates(ByRef vBase As D3DVECTOR, ByRef vNormal As D3DVECTOR, ByRef vRotationAxis As D3DVECTOR)
 GetPolyhedronCoordinatesEx m_tPos, vBase, vNormal, vRotationAxis
+End Sub
+
+Friend Sub GetOldPolyhedronCoordinates(ByRef vBase As D3DVECTOR, ByRef vNormal As D3DVECTOR, ByRef vRotationAxis As D3DVECTOR)
+GetPolyhedronCoordinatesEx m_tOldPos, vBase, vNormal, vRotationAxis
 End Sub
 
 'returns which point and edge is on ground
@@ -485,6 +505,10 @@ If Not MovePosition(tPos, nDirection, objGameMgr) Then Exit Function
 '///check new position
 'TODO:check state and do something
 If CheckPolyhedronStateEx(tPos, objGameMgr) <> 1 Then Exit Function
+'///update animation (TEST ONLY)
+'TODO:tilt angle,etc.
+m_tOldPos = m_tPos
+m_bMoving = True
 '///over
 m_tPos = tPos
 Move = 1
