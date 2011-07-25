@@ -511,3 +511,13 @@ Public Type typePolyhedronPosition
  '///which edge is on ground
  nGroundEdgeIndex As Long
 End Type
+
+Public Type typePolyhedronInstance
+ nInstIndex As Long
+ bMoving As Boolean 'TODO:put it in nFlags
+ matWorld As D3DMATRIX
+ vCenter As D3DVECTOR
+ '///
+ fAnimValue(3) As Single
+ '///
+End Type

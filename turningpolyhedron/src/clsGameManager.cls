@@ -42,14 +42,37 @@ Private m_tLevel As typeLevelData
 Private m_tLevelInst As typeMeshInstanceCollection
 
 Private m_objPoly() As New clsPolyhedron '1-based
-Private m_nPolyInstIndex() As Long '1-based
+Private m_tPolyInst() As typePolyhedronInstance
 
-Private m_fPolyAnimValue() As Single '1-based
+Private m_nCurrentPolyhedron As Long
 
 Private m_bRuntimeDirty As Boolean
 
+'////////render settings
+Private m_bFollowPolyhedron As Boolean
+
+Friend Property Get CurrentPolyhedron() As Long
+CurrentPolyhedron = m_nCurrentPolyhedron
+End Property
+
+Friend Property Let CurrentPolyhedron(ByVal n As Long)
+m_nCurrentPolyhedron = n
+End Property
+
+Friend Property Get FollowCurrentPolyhedron() As Boolean
+FollowCurrentPolyhedron = m_bFollowPolyhedron
+End Property
+
+Friend Property Let FollowCurrentPolyhedron(ByVal b As Boolean)
+m_bFollowPolyhedron = b
+End Property
+
 Friend Property Get PolyhedronCount() As Long
 PolyhedronCount = m_tLevel.nPolyhedronCount
+End Property
+
+Friend Property Get CurrentPolyhedronObject() As clsPolyhedron
+Set CurrentPolyhedronObject = PolyhedronObject(m_nCurrentPolyhedron)
 End Property
 
 Friend Property Get PolyhedronObject(ByVal nPolyhedronIndex As Long) As clsPolyhedron
@@ -58,86 +81,102 @@ If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then _
 Set PolyhedronObject = m_objPoly(nPolyhedronIndex)
 End Property
 
-'TODO:animation
+Friend Property Get IsCurrentPolyhedronMoving() As Boolean
+IsCurrentPolyhedronMoving = IsPolyhedronMoving(m_nCurrentPolyhedron)
+End Property
+
+Friend Property Get IsPolyhedronMoving(ByVal nPolyhedronIndex As Long) As Boolean
+If m_bRuntimeDirty Then Exit Property
+If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then _
+IsPolyhedronMoving = m_tPolyInst(nPolyhedronIndex).bMoving
+End Property
+
+Friend Function MoveCurrentPolyhedron(ByVal nDirection As Long) As Long
+MoveCurrentPolyhedron = MovePolyhedron(m_nCurrentPolyhedron, nDirection)
+End Function
+
+Friend Function MovePolyhedron(ByVal nPolyhedronIndex As Long, ByVal nDirection As Long) As Long
+If m_bRuntimeDirty Then Exit Function
+If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then _
+MovePolyhedron = m_objPoly(nPolyhedronIndex).Move(nDirection, Me)
+End Function
+
+'TODO:more arguments, e.g. animation type
+Friend Sub StartPolyhedronAnimation(ByVal nPolyhedronIndex As Long)
+Erase m_tPolyInst(nPolyhedronIndex).fAnimValue
+m_tPolyInst(nPolyhedronIndex).bMoving = True
+End Sub
+
 Friend Function GetPolyhedronCenterPos(ByVal nPolyhedronIndex As Long) As D3DVECTOR
-Dim ret As D3DVECTOR
-Dim i As Long, j As Long, k As Long
-Dim p As typePolyhedronPosition
+'Dim ret As D3DVECTOR
+'Dim i As Long, j As Long, k As Long
+'Dim p As typePolyhedronPosition
 '///
 If m_bRuntimeDirty Then Exit Function
 If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
- Select Case m_tLevel.tPolyhedron(nPolyhedronIndex).nShape
- Case &H111 To &HFFF
-  m_objPoly(nPolyhedronIndex).GetCurrentSize i, j, k
-  p = m_objPoly(nPolyhedronIndex).Position
-  If p.nMapDataIndex > 0 And p.nMapDataIndex <= m_tLevel.nMapDataCount Then
-   With m_tLevel.tMapData(p.nMapDataIndex)
-    ret.x = .fPos(0).x + (p.x + i / 2) * .fPos(1).x + (p.y + j / 2) * .fPos(2).x + (p.z + k / 2) * .fPos(3).x
-    ret.y = .fPos(0).y + (p.x + i / 2) * .fPos(1).y + (p.y + j / 2) * .fPos(2).y + (p.z + k / 2) * .fPos(3).y
-    ret.z = .fPos(0).z + (p.x + i / 2) * .fPos(1).z + (p.y + j / 2) * .fPos(2).z + (p.z + k / 2) * .fPos(3).z
-   End With
-  End If
- Case Else
-  Debug.Assert False
- End Select
- GetPolyhedronCenterPos = ret
+' Select Case m_tLevel.tPolyhedron(nPolyhedronIndex).nShape
+' Case &H111 To &HFFF
+'  m_objPoly(nPolyhedronIndex).GetCurrentSize i, j, k
+'  p = m_objPoly(nPolyhedronIndex).Position
+'  If p.nMapDataIndex > 0 And p.nMapDataIndex <= m_tLevel.nMapDataCount Then
+'   With m_tLevel.tMapData(p.nMapDataIndex)
+'    ret.x = .fPos(0).x + (p.x + i / 2) * .fPos(1).x + (p.y + j / 2) * .fPos(2).x + (p.z + k / 2) * .fPos(3).x
+'    ret.y = .fPos(0).y + (p.x + i / 2) * .fPos(1).y + (p.y + j / 2) * .fPos(2).y + (p.z + k / 2) * .fPos(3).y
+'    ret.z = .fPos(0).z + (p.x + i / 2) * .fPos(1).z + (p.y + j / 2) * .fPos(2).z + (p.z + k / 2) * .fPos(3).z
+'   End With
+'  End If
+' Case Else
+'  Debug.Assert False
+' End Select
+' GetPolyhedronCenterPos = ret
+ GetPolyhedronCenterPos = m_tPolyInst(nPolyhedronIndex).vCenter
 End If
 End Function
 
-Friend Sub UpdateLevelAnimation(ByVal dt As Single)
+Friend Sub UpdateLevelAnimationAndPosition(ByVal dt As Single)
 Dim idx As Long
 Dim f As Single
-'///
-If m_bRuntimeDirty Then Exit Sub
-'///polyhedron animation
-For idx = 1 To m_tLevel.nPolyhedronCount
- 'TODO:tilt angle, etc.
- If m_objPoly(idx).Moving Then
-  f = m_fPolyAnimValue(idx) + dt
-  If f > 250 Then
-   f = 0
-   m_objPoly(idx).Moving = False
-  End If
-  m_fPolyAnimValue(idx) = f
- Else
-  m_fPolyAnimValue(idx) = 0
- End If
-Next idx
-'///TODO:other
-End Sub
-
-Friend Sub DrawLevel()
-'///TEST ONLY
-Dim idx As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
 Dim vBase As D3DVECTOR, vNormal As D3DVECTOR, vAxis As D3DVECTOR
 Dim v As D3DVECTOR
-Dim matWorld() As D3DMATRIX
-Dim f(31) As Single
-Dim d(23) As Integer
-Dim i As Long, j As Long, k As Long, l As Long
-Dim tmp As Long
+Dim i As Long, j As Long, k As Long
 Dim p As typePolyhedronPosition
-Dim p1 As typePolyhedronPosition
+'Dim p1 As typePolyhedronPosition
 '///
 If m_bRuntimeDirty Then Exit Sub
-If m_tLevel.nPolyhedronCount <= 0 Then Exit Sub
-ReDim matWorld(1 To m_tLevel.nPolyhedronCount) 'TODO:global array
-'///setup polyhedron world matrix
+'////////update animation
+'///polyhedron animation
+For idx = 1 To m_tLevel.nPolyhedronCount
+ 'TODO:tilt angle, etc.
+ If m_tPolyInst(idx).bMoving Then
+  f = m_tPolyInst(idx).fAnimValue(0) + dt
+  If f > 250 Then
+   f = 0
+   m_tPolyInst(idx).bMoving = False
+  End If
+  m_tPolyInst(idx).fAnimValue(0) = f
+ Else
+  m_tPolyInst(idx).fAnimValue(0) = 0
+ End If
+Next idx
+'///TODO:other
+'////////update position
+'///setup polyhedron world matrix and center
 'TODO:adjacency data
 'TODO:animation: tilt angle, interpolation of mat1, interpolation of vAxis and vBase, etc.
 For idx = 1 To m_tLevel.nPolyhedronCount
- matWorld(idx) = D3DXMatrixIdentity
+ m_tPolyInst(idx).matWorld = D3DXMatrixIdentity
  p = m_objPoly(idx).Position
+ 'p1 = m_objPoly(idx).OldPosition
  If p.nMapDataIndex > 0 And p.nMapDataIndex <= m_tLevel.nMapDataCount Then
   Select Case m_tLevel.tPolyhedron(idx).nShape
   Case &H111 To &HFFF
    m_objPoly(idx).GetCurrentSize i, j, k
    m_objPoly(idx).GetPolyhedronCoordinates vBase, vNormal, vAxis
-   If m_objPoly(idx).Moving Then
+   If m_tPolyInst(idx).bMoving Then
     m_objPoly(idx).GetOldPolyhedronCoordinates Vec3, v, Vec3
-    f(0) = m_fPolyAnimValue(idx) / 250
-    D3DXVec3Normalize vNormal, D3DXVec3Lerp(v, vNormal, f(0))
+    f = m_tPolyInst(idx).fAnimValue(0) / 250
+    D3DXVec3Normalize vNormal, D3DXVec3Lerp(v, vNormal, f)
    End If
    v = D3DXVec3Cross(vAxis, vNormal)
    mat.m11 = vNormal.x
@@ -204,18 +243,44 @@ For idx = 1 To m_tLevel.nPolyhedronCount
     mat1.m44 = 1
    End With
    '///
-   D3DXMatrixMultiply matWorld(idx), mat, mat1
+   D3DXMatrixMultiply m_tPolyInst(idx).matWorld, mat, mat1
+   '///get center pos
+   m_objPoly(idx).GetSize i, j, k
+   v.x = i / 2
+   v.y = j / 2
+   v.z = k / 2
+   D3DXVec3TransformCoord m_tPolyInst(idx).vCenter, v, m_tPolyInst(idx).matWorld
   Case Else
    Debug.Assert False
   End Select
  End If
- If m_nPolyInstIndex(idx) > 0 Then
+ i = m_tPolyInst(idx).nInstIndex
+ If i > 0 Then
   'TODO:multiple objects
-  m_tLevelInst.tInstance(m_nPolyInstIndex(idx)).matWorld = matWorld(idx)
+  m_tLevelInst.tInstance(i).matWorld = m_tPolyInst(idx).matWorld
  End If
 Next idx
+'///follow polyhedron?
+If m_bFollowPolyhedron Then
+ If m_nCurrentPolyhedron > 0 And m_nCurrentPolyhedron <= m_tLevel.nPolyhedronCount Then
+  objCamera.MoveTargetTo m_tPolyInst(m_nCurrentPolyhedron).vCenter
+ End If
+End If
+'///
+End Sub
+
+Friend Sub DrawLevel()
+Dim idx As Long
+Dim f(31) As Single
+Dim d(23) As Integer
+Dim i As Long, j As Long, k As Long, l As Long
+Dim tmp As Long
+'///
+If m_bRuntimeDirty Then Exit Sub
+If m_tLevel.nPolyhedronCount <= 0 Then Exit Sub
 '///draw level
 objEffectMgr.DrawInstanceEx m_tLevelInst, True, True
+'///TEST ONLY
 '///draw polyhedron which doesn't have appearance
 d(0) = 0: d(1) = 1: d(2) = 1: d(3) = 3: d(4) = 3: d(5) = 2: d(6) = 2: d(7) = 0
 d(8) = 4: d(9) = 5: d(10) = 5: d(11) = 7: d(12) = 7: d(13) = 6: d(14) = 6: d(15) = 4
@@ -230,11 +295,11 @@ d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
 d3dd9.SetFVF D3DFVF_XYZ Or D3DFVF_DIFFUSE
 '///
 For idx = 1 To m_tLevel.nPolyhedronCount
- If m_nPolyInstIndex(idx) = 0 Then
+ If m_tPolyInst(idx).nInstIndex = 0 Then
   '///TEST ONLY
   '///assume it's cuboid
   m_objPoly(idx).GetSize i, j, k
-  With matWorld(idx)
+  With m_tPolyInst(idx).matWorld
    For l = 0 To 7
     f(l * 4) = .m41 + _
     (i * (l And 1&)) * .m11 + _
@@ -269,15 +334,16 @@ If Not GenerateMeshFromLevelDataEx(m_tLevel, m_tLevelInst, bRuntime) Then Exit F
 '///
 If m_tLevel.nPolyhedronCount > 0 Then
  ReDim m_objPoly(1 To m_tLevel.nPolyhedronCount)
- ReDim m_nPolyInstIndex(1 To m_tLevel.nPolyhedronCount)
- ReDim m_fPolyAnimValue(1 To m_tLevel.nPolyhedronCount)
+ ReDim m_tPolyInst(1 To m_tLevel.nPolyhedronCount)
  For i = 1 To m_tLevel.nPolyhedronCount
   If Not m_objPoly(i).CreateIndirect(m_tLevel, i) Then Exit Function
   '///
   idx = m_tLevel.tPolyhedron(i).nApprIndex
-  If idx > 0 Then m_nPolyInstIndex(i) = _
-  objEffectMgr.AddInstanceFromAppearanceEx(m_tLevelInst, idx, D3DXMatrixIdentity) 'TODO:world matrix
+  If idx > 0 Then m_tPolyInst(i).nInstIndex = _
+  objEffectMgr.AddInstanceFromAppearanceEx(m_tLevelInst, idx, D3DXMatrixIdentity)
  Next i
+ '///set current polyhedron to the first one
+ m_nCurrentPolyhedron = 1
 End If
 '///
 m_bRuntimeDirty = False
@@ -288,9 +354,9 @@ Friend Sub ClearLevelRuntimeData()
 Dim t As typeMeshInstanceCollection
 '///
 Erase m_objPoly
-Erase m_nPolyInstIndex
-Erase m_fPolyAnimValue
+Erase m_tPolyInst
 m_tLevelInst = t
+m_nCurrentPolyhedron = 0
 '///
 m_bRuntimeDirty = True
 End Sub
@@ -328,7 +394,7 @@ Friend Function ParseMapTypeArrayFromNode(ByVal objNode As clsTreeStorageNode, B
 Dim s As String
 Dim b As Boolean
 Dim d() As Integer, lp As Long, lps As Long, m As Long
-Dim c As Long
+Dim C As Long
 Dim i As Long, j As Long, k As Long
 '///
 Dim nIndex As Long
@@ -356,12 +422,12 @@ If m > 0 Then
   lps = lp
   b = True
   Do While lp < m
-   c = d(lp)
-   Select Case c
+   C = d(lp)
+   Select Case C
    Case 44, 59, 124, 64, 91, 42
     Exit Do
    End Select
-   b = b And ((c >= &H30& And c <= &H39&) Or c = 45)
+   b = b And ((C >= &H30& And C <= &H39&) Or C = 45)
    lp = lp + 1
   Loop
   If lp > lps Then
@@ -373,12 +439,12 @@ If m > 0 Then
    End If
   End If
   '///get [@<new_index>]
-  If c = 64 Then
+  If C = 64 Then
    lp = lp + 1
    lps = lp
    Do While lp < m
-    c = d(lp)
-    Select Case c
+    C = d(lp)
+    Select Case C
     Case 44, 59, 124, 91, 42
      Exit Do
     End Select
@@ -391,14 +457,14 @@ If m > 0 Then
    End If
   End If
   '///get ["["<property_index>|<tag>"]"]
-  If c = 91 Then
+  If C = 91 Then
    lp = lp + 1
    lps = lp
    b = True
    Do While lp < m
-    c = d(lp)
-    If c = 93 Then Exit Do
-    b = b And (c >= &H30& And c <= &H39&)
+    C = d(lp)
+    If C = 93 Then Exit Do
+    b = b And (C >= &H30& And C <= &H39&)
     lp = lp + 1
    Loop
    If lp > lps Then
@@ -410,15 +476,15 @@ If m > 0 Then
     End If
    End If
    lp = lp + 1
-   If lp < m Then c = d(lp)
+   If lp < m Then C = d(lp)
   End If
   '///get ["*"<count>]
-  If c = 42 Then
+  If C = 42 Then
    lp = lp + 1
    lps = lp
    Do While lp < m
-    c = d(lp)
-    Select Case c
+    C = d(lp)
+    Select Case C
     Case 44, 59, 124
      Exit Do
     End Select
@@ -501,8 +567,8 @@ If m > 0 Then
    End If
   Next lps
   '///
-  If lp >= m Then c = 44
-  Select Case c
+  If lp >= m Then C = 44
+  Select Case C
   Case 44 '[","]
    'next pos
    i = i + 1

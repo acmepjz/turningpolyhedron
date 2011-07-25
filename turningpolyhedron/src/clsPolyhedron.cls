@@ -19,16 +19,6 @@ Private m_tLogic As typePolyhedronLogic
 Private m_tPos As typePolyhedronPosition
 
 Private m_tOldPos As typePolyhedronPosition
-Private m_bMoving As Boolean
-
-'a variable indicates whether a move animation is avaliable
-Friend Property Get Moving() As Boolean
-Moving = m_bMoving
-End Property
-
-Friend Property Let Moving(ByVal b As Boolean)
-m_bMoving = b
-End Property
 
 Friend Property Get Position() As typePolyhedronPosition
 Position = m_tPos
@@ -508,7 +498,7 @@ If CheckPolyhedronStateEx(tPos, objGameMgr) <> 1 Then Exit Function
 '///update animation (TEST ONLY)
 'TODO:tilt angle,etc.
 m_tOldPos = m_tPos
-m_bMoving = True
+objGameMgr.StartPolyhedronAnimation m_nIndex
 '///over
 m_tPos = tPos
 Move = 1
