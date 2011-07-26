@@ -16,9 +16,12 @@ Option Explicit
 Private m_nIndex As Long
 
 Private m_tLogic As typePolyhedronLogic
-Private m_tPos As typePolyhedronPosition
 
+Private m_tPos As typePolyhedronPosition
 Private m_tOldPos As typePolyhedronPosition
+
+Private m_tState As typePolyhedronState
+Private m_tOldState As typePolyhedronState
 
 Friend Property Get Position() As typePolyhedronPosition
 Position = m_tPos
@@ -129,18 +132,18 @@ If idx <= 0 Or idx > tLevel.nMapDataCount Then
   Exit Function
  End If
 End If
-tPos.nMapDataIndex = idx
-tPos.x = 0
-tPos.y = 0
-tPos.z = 0
+tPos.p.nMapDataIndex = idx
+tPos.p.x = 0
+tPos.p.y = 0
+tPos.p.z = 0
 If i > 0 Then
- tPos.x = Val(s1) 'FIXME: no sanity check :-3
+ tPos.p.x = Val(s1) 'FIXME: no sanity check :-3
  i = InStr(1, s1, ",")
  If i > 0 Then
-  tPos.y = Val(Mid(s1, i + 1))
+  tPos.p.y = Val(Mid(s1, i + 1))
   i = InStr(i + 1, s1, ",")
   If i > 0 Then
-   tPos.z = Val(Mid(s1, i + 1))
+   tPos.p.z = Val(Mid(s1, i + 1))
   End If
  End If
 ElseIf i < 0 Then
@@ -149,9 +152,9 @@ ElseIf i < 0 Then
    For j = 0 To tLevel.tMapData(idx).nSize(1) - 1
     For i = 0 To tLevel.tMapData(idx).nSize(0) - 1
      If tLevel.tMapData(idx).sTagArray(i, j, k) = s1 Then
-      tPos.x = i
-      tPos.y = j
-      tPos.z = k
+      tPos.p.x = i
+      tPos.p.y = j
+      tPos.p.z = k
       Exit Do
      End If
     Next i
@@ -302,7 +305,7 @@ vNormal = m_tLogic.tFace(idx).vNormal
 D3DXVec3Normalize vRotationAxis, D3DXVec3Subtract(m_tLogic.tFace(idx).vBase(j), vBase)
 End Sub
 
-Friend Function CanChangeGroundEdgeIndex(ByVal nNewIndex As Long, ByVal objGameMgr As clsGameManager) As Boolean
+Friend Function CanChangeGroundEdgeIndex(ByVal nNewIndex As Long) As Boolean
 If nNewIndex = m_tPos.nGroundEdgeIndex Then
  CanChangeGroundEdgeIndex = True
  Exit Function
@@ -311,25 +314,29 @@ End If
 CanChangeGroundEdgeIndex = True
 End Function
 
-Friend Function CheckPolyhedronState(ByVal objGameMgr As clsGameManager) As Long
-CheckPolyhedronState = CheckPolyhedronStateEx(m_tPos, objGameMgr)
-End Function
+Friend Sub InitPolyhedronState()
+CheckPolyhedronStateEx m_tPos, m_tState
+End Sub
 
-'-1=fall (TODO:if it isn't fragile then it's OK)
-'0 =can't move
-'1 =OK
-'TODO:etc.
-Friend Function CheckPolyhedronStateEx(ByRef tPos As typePolyhedronPosition, ByVal objGameMgr As clsGameManager) As Long
+Friend Sub CheckPolyhedronState(ByRef ret As typePolyhedronState)
+CheckPolyhedronStateEx m_tPos, ret
+End Sub
+
+'TODO:more arguments in typePolyhedronState
+'e.g. all on ground tiles
+Friend Sub CheckPolyhedronStateEx(ByRef tPos As typePolyhedronPosition, ByRef ret As typePolyhedronState)
 Dim i As Long, j As Long, k As Long
 Dim x As Long, y As Long, z As Long
-Dim p As typePolyhedronPosition
-Dim p1 As typePolyhedronPosition
+Dim p As typeMapPosition
+Dim p1 As typeMapPosition
 Dim nDirX As Long, nDirYDelta As Long
+'///
+ret.nState = 0
 '///
 Select Case m_tLogic.nShape
 Case &H111 To &HFFF
  GetCurrentSizeEx tPos, x, y, z
- p = tPos
+ p = tPos.p
  '///
  'on-ground edge --> index on ground
  i = (tPos.nGroundEdgeIndex - tPos.nFirstEdgeIndex) And 3&
@@ -348,7 +355,7 @@ Case &H111 To &HFFF
   For i = 1 To y - 1
    If Not objGameMgr.GetAdjacentPositionInPlace(p, nDirX, nDirX) Then
     Debug.Assert False
-    Exit Function
+    Exit Sub
    End If
   Next i
   nDirX = (nDirX + 1) And 3&
@@ -358,7 +365,7 @@ Case &H111 To &HFFF
   For i = 1 To x - 1
    If Not objGameMgr.GetAdjacentPositionInPlace(p, nDirX, nDirX) Then
     Debug.Assert False
-    Exit Function
+    Exit Sub
    End If
   Next i
   nDirX = (nDirX - 1) And 3&
@@ -372,7 +379,7 @@ Case &H111 To &HFFF
   If i > 1 Then
    If Not objGameMgr.GetAdjacentPositionInPlace(p, nDirX, nDirX) Then
     Debug.Assert False
-    Exit Function
+    Exit Sub
    End If
   End If
   p1 = p
@@ -381,7 +388,7 @@ Case &H111 To &HFFF
    If j > 1 Then
     If Not objGameMgr.GetAdjacentPositionInPlace(p1, k, k) Then
      Debug.Assert False
-     Exit Function
+     Exit Sub
     End If
    End If
    '///
@@ -391,51 +398,51 @@ Case &H111 To &HFFF
     'TODO:check object interaction
    Case -1 'no supporter
     If (m_tLogic.nFlags And &H8&) = 0 Then
-     CheckPolyhedronStateEx = -1 '???
-     Exit Function
+     ret.nState = -1 '???
+     Exit Sub
     ElseIf x + y <= 3 Then '1x1 or 1x2 or 2x1
-     CheckPolyhedronStateEx = -1
-     Exit Function
+     ret.nState = -1
+     Exit Sub
     Else
      'TODO:
      Debug.Assert False
-     Exit Function
+     Exit Sub
     End If
    Case &H80000000 To &H8000FFFF 'block tiltable
     'TODO:check tilt angle
     If j = 1 Then
-     CheckPolyhedronStateEx = 0 '???
-     Exit Function
+     ret.nState = 0 '???
+     Exit Sub
     ElseIf (m_tLogic.nFlags And &H20&) = 0 Then
-     CheckPolyhedronStateEx = 0 '???
-     Exit Function
+     ret.nState = 0 '???
+     Exit Sub
     Else
      'TODO:
      Debug.Assert False
-     Exit Function
+     Exit Sub
     End If
    Case &H80010000 To &H8001FFFF 'block not tiltable
     'TODO:
-    CheckPolyhedronStateEx = 0 '???
-    Exit Function
+    ret.nState = 0 '???
+    Exit Sub
    Case Else
     'error???
     Debug.Assert False
-    Exit Function
+    Exit Sub
    End Select
    '///
   Next j
  Next i
  '///over
- CheckPolyhedronStateEx = 1
+ ret.nState = 1
 Case Else
  'TODO:
  Debug.Assert False
 End Select
-End Function
+End Sub
 
 'note: tPos.nGroundEdgeIndex should be calculated before
-Friend Function MovePosition(ByRef tPos As typePolyhedronPosition, ByVal nDirection As Long, ByVal objGameMgr As clsGameManager) As Boolean
+Friend Function MovePosition(ByRef tPos As typePolyhedronPosition, ByVal nDirection As Long) As Boolean
 Dim x As Long, y As Long, z As Long
 Dim nOldFace As Long
 Dim nOldEdge As Long
@@ -455,7 +462,7 @@ Case &H111 To &HFFF
   Exit Function
  End Select
  Do While x > 0
-  If Not objGameMgr.GetAdjacentPositionInPlace(tPos, nDirection, nDirection) Then
+  If Not objGameMgr.GetAdjacentPositionInPlace(tPos.p, nDirection, nDirection) Then
    Debug.Assert False
    Exit Function
   End If
@@ -477,9 +484,11 @@ End Function
 
 '0=can't move
 '1=OK
+'other --> same as CheckPolyhedronStateEx
 'TODO:etc.
-Friend Function Move(ByVal nDirection As Long, ByVal objGameMgr As clsGameManager) As Long
+Friend Function Move(ByVal nDirection As Long) As Long
 Dim tPos As typePolyhedronPosition
+Dim tState As typePolyhedronState
 Dim m As Long
 '///check if other polyhedron is on
 If objGameMgr.IsOtherPolyhedronOn(m_nIndex) Then Exit Function
@@ -489,17 +498,22 @@ tPos.nGroundEdgeIndex = tPos.nFirstEdgeIndex + nDirection
 m = m_tLogic.tFace(m_tPos.nGroundFaceIndex).nEdgeCount
 If tPos.nGroundEdgeIndex >= m Then tPos.nGroundEdgeIndex = tPos.nGroundEdgeIndex - m
 '///check if can turn
-If Not CanChangeGroundEdgeIndex(tPos.nGroundEdgeIndex, objGameMgr) Then Exit Function
+If Not CanChangeGroundEdgeIndex(tPos.nGroundEdgeIndex) Then Exit Function
 '///get new position
-If Not MovePosition(tPos, nDirection, objGameMgr) Then Exit Function
-'///check new position
-'TODO:check state and do something
-If CheckPolyhedronStateEx(tPos, objGameMgr) <> 1 Then Exit Function
-'///update animation (TEST ONLY)
-'TODO:tilt angle,etc.
-m_tOldPos = m_tPos
-objGameMgr.StartPolyhedronAnimation m_nIndex
-'///over
-m_tPos = tPos
-Move = 1
+If Not MovePosition(tPos, nDirection) Then Exit Function
+'///check new state and do something
+CheckPolyhedronStateEx tPos, tState
+Select Case tState.nState
+Case 1 ', -1 'TODO:etc.
+ 'TODO:onLeave and onMoveLeave events
+ '///update animation (TEST ONLY)
+ 'TODO:tilt angle,etc.
+ m_tOldPos = m_tPos
+ m_tOldState = m_tState
+ objGameMgr.StartPolyhedronAnimation m_nIndex, ret, 0
+ '///over
+ m_tPos = tPos
+ m_tState = tState
+End Select
+Move = ret
 End Function

@@ -88,9 +88,13 @@ If bTestOnly Then
  Case vbKeyRight
   i = 3
  Case vbKeySpace
+  'TODO:when a polyhedron is falling then can't change polyhedron index
   i = objGameMgr.CurrentPolyhedron + 1
   If i > objGameMgr.PolyhedronCount Then i = 1
   objGameMgr.CurrentPolyhedron = i
+  Exit Sub
+ Case vbKeyR
+  objGameMgr.ResetOnNextUpdate = True
   Exit Sub
  End Select
  If i >= 0 Then
