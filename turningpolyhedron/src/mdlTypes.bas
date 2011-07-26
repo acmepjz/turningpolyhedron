@@ -491,19 +491,16 @@ Public Type typePolyhedronLogic
  tFace() As typePolyhedronFaceLogic '0-based
 End Type
 
-'Public Type typeMapPosition
-' nMapDataIndex As Long
-' x As Long
-' y As Long
-' z As Long
-'End Type
-
-Public Type typePolyhedronPosition
- '///pos
+Public Type typeMapPosition
  nMapDataIndex As Long
  x As Long
  y As Long
  z As Long
+End Type
+
+Public Type typePolyhedronPosition
+ '///pos
+ p As typeMapPosition
  '///edge 0 on ground --> edge ? on polyhedron
  nFirstEdgeIndex As Long
  '///which face is on ground
@@ -514,10 +511,27 @@ End Type
 
 Public Type typePolyhedronInstance
  nInstIndex As Long
- bMoving As Boolean 'TODO:put it in nFlags
+ '///
+ 'type of current animation TODO:flags other than animation
+ nAnimType As Long
+ '0=none
+ '1=rolling (standard)
+ '-1=falling (standard)
+ '///
  matWorld As D3DMATRIX
  vCenter As D3DVECTOR
  '///
  fAnimValue(3) As Single
  '///
+ nAnimStack(7) As Long '?
+ nAnimStackIndex As Long
+End Type
+
+Public Type typePolyhedronState
+ nState As Long
+ '-1=fall (TODO:if it isn't fragile then it's OK)
+ '0 =can't move
+ '1 =OK
+ 'TODO:etc.
+ 'TODO:more arguments in typePolyhedronState
 End Type

@@ -585,6 +585,7 @@ With New clsXMLSerializer
  End If
  '///TEST:load level
  objGameMgr.FollowCurrentPolyhedron = True
+ objGameMgr.AutoReset = True 'should be false because we can undo moves
  i = objFileMgr.LoadFile("lvltest.xml")
  If i > 0 Then
   Set obj = New clsTreeStorageNode
