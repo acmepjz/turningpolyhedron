@@ -206,7 +206,7 @@ Dim idx As Long
 Dim f As Single
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
 Dim vBase As D3DVECTOR, vNormal As D3DVECTOR, vAxis As D3DVECTOR
-Dim v As D3DVECTOR
+Dim v As D3DVECTOR, v2 As D3DVECTOR
 Dim i As Long, j As Long, k As Long
 Dim p As typePolyhedronPosition
 'Dim p1 As typePolyhedronPosition
@@ -243,7 +243,7 @@ Next idx
 '////////update position
 '///setup polyhedron world matrix and center
 'TODO:adjacency data
-'TODO:animation: tilt angle, interpolation of mat1, interpolation of vAxis and vBase, etc.
+'TODO:animation: tilt angle, interpolation of mat1, interpolation of vAxis and vBase, etc. <== interpolation of vAxis IS WRONG
 For idx = 1 To m_tLevel.nPolyhedronCount
  m_tPolyInst(idx).matWorld = D3DXMatrixIdentity
  p = m_objPoly(idx).Position
@@ -253,12 +253,22 @@ For idx = 1 To m_tLevel.nPolyhedronCount
   Case &H111 To &HFFF
    m_objPoly(idx).GetCurrentSize i, j, k
    m_objPoly(idx).GetPolyhedronCoordinates vBase, vNormal, vAxis
+   f = m_objPoly(idx).PolyhedronTiltTangent 'should put this in mat1 (?)
+   If f > 0.000001 Then
+    D3DXVec3Normalize vNormal, D3DXVec3AddScale(vNormal, D3DXVec3Cross(vNormal, vAxis), f)
+   End If
+   '///
    Select Case m_tPolyInst(idx).nAnimType
    Case 1 'rolling
-    m_objPoly(idx).GetOldPolyhedronCoordinates Vec3, v, Vec3
+    m_objPoly(idx).GetOldPolyhedronCoordinates Vec3, v, v2
+    f = m_objPoly(idx).OldPolyhedronTiltTangent 'should put this in mat1 (?)
+    If f > 0.000001 Then
+     D3DXVec3Normalize v, D3DXVec3AddScale(v, D3DXVec3Cross(v, v2), f)
+    End If
     f = m_tPolyInst(idx).fAnimValue(0) / 250
     D3DXVec3Normalize vNormal, D3DXVec3Lerp(v, vNormal, f)
    End Select
+   '///
    v = D3DXVec3Cross(vAxis, vNormal)
    mat.m11 = vNormal.x
    mat.m12 = vNormal.y
@@ -1883,21 +1893,14 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
 End If
 End Function
 
-'return value:
-'&H8001xxxx : blocked and not tiltable, low-word is block height (1-nHeight)
-'&H8000xxxx : this position is blocked, low-word is block height (1-nHeight)
-'-1 : can't stand on there (maybe no supporter or something's supporter=false)
-'>=0: stand on something, return value is nObjType
-'---
-'TODO:return more info
-Friend Function HitTest(ByRef tPos As typeMapPosition, Optional ByVal nExcludePolyhedronIndex As Long, Optional ByVal nHeight As Long = 1) As Long
+Friend Sub HitTest(ByRef tPos As typeMapPosition, ByRef ret As typeMapDataHitTest, Optional ByVal nExcludePolyhedronIndex As Long, Optional ByVal nHeight As Long = 1)
 Dim idx As Long
 Dim i As Long, j As Long, k As Long
 Dim sz As Long, ez As Long
 Dim p As typeMapPosition
-Dim ret As Long
 '///
-ret = -1
+ret.nType = -1
+ret.nObjType = 0
 '///check if it's on some polyhedron
 For idx = 1 To m_tLevel.nPolyhedronCount
  If idx <> nExcludePolyhedronIndex Then
@@ -1913,11 +1916,15 @@ For idx = 1 To m_tLevel.nPolyhedronCount
      If tPos.y >= p.y And tPos.y < p.y + j Then
       If tPos.z >= p.z And tPos.z < p.z + k Then
        k = p.z + k - tPos.z
-       If m_tLevel.tPolyhedron(idx).nFlags And &H40& Then HitTest = &H80000000 Or k _
-       Else HitTest = &H80010000 Or k
-       Exit Function
+       If m_tLevel.tPolyhedron(idx).nFlags And &H40& Then ret.nType = &H80000000 Or k _
+       Else ret.nType = &H80010000 Or k
+       ret.nObjType = m_tLevel.tPolyhedron(idx).nObjType
+       Exit Sub
       ElseIf tPos.z = p.z + k And (m_tLevel.tPolyhedron(idx).nFlags And &H10&) <> 0 Then
-       If ret < 0 Then ret = m_tLevel.tPolyhedron(idx).nObjType
+       If ret.nType < 0 Then
+        ret.nType = 0
+        ret.nObjType = m_tLevel.tPolyhedron(idx).nObjType
+       End If
       End If
      End If
     End If
@@ -1959,11 +1966,15 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
      '///
      If nHeight > sz And sz < ez And ez > 0 Then 'blocked
       If ez > nHeight Then ez = nHeight
-      If (j And &H200&) = 0 Then HitTest = &H80000000 Or ez _
-      Else HitTest = &H80010000 Or ez
-      Exit Function
+      If (j And &H200&) = 0 Then ret.nType = &H80000000 Or ez _
+      Else ret.nType = &H80010000 Or ez
+      ret.nObjType = m_tTileType(i).nObjType
+      Exit Sub
      ElseIf ez = 0 And (j And &H400&) = 0 Then 'supported
-      If ret < 0 Then ret = m_tTileType(i).nObjType
+      If ret.nType < 0 Then
+       ret.nType = 0
+       ret.nObjType = m_tTileType(i).nObjType
+      End If
      End If
      '///
     End If
@@ -1975,6 +1986,4 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
   End If
  End If
 End If
-'///
-HitTest = ret
-End Function
+End Sub

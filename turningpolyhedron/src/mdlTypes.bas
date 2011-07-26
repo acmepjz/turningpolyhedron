@@ -533,5 +533,22 @@ Public Type typePolyhedronState
  '0 =can't move
  '1 =OK
  'TODO:etc.
- 'TODO:more arguments in typePolyhedronState
+ '///
+ nTiltX As Long 'x pos (should always>0)
+ nTiltY As Long 'y pos (0=not tilt)
+ '///
+ nOnGroundCount As Long 'if nTiltY>0 then it means tilt count
+ tOnGroundPos() As typeMapPosition '1-based
+ '///
+ 'TODO:more
 End Type
+
+Public Type typeMapDataHitTest
+ nType As Long
+ '&H8001xxxx : blocked and not tiltable, low-word is block height (1-nHeight)
+ '&H8000xxxx : this position is blocked, low-word is block height (1-nHeight)
+ '-1 : can't stand on there (maybe no supporter or something's supporter=false)
+ '0: stand on something
+ nObjType As Long
+End Type
+
