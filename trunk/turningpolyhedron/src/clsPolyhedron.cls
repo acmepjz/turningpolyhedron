@@ -31,6 +31,22 @@ Friend Property Get OldPosition() As typePolyhedronPosition
 OldPosition = m_tOldPos
 End Property
 
+Friend Property Get PolyhedronState() As typePolyhedronState
+PolyhedronState = m_tState
+End Property
+
+Friend Property Get OldPolyhedronState() As typePolyhedronState
+OldPolyhedronState = m_tOldState
+End Property
+
+Friend Property Get PolyhedronTiltTangent() As Single
+If m_tState.nTiltX > 0 Then PolyhedronTiltTangent = m_tState.nTiltY / m_tState.nTiltX
+End Property
+
+Friend Property Get OldPolyhedronTiltTangent() As Single
+If m_tOldState.nTiltX > 0 Then OldPolyhedronTiltTangent = m_tOldState.nTiltY / m_tOldState.nTiltX
+End Property
+
 Friend Sub GetSize(Optional ByRef nSize0 As Long, Optional ByRef nSize1 As Long, Optional ByRef nSize2 As Long)
 nSize0 = m_tLogic.nSize(0)
 nSize1 = m_tLogic.nSize(1)
@@ -310,7 +326,13 @@ If nNewIndex = m_tPos.nGroundEdgeIndex Then
  CanChangeGroundEdgeIndex = True
  Exit Function
 End If
-'... unimplemented. TODO:actually check it
+'///check tilt (TEST ONLY)
+If m_tState.nTiltY > 0 Then
+ If ((m_tPos.nGroundEdgeIndex + 2) And 3&) = nNewIndex Then
+  Exit Function
+ End If
+End If
+'///TODO:other
 CanChangeGroundEdgeIndex = True
 End Function
 
@@ -327,11 +349,19 @@ End Sub
 Friend Sub CheckPolyhedronStateEx(ByRef tPos As typePolyhedronPosition, ByRef ret As typePolyhedronState)
 Dim i As Long, j As Long, k As Long
 Dim x As Long, y As Long, z As Long
+Dim tmp As Long, tHitTest As typeMapDataHitTest
 Dim p As typeMapPosition
 Dim p1 As typeMapPosition
-Dim nDirX As Long, nDirYDelta As Long
+Dim nDirXDelta As Long, nDirY As Long
+Dim nMax As Long, nState As Long
+Dim bFirstEmpty As Boolean
 '///
 ret.nState = 0
+nState = 1
+ret.nTiltX = 1
+ret.nTiltY = 0
+ret.nOnGroundCount = 0
+Erase ret.tOnGroundPos
 '///
 Select Case m_tLogic.nShape
 Case &H111 To &HFFF
@@ -342,99 +372,130 @@ Case &H111 To &HFFF
  i = (tPos.nGroundEdgeIndex - tPos.nFirstEdgeIndex) And 3&
  Select Case i
  Case 0
-  nDirX = 3
-  nDirYDelta = -1
+  nDirY = 2
+  nDirXDelta = 1
  Case 1
-  nDirX = 2
-  nDirYDelta = 1
-  z = x
+  nDirY = 3
+  nDirXDelta = -1
+  tmp = x
   x = y
-  y = z
+  y = tmp
  Case 2
-  nDirX = 2
+  nDirY = 2
   For i = 1 To y - 1
-   If Not objGameMgr.GetAdjacentPositionInPlace(p, nDirX, nDirX) Then
+   If Not objGameMgr.GetAdjacentPositionInPlace(p, nDirY, nDirY) Then 'err
     Debug.Assert False
     Exit Sub
    End If
   Next i
-  nDirX = (nDirX + 1) And 3&
-  nDirYDelta = 1
+  nDirY = (nDirY + 2) And 3&
+  nDirXDelta = -1
  Case 3
-  nDirX = 3
+  nDirY = 3
   For i = 1 To x - 1
-   If Not objGameMgr.GetAdjacentPositionInPlace(p, nDirX, nDirX) Then
+   If Not objGameMgr.GetAdjacentPositionInPlace(p, nDirY, nDirY) Then 'err
     Debug.Assert False
     Exit Sub
    End If
   Next i
-  nDirX = (nDirX - 1) And 3&
-  nDirYDelta = -1
-  z = x
+  nDirY = (nDirY + 2) And 3&
+  nDirXDelta = 1
+  tmp = x
   x = y
-  y = z
+  y = tmp
  End Select
  '///check
- For i = 1 To x
-  If i > 1 Then
-   If Not objGameMgr.GetAdjacentPositionInPlace(p, nDirX, nDirX) Then
+ For j = 1 To y
+  If j > 1 Then
+   If Not objGameMgr.GetAdjacentPositionInPlace(p, nDirY, nDirY) Then 'err
     Debug.Assert False
     Exit Sub
    End If
   End If
   p1 = p
-  k = (nDirX + nDirYDelta) And 3&
-  For j = 1 To y
-   If j > 1 Then
-    If Not objGameMgr.GetAdjacentPositionInPlace(p1, k, k) Then
+  k = (nDirY + nDirXDelta) And 3&
+  For i = 1 To x
+   If i > 1 Then
+    If Not objGameMgr.GetAdjacentPositionInPlace(p1, k, k) Then 'err
      Debug.Assert False
      Exit Sub
     End If
    End If
    '///
-   z = objGameMgr.HitTest(p1, m_nIndex)
-   Select Case z
-   Case Is >= 0
-    'TODO:check object interaction
+   objGameMgr.HitTest p1, tHitTest, m_nIndex, z
+   Select Case tHitTest.nType
+   Case 0
+    If ret.nTiltY = 0 Then
+     '///record
+     ret.nOnGroundCount = ret.nOnGroundCount + 1
+     If ret.nOnGroundCount > nMax Then
+      nMax = nMax + 16
+      ReDim Preserve ret.tOnGroundPos(1 To nMax)
+     End If
+     ret.tOnGroundPos(ret.nOnGroundCount) = p1
+     '///
+     'TODO:check object interaction
+    End If
    Case -1 'no supporter
-    If (m_tLogic.nFlags And &H8&) = 0 Then
-     ret.nState = -1 '???
-     Exit Sub
-    ElseIf x + y <= 3 Then '1x1 or 1x2 or 2x1
-     ret.nState = -1
-     Exit Sub
-    Else
-     'TODO:
-     Debug.Assert False
-     Exit Sub
+    If j = 1 Then bFirstEmpty = True
+    If ret.nTiltY = 0 Then '????????
+     If (m_tLogic.nFlags And &H8&) = 0 Then
+      If nState > 0 Then nState = -1 '???
+     ElseIf x + y <= 3 Then '1x1 or 1x2 or 2x1
+      If nState > 0 Then nState = -1
+     Else
+      'TODO:
+      Debug.Assert False
+     End If
     End If
-   Case &H80000000 To &H8000FFFF 'block tiltable
-    'TODO:check tilt angle
+   Case &H80000000 To &H8001FFFF 'block tiltable AND block not tiltable
     If j = 1 Then
-     ret.nState = 0 '???
-     Exit Sub
+     nState = 0
     ElseIf (m_tLogic.nFlags And &H20&) = 0 Then
-     ret.nState = 0 '???
-     Exit Sub
+     nState = 0
     Else
-     'TODO:
-     Debug.Assert False
-     Exit Sub
+     '///check tilt angle
+     tmp = (tHitTest.nType And &HFFFF&) * ret.nTiltX - ret.nTiltY * (j - 1)
+     If tHitTest.nType < &H80010000 Then 'tiltable
+      '///????????
+      If nState = -1 Then
+       If Not bFirstEmpty Then nState = 1
+      End If
+      '///
+      If tmp >= 0 Then
+       If tmp > 0 Then
+        ret.nTiltX = j - 1
+        ret.nTiltY = tHitTest.nType And &HFFFF&
+        ret.nOnGroundCount = 0
+        nMax = 16
+        ReDim ret.tOnGroundPos(1 To nMax)
+       End If
+       '///record
+       ret.nOnGroundCount = ret.nOnGroundCount + 1
+       If ret.nOnGroundCount > nMax Then
+        nMax = nMax + 16
+        ReDim Preserve ret.tOnGroundPos(1 To nMax)
+       End If
+       ret.tOnGroundPos(ret.nOnGroundCount) = p1
+       '///
+       'TODO:check object interaction
+      End If
+     Else 'not tiltable
+      If tmp > 0 Then
+       nState = 0
+      End If
+     End If
     End If
-   Case &H80010000 To &H8001FFFF 'block not tiltable
-    'TODO:
-    ret.nState = 0 '???
-    Exit Sub
    Case Else
     'error???
     Debug.Assert False
     Exit Sub
    End Select
    '///
-  Next j
- Next i
+  Next i
+ Next j
  '///over
- ret.nState = 1
+ ret.nState = nState
 Case Else
  'TODO:
  Debug.Assert False
@@ -489,6 +550,7 @@ End Function
 Friend Function Move(ByVal nDirection As Long) As Long
 Dim tPos As typePolyhedronPosition
 Dim tState As typePolyhedronState
+Dim nTiltGroundEdgeDelta As Long '????????
 Dim m As Long
 '///check if other polyhedron is on
 If objGameMgr.IsOtherPolyhedronOn(m_nIndex) Then Exit Function
@@ -497,12 +559,22 @@ tPos = m_tPos
 tPos.nGroundEdgeIndex = tPos.nFirstEdgeIndex + nDirection
 m = m_tLogic.tFace(m_tPos.nGroundFaceIndex).nEdgeCount
 If tPos.nGroundEdgeIndex >= m Then tPos.nGroundEdgeIndex = tPos.nGroundEdgeIndex - m
+If m = 4 And m_tState.nTiltY > 0 Then
+ nTiltGroundEdgeDelta = (tPos.nGroundEdgeIndex - m_tPos.nGroundEdgeIndex) And 3& '????????
+End If
 '///check if can turn
 If Not CanChangeGroundEdgeIndex(tPos.nGroundEdgeIndex) Then Exit Function
 '///get new position
 If Not MovePosition(tPos, nDirection) Then Exit Function
 '///check new state and do something
 CheckPolyhedronStateEx tPos, tState
+If tState.nState = 0 And (nTiltGroundEdgeDelta And 1&) <> 0 Then 'check tilt move
+ tPos.nGroundEdgeIndex = (tPos.nGroundEdgeIndex + nTiltGroundEdgeDelta) And 3& '????????
+ CheckPolyhedronStateEx tPos, tState
+ If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX > 0 Then 'check tilt angle
+  tState.nState = 0
+ End If
+End If
 Select Case tState.nState
 Case 1 ', -1 'TODO:etc.
  'TODO:onLeave and onMoveLeave events
@@ -510,10 +582,10 @@ Case 1 ', -1 'TODO:etc.
  'TODO:tilt angle,etc.
  m_tOldPos = m_tPos
  m_tOldState = m_tState
- objGameMgr.StartPolyhedronAnimation m_nIndex, ret, 0
+ objGameMgr.StartPolyhedronAnimation m_nIndex, tState.nState, 0
  '///over
  m_tPos = tPos
  m_tState = tState
 End Select
-Move = ret
+Move = tState.nState
 End Function
