@@ -516,6 +516,10 @@ Public Type typePolyhedronInstance
  nAnimType As Long
  '0=none
  '1=rolling (standard)
+ '&H8-&HF=rolling+nTiltGroundEdgeDelta (&H8 or nTiltGroundEdgeDelta) (???)
+ '---bit0=rolling? bit1=direction bit2=fall to ground?
+ '---&H9 &HB &HD &HF = rolling
+ '---&H8 &HA &HC &HE = falling
  '-1=falling (standard)
  '///
  matWorld As D3DMATRIX
@@ -536,6 +540,7 @@ Public Type typePolyhedronState
  '///
  nTiltX As Long 'x pos (should always>0)
  nTiltY As Long 'y pos (0=not tilt)
+ fTiltTangent As Single 'display only
  '///
  nOnGroundCount As Long 'if nTiltY>0 then it means tilt count
  tOnGroundPos() As typeMapPosition '1-based

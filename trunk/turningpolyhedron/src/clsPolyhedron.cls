@@ -40,11 +40,11 @@ OldPolyhedronState = m_tOldState
 End Property
 
 Friend Property Get PolyhedronTiltTangent() As Single
-If m_tState.nTiltX > 0 Then PolyhedronTiltTangent = m_tState.nTiltY / m_tState.nTiltX
+PolyhedronTiltTangent = m_tState.fTiltTangent
 End Property
 
 Friend Property Get OldPolyhedronTiltTangent() As Single
-If m_tOldState.nTiltX > 0 Then OldPolyhedronTiltTangent = m_tOldState.nTiltY / m_tOldState.nTiltX
+OldPolyhedronTiltTangent = m_tOldState.fTiltTangent
 End Property
 
 Friend Sub GetSize(Optional ByRef nSize0 As Long, Optional ByRef nSize1 As Long, Optional ByRef nSize2 As Long)
@@ -337,29 +337,32 @@ CanChangeGroundEdgeIndex = True
 End Function
 
 Friend Sub InitPolyhedronState()
-CheckPolyhedronStateEx m_tPos, m_tState
+CheckPolyhedronStateEx m_tPos, m_tState, False
 End Sub
 
-Friend Sub CheckPolyhedronState(ByRef ret As typePolyhedronState)
-CheckPolyhedronStateEx m_tPos, ret
+Friend Sub CheckPolyhedronState(ByRef ret As typePolyhedronState, ByVal bMoving As Boolean)
+CheckPolyhedronStateEx m_tPos, ret, bMoving
 End Sub
 
 'TODO:more arguments in typePolyhedronState
 'e.g. all on ground tiles
-Friend Sub CheckPolyhedronStateEx(ByRef tPos As typePolyhedronPosition, ByRef ret As typePolyhedronState)
+Friend Sub CheckPolyhedronStateEx(ByRef tPos As typePolyhedronPosition, ByRef ret As typePolyhedronState, ByVal bMoving As Boolean)
 Dim i As Long, j As Long, k As Long
 Dim x As Long, y As Long, z As Long
+Dim nHeight As Long, nHeight2 As Long
 Dim tmp As Long, tHitTest As typeMapDataHitTest
 Dim p As typeMapPosition
 Dim p1 As typeMapPosition
 Dim nDirXDelta As Long, nDirY As Long
 Dim nMax As Long, nState As Long
+Dim f As Single
 Dim bFirstEmpty As Boolean
 '///
 ret.nState = 0
 nState = 1
 ret.nTiltX = 1
 ret.nTiltY = 0
+ret.fTiltTangent = 0
 ret.nOnGroundCount = 0
 Erase ret.tOnGroundPos
 '///
@@ -414,6 +417,19 @@ Case &H111 To &HFFF
   End If
   p1 = p
   k = (nDirY + nDirXDelta) And 3&
+  '///get polyhedron height (???)
+  If bMoving Then
+   nHeight = j - 1
+   nHeight = y * y - nHeight * nHeight
+   nHeight2 = -Int(-Sqr(nHeight))
+   nHeight = -Int(-Sqr(nHeight + z * z))
+  Else
+   nHeight = z
+   nHeight2 = z
+  End If
+  '///debug
+  'Debug.Print y, z, j, bMoving, nHeight, nHeight2
+  '///
   For i = 1 To x
    If i > 1 Then
     If Not objGameMgr.GetAdjacentPositionInPlace(p1, k, k) Then 'err
@@ -422,7 +438,7 @@ Case &H111 To &HFFF
     End If
    End If
    '///
-   objGameMgr.HitTest p1, tHitTest, m_nIndex, z
+   objGameMgr.HitTest p1, tHitTest, m_nIndex, nHeight
    Select Case tHitTest.nType
    Case 0
     If ret.nTiltY = 0 Then
@@ -457,7 +473,11 @@ Case &H111 To &HFFF
      '///check tilt angle
      tmp = (tHitTest.nType And &HFFFF&) * ret.nTiltX - ret.nTiltY * (j - 1)
      If tHitTest.nType < &H80010000 Then 'tiltable
-      '///????????
+      '///check height - if it's blocked (???)
+      If (tHitTest.nType And &HFFFF&) > nHeight2 And tmp > 0 Then
+       nState = 0
+      End If
+      '///tile --> doesn't need supporter (???)
       If nState = -1 Then
        If Not bFirstEmpty Then nState = 1
       End If
@@ -494,8 +514,14 @@ Case &H111 To &HFFF
    '///
   Next i
  Next j
- '///over
+ '///over, calc tangent
  ret.nState = nState
+ If ret.nTiltY > 0 Then
+  i = ret.nTiltX
+  ret.fTiltTangent = ret.nTiltY / i
+  f = Sqr(y * y - i * i) / i
+  If ret.fTiltTangent > f Then ret.fTiltTangent = f
+ End If
 Case Else
  'TODO:
  Debug.Assert False
@@ -567,25 +593,32 @@ If Not CanChangeGroundEdgeIndex(tPos.nGroundEdgeIndex) Then Exit Function
 '///get new position
 If Not MovePosition(tPos, nDirection) Then Exit Function
 '///check new state and do something
-CheckPolyhedronStateEx tPos, tState
-If tState.nState = 0 And (nTiltGroundEdgeDelta And 1&) <> 0 Then 'check tilt move
- tPos.nGroundEdgeIndex = (tPos.nGroundEdgeIndex + nTiltGroundEdgeDelta) And 3& '????????
- CheckPolyhedronStateEx tPos, tState
- If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX > 0 Then 'check tilt angle
-  tState.nState = 0
+CheckPolyhedronStateEx tPos, tState, True
+'check tilt move
+If nTiltGroundEdgeDelta And 1& Then
+ If tState.nState = 0 Then
+  tPos.nGroundEdgeIndex = (tPos.nGroundEdgeIndex + nTiltGroundEdgeDelta) And 3& '????????
+  nTiltGroundEdgeDelta = nTiltGroundEdgeDelta Or 4&
+  CheckPolyhedronStateEx tPos, tState, True
+  If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX > 0 Then 'check tilt angle
+   tState.nState = 0
+  End If
  End If
 End If
 Select Case tState.nState
-Case 1 ', -1 'TODO:etc.
+Case 1 'TODO:etc.
  'TODO:onLeave and onMoveLeave events
- '///update animation (TEST ONLY)
- 'TODO:tilt angle,etc.
  m_tOldPos = m_tPos
  m_tOldState = m_tState
- objGameMgr.StartPolyhedronAnimation m_nIndex, tState.nState, 0
- '///over
  m_tPos = tPos
  m_tState = tState
+ '///update animation (TEST ONLY)
+ If nTiltGroundEdgeDelta And 1& Then
+  objGameMgr.StartPolyhedronAnimation m_nIndex, tState.nState, nTiltGroundEdgeDelta
+ Else
+  'TODO:etc.
+  objGameMgr.StartPolyhedronAnimation m_nIndex, tState.nState, 0
+ End If
 End Select
 Move = tState.nState
 End Function

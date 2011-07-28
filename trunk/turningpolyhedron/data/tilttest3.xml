@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<level>
+  <mapData id="m1" format="???" shape="rect" c="0.5,0.5,0" size="8,8,1">
+    <typeArray>
+11,01,11,11,01,01,01,01;
+11,01,01,01,01,01,01,01;
+11,01,01,01,01,01,01,01;
+11,01,11,11,11,11,01,01;
+01,01,11,11,11,11,01,11;
+01,01,01,01,01,01,01,11;
+01,01,01,01,01,01,01,11;
+01,01,01,01,11,11,01,11;
+    </typeArray>
+  </mapData>
+  <polyhedron shape="2x2x2" p="m1(0,6)" supportable="false" autoSize="true">
+    <appearance>
+      <shader templateName="simple1_fixed" ambient="0.2,0.2,0.2" diffuse="0.2,0.2,0.2" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
+    </appearance>
+  </polyhedron>
+</level>

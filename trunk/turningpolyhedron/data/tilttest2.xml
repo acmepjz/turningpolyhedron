@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<level>
+  <mapData id="m1" format="???" shape="rect" c="0.5,0.5,0" size="8,8,3">
+    <typeArray>1*9,,1*3,,goal,1;1,11*4,1,1;1*3,,1*4;,1*3,,1*6,11*4,1*3,,1*13||*43,block-ground</typeArray>
+  </mapData>
+  <polyhedron p="m1(1,7)" autoSize="true">
+    <!--<appearance>
+      <shader shaderProgram="standard"
+      	baseColor="textureArgument0.xyz:texcoord0:textureFile:test3.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
+      	normalMap="textureArgument1.xyz:texcoord0:textureFile:test3a.png:MipFilter=NONE;MinFilter=LINEAR;MagFilter=LINEAR;AddressU=CLAMP;AddressV=CLAMP;"
+      	parallaxMap="textureArgument0.w:texcoord0" parallaxMapScale="0.02" parallaxMapOffset="-0.5"
+      	ambient="0.6,0.6,0.6" diffuse="0.6,0.6,0.6" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,2" bevel="2;0.05" bevelNormalSmoothness="1"
+        	texcoord0="rect_unwrap"/>
+      </shader>
+    </appearance>-->
+  </polyhedron>
+</level>
