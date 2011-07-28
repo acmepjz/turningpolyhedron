@@ -205,7 +205,7 @@ With d3dd9
   '///draw cube with effects
   objRenderTest.BeginRenderToPostProcessTarget
   If bTestOnly Then
-   objGameMgr.UpdateLevelAnimationAndPosition objTiming.GetDelta
+   objGameMgr.UpdateLevelRuntimeData objTiming.GetDelta
    .BeginScene
    '///TEST TEST TEST
    objGameMgr.DrawLevel

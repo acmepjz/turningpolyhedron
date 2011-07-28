@@ -15,6 +15,8 @@ Option Explicit
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
+Private Const m_fAnimTime As Single = 500 'TODO:
+
 '////////object type data
 
 Private m_tObjType() As typeObjectType
@@ -126,25 +128,34 @@ MovePolyhedron = m_objPoly(nPolyhedronIndex).Move(nDirection)
 End Function
 
 'nCurrentState=state return by clsPolyhedron::CheckPolyhedronStateEx
-'When:
-'0=before rolling
-'1=after rolling
-'etc...
 '///TODO:more arguments
-Friend Sub StartPolyhedronAnimation(ByVal nPolyhedronIndex As Long, ByVal nCurrentState As Long, ByVal When As Long)
+Friend Sub StartPolyhedronAnimation(ByVal nPolyhedronIndex As Long, ByVal nCurrentState As Long, ByVal nReserved1 As Long)
+Dim t1 As typePolyhedronState
+Dim t2 As typePolyhedronState
+Dim b As Boolean
+'///
 Select Case nCurrentState
 Case 0 'not moveable
 Case 1 'moveable
- StartPolyhedronAnimationByType nPolyhedronIndex, 1
- SetPolyhedronAnimationStack4 nPolyhedronIndex
-Case -1 'moveable then falling
- Select Case When
- Case 0
+ If nReserved1 And 7& Then
+  '???????? TODO:(nReserved1) tilt animation
+  StartPolyhedronAnimationByType nPolyhedronIndex, (nReserved1 And 7&) Or 8&
+  If nReserved1 And 4& Then
+   t1 = m_objPoly(nPolyhedronIndex).OldPolyhedronState
+   t2 = m_objPoly(nPolyhedronIndex).PolyhedronState
+   t2.nTiltY = t2.nTiltY * t1.nTiltX - t1.nTiltY * t2.nTiltX
+   Debug.Assert t2.nTiltY <= 0
+   If t2.nTiltY < 0 Then _
+   SetPolyhedronAnimationStack4 nPolyhedronIndex, (nReserved1 And 6&) Or 8&
+  Else 'fall to ground
+   SetPolyhedronAnimationStack4 nPolyhedronIndex, (nReserved1 And 6&) Or 8&
+  End If
+ Else
   StartPolyhedronAnimationByType nPolyhedronIndex, 1
-  SetPolyhedronAnimationStack4 nPolyhedronIndex, -1
- Case 1
-  StartPolyhedronAnimationByType nPolyhedronIndex, -1
- End Select
+  SetPolyhedronAnimationStack4 nPolyhedronIndex
+ End If
+Case -1 'falling
+ StartPolyhedronAnimationByType nPolyhedronIndex, -1
 Case Else
  Debug.Assert False
 End Select
@@ -201,15 +212,15 @@ If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
 End If
 End Function
 
-Friend Sub UpdateLevelAnimationAndPosition(ByVal dt As Single)
+Friend Sub UpdateLevelRuntimeData(ByVal dt As Single)
 Dim idx As Long
-Dim f As Single
+Dim f As Single, f2 As Single
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX
 Dim vBase As D3DVECTOR, vNormal As D3DVECTOR, vAxis As D3DVECTOR
 Dim v As D3DVECTOR, v2 As D3DVECTOR
 Dim i As Long, j As Long, k As Long
 Dim p As typePolyhedronPosition
-'Dim p1 As typePolyhedronPosition
+Dim nAnimType As Long
 '///
 If m_bRuntimeDirty Then Exit Sub
 '////////reset?
@@ -222,9 +233,9 @@ End If
 For idx = 1 To m_tLevel.nPolyhedronCount
  'TODO:tilt angle, etc.
  Select Case m_tPolyInst(idx).nAnimType
- Case 1 'rolling
+ Case 1, &H8& To &HF& 'rolling
   f = m_tPolyInst(idx).fAnimValue(0) + dt
-  If f > 250 Then
+  If f > m_fAnimTime Then
    StartPolyhedronAnimationByStack idx
   Else
    m_tPolyInst(idx).fAnimValue(0) = f
@@ -247,26 +258,83 @@ Next idx
 For idx = 1 To m_tLevel.nPolyhedronCount
  m_tPolyInst(idx).matWorld = D3DXMatrixIdentity
  p = m_objPoly(idx).Position
- 'p1 = m_objPoly(idx).OldPosition
  If p.p.nMapDataIndex > 0 And p.p.nMapDataIndex <= m_tLevel.nMapDataCount Then
   Select Case m_tLevel.tPolyhedron(idx).nShape
   Case &H111 To &HFFF
+   nAnimType = m_tPolyInst(idx).nAnimType
    m_objPoly(idx).GetCurrentSize i, j, k
-   m_objPoly(idx).GetPolyhedronCoordinates vBase, vNormal, vAxis
-   f = m_objPoly(idx).PolyhedronTiltTangent 'should put this in mat1 (?)
-   If f > 0.000001 Then
-    D3DXVec3Normalize vNormal, D3DXVec3AddScale(vNormal, D3DXVec3Cross(vNormal, vAxis), f)
-   End If
+   Select Case nAnimType
+   Case &H8& To &HF&
+    If nAnimType And 1& Then 'tilt rolling
+     If nAnimType And 4& Then p.nGroundEdgeIndex = (p.nGroundEdgeIndex + (nAnimType And 2&) - 1) And 3&
+     m_objPoly(idx).GetPolyhedronCoordinatesEx p, vBase, vNormal, vAxis
+     If nAnimType And 2& Then '???????? FIXME: ugly dirty code
+      p.nGroundEdgeIndex = (p.nGroundEdgeIndex - 1) And 3&
+      m_objPoly(idx).GetPolyhedronCoordinatesEx p, vBase, Vec3, Vec3
+      '///
+      vAxis.x = -vAxis.x
+      vAxis.y = -vAxis.y
+      vAxis.z = -vAxis.z
+      '///
+      p = m_objPoly(idx).OldPosition '????????
+      p.nGroundEdgeIndex = (p.nGroundEdgeIndex - 1) And 3& '????????
+     End If
+    Else 'tilt falling
+     If nAnimType And 4& Then
+      m_objPoly(idx).GetPolyhedronCoordinatesEx p, vBase, vNormal, vAxis
+      f = m_objPoly(idx).PolyhedronTiltTangent
+     Else 'fall to ground
+      p.nGroundEdgeIndex = (p.nGroundEdgeIndex + (nAnimType And 2&) + 1) And 3&
+      m_objPoly(idx).GetPolyhedronCoordinatesEx p, vBase, vNormal, vAxis
+      'f = m_objPoly(idx).PolyhedronTiltTangent
+      f = 0 '???????? TODO:etc.
+     End If
+    End If
+   Case Else
+    'normal rolling
+    m_objPoly(idx).GetPolyhedronCoordinatesEx p, vBase, vNormal, vAxis
+    f = m_objPoly(idx).PolyhedronTiltTangent
+    If f > 0.000001 Then
+     D3DXVec3Normalize vNormal, D3DXVec3AddScale(vNormal, D3DXVec3Cross(vNormal, vAxis), f)
+    End If
+   End Select
    '///
-   Select Case m_tPolyInst(idx).nAnimType
+   Select Case nAnimType
    Case 1 'rolling
     m_objPoly(idx).GetOldPolyhedronCoordinates Vec3, v, v2
-    f = m_objPoly(idx).OldPolyhedronTiltTangent 'should put this in mat1 (?)
+    f = m_objPoly(idx).OldPolyhedronTiltTangent
     If f > 0.000001 Then
      D3DXVec3Normalize v, D3DXVec3AddScale(v, D3DXVec3Cross(v, v2), f)
     End If
-    f = m_tPolyInst(idx).fAnimValue(0) / 250
+    f = m_tPolyInst(idx).fAnimValue(0) / m_fAnimTime
     D3DXVec3Normalize vNormal, D3DXVec3Lerp(v, vNormal, f)
+   Case &H8& To &HF&
+    If nAnimType And 1& Then 'tilt rolling
+     m_objPoly(idx).GetOldPolyhedronCoordinates Vec3, v, Vec3
+     f = m_tPolyInst(idx).fAnimValue(0) / m_fAnimTime
+     D3DXVec3Normalize vNormal, D3DXVec3Lerp(v, vNormal, f)
+     '///tilt rolling
+     f = m_objPoly(idx).OldPolyhedronTiltTangent
+     If f > 0.000001 Then
+      f2 = 1 / Sqr(1 + f * f) 'cos
+      f = f * f2 'sin
+      v = D3DXVec3Cross(vAxis, vNormal)
+      '---
+      v2.x = vNormal.x * f2 - vAxis.x * f
+      v2.y = vNormal.y * f2 - vAxis.y * f
+      v2.z = vNormal.z * f2 - vAxis.z * f
+      '---
+      vAxis.x = vAxis.x * f2 + vNormal.x * f
+      vAxis.y = vAxis.y * f2 + vNormal.y * f
+      vAxis.z = vAxis.z * f2 + vNormal.z * f
+      '---
+      vNormal = v2
+     End If
+    Else 'tilt falling
+     'TODO:etc.
+     f = f + (m_objPoly(idx).OldPolyhedronTiltTangent - f) * (1 - m_tPolyInst(idx).fAnimValue(0) / m_fAnimTime)
+     D3DXVec3Normalize vNormal, D3DXVec3AddScale(vNormal, D3DXVec3Cross(vNormal, vAxis), f)
+    End If
    End Select
    '///
    v = D3DXVec3Cross(vAxis, vNormal)
@@ -342,7 +410,7 @@ For idx = 1 To m_tLevel.nPolyhedronCount
    v.z = k / 2
    D3DXVec3TransformCoord m_tPolyInst(idx).vCenter, v, m_tPolyInst(idx).matWorld
    '///
-   Select Case m_tPolyInst(idx).nAnimType
+   Select Case nAnimType
    Case -1 'falling
     f = m_tPolyInst(idx).fAnimValue(0) / 200
     f = f * f
