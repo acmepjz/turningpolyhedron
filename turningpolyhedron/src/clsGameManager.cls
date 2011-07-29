@@ -44,6 +44,7 @@ Private m_bIsRuntime As Boolean
 
 Private m_tLevel As typeLevelData
 
+Private m_tMapDataInst() As typeMapDataRuntime
 Private m_tLevelInst As typeMeshInstanceCollection
 
 Private m_objPoly() As New clsPolyhedron '1-based
@@ -52,6 +53,10 @@ Private m_tPolyInst() As typePolyhedronInstance
 Private m_nCurrentPolyhedron As Long
 
 Private m_bRuntimeDirty As Boolean
+
+Private m_tEvent() As typeMapDataEvent '0-based
+Private m_nEventStart As Long, m_nEventEnd As Long, m_nEventMax As Long
+Private m_bEventDirty As Boolean
 
 '////////game logic settings
 
@@ -141,7 +146,7 @@ Case 1 'moveable
   '???????? TODO:(nReserved1) tilt animation
   StartPolyhedronAnimationByType nPolyhedronIndex, (nReserved1 And 7&) Or 8&
   If nReserved1 And 4& Then
-   t1 = m_objPoly(nPolyhedronIndex).OldPolyhedronState
+   t1 = m_objPoly(nPolyhedronIndex).PolyhedronState(True)
    t2 = m_objPoly(nPolyhedronIndex).PolyhedronState
    t2.nTiltY = t2.nTiltY * t1.nTiltX - t1.nTiltY * t2.nTiltX
    Debug.Assert t2.nTiltY <= 0
@@ -231,11 +236,15 @@ End If
 '////////update animation
 '///polyhedron animation
 For idx = 1 To m_tLevel.nPolyhedronCount
- 'TODO:tilt angle, etc.
- Select Case m_tPolyInst(idx).nAnimType
+ nAnimType = m_tPolyInst(idx).nAnimType
+ Select Case nAnimType
  Case 1, &H8& To &HF& 'rolling
   f = m_tPolyInst(idx).fAnimValue(0) + dt
   If f > m_fAnimTime Then
+   If nAnimType = 1 Or (nAnimType And 1&) = 0 Then
+    m_objPoly(idx).SendEvent EventTypeOnEnter
+    m_objPoly(idx).SendEvent EventTypeOnMoveEnter
+   End If
    StartPolyhedronAnimationByStack idx
   Else
    m_tPolyInst(idx).fAnimValue(0) = f
@@ -251,6 +260,8 @@ For idx = 1 To m_tLevel.nPolyhedronCount
  End Select
 Next idx
 '///TODO:other
+'////////update event (?)
+ProcessMapEvents
 '////////update position
 '///setup polyhedron world matrix and center
 'TODO:adjacency data
@@ -276,7 +287,7 @@ For idx = 1 To m_tLevel.nPolyhedronCount
       vAxis.y = -vAxis.y
       vAxis.z = -vAxis.z
       '///
-      p = m_objPoly(idx).OldPosition '????????
+      p = m_objPoly(idx).Position(True) '????????
       p.nGroundEdgeIndex = (p.nGroundEdgeIndex - 1) And 3& '????????
      End If
     Else 'tilt falling
@@ -301,8 +312,8 @@ For idx = 1 To m_tLevel.nPolyhedronCount
    '///
    Select Case nAnimType
    Case 1 'rolling
-    m_objPoly(idx).GetOldPolyhedronCoordinates Vec3, v, v2
-    f = m_objPoly(idx).OldPolyhedronTiltTangent
+    m_objPoly(idx).GetPolyhedronCoordinates Vec3, v, v2, True
+    f = m_objPoly(idx).PolyhedronTiltTangent(True)
     If f > 0.000001 Then
      D3DXVec3Normalize v, D3DXVec3AddScale(v, D3DXVec3Cross(v, v2), f)
     End If
@@ -310,11 +321,11 @@ For idx = 1 To m_tLevel.nPolyhedronCount
     D3DXVec3Normalize vNormal, D3DXVec3Lerp(v, vNormal, f)
    Case &H8& To &HF&
     If nAnimType And 1& Then 'tilt rolling
-     m_objPoly(idx).GetOldPolyhedronCoordinates Vec3, v, Vec3
+     m_objPoly(idx).GetPolyhedronCoordinates Vec3, v, Vec3, True
      f = m_tPolyInst(idx).fAnimValue(0) / m_fAnimTime
      D3DXVec3Normalize vNormal, D3DXVec3Lerp(v, vNormal, f)
      '///tilt rolling
-     f = m_objPoly(idx).OldPolyhedronTiltTangent
+     f = m_objPoly(idx).PolyhedronTiltTangent(True)
      If f > 0.000001 Then
       f2 = 1 / Sqr(1 + f * f) 'cos
       f = f * f2 'sin
@@ -332,7 +343,7 @@ For idx = 1 To m_tLevel.nPolyhedronCount
      End If
     Else 'tilt falling
      'TODO:etc.
-     f = f + (m_objPoly(idx).OldPolyhedronTiltTangent - f) * (1 - m_tPolyInst(idx).fAnimValue(0) / m_fAnimTime)
+     f = f + (m_objPoly(idx).PolyhedronTiltTangent(True) - f) * (1 - m_tPolyInst(idx).fAnimValue(0) / m_fAnimTime)
      D3DXVec3Normalize vNormal, D3DXVec3AddScale(vNormal, D3DXVec3Cross(vNormal, vAxis), f)
     End If
    End Select
@@ -504,7 +515,7 @@ Dim i As Long, idx As Long
 ClearLevelRuntimeData
 '///
 m_bIsRuntime = bRuntime
-If Not GenerateMeshFromLevelDataEx(m_tLevel, m_tLevelInst, bRuntime) Then Exit Function
+If Not GenerateMeshFromLevelDataEx(m_tLevel, m_tMapDataInst, m_tLevelInst, bRuntime) Then Exit Function
 '///
 If m_tLevel.nPolyhedronCount > 0 Then
  ReDim m_objPoly(1 To m_tLevel.nPolyhedronCount)
@@ -518,12 +529,17 @@ If m_tLevel.nPolyhedronCount > 0 Then
  Next i
  '///
  For i = 1 To m_tLevel.nPolyhedronCount
-  m_objPoly(i).InitPolyhedronState
+  m_objPoly(i).CheckPolyhedronStateAndResponse
  Next i
- '///TODO:check if there are onEnter events
+ '///
+ For i = 1 To m_tLevel.nPolyhedronCount
+  m_objPoly(i).SendEvent EventTypeOnEnter
+ Next i
  '///set current polyhedron to the first one
  m_nCurrentPolyhedron = 1
 End If
+'///
+ProcessMapEvents
 '///
 m_bRuntimeDirty = False
 CreateLevelRuntimeData = True
@@ -534,8 +550,13 @@ Dim t As typeMeshInstanceCollection
 '///
 Erase m_objPoly
 Erase m_tPolyInst
+Erase m_tEvent
+Erase m_tMapDataInst
 m_tLevelInst = t
 m_nCurrentPolyhedron = 0
+m_nEventStart = 0
+m_nEventEnd = 0
+m_nEventMax = 0
 '///
 m_bRuntimeDirty = True
 End Sub
@@ -567,6 +588,58 @@ End Property
 Friend Function AddLevelDataFromNode(ByVal objNode As clsTreeStorageNode) As Boolean
 AddLevelDataFromNode = AddLevelDataFromNodeEx(objNode, m_tLevel)
 m_bRuntimeDirty = True
+End Function
+
+Friend Function ParseTileTypeFromString(ByVal s As String) As Long
+Dim nIndex As Long
+Dim lps As Long
+'///
+ParseTileTypeFromString = -1
+'///
+If IsNumeric(s) Then
+ nIndex = Val(s)
+ If nIndex > m_nTileTypeCount_Max Then 'out of range?
+  For lps = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
+   If m_tTileType(lps).nIndex = nIndex Then
+    nIndex = lps
+    Exit For
+   End If
+  Next lps
+ ElseIf nIndex > 0 Then
+  If nIndex <> m_tTileType(nIndex).nIndex Then 'invalid index
+   Debug.Assert False
+   Exit Function
+  End If
+ ElseIf nIndex < 0 And nIndex >= -m_nTileTypeCount_Max Then 'use dynamic mapping index?
+  nIndex = m_nTileTypeMap(-nIndex)
+  If nIndex <= 0 Then 'invalid index
+   Debug.Assert False
+   Exit Function
+  End If
+ End If
+ElseIf s <> "" Then
+ For lps = 1 To m_nTileTypeCount
+  If m_tTileType(lps).nIndex > 0 Then
+   If m_tTileType(lps).sID = s Then
+    nIndex = lps
+    Exit For
+   End If
+  End If
+ Next lps
+ If nIndex = 0 Then
+  For lps = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
+   If m_tTileType(lps).sID = s Then
+    nIndex = lps
+    Exit For
+   End If
+  Next lps
+ End If
+ If nIndex = 0 Then 'not found
+  Debug.Assert False
+  Exit Function
+ End If
+End If
+ParseTileTypeFromString = nIndex
 End Function
 
 Friend Function ParseMapTypeArrayFromNode(ByVal objNode As clsTreeStorageNode, ByRef tMap As typeMapData) As Boolean
@@ -784,13 +857,6 @@ If m > 0 Then
  Loop While lp < m
  '///
 End If
-'///debug
-'For j = 0 To tMap.nSize(1) - 1
-' For i = 0 To tMap.nSize(0) - 1
-'  Debug.Print tMap.nTypeArray(i, j, 0);
-' Next i
-' Debug.Print
-'Next j
 '///
 ParseMapTypeArrayFromNode = True
 End Function
@@ -1215,18 +1281,29 @@ Next i
 AddLevelDataFromNodeEx = True
 End Function
 
-Friend Function GenerateMeshFromLevelData(ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
-GenerateMeshFromLevelData = GenerateMeshFromLevelDataEx(m_tLevel, tInst, bRuntime)
-End Function
+'Friend Function GenerateMeshFromLevelData(ByRef tMapDataInst() As typeMapDataRuntime, ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
+'GenerateMeshFromLevelData = GenerateMeshFromLevelDataEx(m_tLevel, tMapDataInst, tInst, bRuntime)
+'End Function
 
-'test only
-Friend Function GenerateMeshFromLevelDataEx(ByRef tLevel As typeLevelData, ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
+Friend Function GenerateMeshFromLevelDataEx(ByRef tLevel As typeLevelData, ByRef tMapDataInst() As typeMapDataRuntime, ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
 Dim idx As Long
 Dim i As Long, j As Long, k As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
 Dim nIndex As Long
 '///
+If tLevel.nMapDataCount > 0 Then
+ ReDim tMapDataInst(1 To tLevel.nMapDataCount)
+Else
+ Erase tMapDataInst
+End If
+'///
 For idx = 1 To tLevel.nMapDataCount
+ '///
+ ReDim tMapDataInst(idx).nTypeArray(tLevel.tMapData(idx).nSize(0) - 1, _
+ tLevel.tMapData(idx).nSize(1) - 1, tLevel.tMapData(idx).nSize(2) - 1)
+ ReDim tMapDataInst(idx).nInstIndex(tLevel.tMapData(idx).nSize(0) - 1, _
+ tLevel.tMapData(idx).nSize(1) - 1, tLevel.tMapData(idx).nSize(2) - 1)
+ '///
  Select Case tLevel.tMapData(idx).nFlags And &HF&
  Case 0 'rect
   mat = tLevel.tMapData(idx).matWorld
@@ -1235,12 +1312,12 @@ For idx = 1 To tLevel.nMapDataCount
    For j = 0 To tLevel.tMapData(idx).nSize(1) - 1
     mat2 = mat1
     For i = 0 To tLevel.tMapData(idx).nSize(0) - 1
-     '///
      nIndex = tLevel.tMapData(idx).nTypeArray(i, j, k)
+     tMapDataInst(idx).nTypeArray(i, j, k) = nIndex
      If nIndex > 0 And nIndex <= m_nTileTypeMax Then
       'invisibleAtRuntime (?)
       If (bRuntime And m_tTileType(nIndex).nFlags And 1&) = 0 Then
-       objEffectMgr.AddInstanceFromAppearanceEx tInst, m_tTileType(nIndex).nApprIndex, mat2
+       tMapDataInst(idx).nInstIndex(i, j, k) = objEffectMgr.AddInstanceFromAppearanceEx(tInst, m_tTileType(nIndex).nApprIndex, mat2)
       End If
      End If
      '///
@@ -1499,19 +1576,17 @@ End Sub
 Friend Function ParseEventType(ByRef s As String) As Long
 Select Case s
 Case "onEnter"
- ParseEventType = 1
+ ParseEventType = EventTypeOnEnter
 Case "onLeave"
- ParseEventType = 2
+ ParseEventType = EventTypeOnLeave
 Case "onMoveEnter"
- ParseEventType = 3
+ ParseEventType = EventTypeOnMoveEnter
 Case "onMoveLeave"
- ParseEventType = 4
+ ParseEventType = EventTypeOnMoveLeave
 Case "onPressKey"
- ParseEventType = 5
-Case "onCustomEvent"
- ParseEventType = 6
-Case "onTriggeredEvent", "onEvent" 'onEvent????????
- ParseEventType = 7
+ ParseEventType = EventTypeOnPressKey
+Case "onCustomEvent", "onTriggeredEvent", "onEvent"
+ ParseEventType = EventTypeOnCustomEvent
 End Select
 End Function
 
@@ -1534,15 +1609,28 @@ If ret.nConditionCount > 0 Then ReDim ret.tCondition(1 To ret.nConditionCount)
 For i = 1 To ret.nConditionCount
  s = Trim(v(i - 1))
  lps = InStr(1, s, "=")
- If lps <= 1 Then
-  Debug.Assert False
-  Exit Function
+ If lps > 0 Then
+  s1 = Trim(Mid(s, lps + 1))
+  If Mid(s, lps - 1, 1) = "!" Then
+   nCompareType = 1
+   lps = lps - 1
+  End If
+ Else
+  lps = InStr(1, s, "!")
+  If lps > 0 Then
+   If Mid(s, lps + 1, 1) = "!" Then
+    nCompareType = 3
+    s1 = Trim(Mid(s, lps + 2))
+   Else
+    nCompareType = 2
+    s1 = Trim(Mid(s, lps + 1))
+   End If
+  Else
+   Debug.Assert False
+   Exit Function
+  End If
  End If
- s1 = Trim(Mid(s, lps + 1))
- If Mid(s, lps - 1, 1) = "!" Then
-  nCompareType = 1
-  lps = lps - 1
- End If
+ '///
  Select Case Trim(Left(s, lps - 1))
  Case "pressure"
   nType = 1
@@ -1553,12 +1641,9 @@ For i = 1 To ret.nConditionCount
  Case "onDifferentType"
   nType = 3
   nDataType = 1
- Case "eventType"
+ Case "eventType", "eventIndex"
   nType = 4
   nDataType = 3
- Case "eventIndex"
-  nType = 5
-  nDataType = 2
  Case "discardable"
   nType = &H101
   nDataType = 1
@@ -1586,10 +1671,17 @@ For i = 1 To ret.nConditionCount
  Case "objectType"
   nType = &H121
   nDataType = 3
+ Case "objectID"
+  nType = &H122
+  nDataType = 3
  Case Else
   Debug.Assert False
   Exit Function
  End Select
+ '///
+ If nDataType <> 3 Then
+  nCompareType = nCompareType And 1&
+ End If
  '///
  Select Case nDataType
  Case 1 'boolean
@@ -1651,13 +1743,8 @@ For i = 1 To ret.nEventCount
  End If
  '///
  Select Case s
- Case "triggerEvent"
+ Case "event", "sendEvent", "triggerEvent"
   nType = 1
-  j = Val(s1)
-  If j <= 0 Then j = 1
-  ret.tEvent(i).nParam = j
- Case "sendEvent"
-  nType = 2
   ret.tEvent(i).sStringParam = Split(s1, ":")
   ret.tEvent(i).nStringParamCount = UBound(ret.tEvent(i).sStringParam) + 1
  Case "teleport"
@@ -1971,7 +2058,11 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
  If tPos.x >= 0 And tPos.x < m_tLevel.tMapData(idx).nSize(0) Then
   If tPos.y >= 0 And tPos.y < m_tLevel.tMapData(idx).nSize(1) Then
    If tPos.z >= 0 And tPos.z < m_tLevel.tMapData(idx).nSize(2) Then
-    GetMapDataIndirect = m_tLevel.tMapData(idx).nTypeArray(tPos.x, tPos.y, tPos.z)
+    'If m_bRuntimeDirty Then
+    ' GetMapDataIndirect = m_tLevel.tMapData(idx).nTypeArray(tPos.x, tPos.y, tPos.z)
+    'Else
+     GetMapDataIndirect = m_tMapDataInst(tPos.nMapDataIndex).nTypeArray(tPos.x, tPos.y, tPos.z)
+    'End If
    End If
   End If
  End If
@@ -2078,4 +2169,364 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
   End If
  End If
 End If
+End Sub
+
+Friend Sub DispatchTileEvent(ByRef t As typeMapDataEvent, ByRef tEvent As typeTileEventAction)
+Dim tNew As typeMapDataEvent
+Dim mat As D3DMATRIX
+Dim i As Long, j As Long, k As Long
+'///
+m_bEventDirty = True
+'///
+Select Case tEvent.nType
+Case 1 'custom event
+ If tEvent.nStringParamCount > 1 Then
+  tNew = t
+  tNew.nEventType = EventTypeOnCustomEvent
+  tNew.sEventType = tEvent.sStringParam(0)
+  For i = 1 To tEvent.nStringParamCount - 1
+   tNew.p = t.p
+   AddMapEventFromPositionString tNew, tEvent.sStringParam(i)
+  Next i
+ ElseIf tEvent.nStringParamCount > 0 Then
+  tNew = t
+  tNew.nEventType = EventTypeOnCustomEvent
+  tNew.sEventType = tEvent.sStringParam(0)
+  AddMapEventFromPositionString tNew, vbNullString
+ End If
+Case 3 'teleport
+ Debug.Print "TODO:teleport"
+Case 4 'convertTo
+ If tEvent.nStringParamCount < 1 Then Exit Sub
+ i = GetMapDataIndirect(t.p)
+ If i < 0 Then Exit Sub
+ j = ParseTileTypeFromString(tEvent.sStringParam(0))
+ If j < 0 Then Exit Sub
+ '///
+ If i <> j Then
+  k = m_tMapDataInst(t.p.nMapDataIndex).nInstIndex(t.p.x, t.p.y, t.p.z)
+  If k > 0 Then
+   'TODO:animation
+   objEffectMgr.RemoveInstanceEx m_tLevelInst, k
+  End If
+  k = 0
+  If j > 0 Then
+   If (m_bIsRuntime And m_tTileType(j).nFlags And 1&) = 0 Then
+    'TODO:animation
+    With m_tLevel.tMapData(t.p.nMapDataIndex)
+     mat = .matWorld
+     mat.m41 = mat.m41 + t.p.x * .fPos(1).x + t.p.y * .fPos(2).x + t.p.z * .fPos(3).x
+     mat.m42 = mat.m42 + t.p.x * .fPos(1).y + t.p.y * .fPos(2).y + t.p.z * .fPos(3).y
+     mat.m43 = mat.m43 + t.p.x * .fPos(1).z + t.p.y * .fPos(2).z + t.p.z * .fPos(3).z
+    End With
+    k = objEffectMgr.AddInstanceFromAppearanceEx(m_tLevelInst, m_tTileType(j).nApprIndex, mat)
+   End If
+  End If
+  m_tMapDataInst(t.p.nMapDataIndex).nTypeArray(t.p.x, t.p.y, t.p.z) = j
+  m_tMapDataInst(t.p.nMapDataIndex).nInstIndex(t.p.x, t.p.y, t.p.z) = k
+ End If
+Case 5 'move:straight
+ Debug.Print "TODO:move:straight"
+Case 6 'move:left
+ Debug.Print "TODO:move:left"
+Case 7 'move:right
+ Debug.Print "TODO:move:right"
+Case 8 'move:back
+ Debug.Print "TODO:move:back"
+Case 9 'absolute-move
+ Debug.Print "TODO:absolute-move"
+Case 10 'game-finished
+ Debug.Print "TODO:game-finished"
+Case 11 'game-finished:unconditional
+ Debug.Print "TODO:game-finished:unconditional"
+Case 12 'checkpoint
+ Debug.Print "TODO:checkpoint"
+Case &H100 To &H1FF 'game over
+ If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+  StartPolyhedronAnimation t.nPolyhedronIndex, -1, 0 'TODO:game over type
+ Else 'err???
+  m_bReset = True
+ End If
+Case Else
+ Debug.Assert False
+ Exit Sub
+End Select
+End Sub
+
+Friend Function CheckNumberMatchesCondition(ByVal f As Single, ByRef t As typeTileEventCondition) As Boolean
+Select Case t.nCompareType
+Case 0
+ CheckNumberMatchesCondition = f >= t.nValue1 And f <= t.nValue2
+Case 1
+ CheckNumberMatchesCondition = Not (f >= t.nValue1 And f <= t.nValue2)
+Case Else
+ Debug.Assert False
+End Select
+End Function
+
+Friend Function CheckBooleanMatchesCondition(ByVal b As Boolean, ByRef t As typeTileEventCondition) As Boolean
+Select Case t.nCompareType
+Case 0
+ CheckBooleanMatchesCondition = b = (t.nValue1 = 0)
+Case 1
+ CheckBooleanMatchesCondition = b <> (t.nValue1 = 0)
+Case Else
+ Debug.Assert False
+End Select
+End Function
+
+Friend Function CheckStringMatchesCondition(ByVal s As String, ByRef t As typeTileEventCondition) As Boolean
+Dim i As Long
+Select Case t.nCompareType
+Case 0
+ For i = 0 To t.nStringValueCount - 1
+  If s = t.sStringValue(i) Then
+   CheckStringMatchesCondition = True
+   Exit Function
+  End If
+ Next i
+Case 1
+ For i = 0 To t.nStringValueCount - 1
+  If s = t.sStringValue(i) Then Exit Function
+ Next i
+ CheckStringMatchesCondition = True
+Case 2
+ For i = 0 To t.nStringValueCount - 1
+  If s Like t.sStringValue(i) Then
+   CheckStringMatchesCondition = True
+   Exit Function
+  End If
+ Next i
+Case 3
+ For i = 0 To t.nStringValueCount - 1
+  If s Like t.sStringValue(i) Then Exit Function
+ Next i
+ CheckStringMatchesCondition = True
+Case Else
+ Debug.Assert False
+End Select
+End Function
+
+Friend Sub CheckMapEventMatchesTileEvent(ByRef t As typeMapDataEvent, ByRef tEvent As typeTileEvent)
+Dim i As Long, j As Long
+Dim s As String
+Dim b As Boolean
+'///
+If t.nEventType <> tEvent.nEventType Then Exit Sub
+'///check condition
+For i = 1 To tEvent.nConditionCount
+ b = False
+ Select Case tEvent.tCondition(i).nType
+ Case 1 'pressure
+  b = CheckNumberMatchesCondition(t.fPressure, tEvent.tCondition(i))
+ Case 2 'onGroundCount
+  b = CheckNumberMatchesCondition(t.nOnGroundCount, tEvent.tCondition(i))
+ Case 3 'onDifferentType
+  b = CheckBooleanMatchesCondition(t.nTileTypeCount > 1, tEvent.tCondition(i))
+ Case 4 'eventType
+  b = CheckStringMatchesCondition(t.sEventType, tEvent.tCondition(i))
+ Case &H101 'discardable
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   b = CheckBooleanMatchesCondition(m_tLevel.tPolyhedron(t.nPolyhedronIndex).nFlags And 1&, tEvent.tCondition(i))
+  End If
+ Case &H102 'main
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   b = CheckBooleanMatchesCondition(m_tLevel.tPolyhedron(t.nPolyhedronIndex).nFlags And 2&, tEvent.tCondition(i))
+  End If
+ Case &H103 'fragile
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   b = CheckBooleanMatchesCondition(m_tLevel.tPolyhedron(t.nPolyhedronIndex).nFlags And 4&, tEvent.tCondition(i))
+  End If
+ Case &H104 'supportable
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   b = CheckBooleanMatchesCondition(m_tLevel.tPolyhedron(t.nPolyhedronIndex).nFlags And 8&, tEvent.tCondition(i))
+  End If
+ Case &H105 'supporter
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   b = CheckBooleanMatchesCondition(m_tLevel.tPolyhedron(t.nPolyhedronIndex).nFlags And &H10&, tEvent.tCondition(i))
+  End If
+ Case &H106 'tiltable
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   b = CheckBooleanMatchesCondition(m_tLevel.tPolyhedron(t.nPolyhedronIndex).nFlags And &H20&, tEvent.tCondition(i))
+  End If
+ Case &H107 'tilt-supporter
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   b = CheckBooleanMatchesCondition(m_tLevel.tPolyhedron(t.nPolyhedronIndex).nFlags And &H40&, tEvent.tCondition(i))
+  End If
+ Case &H108 'spannable
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   b = CheckBooleanMatchesCondition(m_tLevel.tPolyhedron(t.nPolyhedronIndex).nFlags And &H80&, tEvent.tCondition(i))
+  End If
+ Case &H121 'objectType
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   j = m_tLevel.tPolyhedron(t.nPolyhedronIndex).nObjType
+   If j > 0 And j <= m_nObjTypeCount Then
+    s = m_tObjType(j).sName
+   Else
+    s = "default"
+   End If
+   b = CheckStringMatchesCondition(s, tEvent.tCondition(i))
+  End If
+ Case &H122 'objectID
+  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+   b = CheckStringMatchesCondition(m_tLevel.tPolyhedron(t.nPolyhedronIndex).sID, tEvent.tCondition(i))
+  End If
+ Case Else
+  Debug.Assert False
+  Exit Sub
+ End Select
+ If Not b Then Exit Sub
+Next i
+'///dispatch event
+For i = 1 To tEvent.nEventCount
+ DispatchTileEvent t, tEvent.tEvent(i)
+Next i
+End Sub
+
+Friend Sub DispatchMapEvent(ByRef tEvent As typeMapDataEvent)
+Dim nType As Long
+Dim i As Long
+'///
+nType = GetMapDataIndirect(tEvent.p)
+If nType < 0 Then Exit Sub
+'///check tile type's event
+If nType > 0 Then
+ For i = 1 To m_tTileType(nType).nEventCount
+  CheckMapEventMatchesTileEvent tEvent, m_tTileType(nType).tEvent(i)
+ Next i
+End If
+'///check custom event
+nType = m_tLevel.tMapData(tEvent.p.nMapDataIndex).nPropertyArray(tEvent.p.x, tEvent.p.y, tEvent.p.z)
+If nType > 0 And nType <= m_tLevel.tMapData(tEvent.p.nMapDataIndex).nPropertyCount Then
+ For i = 1 To m_tLevel.tMapData(tEvent.p.nMapDataIndex).tProperties(nType).nEventCount
+  CheckMapEventMatchesTileEvent tEvent, m_tLevel.tMapData(tEvent.p.nMapDataIndex).tProperties(nType).tEvent(i)
+ Next i
+End If
+End Sub
+
+Friend Sub ProcessMapEvents()
+Dim i As Long
+Dim tEvent As typeMapDataEvent
+'///
+m_bEventDirty = False
+'///
+For i = 1 To 16384 'max iteration
+ If m_nEventStart >= m_nEventEnd Then
+  m_nEventStart = 0
+  m_nEventEnd = 0
+  Exit For
+ End If
+ tEvent = m_tEvent(m_nEventStart)
+ m_nEventStart = m_nEventStart + 1
+ DispatchMapEvent tEvent
+Next i
+Debug.Assert i <= 16384
+'///???
+If m_bEventDirty Then
+ For i = 1 To m_tLevel.nPolyhedronCount
+  m_objPoly(i).CheckPolyhedronStateAndResponse
+ Next i
+End If
+End Sub
+
+Friend Sub AddMapEvent(ByRef tEvent As typeMapDataEvent)
+If m_nEventEnd >= m_nEventMax Then
+ m_nEventMax = m_nEventMax + 256&
+ ReDim Preserve m_tEvent(m_nEventMax - 1)
+End If
+m_tEvent(m_nEventEnd) = tEvent
+m_nEventEnd = m_nEventEnd + 1
+End Sub
+
+'will change the contents of tEvent.p
+Friend Sub AddMapEventFromPositionString(ByRef tEvent As typeMapDataEvent, ByVal s As String)
+Dim s1 As String
+Dim idx As Long, i As Long, j As Long, k As Long
+'///
+i = InStr(1, s, "(")
+If i > 0 Then '<id>"("<subscript>")"
+ s1 = Mid(s, i + 1)
+ s = Left(s, i - 1)
+Else
+ i = InStr(1, s, ".")
+ If i > 0 Then '<id>.<tag>
+  s1 = Mid(s, i + 1)
+  s = Left(s, i - 1)
+  i = -1
+ End If
+End If
+'///
+If i <> 0 Then
+ 'get id
+ idx = Val(s)
+ If idx <= 0 Or idx > m_tLevel.nMapDataCount Then
+  For idx = 1 To m_tLevel.nMapDataCount
+   If s = m_tLevel.tMapData(idx).sID Then Exit For
+  Next idx
+  If idx > m_tLevel.nMapDataCount Then Exit Sub
+ End If
+ tEvent.p.nMapDataIndex = idx
+ tEvent.p.x = 0
+ tEvent.p.y = 0
+ tEvent.p.z = 0
+ 'get subscript
+ If i > 0 Then '<id>"("<subscript>")"
+  tEvent.p.x = Val(s1) 'FIXME: no sanity check :-3
+  i = InStr(1, s1, ",")
+  If i > 0 Then
+   tEvent.p.y = Val(Mid(s1, i + 1))
+   i = InStr(i + 1, s1, ",")
+   If i > 0 Then
+    tEvent.p.z = Val(Mid(s1, i + 1))
+   End If
+  End If
+  AddMapEvent tEvent
+ Else '<id>.<tag>
+  For k = 0 To m_tLevel.tMapData(idx).nSize(2) - 1
+   tEvent.p.z = k
+   For j = 0 To m_tLevel.tMapData(idx).nSize(1) - 1
+    tEvent.p.y = j
+    For i = 0 To m_tLevel.tMapData(idx).nSize(0) - 1
+     If m_tLevel.tMapData(idx).sTagArray(i, j, k) = s1 Then
+      tEvent.p.x = i
+      AddMapEvent tEvent
+     End If
+    Next i
+   Next j
+  Next k
+ End If
+ElseIf s = "this" Then
+ AddMapEvent tEvent
+ElseIf s = vbNullString Then 'all
+ For idx = 1 To m_tLevel.nMapDataCount
+  tEvent.p.nMapDataIndex = idx
+  For k = 0 To m_tLevel.tMapData(idx).nSize(2) - 1
+   tEvent.p.z = k
+   For j = 0 To m_tLevel.tMapData(idx).nSize(1) - 1
+    tEvent.p.y = j
+    For i = 0 To m_tLevel.tMapData(idx).nSize(0) - 1
+     tEvent.p.x = i
+     AddMapEvent tEvent
+    Next i
+   Next j
+  Next k
+ Next idx
+Else '<tag>
+ For idx = 1 To m_tLevel.nMapDataCount
+  tEvent.p.nMapDataIndex = idx
+  For k = 0 To m_tLevel.tMapData(idx).nSize(2) - 1
+   tEvent.p.z = k
+   For j = 0 To m_tLevel.tMapData(idx).nSize(1) - 1
+    tEvent.p.y = j
+    For i = 0 To m_tLevel.tMapData(idx).nSize(0) - 1
+     If m_tLevel.tMapData(idx).sTagArray(i, j, k) = s Then
+      tEvent.p.x = i
+      AddMapEvent tEvent
+     End If
+    Next i
+   Next j
+  Next k
+ Next idx
+End If
+'///
 End Sub

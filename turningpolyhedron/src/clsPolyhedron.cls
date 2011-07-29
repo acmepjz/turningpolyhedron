@@ -23,28 +23,28 @@ Private m_tOldPos As typePolyhedronPosition
 Private m_tState As typePolyhedronState
 Private m_tOldState As typePolyhedronState
 
-Friend Property Get Position() As typePolyhedronPosition
-Position = m_tPos
+Friend Property Get Position(Optional ByVal IsOld As Boolean) As typePolyhedronPosition
+If IsOld Then
+ Position = m_tOldPos
+Else
+ Position = m_tPos
+End If
 End Property
 
-Friend Property Get OldPosition() As typePolyhedronPosition
-OldPosition = m_tOldPos
+Friend Property Get PolyhedronState(Optional ByVal IsOld As Boolean) As typePolyhedronState
+If IsOld Then
+ PolyhedronState = m_tOldState
+Else
+ PolyhedronState = m_tState
+End If
 End Property
 
-Friend Property Get PolyhedronState() As typePolyhedronState
-PolyhedronState = m_tState
-End Property
-
-Friend Property Get OldPolyhedronState() As typePolyhedronState
-OldPolyhedronState = m_tOldState
-End Property
-
-Friend Property Get PolyhedronTiltTangent() As Single
-PolyhedronTiltTangent = m_tState.fTiltTangent
-End Property
-
-Friend Property Get OldPolyhedronTiltTangent() As Single
-OldPolyhedronTiltTangent = m_tOldState.fTiltTangent
+Friend Property Get PolyhedronTiltTangent(Optional ByVal IsOld As Boolean) As Single
+If IsOld Then
+ PolyhedronTiltTangent = m_tOldState.fTiltTangent
+Else
+ PolyhedronTiltTangent = m_tState.fTiltTangent
+End If
 End Property
 
 Friend Sub GetSize(Optional ByRef nSize0 As Long, Optional ByRef nSize1 As Long, Optional ByRef nSize2 As Long)
@@ -298,12 +298,12 @@ tFace.vBase(2) = p2
 tFace.vBase(3) = p3
 End Sub
 
-Friend Sub GetPolyhedronCoordinates(ByRef vBase As D3DVECTOR, ByRef vNormal As D3DVECTOR, ByRef vRotationAxis As D3DVECTOR)
-GetPolyhedronCoordinatesEx m_tPos, vBase, vNormal, vRotationAxis
-End Sub
-
-Friend Sub GetOldPolyhedronCoordinates(ByRef vBase As D3DVECTOR, ByRef vNormal As D3DVECTOR, ByRef vRotationAxis As D3DVECTOR)
-GetPolyhedronCoordinatesEx m_tOldPos, vBase, vNormal, vRotationAxis
+Friend Sub GetPolyhedronCoordinates(ByRef vBase As D3DVECTOR, ByRef vNormal As D3DVECTOR, ByRef vRotationAxis As D3DVECTOR, Optional ByVal IsOld As Boolean)
+If IsOld Then
+ GetPolyhedronCoordinatesEx m_tOldPos, vBase, vNormal, vRotationAxis
+Else
+ GetPolyhedronCoordinatesEx m_tPos, vBase, vNormal, vRotationAxis
+End If
 End Sub
 
 'returns which point and edge is on ground
@@ -336,12 +336,14 @@ End If
 CanChangeGroundEdgeIndex = True
 End Function
 
-Friend Sub InitPolyhedronState()
+Friend Sub CheckPolyhedronStateAndResponse()
 CheckPolyhedronStateEx m_tPos, m_tState, False
-End Sub
-
-Friend Sub CheckPolyhedronState(ByRef ret As typePolyhedronState, ByVal bMoving As Boolean)
-CheckPolyhedronStateEx m_tPos, ret, bMoving
+'///response
+'TODO:if state changed then play some animation (e.g. tilt angle changed)
+Select Case m_tState.nState
+Case -1 'falling
+ objGameMgr.StartPolyhedronAnimation m_nIndex, -1, 0
+End Select
 End Sub
 
 'TODO:more arguments in typePolyhedronState
@@ -363,12 +365,14 @@ nState = 1
 ret.nTiltX = 1
 ret.nTiltY = 0
 ret.fTiltTangent = 0
+ret.fPressure = 0
 ret.nOnGroundCount = 0
 Erase ret.tOnGroundPos
 '///
 Select Case m_tLogic.nShape
 Case &H111 To &HFFF
  GetCurrentSizeEx tPos, x, y, z
+ ret.fPressure = z 'TODO:irregular polyhedron
  p = tPos.p
  '///
  'on-ground edge --> index on ground
@@ -614,7 +618,6 @@ End If
 'check new state
 Select Case tState.nState
 Case 1 'TODO:etc.
- 'TODO:onLeave and onMoveLeave events
  m_tOldPos = m_tPos
  m_tOldState = m_tState
  m_tPos = tPos
@@ -626,6 +629,34 @@ Case 1 'TODO:etc.
   'TODO:etc.
   objGameMgr.StartPolyhedronAnimation m_nIndex, tState.nState, 0
  End If
+ '///onLeave and onMoveLeave events
+ SendEventEx EventTypeOnLeave, m_tOldState
+ SendEventEx EventTypeOnMoveLeave, m_tOldState
 End Select
 Move = tState.nState
 End Function
+
+Friend Sub SendEvent(ByVal nEventType As Long, Optional ByVal IsOld As Boolean)
+If IsOld Then
+ SendEventEx nEventType, m_tOldState
+Else
+ SendEventEx nEventType, m_tState
+End If
+End Sub
+
+Friend Sub SendEventEx(ByVal nEventType As Long, ByRef tState As typePolyhedronState)
+Dim tEvent As typeMapDataEvent
+Dim i As Long
+'///
+If tState.nTiltY = 0 Then
+ tEvent.nEventType = nEventType
+ tEvent.nPolyhedronIndex = m_nIndex
+ tEvent.fPressure = tState.fPressure
+ tEvent.nOnGroundCount = tState.nOnGroundCount
+ '///
+ For i = 1 To tState.nOnGroundCount
+  tEvent.p = tState.tOnGroundPos(i)
+  objGameMgr.AddMapEvent tEvent
+ Next i
+End If
+End Sub
