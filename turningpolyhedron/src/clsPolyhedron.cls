@@ -421,6 +421,7 @@ Case &H111 To &HFFF
   If bMoving Then
    nHeight = j - 1
    nHeight = y * y - nHeight * nHeight
+   'TODO: WRONG CODE --> if wall height is infinity and nHeight>nHeight2 then it produces wrong result
    nHeight2 = -Int(-Sqr(nHeight))
    nHeight = -Int(-Sqr(nHeight + z * z))
   Else
@@ -586,25 +587,31 @@ tPos.nGroundEdgeIndex = tPos.nFirstEdgeIndex + nDirection
 m = m_tLogic.tFace(m_tPos.nGroundFaceIndex).nEdgeCount
 If tPos.nGroundEdgeIndex >= m Then tPos.nGroundEdgeIndex = tPos.nGroundEdgeIndex - m
 If m = 4 And m_tState.nTiltY > 0 Then
- nTiltGroundEdgeDelta = (tPos.nGroundEdgeIndex - m_tPos.nGroundEdgeIndex) And 3& '????????
+ nTiltGroundEdgeDelta = (tPos.nGroundEdgeIndex - m_tPos.nGroundEdgeIndex) And 3&
 End If
 '///check if can turn
 If Not CanChangeGroundEdgeIndex(tPos.nGroundEdgeIndex) Then Exit Function
 '///get new position
 If Not MovePosition(tPos, nDirection) Then Exit Function
 '///check new state and do something
-CheckPolyhedronStateEx tPos, tState, True
-'check tilt move
+'check tilt move first
 If nTiltGroundEdgeDelta And 1& Then
+ tPos.nGroundEdgeIndex = (tPos.nGroundEdgeIndex + nTiltGroundEdgeDelta) And 3&
+ CheckPolyhedronStateEx tPos, tState, True
+ If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX > 0 Then 'check tilt angle
+  tState.nState = 0
+ End If
  If tState.nState = 0 Then
-  tPos.nGroundEdgeIndex = (tPos.nGroundEdgeIndex + nTiltGroundEdgeDelta) And 3& '????????
+  tPos.nGroundEdgeIndex = (tPos.nGroundEdgeIndex - nTiltGroundEdgeDelta) And 3&
+ Else
   nTiltGroundEdgeDelta = nTiltGroundEdgeDelta Or 4&
-  CheckPolyhedronStateEx tPos, tState, True
-  If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX > 0 Then 'check tilt angle
-   tState.nState = 0
-  End If
  End If
 End If
+'check normal move
+If tState.nState = 0 Then
+ CheckPolyhedronStateEx tPos, tState, True
+End If
+'check new state
 Select Case tState.nState
 Case 1 'TODO:etc.
  'TODO:onLeave and onMoveLeave events

@@ -626,7 +626,7 @@ End With
 'End If
 '////////landscape test
 Dim t As D3DXIMAGE_INFO
-objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -50 ', App.Path + "\fogmap_test.png", , 0.01, , 0.1
+objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15
 'objLand.CreateFromFile App.Path + "\heightmap_test.png", 3, 5, 0.05, , , -15, App.Path + "\fogmap_test.png", 3, 0.05, 2
 'objLand.FogEnabled = True
 D3DXCreateTextureFromFileExW d3dd9, App.Path + "\test0.png", D3DX_DEFAULT, D3DX_DEFAULT, 1, 0, D3DFMT_FROM_FILE, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, t, ByVal 0, objLandTexture
