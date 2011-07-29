@@ -286,7 +286,6 @@ Public Type typeTileEventCondition
  '2=onGroundCount[n]
  '3=onDifferentType[b]
  '4=eventType[s]
- '5=eventIndex[n]
  '----polyhedron properties[b]
  '--&H101=discardable
  '--&H102=main
@@ -297,7 +296,8 @@ Public Type typeTileEventCondition
  '--&H107=tilt-supporter
  '--&H108=spannable
  '----other polyhedron properties
- '--&H121=objectType[s] (string??)
+ '--&H121=objectType [s]
+ '--&H122=objectID [s]
  '========data type
  '1 [b]=boolean
  '2 [n]=number(integer or float)
@@ -305,6 +305,8 @@ Public Type typeTileEventCondition
  nCompareType As Long
  '0="=" (default)
  '1="!="
+ '2=like ("!") [string only]
+ '3=doesn't like ("!!") [string only]
  nValue1 As Single
  nValue2 As Single
  nStringValueCount As Long
@@ -314,8 +316,8 @@ End Type
 Public Type typeTileEventAction
  nType As Long
  '0=unused
- '1=triggerEvent
- '2=sendEvent
+ '1=[trigger]Event
+ '2=RESERVED
  '3=teleport (currently unsupported TODO:)
  '4=convertTo
  '5=move:straight
@@ -326,8 +328,7 @@ Public Type typeTileEventAction
  '10=game-finished
  '11=game-finished:unconditional
  '12=checkpoint
- '&H100-x=game-over:*
- nParam As Long
+ '&H100-&H1FF=game-over:*
  nStringParamCount As Long
  sStringParam() As String '0-based
 End Type
@@ -339,13 +340,21 @@ Public Type typeTileEvent
  '3=onMoveEnter
  '4=onMoveLeave
  '5=onPressKey
- '6=onCustomEvent
- '7=onTriggeredEvent
+ '6=on[Custom]Event
  nConditionCount As Long
  tCondition() As typeTileEventCondition '1-based
  nEventCount As Long
  tEvent() As typeTileEventAction '1-based
 End Type
+
+Public Enum enumEventType
+ EventTypeOnEnter = 1
+ EventTypeOnLeave = 2
+ EventTypeOnMoveEnter = 3
+ EventTypeOnMoveLeave = 4
+ EventTypeOnPressKey = 5
+ EventTypeOnCustomEvent = 6
+End Enum
 
 Public Type typeTileType
  nIndex As Long '???
@@ -412,6 +421,12 @@ Public Type typeMapData
  nPropertyCount As Long
  tProperties() As typeMapData_Properties '1-based
  'TODO:adjacency
+End Type
+
+Public Type typeMapDataRuntime
+ '///0 to x-1,0 to y-1,0 to z-1
+ nTypeArray() As Long
+ nInstIndex() As Long
 End Type
 
 Public Type typeMapData_Polyhedron
@@ -542,6 +557,8 @@ Public Type typePolyhedronState
  nTiltY As Long 'y pos (0=not tilt)
  fTiltTangent As Single 'display only
  '///
+ fPressure As Single
+ '///
  nOnGroundCount As Long 'if nTiltY>0 then it means tilt count
  tOnGroundPos() As typeMapPosition '1-based
  '///
@@ -557,3 +574,16 @@ Public Type typeMapDataHitTest
  nObjType As Long
 End Type
 
+Public Type typeMapDataEvent
+ nEventType As Long
+ '///event (not polyhedron) position
+ p As typeMapPosition
+ '///polyhedron arguments
+ nPolyhedronIndex As Long
+ fPressure As Single
+ nOnGroundCount As Long
+ nTileTypeCount As Long 'currently unsupported
+ nObjTypeCount As Long 'currently unsupported
+ '///custom event and triggered event
+ sEventType As String
+End Type

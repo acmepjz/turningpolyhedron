@@ -30,7 +30,7 @@
         	texcoord0="rect_unwrap"/>
       </shader>
     </appearance>
-    <onEnter event="triggerEvent"/>
+    <onEnter event="triggerEvent:pressed:this"/>
   </tileType>
   <tileType id="hard-button" index="3">
     <name>Hard button</name>
@@ -45,7 +45,7 @@
         	texcoord0="rect_unwrap"/>
       </shader>
     </appearance>
-    <onEnter condition="pressure=2~" event="triggerEvent"/>
+    <onEnter condition="pressure=2~" event="triggerEvent:pressed:this"/>
   </tileType>
   <tileType id="teleporter" index="4">
     <name>Teleporter</name>
