@@ -52,17 +52,21 @@
     <description>Teleporter will teleports your block to different locations, optionally splitting it into two smaller blocks at the same time.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
-        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      <shader templateName="simple1_fixed_with_texture_normal"
+      	baseColor="textureFile:gfx/tele_button.png"
+      	normalMap="textureFile:gfx/tele_button_normal.png"
+      	ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="2;0.05" bevelNormalSmoothness="1"
+        	texcoord0="rect_unwrap"/>
       </shader>
     </appearance>
-    <onMoveEnter condition="onGroundCount=1" event="teleport"/>
+    <onMoveEnter condition="onGroundCount=1;main=true" event="triggerEvent:pressed:this"/> <!-- ??? -->
   </tileType>
   <tileType id="thin-ground" index="5">
     <name>Thin ground</name>
     <description>Thin ground are more fragile than the rest of the land. If your block stands up vertically on it, the tile will give way and your block will fall.</description>
     <appearance>
-      <shader templateName="simple1_fixed" ambient="0.4,0.3,0.2" diffuse="0.5,0.3,0.2" specular="0.4,0.4,0.3" specularHardness="50">
+      <shader templateName="simple1_fixed" ambient="0.4,0.2,0.1" diffuse="0.4,0.3,0.2" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.2" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
@@ -73,7 +77,7 @@
     <description>The bridge which is off.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+      <shader templateName="simple1_fixed" ambient="0.4,0.4,0.4" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
@@ -84,7 +88,7 @@
     <description>The bridge is just the same as normal ground when it is activated.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+      <shader templateName="simple1_fixed" ambient="0.4,0.4,0.4" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
@@ -117,7 +121,7 @@
     <description>Ice are slippery. If the block is not rough enough and is completely on the ice, it will slip until get off the ice or hit the wall.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+      <shader templateName="simple1_fixed" ambient="0.1,0.3,0.4" diffuse="0.2,0.4,0.4" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
@@ -127,8 +131,11 @@
     <description>Your block is unstable when standing on the pyramid, so it will lie down immediately unless there is a wall next to your block.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
-        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      <shader templateName="simple1_fixed_with_normal"
+      	normalMap="textureFile:gfx/pyramid_normal.png"
+      	ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="2;0.05" bevelNormalSmoothness="1"
+        	texcoord0="rect_unwrap"/>
       </shader>
     </appearance>
     <onMoveEnter condition="pressure=2~" event="move"/>
@@ -150,7 +157,7 @@
     <description>This ground is so thin that it will break down immediately after you move on it.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+      <shader templateName="simple1_fixed" ambient="0.1,0.3,0.1" diffuse="0.1,0.3,0.1" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>

@@ -139,6 +139,7 @@ Friend Function AddInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal n
 Dim idx As Long
 If nEffectIndex > 0 And nEffectIndex <= m_nEffectCount And nMeshIndex > 0 Then
  idx = pAddEmptyInstance(tInst)
+ tInst.tInstance(idx).Visible = True
  tInst.tInstance(idx).nEffectIndex = nEffectIndex
  tInst.tInstance(idx).nMeshIndex = nMeshIndex
  tInst.tInstance(idx).matWorld = matWorld
@@ -409,37 +410,39 @@ For i = 1 To tInst.nInstCount
    '///
   End If
  End If
- '///SetupTransform
- If bUseExistingTransform Then
-  D3DXMatrixMultiply mat, tInst.tInstance(idx).matWorld, matBackup
-  d3dd9.SetTransform D3DTS_WORLD, mat
- Else
-  d3dd9.SetTransform D3DTS_WORLD, tInst.tInstance(idx).matWorld
+ If tInst.tInstance(idx).Visible Then
+  '///SetupTransform
+  If bUseExistingTransform Then
+   D3DXMatrixMultiply mat, tInst.tInstance(idx).matWorld, matBackup
+   d3dd9.SetTransform D3DTS_WORLD, mat
+  Else
+   d3dd9.SetTransform D3DTS_WORLD, tInst.tInstance(idx).matWorld
+  End If
+  objRenderTest.SetupTransform obj
+  obj.CommitChanges
+  '///draw
+  j = tInst.tInstance(idx).nMeshIndex
+  Set objMesh = objMeshMgr.Mesh(j)
+  Select Case tInst.tInstance(idx).nType
+  Case 1 To 15
+   '///TEST hardware instancing
+   d3dd9.SetStreamSourceFreq 0, D3DSTREAMSOURCE_INDEXEDDATA Or tInst.tInstance(idx).nCount
+   d3dd9.SetStreamSource 0, objMesh.GetVertexBuffer, 0, objMeshMgr.MeshVertexSize(j)
+   d3dd9.SetStreamSourceFreq 1, D3DSTREAMSOURCE_INSTANCEDATA Or 1
+   d3dd9.SetStreamSource 1, tInst.tInstance(idx).objInstanceBuffer, 0, tInst.tInstance(idx).nInstanceVertexSize
+   '///
+   d3dd9.SetVertexDeclaration tInst.tInstance(idx).objDeclaration
+   d3dd9.SetIndices objMesh.GetIndexBuffer
+   d3dd9.DrawIndexedPrimitive D3DPT_TRIANGLELIST, 0, 0, objMesh.GetNumVertices, 0, objMesh.GetNumFaces
+   '///
+   d3dd9.SetStreamSourceFreq 0, 1
+   d3dd9.SetStreamSource 0, Nothing, 0, 0
+   d3dd9.SetStreamSourceFreq 1, 1
+   d3dd9.SetStreamSource 1, Nothing, 0, 0
+  Case Else
+   objMesh.DrawSubset 0
+  End Select
  End If
- objRenderTest.SetupTransform obj
- obj.CommitChanges
- '///draw
- j = tInst.tInstance(idx).nMeshIndex
- Set objMesh = objMeshMgr.Mesh(j)
- Select Case tInst.tInstance(idx).nType
- Case 1 To 15
-  '///TEST hardware instancing
-  d3dd9.SetStreamSourceFreq 0, D3DSTREAMSOURCE_INDEXEDDATA Or tInst.tInstance(idx).nCount
-  d3dd9.SetStreamSource 0, objMesh.GetVertexBuffer, 0, objMeshMgr.MeshVertexSize(j)
-  d3dd9.SetStreamSourceFreq 1, D3DSTREAMSOURCE_INSTANCEDATA Or 1
-  d3dd9.SetStreamSource 1, tInst.tInstance(idx).objInstanceBuffer, 0, tInst.tInstance(idx).nInstanceVertexSize
-  '///
-  d3dd9.SetVertexDeclaration tInst.tInstance(idx).objDeclaration
-  d3dd9.SetIndices objMesh.GetIndexBuffer
-  d3dd9.DrawIndexedPrimitive D3DPT_TRIANGLELIST, 0, 0, objMesh.GetNumVertices, 0, objMesh.GetNumFaces
-  '///
-  d3dd9.SetStreamSourceFreq 0, 1
-  d3dd9.SetStreamSource 0, Nothing, 0, 0
-  d3dd9.SetStreamSourceFreq 1, 1
-  d3dd9.SetStreamSource 1, Nothing, 0, 0
- Case Else
-  objMesh.DrawSubset 0
- End Select
 Next i
 '///over
 If Not obj Is Nothing Then
@@ -521,6 +524,7 @@ For i = 0 To 64
 Next i
 '///
 i = pAddEmptyInstance(tInst)
+tInst.tInstance(i).Visible = True
 tInst.tInstance(i).nType = nHWInstancingMode
 tInst.tInstance(i).nEffectIndex = nEffectIndex
 tInst.tInstance(i).nMeshIndex = nMeshIndex
