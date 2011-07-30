@@ -14,6 +14,8 @@ Public Type typeMeshInstanceData 'N bytes :(
  '///
  nEffectIndex As Long '<=0 is unused, if <0 then is &H80000000 | (next unused index)
  nMeshIndex As Long 'must >0
+ '///
+ Visible As Boolean 'TODO:
  '///when nType=0
  matWorld As D3DMATRIX
  '///when nType=1-15
@@ -458,6 +460,7 @@ Public Type typeMapData_Polyhedron
  '&H20=tiltable
  '&H40=tilt-supporter
  '&H80=spannable
+ '&H100=visible
  'TODO:etc.
  sPos As String 'start pos (and start direction)
  'TODO:controller, etc.
@@ -525,6 +528,8 @@ Public Type typePolyhedronPosition
 End Type
 
 Public Type typePolyhedronInstance
+ nFlags As Long 'same as design-time flags (???)
+ '///
  nInstIndex As Long
  '///
  'type of current animation TODO:flags other than animation
@@ -544,6 +549,20 @@ Public Type typePolyhedronInstance
  '///
  nAnimStack(7) As Long '?
  nAnimStackIndex As Long
+End Type
+
+Public Type typeCustomTileAnimation
+ nInstIndex As Long
+ '///
+ nAnimType As Long
+ '0=none
+ '1=fade out (TODO:)
+ '2=fade in (TODO:)
+ '-1=falling <-- should be breakdown ?
+ '///
+ matWorld As D3DMATRIX
+ '///
+ fAnimValue(3) As Single
 End Type
 
 Public Type typePolyhedronState

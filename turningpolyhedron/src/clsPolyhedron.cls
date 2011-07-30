@@ -23,6 +23,14 @@ Private m_tOldPos As typePolyhedronPosition
 Private m_tState As typePolyhedronState
 Private m_tOldState As typePolyhedronState
 
+Friend Property Get PolyhedronFlags() As Long
+PolyhedronFlags = m_tLogic.nFlags
+End Property
+
+Friend Property Let PolyhedronFlags(ByVal n As Long)
+m_tLogic.nFlags = n
+End Property
+
 Friend Property Get Position(Optional ByVal IsOld As Boolean) As typePolyhedronPosition
 If IsOld Then
  Position = m_tOldPos
@@ -30,6 +38,22 @@ Else
  Position = m_tPos
 End If
 End Property
+
+Friend Property Let Position(Optional ByVal IsOld As Boolean, ByRef tPos As typePolyhedronPosition)
+If IsOld Then
+ m_tOldPos = tPos
+Else
+ m_tPos = tPos
+End If
+End Property
+
+Friend Function SetPositionFromString(ByVal s As String, ByRef tLevel As typeLevelData) As Boolean
+Dim t As typePolyhedronPosition
+If ParsePolyhedronPosition(s, t, tLevel) Then
+ m_tPos = t
+ SetPositionFromString = True
+End If
+End Function
 
 Friend Property Get PolyhedronState(Optional ByVal IsOld As Boolean) As typePolyhedronState
 If IsOld Then
@@ -107,7 +131,9 @@ If Not CreatePolyhedronLogic(m_tLogic, tLevel.tPolyhedron(nPolyhedronIndex).nSha
 m_tLogic.nObjType = tLevel.tPolyhedron(nPolyhedronIndex).nObjType
 m_tLogic.nFlags = tLevel.tPolyhedron(nPolyhedronIndex).nFlags
 '///get position
-If Not ParsePolyhedronPosition(tLevel.tPolyhedron(nPolyhedronIndex).sPos, m_tPos, tLevel) Then Exit Function
+If m_tLogic.nFlags And &H100& Then
+ If Not ParsePolyhedronPosition(tLevel.tPolyhedron(nPolyhedronIndex).sPos, m_tPos, tLevel) Then Exit Function
+End If
 '///
 CreateIndirect = True
 End Function
@@ -578,11 +604,12 @@ End Function
 '1=OK
 'other --> same as CheckPolyhedronStateEx
 'TODO:etc.
-Friend Function Move(ByVal nDirection As Long) As Long
+Friend Function Move(ByVal nDirection As Long, Optional ByVal bAllowFalling As Boolean) As Long
 Dim tPos As typePolyhedronPosition
 Dim tState As typePolyhedronState
 Dim nTiltGroundEdgeDelta As Long '????????
 Dim m As Long
+Dim bMove As Boolean
 '///check if other polyhedron is on
 If objGameMgr.IsOtherPolyhedronOn(m_nIndex) Then Exit Function
 '///get new nGroundEdgeIndex
@@ -616,13 +643,20 @@ If tState.nState = 0 Then
  CheckPolyhedronStateEx tPos, tState, True
 End If
 'check new state
+bMove = False
 Select Case tState.nState
 Case 1 'TODO:etc.
+ bMove = True
+Case -1 'falling
+ bMove = bAllowFalling
+End Select
+If bMove Then
  m_tOldPos = m_tPos
  m_tOldState = m_tState
  m_tPos = tPos
  m_tState = tState
  '///update animation (TEST ONLY)
+ If tState.nState = -1 Then tState.nState = 1
  If nTiltGroundEdgeDelta And 1& Then
   objGameMgr.StartPolyhedronAnimation m_nIndex, tState.nState, nTiltGroundEdgeDelta
  Else
@@ -632,8 +666,8 @@ Case 1 'TODO:etc.
  '///onLeave and onMoveLeave events
  SendEventEx EventTypeOnLeave, m_tOldState
  SendEventEx EventTypeOnMoveLeave, m_tOldState
-End Select
-Move = tState.nState
+End If
+Move = m_tState.nState
 End Function
 
 Friend Sub SendEvent(ByVal nEventType As Long, Optional ByVal IsOld As Boolean)
@@ -649,14 +683,16 @@ Dim tEvent As typeMapDataEvent
 Dim i As Long
 '///
 If tState.nTiltY = 0 Then
- tEvent.nEventType = nEventType
- tEvent.nPolyhedronIndex = m_nIndex
- tEvent.fPressure = tState.fPressure
- tEvent.nOnGroundCount = tState.nOnGroundCount
- '///
- For i = 1 To tState.nOnGroundCount
-  tEvent.p = tState.tOnGroundPos(i)
-  objGameMgr.AddMapEvent tEvent
- Next i
+ If tState.nState = 1 Then
+  tEvent.nEventType = nEventType
+  tEvent.nPolyhedronIndex = m_nIndex
+  tEvent.fPressure = tState.fPressure
+  tEvent.nOnGroundCount = tState.nOnGroundCount
+  '///
+  For i = 1 To tState.nOnGroundCount
+   tEvent.p = tState.tOnGroundPos(i)
+   objGameMgr.AddMapEvent tEvent
+  Next i
+ End If
 End If
 End Sub

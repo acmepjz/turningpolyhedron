@@ -397,7 +397,7 @@ End Sub
 
 Public Sub FakeDXAppSetDefaultRenderState()
 'zFar can be very big and there's still small error, but zNear can't be very small
-objRenderTest.SetProjection_PerspectiveFovLH Atn(1.732), d3dpp.BackBufferWidth / d3dpp.BackBufferHeight, 0.1, 1000
+objRenderTest.SetProjection_PerspectiveFovLH , d3dpp.BackBufferWidth / d3dpp.BackBufferHeight, 0.1, 1000
 With d3dd9
  .SetRenderState D3DRS_LIGHTING, 0
  .SetSamplerState 0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR
@@ -536,7 +536,7 @@ objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
 objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
 'objRenderTest.SetLightType D3DLIGHT_POINT
 'objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1), True
-objCamera.SetCamrea Vec3(0, 6, -3.75), Vec3, Vec3(, , 1), True
+objCamera.SetCamrea Vec3(0, 9.6, -6), Vec3, Vec3(, , 1), True
 objCamera.AnimationEnabled = True
 objCamera.LinearDamping = 0.5
 'objRenderTest.CreateShadowMap 1024 'new
