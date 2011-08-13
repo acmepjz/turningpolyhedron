@@ -82,7 +82,25 @@ Public FakeDXAppMyGamesPath As String
 
 Public FakeDXAppRequestUnload As Boolean, FakeDXAppCanUnload As Boolean
 
+Public FakeDXAppMainLoopCallback As IMainLoopCallback
+
+'////////receives unprocessed window event
+
+Public FakeDXAppEvent As IFakeDXAppEvent
+
+Public Const FakeDXAppEvent_Click As Long = 1
+Public Const FakeDXAppEvent_DblClick As Long = 2
+Public Const FakeDXAppEvent_MouseMove As Long = 3
+Public Const FakeDXAppEvent_MouseDown As Long = 4
+Public Const FakeDXAppEvent_MouseUp As Long = 5
+Public Const FakeDXAppEvent_MouseWheel As Long = 6
+Public Const FakeDXAppEvent_KeyPress As Long = &H101
+Public Const FakeDXAppEvent_KeyDown As Long = &H102
+Public Const FakeDXAppEvent_KeyUp As Long = &H103
+
 '////////test
+
+Public FakeDXAppRootObject As IRenderableObject
 
 'default camera
 Public objCamera As New clsCamera
@@ -100,7 +118,12 @@ Public objFontSprite As D3DXSprite
 Public objFont As D3DXFont
 
 Public objEffectMgr As New clsEffectManager
-Public bTestOnly As Boolean
+
+'////////game UI objects
+
+Public objMainMenu As New clsMainMenu
+Public objGame As New clsGameGUI
+
 '////////
 
 Public objFileMgr As New clsFileManager
@@ -122,7 +145,7 @@ m_tDefVertexDecl(6) = D3DVertexElementCreate(, 56&, D3DDECLTYPE_FLOAT2, , D3DDEC
 m_tDefVertexDecl(7) = D3DDECL_END '64 bytes
 End Sub
 
-Public Sub FakeDXAppMainLoop(Optional ByVal lpbCancel As Long)
+Public Sub FakeDXAppMainLoop(Optional ByVal objCallback As IMainLoopCallback, Optional ByVal bRunOnce As Boolean)
 Dim b As Byte
 Do Until d3dd9 Is Nothing
  '///process key event
@@ -132,11 +155,13 @@ Do Until d3dd9 Is Nothing
  FakeDXAppRender
  DoEvents
  '///
+ If bRunOnce Then Exit Do
  If FakeDXAppRequestUnload Then Exit Do
  '///
- If lpbCancel Then
-  CopyMemory b, ByVal lpbCancel, 1&
-  If b Then Exit Do
+ If Not objCallback Is Nothing Then
+  If objCallback.Cancel Then Exit Do
+ ElseIf Not FakeDXAppMainLoopCallback Is Nothing Then
+  If FakeDXAppMainLoopCallback.Cancel Then Exit Do
  End If
 Loop
 End Sub
@@ -184,84 +209,87 @@ With d3dd9
   '///
  End If
  If i = 0 Then
-  '///init
+  '///init (if first time run this sub or after device reset
   FakeDXAppOnInitalize
+  '///reset counter
+  MyMini_IndexCount = 0
+  MyMini_FogIndexCount = 0
   '///
-'  D3DXMatrixRotationZ mat1, 0.005
-  .GetTransform D3DTS_WORLD, mat
-'  D3DXMatrixMultiply mat, mat1, mat
-'  .SetTransform D3DTS_WORLD, mat
-  objCamera.Apply objRenderTest
-  '///
-  objRenderTest.SetDepthOfFieldParams objCamera.RealDistance, 0.01, 0.1, 40
-  '///shadow map
-  If objRenderTest.BeginRender(RenderPass_ShadowMap) Then
-   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
+  If FakeDXAppRootObject Is Nothing Then
+   '??? nothing to render
+   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000000, 1, 0
+   'show something ridiculous
    .BeginScene
-   objTest.DrawSubset 0
-   .EndScene
-   objRenderTest.EndRender
-  End If
-  '///draw cube with effects
-  objRenderTest.BeginRenderToPostProcessTarget
-  If bTestOnly Then
-   objGameMgr.UpdateLevelRuntimeData objTiming.GetDelta
-   .BeginScene
-   '///TEST TEST TEST
-   objGameMgr.DrawLevel
-   '////////draw landscape
-   d3dd9.SetTexture 0, objLandTexture
-   .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
-   objRenderTest.UpdateRenderState
-   objLand.Render objRenderTest, objCamera
-   .SetTransform D3DTS_WORLD, mat
-   '////////
+   FakeDXGDIDrawText FakeDXUIDefaultFont, "Nothing to render", 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, , _
+   DT_CENTER Or DT_VCENTER Or DT_SINGLELINE Or DT_NOCLIP, , , , , , , , True
    .EndScene
   Else
-   objRenderTest.SetTexture objTexture
-   objRenderTest.SetNormalTexture objNormalTexture
-   If objRenderTest.BeginRender(RenderPass_Main) Then
-    .BeginScene
-    objTest.DrawSubset 0
-    objRenderTest.EndRender 'xx
-    '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
-    d3dd9.SetTexture 0, objLandTexture
-    .SetTransform D3DTS_WORLD, D3DXMatrixIdentity
-    objRenderTest.UpdateRenderState
-    objLand.Render objRenderTest, objCamera
-    .SetTransform D3DTS_WORLD, mat
-    '////////
-    .EndScene
-   End If
+   '///
+   objCamera.Apply objRenderTest
+   '///
+   objRenderTest.SetDepthOfFieldParams objCamera.RealDistance, 0.01, 0.1, 40
+   '///shadow map
+   FakeDXAppRootObject.Render RenderPass_ShadowMap, objRenderTest, objCamera, False, False
+   '///
+   FakeDXAppRootObject.Render RenderPass_Main, objRenderTest, objCamera, False, False
+'   objRenderTest.BeginRenderToPostProcessTarget
+'   If bTestOnly Then
+'    objGameMgr.UpdateLevelRuntimeData objTiming.GetDelta
+'    .BeginScene
+'    '///TEST TEST TEST
+'    objGameMgr.DrawLevel
+'    '////////draw landscape
+'    d3dd9.SetTexture 0, objLandTexture
+'    objLand.Render objRenderTest, objCamera
+'    '////////
+'    .EndScene
+'   Else
+'    objRenderTest.SetTexture objTexture
+'    objRenderTest.SetNormalTexture objNormalTexture
+'    If objRenderTest.BeginRender(RenderPass_Main) Then
+'     .BeginScene
+'     objTest.DrawSubset 0
+'     objRenderTest.EndRender 'xx
+'     '////////draw landscape test (new and buggy) TODO:shouldn't use advanced shading effects
+'     d3dd9.SetTexture 0, objLandTexture
+'     objLand.Render objRenderTest, objCamera
+'     '////////
+'     .EndScene
+'    End If
+'   End If
+'   objRenderTest.EndRenderToPostProcessTarget
+   '////////volumetric fog test
+   FakeDXAppRootObject.Render RenderPass_FogVolume, objRenderTest, objCamera, False, False
+'   If objRenderTest.BeginRender(RenderPass_FogVolume) Then
+'    D3DXMatrixScaling mat1, 5, 5, 5
+'    D3DXMatrixMultiply mat2, mat1, mat
+'    .SetTransform D3DTS_WORLD, mat2
+'    objRenderTest.UpdateRenderState '???
+'    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
+'    .BeginScene
+'    objTest.DrawSubset 0
+'    .EndScene
+'    objRenderTest.EndRender
+'    .SetTransform D3DTS_WORLD, mat
+'   End If
+   '////////perform post process
+   objRenderTest.PerformPostProcess
   End If
-  objRenderTest.EndRenderToPostProcessTarget
-  '////////volumetric fog test
-  If objRenderTest.BeginRender(RenderPass_FogVolume) Then
-   D3DXMatrixScaling mat1, 5, 5, 5
-   D3DXMatrixMultiply mat2, mat1, mat
-   .SetTransform D3DTS_WORLD, mat2
-   objRenderTest.UpdateRenderState '???
-   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
-   .BeginScene
-   objTest.DrawSubset 0
-   .EndScene
-   objRenderTest.EndRender
-   .SetTransform D3DTS_WORLD, mat
-  End If
-  '////////perform post process
-  objRenderTest.PerformPostProcess
-  '////////draw text test
+  '////////draw overlay
   .BeginScene
-  s = "FPS:" + Format(objTiming.FPS, "0.0")
-  FakeDXGDIDrawText FakeDXUIDefaultFont, s, 32, 32, 128, 32, 0.75, DT_NOCLIP, -1, , &HFF000000, , , , , True
-  FakeDXGDIDrawText FakeDXUIDefaultFont, "Landscape Triangles:" + CStr(MyMini_IndexCount) + vbCrLf + "Fog Triangles:" + CStr(MyMini_FogIndexCount), _
-  48, 256, 128, 32, 0.75, DT_NOCLIP, &HFFFF0000, , -1, , , , 0.2, True
-  .EndScene
-  '////////
-  .BeginScene
+  '///overlay text
+  s = "FPS:" + Format(objTiming.FPS, "0.0") + vbCrLf + _
+  "Landscape Triangles:" + CStr(MyMini_IndexCount) + vbCrLf + _
+  "Fog Triangles:" + CStr(MyMini_FogIndexCount)
+  FakeDXGDIDrawText FakeDXUIDefaultFont, s, 32, 32, 128, 32, 0.5, DT_NOCLIP, -1, , &HFF000000, , , , , True
+  '///UI
   FakeDXUIRender
+  '///custom text
+  If Not FakeDXAppRootObject Is Nothing Then
+   FakeDXAppRootObject.Render RenderPass_Overlay, objRenderTest, objCamera, False, True
+  End If
   .EndScene
-  '////////
+  '////////over
   .Present ByVal 0, ByVal 0, 0, ByVal 0
  End If
 End With
@@ -432,6 +460,9 @@ FakeDXUIDestroy
 objEffectMgr.Destroy
 objMeshMgr.Destroy
 '///
+Set FakeDXAppMainLoopCallback = Nothing
+Set FakeDXAppEvent = Nothing
+'///
 Set objLand = Nothing
 Set objLandTexture = Nothing
 Set objTextMgr = Nothing
@@ -451,7 +482,7 @@ Next frm
 '///
 End Sub
 
-Public Sub FakeDXAppInit(ByVal frm As Form, ByVal objSubclass As cSubclass, ByVal objCallback As iSubclass, ByVal objEventCallback As IFakeDXUIEvent)
+Public Sub FakeDXAppInit(ByVal frm As Form, ByVal objSubclass As cSubclass, ByVal objCallback As iSubclass)
 On Error Resume Next
 Dim i As Long
 Dim s As String
@@ -529,7 +560,7 @@ FakeDXAppSetDefaultRenderState
 '////////test
 Set objTest = pLoadMeshTest
 '///
-FakeDXAppCreateUI objEventCallback
+FakeDXAppCreateUI
 '///
 objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
 objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
@@ -583,20 +614,6 @@ With New clsXMLSerializer
   If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then _
   objGameMgr.LoadTileTypesFromSubNodes obj
  End If
- '///TEST:load level
- objGameMgr.FollowCurrentPolyhedron = True
- objGameMgr.AutoReset = True 'should be false because we can undo moves
- i = objFileMgr.LoadFile("lvltest.xml")
- If i > 0 Then
-  Set obj = New clsTreeStorageNode
-  If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj) Then
-   If objGameMgr.AddLevelDataFromNode(obj) Then
-    objGameMgr.CreateLevelRuntimeData
-   End If
-  End If
-  objFileMgr.CloseFile i
- End If
- '///
 End With
 ''////////TEST TEST TEST load appearance, and add instance (software and hardware), and draw
 'Dim obj As New clsTreeStorageNode
@@ -626,13 +643,17 @@ End With
 'End If
 '////////landscape test
 Dim t As D3DXIMAGE_INFO
-objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -15
+objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -25
 'objLand.CreateFromFile App.Path + "\heightmap_test.png", 3, 5, 0.05, , , -15, App.Path + "\fogmap_test.png", 3, 0.05, 2
 'objLand.FogEnabled = True
 D3DXCreateTextureFromFileExW d3dd9, App.Path + "\test0.png", D3DX_DEFAULT, D3DX_DEFAULT, 1, 0, D3DFMT_FROM_FILE, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, t, ByVal 0, objLandTexture
-'////////over
+'////////set caption
 frm.Caption = objText.GetText("Turning Polyhedron")
-'////////
+'////////show first game UI
+Set FakeDXAppEvent = objMainMenu
+Set FakeDXAppRootObject = objMainMenu
+objMainMenu.Show
+'TODO:etc.
 End Sub
 
 'internal function
@@ -691,16 +712,14 @@ obj.UnlockVertexBuffer
 Set pLoadMeshTest = obj
 End Function
 
-Public Sub FakeDXAppCreateUI(ByVal objEventCallback As IFakeDXUIEvent)
-Dim i As Long
+Public Sub FakeDXAppCreateUI()
 FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
+'///
+objMainMenu.Create
+'///
+#If 0 Then
+Dim i As Long
 With FakeDXUIControls(1)
- '///some buttons, including settings
- .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
- .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
- '///following items are TEST ONLY
- .AddNewChildren(FakeCtl_Button, 108, -32, 180, -8, , , , , "Danger!!!", , "cmdDanger", , 1, , 1, , , _
- "Debug " + String(200, "W") + Replace(Space(10), " ", vbCrLf) + String(200, "W")).ForeColor = &HFF0000
  '///
  With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFF20FF, , False, , "Form1234°¡°¢")
   .Show
@@ -815,7 +834,6 @@ With FakeDXUIControls(1)
   '///
   End With
  End With
- #If 0 Then
  With .AddNewChildren(FakeCtl_Form, 160, 120, 600, 400, &HFF00FF, , False, , "É½Õ¯MDIForm1")
   .ScrollBars = vbBoth
   .Min = -50
@@ -857,10 +875,8 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 80, 28, 140, 48, FBS_Default Or FBS_Cancel Or FCS_CanGetFocus, , , , "Close", , "cmdClose"
   .Show 1
  End With
- #End If
 End With
-'///
-Set FakeDXUIEvent = objEventCallback
+#End If
 End Sub
 
 Public Function FakeDXUtilReadVec4(ByVal s As String, ByRef t As D3DXVECTOR4) As Boolean

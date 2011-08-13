@@ -19,7 +19,7 @@ Private Declare Function MessageBeep Lib "user32.dll" (ByVal wType As Long) As L
 Private m_idx As Long
 
 Private m_nReturnValue As Long
-Private m_bUnload As Boolean
+Private m_objUnload As New IMainLoopCallback
 
 Private m_nButtonCount As Long
 Private m_sButtonCaption() As String
@@ -104,7 +104,7 @@ Dim idx As Long
 Dim ii As Long
 '///
 If m_idx Then Exit Function
-m_bUnload = False
+m_objUnload.Cancel = False
 m_nReturnValue = Default
 '///
 Select Case Buttons And 15&
@@ -173,7 +173,7 @@ Or (FFS_Sizable And (Buttons And &H10000000) <> 0), , False, , Title, , , 0.5, 0
  .Show 1
 End With
 '///wait for single object
-FakeDXAppMainLoop VarPtr(m_bUnload)
+FakeDXAppMainLoop m_objUnload
 ''///fix a bug (?)
 'FakeDXUIRemoveModalWindow m_idx
 '///
@@ -197,12 +197,12 @@ Case FakeCtl_Event_Click
   m_nReturnValue = Val(obj.GroupName)
   If m_idx > 0 And m_idx <= FakeDXUIControlCount Then
    FakeDXUIControls(m_idx).Unload
-   m_bUnload = True
+   m_objUnload.Cancel = True
    m_idx = 0
   End If
  End Select
 Case FakeCtl_Event_Unload
- m_bUnload = True
+ m_objUnload.Cancel = True
 End Select
 End Function
 

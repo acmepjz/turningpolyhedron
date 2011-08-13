@@ -26,7 +26,6 @@ Private Const m_nFormat32FC4 As Long = D3DFMT_A32B32G32R32F
 Private Const m_nFormat1 As Long = D3DFMT_A8R8G8B8
 
 Private objEffect As D3DXEffect
-Private objCustomEffect As D3DXEffect '? test only
 
 Private m_tLightDir As D3DXVECTOR4, m_tLightPos As D3DXVECTOR4, m_tViewPos As D3DXVECTOR4
 Private m_nLightType As Long
@@ -48,10 +47,13 @@ Private m_nShadowMapSize As Long
 Public Enum enumRenderPassType
  RenderPass_Nothing = 0
  RenderPass_Main = 1
- RenderPass_ShadowMap = 100
- RenderPass_FogVolume = 200
+ RenderPass_ShadowMap = &H100&
+ RenderPass_FogVolume = &H200&
+ RenderPass_Overlay = &H10000
 End Enum
 Private m_nLastType As Long
+'low 24-bit is render pass type
+'&H1000000=effect was set up
 
 '////////post process
 
@@ -270,22 +272,12 @@ End Sub
 
 Friend Sub SetTexture(ByVal obj As Direct3DBaseTexture9)
 On Error Resume Next
-'TEST ONLY
-If Not objCustomEffect Is Nothing Then
- objCustomEffect.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), obj
-Else
- objEffect.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), obj
-End If
+objEffect.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), obj
 End Sub
 
 Friend Sub SetNormalTexture(ByVal obj As Direct3DBaseTexture9)
 On Error Resume Next
-'TEST ONLY
-If Not objCustomEffect Is Nothing Then
- objCustomEffect.SetTexture StrPtr(StrConv("tex1", vbFromUnicode)), obj
-Else
- objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
-End If
+objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
 End Sub
 
 Friend Sub OnLostDevice()
@@ -300,8 +292,6 @@ Set objShadowStencil = Nothing
 Erase objPostProcessTarget
 '///
 objEffect.OnLostDevice
-'///
-Set objCustomEffect = Nothing '? test only
 End Sub
 
 Friend Sub OnResetDevice()
@@ -339,14 +329,10 @@ End Sub
 
 Friend Sub UpdateRenderState()
 On Error Resume Next
-Dim obj1 As D3DXEffect
-'///test only
-If Not objCustomEffect Is Nothing Then Set obj1 = objCustomEffect _
-Else Set obj1 = objEffect
 '///
-SetupTransform obj1
+SetupTransform objEffect
 '///
-obj1.CommitChanges
+objEffect.CommitChanges
 End Sub
 
 Friend Sub SetupLight(ByVal obj1 As D3DXEffect)
@@ -376,52 +362,70 @@ On Error Resume Next
 obj1.SetVector StrPtr(StrConv("zData", vbFromUnicode)), m_vZData
 End Sub
 
-'CustomEffect --> test only
-Friend Function BeginRender(ByVal nType As enumRenderPassType, Optional ByVal CustomEffect As D3DXEffect) As Boolean
+'test only
+Friend Function BeginRender(ByVal nType As enumRenderPassType, Optional ByVal SetupEffect As Boolean = True) As Boolean
 On Error Resume Next
-Dim obj As Direct3DTexture9, obj1 As D3DXEffect
+Dim obj As Direct3DTexture9
 Dim mat As D3DMATRIX
 Dim s As String
-'///test only
-If Not CustomEffect Is Nothing Then
- Set objCustomEffect = CustomEffect
- Set obj1 = CustomEffect
- '///setup light
- SetupLight obj1
- '///
-Else
- Set obj1 = objEffect
+'///
+If m_nLastType Then
+ Debug.Assert False
+ Exit Function
 End If
 '///
 Select Case nType
 Case RenderPass_ShadowMap
  If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Then Exit Function
- '///
- Set objOldTarget = d3dd9.GetRenderTarget(0)
- Set objOldStencil = d3dd9.GetDepthStencilSurface
- d3dd9.SetRenderTarget 0, objShadowMap.GetSurfaceLevel(0)
- d3dd9.SetDepthStencilSurface objShadowStencil
- '///
- d3dd9.GetTransform D3DTS_WORLD, mat
- D3DXMatrixMultiply mat, mat, m_tLightViewProj
- obj1.SetMatrix StrPtr(StrConv("matShadow", vbFromUnicode)), mat
- '///
- s = "test_shadow"
+ If SetupEffect Then
+  Set objOldTarget = d3dd9.GetRenderTarget(0)
+  Set objOldStencil = d3dd9.GetDepthStencilSurface
+  d3dd9.SetRenderTarget 0, objShadowMap.GetSurfaceLevel(0)
+  d3dd9.SetDepthStencilSurface objShadowStencil
+  '///
+  d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
+  '///
+  d3dd9.GetTransform D3DTS_WORLD, mat
+  D3DXMatrixMultiply mat, mat, m_tLightViewProj
+  objEffect.SetMatrix StrPtr(StrConv("matShadow", vbFromUnicode)), mat
+  '///
+  s = "test_shadow"
+ End If
 Case RenderPass_FogVolume
  If Not (m_bPostProcessEnabled And m_bFog And m_bVolumeFog) Then Exit Function
- Set objOldTarget_1 = d3dd9.GetRenderTarget(0)
- d3dd9.SetRenderTarget 0, objPostProcessTarget(IDR_VolumetricFogTarget).GetSurfaceLevel(0)
- obj1.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), objPostProcessTarget(IDR_Main)
- '///
- s = "test_volumefog"
-Case RenderPass_Main
- 'TEST ONLY
- If CustomEffect Is Nothing Then
-  If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
-  obj1.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
-  obj1.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
+ If SetupEffect Then
+  Set objOldTarget_1 = d3dd9.GetRenderTarget(0)
+  d3dd9.SetRenderTarget 0, objPostProcessTarget(IDR_VolumetricFogTarget).GetSurfaceLevel(0)
+  objEffect.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), objPostProcessTarget(IDR_Main)
+  '///
+  s = "test_volumefog"
  End If
- s = "test"
+Case RenderPass_Main
+ If m_bPostProcessEnabled Then
+  '///this code is not compatible with FSAA
+  Set objOldTarget = d3dd9.GetRenderTarget(0)
+  #If UseMultiSample Then
+  If d3dpp.MultiSampleType > 1 Then
+   Debug.Assert Not objFloatTarget Is Nothing
+   d3dd9.SetRenderTarget 0, objFloatTarget
+  Else
+  #End If
+   d3dd9.SetRenderTarget 0, objPostProcessTarget(IDR_Main).GetSurfaceLevel(0)
+  #If UseMultiSample Then
+  End If
+  #End If
+ End If
+ d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000010, 1, 0 '??? TODO:backcolor,etc.
+ '///
+ If SetupEffect Then
+  If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap
+  objEffect.SetTexture StrPtr(StrConv("texShadow", vbFromUnicode)), obj
+  objEffect.SetTexture StrPtr(StrConv("texNoise", vbFromUnicode)), texNoise
+  s = "test"
+ End If
+Case RenderPass_Overlay 'dummy
+ BeginRender = True
+ Exit Function
 Case Else
  Exit Function
 End Select
@@ -431,10 +435,22 @@ m_nLastType = nType
 '///
 UpdateRenderState
 '///
-obj1.SetTechnique StrPtr(StrConv(s, vbFromUnicode))
-obj1.Begin 0, 0
-obj1.BeginPass 0
+If SetupEffect Then
+ objEffect.SetTechnique StrPtr(StrConv(s, vbFromUnicode))
+ objEffect.Begin 0, 0
+ objEffect.BeginPass 0
+ m_nLastType = m_nLastType Or &H1000000
+End If
 End Function
+
+'TEST ONLY
+Friend Sub EndEffect()
+If m_nLastType And &H1000000 Then
+ objEffect.EndPass
+ objEffect.End
+ m_nLastType = m_nLastType And Not &H1000000
+End If
+End Sub
 
 Friend Sub EndRender()
 On Error Resume Next
@@ -443,17 +459,13 @@ Dim nType As Long
 nType = m_nLastType
 If nType = 0 Then Exit Sub
 m_nLastType = 0
-'///test only
-If Not objCustomEffect Is Nothing Then
- objCustomEffect.EndPass
- objCustomEffect.End
- Set objCustomEffect = Nothing
-Else
+'///
+If nType And &H1000000 Then
  objEffect.EndPass
  objEffect.End
 End If
 '///
-Select Case nType
+Select Case nType And &HFFFFFF
 Case RenderPass_ShadowMap
  If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Then Exit Sub
  d3dd9.SetRenderTarget 0, objOldTarget
@@ -463,42 +475,22 @@ Case RenderPass_ShadowMap
 Case RenderPass_FogVolume
  d3dd9.SetRenderTarget 0, objOldTarget_1
  Set objOldTarget_1 = Nothing
+Case RenderPass_Main
+ If m_bPostProcessEnabled Then
+  '///this code is not compatible with FSAA
+  d3dd9.SetRenderTarget 0, objOldTarget
+  Set objOldTarget = Nothing
+  '///
+  #If UseMultiSample Then
+  'it looks ugly
+  If d3dpp.MultiSampleType > 1 Then
+   Debug.Assert Not objFloatTarget Is Nothing
+   d3dd9.StretchRect objFloatTarget, ByVal 0, objPostProcessTarget(IDR_Main).GetSurfaceLevel(0), ByVal 0, D3DTEXF_NONE
+  End If
+  #End If
+  '///
+ End If
 End Select
-End Sub
-
-Friend Sub BeginRenderToPostProcessTarget()
-If m_bPostProcessEnabled Then
- '///this code is not compatible with FSAA
- Set objOldTarget = d3dd9.GetRenderTarget(0)
- #If UseMultiSample Then
- If d3dpp.MultiSampleType > 1 Then
-  Debug.Assert Not objFloatTarget Is Nothing
-  d3dd9.SetRenderTarget 0, objFloatTarget
- Else
- #End If
-  d3dd9.SetRenderTarget 0, objPostProcessTarget(IDR_Main).GetSurfaceLevel(0)
- #If UseMultiSample Then
- End If
- #End If
-End If
-d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000010, 1, 0 '??? TODO:backcolor,etc.
-End Sub
-
-Friend Sub EndRenderToPostProcessTarget()
-If m_bPostProcessEnabled Then
- '///this code is not compatible with FSAA
- d3dd9.SetRenderTarget 0, objOldTarget
- Set objOldTarget = Nothing
- '///
- #If UseMultiSample Then
- 'it looks ugly
- If d3dpp.MultiSampleType > 1 Then
-  Debug.Assert Not objFloatTarget Is Nothing
-  d3dd9.StretchRect objFloatTarget, ByVal 0, objPostProcessTarget(IDR_Main).GetSurfaceLevel(0), ByVal 0, D3DTEXF_NONE
- End If
- #End If
- '///
-End If
 End Sub
 
 Friend Sub PerformPostProcess()

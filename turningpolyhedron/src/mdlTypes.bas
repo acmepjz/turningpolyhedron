@@ -468,6 +468,12 @@ Public Type typeMapData_Polyhedron
  nApprIndex As Long 'TODO:
 End Type
 
+Public Type typeMapData_PolyhedronMerge
+ nSrcCount As Long
+ sSrcID() As String '0-based
+ sDestID As String
+End Type
+
 Public Type typeLevelData
  'map data (tiles)
  nMapDataCount As Long
@@ -475,6 +481,9 @@ Public Type typeLevelData
  'polyhedrons
  nPolyhedronCount As Long
  tPolyhedron() As typeMapData_Polyhedron '1-based
+ 'polyhedron merge
+ nPolyMergeCount As Long
+ tPolyMerge() As typeMapData_PolyhedronMerge
 End Type
 
 Public Type typePolyhedronFaceLogic

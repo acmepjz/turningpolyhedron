@@ -17,7 +17,7 @@ Private m_idx As Long
 Private m_idxTextBox As Long
 
 Private m_bCancel As Boolean, m_sValue As String
-Private m_bUnload As Boolean
+Private m_objUnload As New IMainLoopCallback
 
 Implements IFakeDXUIEvent
 
@@ -39,7 +39,7 @@ Friend Function InputBox(Optional ByVal Prompt As String, Optional ByVal Title A
 Dim w As Long, h As Long
 '///
 If m_idx > 0 Or m_idxTextBox > 0 Then Exit Function
-m_bUnload = False
+m_objUnload.Cancel = False
 m_bCancel = True
 m_sValue = vbNullString
 '///
@@ -74,7 +74,7 @@ FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_Sizable Or FFS_TitleBar,
 End With
 FakeDXUIPostMessage FakeCtl_Msg_SetFocus, m_idxTextBox
 '///wait for single object
-FakeDXAppMainLoop VarPtr(m_bUnload)
+FakeDXAppMainLoop m_objUnload
 '///
 InputBox = m_sValue
 m_idx = 0
@@ -96,11 +96,11 @@ Case FakeCtl_Event_Click
  End Select
  If m_idx > 0 And m_idx <= FakeDXUIControlCount Then
   FakeDXUIControls(m_idx).Unload
-  m_bUnload = True
+  m_objUnload.Cancel = True
   m_idx = 0
  End If
 Case FakeCtl_Event_Unload
- m_bUnload = True
+ m_objUnload.Cancel = True
 End Select
 End Function
 

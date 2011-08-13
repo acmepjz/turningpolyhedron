@@ -60,6 +60,8 @@ Private m_tEvent() As typeMapDataEvent '0-based
 Private m_nEventStart As Long, m_nEventEnd As Long, m_nEventMax As Long
 Private m_bPolyhedronDirty As Boolean
 
+Private m_bGameOver As Boolean
+
 '////////game logic settings
 
 Private m_bAutoReset As Boolean, m_bReset As Boolean
@@ -114,14 +116,31 @@ If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then _
 Set PolyhedronObject = m_objPoly(nPolyhedronIndex)
 End Property
 
-Friend Property Get IsCurrentPolyhedronMoving() As Boolean
-IsCurrentPolyhedronMoving = IsPolyhedronMoving(m_nCurrentPolyhedron)
-End Property
+'Friend Property Get IsCurrentPolyhedronMoving() As Boolean
+'IsCurrentPolyhedronMoving = IsPolyhedronMoving(m_nCurrentPolyhedron)
+'End Property
+'
+'Friend Property Get IsPolyhedronMoving(ByVal nPolyhedronIndex As Long) As Boolean
+'If m_bRuntimeDirty Then Exit Property
+'If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then _
+'IsPolyhedronMoving = m_tPolyInst(nPolyhedronIndex).nAnimType <> 0
+'End Property
 
-Friend Property Get IsPolyhedronMoving(ByVal nPolyhedronIndex As Long) As Boolean
+Friend Property Get CanPlayerMovePolyhedron() As Boolean
+Dim idx As Long
+'///
 If m_bRuntimeDirty Then Exit Property
-If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then _
-IsPolyhedronMoving = m_tPolyInst(nPolyhedronIndex).nAnimType <> 0
+If m_bGameOver Then Exit Property
+'///
+For idx = 1 To m_tLevel.nPolyhedronCount
+ If m_tPolyInst(idx).nFlags And &H100& Then
+  If m_tPolyInst(idx).nAnimType <> 0 Then
+   Exit Property
+  End If
+ End If
+Next idx
+'///
+CanPlayerMovePolyhedron = True
 End Property
 
 Friend Property Get IsPolyhedronVisible(ByVal nPolyhedronIndex As Long) As Boolean
@@ -277,11 +296,19 @@ For idx = 1 To m_tLevel.nPolyhedronCount
   Case -1 'falling
    f = m_tPolyInst(idx).fAnimValue(0) + dt
    If f > 3000 Then
-    f = 3000
-    'TODO:if discardable=true then don't reset
-    If m_bAutoReset Then m_bReset = True
+    StartPolyhedronAnimationByStack idx
+    '///
+    i = m_tPolyInst(idx).nFlags
+    'hide this polyhedron
+    m_tPolyInst(idx).nFlags = i And Not &H100&
+    If (i And &H1&) = 0 Then 'if not discardable
+     'TODO:game over
+     m_bGameOver = True
+     If m_bAutoReset Then m_bReset = True
+    End If
+   Else
+    m_tPolyInst(idx).fAnimValue(0) = f
    End If
-   m_tPolyInst(idx).fAnimValue(0) = f
   End Select
  End If
 Next idx
@@ -522,7 +549,9 @@ Next idx
 '///follow polyhedron?
 If m_bFollowPolyhedron Then
  If m_nCurrentPolyhedron > 0 And m_nCurrentPolyhedron <= m_tLevel.nPolyhedronCount Then
-  objCamera.MoveTargetTo m_tPolyInst(m_nCurrentPolyhedron).vCenter
+  If m_tPolyInst(m_nCurrentPolyhedron).nFlags And &H100& Then
+   objCamera.MoveTargetTo m_tPolyInst(m_nCurrentPolyhedron).vCenter
+  End If
  End If
 End If
 '///
@@ -626,6 +655,10 @@ m_bRuntimeDirty = False
 CreateLevelRuntimeData = True
 End Function
 
+Friend Property Get IsGameOver() As Boolean
+IsGameOver = m_bGameOver
+End Property
+
 Friend Sub ClearLevelRuntimeData()
 Dim t As typeMeshInstanceCollection
 '///
@@ -642,6 +675,7 @@ m_nEventMax = 0
 m_bPolyhedronDirty = False
 m_nTileAnimMax = 0
 m_nTileAnimFirstUnused = 0
+m_bGameOver = False
 '///
 m_bRuntimeDirty = True
 End Sub
@@ -1182,6 +1216,30 @@ If s = "true" Then j = -1 Else If Val(s) <> 0 Then j = -1
 pFlagsFromBooleanString = (nFlags And Not nMask) Or (j And nMask)
 End Function
 
+Friend Function ParseMapPolyMergeDataFromNode(ByVal objNode As clsTreeStorageNode, ByRef t As typeMapData_PolyhedronMerge) As Boolean
+On Error Resume Next
+'///
+Dim i As Long
+Dim s As String
+'///
+For i = 1 To objNode.SubNodeCount
+ If objNode.SubNodeType(i) = 0 Then
+  s = Trim(objNode.GetSubNodeValueAsString(i))
+  Select Case objNode.GetSubNodeNameAsString(i)
+  Case "src"
+   t.sSrcID = Split(Trim(objNode.GetSubNodeValueAsString(i)), ",")
+   t.nSrcCount = UBound(t.sSrcID) + 1
+  Case "dest"
+   t.sDestID = Trim(objNode.GetSubNodeValueAsString(i))
+  End Select
+ Else
+  'TODO:
+ End If
+Next i
+'///
+ParseMapPolyMergeDataFromNode = True
+End Function
+
 Friend Function ParseMapPolyhedronDataFromNode(ByVal objNode As clsTreeStorageNode, ByRef tPoly As typeMapData_Polyhedron, Optional ByVal sBasePosition As String) As Boolean
 Dim i As Long, j As Long, k As Long
 Dim s As String
@@ -1394,8 +1452,9 @@ For i = 1 To objNode.SubNodeCount
     End If
    End If
   Case "polyhedronMerge"
-   'TODO:
-   Debug.Print "TODO:polyhedronMerge"
+   tLevel.nPolyMergeCount = tLevel.nPolyMergeCount + 1
+   ReDim Preserve tLevel.tPolyMerge(1 To tLevel.nPolyMergeCount)
+   If Not ParseMapPolyMergeDataFromNode(obj, tLevel.tPolyMerge(tLevel.nPolyMergeCount)) Then Exit Function
   End Select
  End If
 Next i
@@ -1717,7 +1776,7 @@ Friend Function ParseEventFromNode(ByRef ret As typeTileEvent, ByVal objNode As 
 On Error Resume Next
 Dim v As Variant, m As Long
 Dim s As String, s1 As String
-Dim i As Long, j As Long
+Dim i As Long, ii As Long, j As Long
 Dim lps As Long
 Dim nType As Long
 Dim nCompareType As Long
@@ -1725,208 +1784,214 @@ Dim nDataType As Long
 '///
 ret.nEventType = nEventType
 '///process conditions
-s = Trim(objNode.GetSubNodeValueAsStringByName("condition"))
-If Right(s, 1) = ";" Then s = Left(s, Len(s) - 1)
-v = Split(s, ";")
+v = Split(Trim(objNode.GetSubNodeValueAsStringByName("condition")), ";")
 ret.nConditionCount = UBound(v) + 1
 If ret.nConditionCount > 0 Then ReDim ret.tCondition(1 To ret.nConditionCount)
-For i = 1 To ret.nConditionCount
- s = Trim(v(i - 1))
- lps = InStr(1, s, "=")
- If lps > 0 Then
-  s1 = Trim(Mid(s, lps + 1))
-  If Mid(s, lps - 1, 1) = "!" Then
-   nCompareType = 1
-   lps = lps - 1
-  End If
- Else
-  lps = InStr(1, s, "!")
+i = 0
+For ii = 1 To ret.nConditionCount
+ s = Trim(v(ii - 1))
+ If s <> "" Then
+  i = i + 1
+  lps = InStr(1, s, "=")
   If lps > 0 Then
-   If Mid(s, lps + 1, 1) = "!" Then
-    nCompareType = 3
-    s1 = Trim(Mid(s, lps + 2))
-   Else
-    nCompareType = 2
-    s1 = Trim(Mid(s, lps + 1))
+   s1 = Trim(Mid(s, lps + 1))
+   If Mid(s, lps - 1, 1) = "!" Then
+    nCompareType = 1
+    lps = lps - 1
    End If
   Else
+   lps = InStr(1, s, "!")
+   If lps > 0 Then
+    If Mid(s, lps + 1, 1) = "!" Then
+     nCompareType = 3
+     s1 = Trim(Mid(s, lps + 2))
+    Else
+     nCompareType = 2
+     s1 = Trim(Mid(s, lps + 1))
+    End If
+   Else
+    Debug.Assert False
+    Exit Function
+   End If
+  End If
+  '///
+  Select Case Trim(Left(s, lps - 1))
+  Case "pressure"
+   nType = 1
+   nDataType = 2
+  Case "onGroundCount"
+   nType = 2
+   nDataType = 2
+  Case "onDifferentType"
+   nType = 3
+   nDataType = 1
+  Case "eventType", "eventIndex"
+   nType = 4
+   nDataType = 3
+  Case "discardable"
+   nType = &H101
+   nDataType = 1
+  Case "main"
+   nType = &H102
+   nDataType = 1
+  Case "fragile"
+   nType = &H103
+   nDataType = 1
+  Case "supportable"
+   nType = &H104
+   nDataType = 1
+  Case "supporter"
+   nType = &H105
+   nDataType = 1
+  Case "tiltable"
+   nType = &H106
+   nDataType = 1
+  Case "tilt-supporter"
+   nType = &H107
+   nDataType = 1
+  Case "spannable"
+   nType = &H108
+   nDataType = 1
+  Case "objectType"
+   nType = &H121
+   nDataType = 3
+  Case "objectID"
+   nType = &H122
+   nDataType = 3
+  Case Else
    Debug.Assert False
    Exit Function
+  End Select
+  '///
+  If nDataType <> 3 Then
+   nCompareType = nCompareType And 1&
   End If
- End If
- '///
- Select Case Trim(Left(s, lps - 1))
- Case "pressure"
-  nType = 1
-  nDataType = 2
- Case "onGroundCount"
-  nType = 2
-  nDataType = 2
- Case "onDifferentType"
-  nType = 3
-  nDataType = 1
- Case "eventType", "eventIndex"
-  nType = 4
-  nDataType = 3
- Case "discardable"
-  nType = &H101
-  nDataType = 1
- Case "main"
-  nType = &H102
-  nDataType = 1
- Case "fragile"
-  nType = &H103
-  nDataType = 1
- Case "supportable"
-  nType = &H104
-  nDataType = 1
- Case "supporter"
-  nType = &H105
-  nDataType = 1
- Case "tiltable"
-  nType = &H106
-  nDataType = 1
- Case "tilt-supporter"
-  nType = &H107
-  nDataType = 1
- Case "spannable"
-  nType = &H108
-  nDataType = 1
- Case "objectType"
-  nType = &H121
-  nDataType = 3
- Case "objectID"
-  nType = &H122
-  nDataType = 3
- Case Else
-  Debug.Assert False
-  Exit Function
- End Select
- '///
- If nDataType <> 3 Then
-  nCompareType = nCompareType And 1&
- End If
- '///
- Select Case nDataType
- Case 1 'boolean
-  j = 0
-  If s1 = "true" Then j = 1 Else If Val(s1) <> 0 Then j = 1
-  If nCompareType And 1& Then
-   nCompareType = 0
-   j = j Xor 1
-  End If
-  ret.tCondition(i).nValue1 = j
-  ret.tCondition(i).nValue2 = j
- Case 2 'number
-  lps = InStr(1, s1, "~")
-  If lps > 0 Then
-   s = Trim(Left(s1, lps - 1))
-   s1 = Trim(Mid(s1, lps + 1))
-   If s <> "" Then
-    If s1 <> "" Then
-     ret.tCondition(i).nValue1 = Val(s)
-     ret.tCondition(i).nValue2 = Val(s1)
+  '///
+  Select Case nDataType
+  Case 1 'boolean
+   j = 0
+   If s1 = "true" Then j = 1 Else If Val(s1) <> 0 Then j = 1
+   If nCompareType And 1& Then
+    nCompareType = 0
+    j = j Xor 1
+   End If
+   ret.tCondition(i).nValue1 = j
+   ret.tCondition(i).nValue2 = j
+  Case 2 'number
+   lps = InStr(1, s1, "~")
+   If lps > 0 Then
+    s = Trim(Left(s1, lps - 1))
+    s1 = Trim(Mid(s1, lps + 1))
+    If s <> "" Then
+     If s1 <> "" Then
+      ret.tCondition(i).nValue1 = Val(s)
+      ret.tCondition(i).nValue2 = Val(s1)
+     Else
+      ret.tCondition(i).nValue1 = Val(s)
+      ret.tCondition(i).nValue2 = 1E+30
+     End If
     Else
-     ret.tCondition(i).nValue1 = Val(s)
-     ret.tCondition(i).nValue2 = 1E+30
+     If s1 <> "" Then
+      ret.tCondition(i).nValue1 = -1E+30
+      ret.tCondition(i).nValue2 = Val(s1)
+     Else
+      'ERR
+      Debug.Assert False
+      Exit Function
+     End If
     End If
    Else
-    If s1 <> "" Then
-     ret.tCondition(i).nValue1 = -1E+30
-     ret.tCondition(i).nValue2 = Val(s1)
-    Else
-     'ERR
-     Debug.Assert False
-     Exit Function
-    End If
+    ret.tCondition(i).nValue1 = Val(s1)
+    ret.tCondition(i).nValue2 = ret.tCondition(i).nValue1
    End If
-  Else
-   ret.tCondition(i).nValue1 = Val(s1)
-   ret.tCondition(i).nValue2 = ret.tCondition(i).nValue1
-  End If
- Case 3 'string
-  ret.tCondition(i).sStringValue = Split(s1, "|")
-  ret.tCondition(i).nStringValueCount = UBound(ret.tCondition(i).sStringValue) + 1
- End Select
- '///
- ret.tCondition(i).nType = nType
- ret.tCondition(i).nCompareType = nCompareType
-Next i
+  Case 3 'string
+   ret.tCondition(i).sStringValue = Split(s1, "|")
+   ret.tCondition(i).nStringValueCount = UBound(ret.tCondition(i).sStringValue) + 1
+  End Select
+  '///
+  ret.tCondition(i).nType = nType
+  ret.tCondition(i).nCompareType = nCompareType
+ End If
+Next ii
+ret.nConditionCount = i
 '///process events
-s = Trim(objNode.GetSubNodeValueAsStringByName("event"))
-If Right(s, 1) = ";" Then s = Left(s, Len(s) - 1)
-v = Split(s, ";")
+v = Split(Trim(objNode.GetSubNodeValueAsStringByName("event")), ";")
 ret.nEventCount = UBound(v) + 1
 If ret.nEventCount > 0 Then ReDim ret.tEvent(1 To ret.nEventCount)
-For i = 1 To ret.nEventCount
- s = Trim(v(i - 1))
- lps = InStr(1, s, ":")
- If lps > 0 Then
-  s1 = Trim(Mid(s, lps + 1))
-  s = Trim(Left(s, lps - 1))
- Else
-  s1 = vbNullString
+i = 0
+For ii = 1 To ret.nEventCount
+ s = Trim(v(ii - 1))
+ If s <> "" Then
+  i = i + 1
+  lps = InStr(1, s, ":")
+  If lps > 0 Then
+   s1 = Trim(Mid(s, lps + 1))
+   s = Trim(Left(s, lps - 1))
+  Else
+   s1 = vbNullString
+  End If
+  '///
+  Select Case s
+  Case "event", "sendEvent", "triggerEvent"
+   nType = 1
+   ret.tEvent(i).sStringParam = Split(s1, ":")
+   ret.tEvent(i).nStringParamCount = UBound(ret.tEvent(i).sStringParam) + 1
+  Case "teleport"
+   nType = 3
+   ret.tEvent(i).sStringParam = Split(s1, ":")
+   ret.tEvent(i).nStringParamCount = UBound(ret.tEvent(i).sStringParam) + 1
+  Case "convertTo"
+   nType = 4
+   ret.tEvent(i).nStringParamCount = 1
+   ReDim ret.tEvent(i).sStringParam(0)
+   ret.tEvent(i).sStringParam(0) = s1
+  Case "move"
+   Select Case s1
+   Case "left"
+    nType = 6
+   Case "right"
+    nType = 7
+   Case "back"
+    nType = 8
+   Case Else
+    nType = 5
+   End Select
+  Case "absolute-move"
+   nType = 9
+   'TODO:
+  Case "game-finished"
+   Select Case s1
+   Case "unconditional"
+    nType = 11
+   Case Else
+    nType = 10
+   End Select
+  Case "checkpoint"
+   nType = 12
+  Case "game-over"
+   j = 0
+   Select Case s1
+   Case "immediately"
+    j = 1
+   Case "breakdown"
+    j = 2
+   Case "breakdown:2"
+    j = 3
+   Case "melting"
+    j = 4
+   Case "melting:2"
+    j = 5
+   End Select
+   nType = &H100 Or j
+  Case Else
+   Debug.Assert False
+   Exit Function
+  End Select
+  '///
+  ret.tEvent(i).nType = nType
  End If
- '///
- Select Case s
- Case "event", "sendEvent", "triggerEvent"
-  nType = 1
-  ret.tEvent(i).sStringParam = Split(s1, ":")
-  ret.tEvent(i).nStringParamCount = UBound(ret.tEvent(i).sStringParam) + 1
- Case "teleport"
-  nType = 3
-  ret.tEvent(i).sStringParam = Split(s1, ":")
-  ret.tEvent(i).nStringParamCount = UBound(ret.tEvent(i).sStringParam) + 1
- Case "convertTo"
-  nType = 4
-  ret.tEvent(i).nStringParamCount = 1
-  ReDim ret.tEvent(i).sStringParam(0)
-  ret.tEvent(i).sStringParam(0) = s1
- Case "move"
-  Select Case s1
-  Case "left"
-   nType = 6
-  Case "right"
-   nType = 7
-  Case "back"
-   nType = 8
-  Case Else
-   nType = 5
-  End Select
- Case "absolute-move"
-  nType = 9
-  'TODO:
- Case "game-finished"
-  Select Case s1
-  Case "unconditional"
-   nType = 11
-  Case Else
-   nType = 10
-  End Select
- Case "checkpoint"
-  nType = 12
- Case "game-over"
-  j = 0
-  Select Case s1
-  Case "immediately"
-   j = 1
-  Case "breakdown"
-   j = 2
-  Case "breakdown:2"
-   j = 3
-  Case "melting"
-   j = 4
-  Case "melting:2"
-   j = 5
-  End Select
-  nType = &H100 Or j
- Case Else
-  Debug.Assert False
-  Exit Function
- End Select
- '///
- ret.tEvent(i).nType = nType
-Next i
+Next ii
+ret.nEventCount = i
 '///over
 ParseEventFromNode = True
 End Function
@@ -2322,6 +2387,7 @@ Case 1 'custom event
   AddMapEventFromPositionString tNew, vbNullString
  End If
 Case 3 'teleport
+ 'TODO:animation
  If tEvent.nStringParamCount > 0 And _
  t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
   m_bPolyhedronDirty = True

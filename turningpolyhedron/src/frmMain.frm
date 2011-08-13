@@ -40,8 +40,6 @@ Private Type POINTAPI
     y As Long
 End Type
 
-Implements IFakeDXUIEvent
-
 Private Const WM_INPUTLANGCHANGE As Long = &H51
 Private Const WM_IME_COMPOSITION As Long = &H10F
 Private Const WM_IME_STARTCOMPOSITION As Long = &H10D
@@ -55,115 +53,67 @@ Private cSub As New cSubclass
 
 Implements iSubclass
 
+Private Sub Form_Click()
+Dim p As POINTAPI
+GetCursorPos p
+ScreenToClient Me.hwnd, p
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_Click, p.x, p.y, 1
+End Sub
+
 Private Sub Form_DblClick()
 Dim p As POINTAPI
 GetCursorPos p
 ScreenToClient Me.hwnd, p
-Call FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4)
+If FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4) Then Exit Sub
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_DblClick, p.x, p.y, 1
 End Sub
 
 Private Sub Form_KeyDown(KeyCode As Integer, Shift As Integer)
-'///TEST ONLY
-Dim v1 As D3DVECTOR, v2 As D3DVECTOR, v3 As D3DVECTOR
-Dim i As Long
 '///
 If FakeDXUIOnKeyEvent(KeyCode, Shift, 1) Then Exit Sub
-'///
-If KeyCode = vbKeyS And Shift = vbCtrlMask Then
-   '///test
-   D3DXSaveTextureToFileW CStr(App.Path) + "\test.bmp", D3DXIFF_BMP, objTexture, ByVal 0
-   D3DXSaveTextureToFileW CStr(App.Path) + "\testnormal.bmp", D3DXIFF_BMP, objNormalTexture, ByVal 0
-   '///
-End If
-'///TEST ONLY
-If bTestOnly Then
- i = -1
- Select Case KeyCode
- Case vbKeyUp
-  i = 0
- Case vbKeyLeft
-  i = 1
- Case vbKeyDown
-  i = 2
- Case vbKeyRight
-  i = 3
- Case vbKeySpace
-  'TODO:when a polyhedron is falling then can't change polyhedron index
-  i = objGameMgr.CurrentPolyhedron + 1
-  If i > objGameMgr.PolyhedronCount Then i = 1
-  objGameMgr.CurrentPolyhedron = i
-  Exit Sub
- Case vbKeyR
-  objGameMgr.ResetOnNextUpdate = True
-  Exit Sub
- End Select
- If i >= 0 Then
-  If Not objGameMgr.CurrentPolyhedronObject Is Nothing Then
-   '///
-   objCamera.GetRealCamera v1, v2, v3
-   v1.x = v1.x - v2.x
-   v1.y = v1.y - v2.y
-   v2.x = v1.x - v1.y
-   v2.y = v1.x + v1.y
-   If v2.x > 0 Then
-    If v2.y > 0 Then i = i + 1 _
-    Else i = i + 2
-   Else
-    If v2.y < 0 Then i = i - 1
-   End If
-   i = i And 3&
-   '///
-   If Not objGameMgr.IsCurrentPolyhedronMoving Then
-    If objGameMgr.MoveCurrentPolyhedron(i) = 1 Then
-     'nothing need to do
-    End If
-   End If
-  End If
- End If
-End If
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_KeyDown, KeyCode, Shift, 0
+'///debug only
+'If KeyCode = vbKeyS And Shift = vbCtrlMask Then
+'   D3DXSaveTextureToFileW CStr(App.Path) + "\test.bmp", D3DXIFF_BMP, objTexture, ByVal 0
+'   D3DXSaveTextureToFileW CStr(App.Path) + "\testnormal.bmp", D3DXIFF_BMP, objNormalTexture, ByVal 0
+'End If
 End Sub
 
 Private Sub Form_KeyPress(KeyAscii As Integer)
 '///
 If FakeDXUIOnKeyEvent(KeyAscii, 0, 0) Then Exit Sub
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_KeyPress, KeyAscii, 0, 0
 '///
 End Sub
 
 Private Sub Form_KeyUp(KeyCode As Integer, Shift As Integer)
 '///
 If FakeDXUIOnKeyEvent(KeyCode, Shift, 2) Then Exit Sub
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_KeyUp, KeyCode, Shift, 0
 '///
 End Sub
 
 Private Sub Form_Load()
-FakeDXAppInit Me, cSub, Me, Me
-'///
+FakeDXAppInit Me, cSub, Me
 FakeDXAppMainLoop
-'///
 FakeDXAppDestroy
-'///
 End Sub
 
 Private Sub Form_MouseDown(Button As Integer, Shift As Integer, x As Single, y As Single)
 '///
 If FakeDXUIOnMouseEvent(Button, Shift, x, y, 1) Then Exit Sub
 '///
-Select Case Button
-Case 1, 2
- objCamera.LockCamera = Button = 2
- objCamera.BeginDrag x, y
- FakeDXUISetCapture = -1
-End Select
+FakeDXUISetCapture = -1
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_MouseDown, x, y, CLng(Button) Or (CLng(Shift) * &H10000)
+'///
 End Sub
 
 Private Sub Form_MouseMove(Button As Integer, Shift As Integer, x As Single, y As Single)
 '///
 If FakeDXUIOnMouseEvent(Button, Shift, x, y, 0) Then Exit Sub
 '///
-Select Case Button
-Case 1, 2
- objCamera.Drag x, y, 0.01
-End Select
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_MouseMove, x, y, CLng(Button) Or (CLng(Shift) * &H10000)
+'///
 End Sub
 
 Private Sub Form_MouseUp(Button As Integer, Shift As Integer, x As Single, y As Single)
@@ -171,6 +121,8 @@ Private Sub Form_MouseUp(Button As Integer, Shift As Integer, x As Single, y As 
 If FakeDXUIOnMouseEvent(Button, Shift, x, y, 2) Then Exit Sub
 '///
 FakeDXUISetCapture = 0
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_MouseUp, x, y, CLng(Button) Or (CLng(Shift) * &H10000)
+'///
 End Sub
 
 Private Sub Form_QueryUnload(Cancel As Integer, UnloadMode As Integer)
@@ -179,78 +131,78 @@ FakeDXAppRequestUnload = True
 Cancel = &H1& And Not FakeDXAppCanUnload
 End Sub
 
-Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
-Dim i As Long, bErr As Boolean
-Dim obj1 As clsTreeStorageNode, v1 As D3DVECTOR
-Dim s As String
-'///
-Select Case nType
-Case FakeCtl_Event_Click
- Select Case obj.Name
- Case "cmdClose"
-  i = FakeDXUIFindControl("frmTopmost")
-  If i Then FakeDXUIControls(i).Unload
- Case "cmdExit"
- ' With New clsFakeDXUIMsgBox
- '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
- ' End With
-  Unload Me
- Case "cmdDanger"
-  With New clsFakeCommonDialog
-   If .VBGetOpenFileName(s, , , , , "XML Level file|*.xml", , App.Path + "\data\") Then
-    i = objFileMgr.LoadFile(s)
-    If i > 0 Then
-     Set obj1 = New clsTreeStorageNode
-     With New clsXMLSerializer
-      If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj1) Then
-       objGameMgr.ClearLevelData
-       If objGameMgr.AddLevelDataFromNode(obj1) Then
-        objGameMgr.CreateLevelRuntimeData
-        '///
-        bTestOnly = True 'change mode
-        '///
-       Else
-        bErr = True
-       End If
-      Else
-       bErr = True
-      End If
-     End With
-     objFileMgr.CloseFile i
-    Else
-     bErr = True
-    End If
-   End If
-  End With
-  If bErr Then
-   With New clsFakeDXUIMsgBox
-    .MsgBox "Error when loading level file:" + vbCrLf + s, vbExclamation, "Error"
-   End With
-  End If
- Case "Check1"
-  i = FakeDXUIFindControl("Check2")
-  If i Then FakeDXUIControls(i).Enabled = obj.Value
- Case "Check2"
-  bTestOnly = obj.Value
- Case "cmdOptions"
-  frmSettings.Show
- End Select
-Case FakeCtl_Event_Change
- Select Case obj.Name
- Case "Slider1"
-  i = FakeDXUIFindControl("Progress1")
-  If i Then
-   With FakeDXUIControls(i)
-    .Caption = Format(obj.Value / 100, "0%")
-    .Value = obj.Value
-    objRenderTest.OrenNayarRoughness = obj.Value / 100
-   End With
-  End If
- End Select
- 'i = FakeDXUIFindControl("Label1")
- 'If i Then FakeDXUIControls(i).Caption = CStr(obj.Value) + "," + CStr(obj.Value(1))
-End Select
-End Function
+'Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
+'Dim i As Long, bErr As Boolean
+'Dim obj1 As clsTreeStorageNode, v1 As D3DVECTOR
+'Dim s As String
+''///
+'Select Case nType
+'Case FakeCtl_Event_Click
+' Select Case obj.Name
+' Case "cmdClose"
+'  i = FakeDXUIFindControl("frmTopmost")
+'  If i Then FakeDXUIControls(i).Unload
+' Case "cmdExit"
+' ' With New clsFakeDXUIMsgBox
+' '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
+' ' End With
+'  Unload Me
+' Case "cmdDanger"
+'  With New clsFakeCommonDialog
+'   If .VBGetOpenFileName(s, , , , , "XML Level file|*.xml", , App.Path + "\data\") Then
+'    i = objFileMgr.LoadFile(s)
+'    If i > 0 Then
+'     Set obj1 = New clsTreeStorageNode
+'     With New clsXMLSerializer
+'      If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj1) Then
+'       objGameMgr.ClearLevelData
+'       If objGameMgr.AddLevelDataFromNode(obj1) Then
+'        objGameMgr.CreateLevelRuntimeData
+'        '///
+'        bTestOnly = True 'change mode
+'        '///
+'       Else
+'        bErr = True
+'       End If
+'      Else
+'       bErr = True
+'      End If
+'     End With
+'     objFileMgr.CloseFile i
+'    Else
+'     bErr = True
+'    End If
+'   End If
+'  End With
+'  If bErr Then
+'   With New clsFakeDXUIMsgBox
+'    .MsgBox "Error when loading level file:" + vbCrLf + s, vbExclamation, "Error"
+'   End With
+'  End If
+' Case "Check1"
+'  i = FakeDXUIFindControl("Check2")
+'  If i Then FakeDXUIControls(i).Enabled = obj.Value
+' Case "Check2"
+'  bTestOnly = obj.Value
+' Case "cmdOptions"
+'  frmSettings.Show
+' End Select
+'Case FakeCtl_Event_Change
+' Select Case obj.Name
+' Case "Slider1"
+'  i = FakeDXUIFindControl("Progress1")
+'  If i Then
+'   With FakeDXUIControls(i)
+'    .Caption = Format(obj.Value / 100, "0%")
+'    .Value = obj.Value
+'    objRenderTest.OrenNayarRoughness = obj.Value / 100
+'   End With
+'  End If
+' End Select
+' 'i = FakeDXUIFindControl("Label1")
+' 'If i Then FakeDXUIControls(i).Caption = CStr(obj.Value) + "," + CStr(obj.Value(1))
+'End Select
+'End Function
 
 Private Sub iSubclass_After(lReturn As Long, ByVal hwnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long)
 Dim i As Long
@@ -279,11 +231,6 @@ End Sub
 
 Friend Sub OnMouseWheel(ByVal Button As MouseButtonConstants, ByVal Shift As ShiftConstants, ByVal x As Long, ByVal y As Long, ByVal nDelta As Long)
 If FakeDXUIOnMouseWheel(nDelta, Shift) Then Exit Sub
-'etc.
-If nDelta > 0 Then
- objCamera.Zoom 0.8
-Else
- objCamera.Zoom 1.25
-End If
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_MouseWheel, nDelta, Shift, 0
 End Sub
 
