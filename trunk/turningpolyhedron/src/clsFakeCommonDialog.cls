@@ -69,7 +69,7 @@ Private m_nType As Long
 '3-choose folder
 
 Private m_bCancel As Boolean
-Private m_bUnload As Boolean
+Private m_objUnload As New IMainLoopCallback
 Private m_bDiscardEvent As Boolean
 
 Private m_sTitle As String
@@ -455,7 +455,7 @@ On Error Resume Next
 Dim i As Long, j As Long
 Dim s As String, s1 As String
 '///
-m_bUnload = False
+m_objUnload.Cancel = False
 m_bCancel = True
 m_sValue = vbNullString
 Erase m_tFolders
@@ -563,10 +563,10 @@ FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_Sizable Or FFS_TitleBar,
 End With
 '///
 m_bDiscardEvent = True
-FakeDXAppMainLoop VarPtr(1&)
+FakeDXAppMainLoop , True
 m_bDiscardEvent = False
 '///wait for single object
-FakeDXAppMainLoop VarPtr(m_bUnload)
+FakeDXAppMainLoop m_objUnload
 '///
 i = m_idx(0)
 If i > 0 And i <= FakeDXUIControlCount Then
@@ -837,11 +837,11 @@ Case FakeCtl_Event_Click
     m_sValue = s1
    End If
    '///
-   m_bUnload = True
+   m_objUnload.Cancel = True
    m_bCancel = False
   End If
  Case "cmdCancel"
-  m_bUnload = True
+  m_objUnload.Cancel = True
  Case "optFolder"
   m_nSelectedFolder = obj.ChildIndex \ 2
   pShowFile
@@ -874,7 +874,7 @@ Case FakeCtl_Event_Click
   End If
   '///???
   m_bDiscardEvent = True
-  FakeDXAppMainLoop VarPtr(1&)
+  FakeDXAppMainLoop , True
   m_bDiscardEvent = False
   '///
  Case "cmdNewFolder"
@@ -982,7 +982,7 @@ Case FakeCtl_Event_DblClick
      s1 = pValidateFile(m_tFolders(m_nSelectedFolder).sPath, m_tFolders(m_nSelectedFolder).tData(i).sName, True)
      If s1 <> "" Then
       m_sValue = s1
-      m_bUnload = True
+      m_objUnload.Cancel = True
       m_bCancel = False
      End If
     End If
@@ -991,7 +991,7 @@ Case FakeCtl_Event_DblClick
  End Select
  '////////////////////////////////
 Case FakeCtl_Event_Unload
- m_bUnload = True
+ m_objUnload.Cancel = True
 End Select
 End Function
 

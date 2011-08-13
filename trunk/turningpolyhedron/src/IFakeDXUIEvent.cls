@@ -29,6 +29,9 @@ Option Explicit
 '
 'End Sub
 
+'nType: see mdlFakeDXUI
+'nParam*: unused
+'return value: if Unload then bit0=cancel
 Public Function OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
 '
 End Function
