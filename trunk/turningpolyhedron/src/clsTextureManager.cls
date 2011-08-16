@@ -21,9 +21,11 @@ Option Explicit
 Private Type typeTextMgrData
  sName As String
  objTexture As Direct3DBaseTexture9
+ 'new:data level
+ nDataLevel As Long
 End Type
 
-Private m_tData() As typeTextMgrData
+Private m_tData() As typeTextMgrData '1-based, sparse data
 Private m_nCount As Long
 
 Private objEffect As D3DXEffect
@@ -32,9 +34,37 @@ Private texNoise As Direct3DTexture9
 Private objOldTarget As Direct3DSurface9
 Private objOldStencil As Direct3DSurface9
 
+'////////new:data level
+
+Private m_nDataLevel As Long
+
+Friend Sub AddDataLevel(ByVal nDataLevel As Long)
+If nDataLevel <= m_nDataLevel Then Exit Sub
+m_nDataLevel = nDataLevel
+End Sub
+
+Friend Sub RemoveDataLevel(ByVal nDataLevel As Long)
+Dim i As Long
+If nDataLevel <= 0 Then
+ Clear
+Else
+ For i = 1 To m_nCount
+  If Not m_tData(i).objTexture Is Nothing Then
+   If m_tData(i).nDataLevel >= nDataLevel Then
+    m_tData(i).sName = vbNullString
+    Set m_tData(i).objTexture = Nothing
+   End If
+  End If
+ Next i
+ '///
+ m_nDataLevel = nDataLevel - 1
+End If
+End Sub
+
 Friend Sub Clear()
 Erase m_tData
 m_nCount = 0
+m_nDataLevel = 0
 End Sub
 
 Friend Function AddTexture(ByVal obj As Direct3DBaseTexture9, Optional ByVal sName As String) As Long
@@ -58,6 +88,7 @@ If Not obj Is Nothing Then
  With m_tData(j)
   .sName = sName
   Set .objTexture = obj
+  .nDataLevel = m_nDataLevel
  End With
  AddTexture = j
 End If
@@ -109,6 +140,7 @@ If obj Is Nothing Then Exit Function
 With m_tData(j)
  .sName = sName
  Set .objTexture = obj
+ .nDataLevel = m_nDataLevel
 End With
 AddTextureFromFile = j
 End Function

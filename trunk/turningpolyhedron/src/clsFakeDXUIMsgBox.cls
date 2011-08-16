@@ -37,7 +37,7 @@ Erase m_sButtonCaption
 Erase m_nButtonValue
 End Sub
 
-Friend Sub AddButton(Optional ByVal s As String, Optional ByVal nValue As VbMsgBoxResult)
+Friend Sub AddButton(Optional ByVal s As String, Optional ByVal nValue As VbMsgBoxResult, Optional ByVal sToolTipText As String)
 '///get default name
 If s = "" Then
  Select Case nValue
@@ -59,9 +59,10 @@ If s = "" Then
 End If
 '///
 m_nButtonCount = m_nButtonCount + 1
-ReDim Preserve m_sButtonCaption(1 To m_nButtonCount)
+ReDim Preserve m_sButtonCaption(1 To m_nButtonCount * 2)
 ReDim Preserve m_nButtonValue(1 To m_nButtonCount)
-m_sButtonCaption(m_nButtonCount) = s
+m_sButtonCaption(m_nButtonCount * 2 - 1) = s
+m_sButtonCaption(m_nButtonCount * 2) = sToolTipText
 m_nButtonValue(m_nButtonCount) = nValue
 End Sub
 
@@ -90,16 +91,17 @@ End Select
 End Sub
 
 'new style:
+'&H8000000=vertical buttons
 '&H10000000=sizable
 '&H20000000=no close
 '&H40000000=no caption
 '&H80000000=not moveable
-'TODO:autosize,custom buttons,default button,icon,etc.
-Friend Function MsgBox(Optional ByVal Prompt As String, Optional ByVal Buttons As VbMsgBoxStyle, Optional ByVal Title As String, Optional ByVal Default As VbMsgBoxResult) As VbMsgBoxResult
+'TODO:autosize,default button,icon,etc.
+Friend Function MsgBox(Optional ByVal Prompt As String, Optional ByVal Buttons As VbMsgBoxStyle, Optional ByVal Title As String, Optional ByVal Default As VbMsgBoxResult, Optional ByVal ButtonSize As Long = 56) As VbMsgBoxResult
 Dim w As Long, h As Long
 Dim ww As Single, hh As Single
 Dim ww1 As Single ', hh1 As Single
-Dim i As Long, x As Long
+Dim i As Long, x As Long, y As Long
 Dim idx As Long
 Dim ii As Long
 '///
@@ -117,7 +119,11 @@ ii = Buttons And &H70&
 If ii <= &H40& Then MessageBeep ii _
 Else ii = 0
 '///calc size
-w = m_nButtonCount * 64& - 8&
+If Buttons And &H8000000 Then
+ w = ButtonSize
+Else
+ w = m_nButtonCount * (ButtonSize + 8&) - 8&
+End If
 If w < 32& Then w = 32&
 '///debug
 If Len(Prompt) > 0 Then _
@@ -145,6 +151,11 @@ If ww < w Then ww = w
 ' If ww < w Then ww = w
  If ww > d3dpp.BackBufferWidth - 32 Then ww = d3dpp.BackBufferWidth - 32
 'End If
+'///
+If Buttons And &H8000000 Then
+ hh = hh + (m_nButtonCount - 1) * 32&
+End If
+'///
 If hh > d3dpp.BackBufferHeight - 80 Then hh = d3dpp.BackBufferHeight - 80
 w = CLng(ww) \ 2& + 12
 h = CLng(hh) \ 2& + 28 + (10 And (Buttons And &H40000000) = 0)
@@ -161,13 +172,22 @@ Or (FFS_Sizable And (Buttons And &H10000000) <> 0), , False, , Title, , , 0.5, 0
  .AddNewChildren FakeCtl_Label, 8 + ((ii > 0) And 56&), 8, -8, -8, FLS_WordWrap, , , , Prompt, , , , , 1, 1
  '///
  idx = (Buttons And &HFF00&) \ &H100& + 1
- x = 4& - m_nButtonCount * 32&
+ If Buttons And &H8000000 Then
+  x = -(ButtonSize \ 2&)
+ Else
+  x = 4& - (m_nButtonCount * (ButtonSize + 8&)) \ 2&
+  y = -32
+ End If
  For i = 1 To m_nButtonCount
-  With .AddNewChildren(FakeCtl_Button, x, -32, x + 56, -8, FCS_TabStop Or FCS_CanGetFocus, , , , m_sButtonCaption(i), , "MsgBox", _
-  0.5, 1, 0.5, 1, , CStr(m_nButtonValue(i)))
+  If Buttons And &H8000000 Then
+   y = (i - m_nButtonCount - 1) * 32&
+  ElseIf i > 1 Then
+   x = x + ButtonSize + 8&
+  End If
+  With .AddNewChildren(FakeCtl_Button, x, y, x + ButtonSize, y + 24, FCS_TabStop Or FCS_CanGetFocus, , , , m_sButtonCaption(i * 2 - 1), , "MsgBox", _
+  0.5, 1, 0.5, 1, , CStr(m_nButtonValue(i)), m_sButtonCaption(i * 2))
    If i = idx Then FakeDXUIPostMessage FakeCtl_Msg_SetFocus, .Index
   End With
-  x = x + 64
  Next i
  '///
  .Show 1

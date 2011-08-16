@@ -785,9 +785,13 @@ End Select
 End Property
 
 Friend Sub Show(Optional ByVal Modal As Long, Optional ByVal OwnerForm As Long)
-If m_nClosing = 0 And Not m_bVisible Then
+If Not m_bVisible Then
+ If m_nClosing = 0 Then
+  m_nClosing = &H21&
+ Else
+  m_nClosing = 0
+ End If
  m_bVisible = True
- m_nClosing = &H21&
  '///modal form (???)
  If Modal Then FakeDXUIPushModalWindow m_nIndex
  '///
@@ -803,8 +807,11 @@ End Sub
 Friend Sub Hide()
 If m_nClosing = 0 And m_bVisible Then
  m_nClosing = &H11&
- FakeDXUIRemoveModalWindow m_nIndex
+Else
+ m_nClosing = 0
+ m_bVisible = False
 End If
+FakeDXUIRemoveModalWindow m_nIndex
 End Sub
 
 Friend Sub Unload()
@@ -1916,6 +1923,42 @@ Friend Property Let RectangleEx(p As typeFakeDXUIRectEx)
 m_tRectEx = p
 m_bSizeDirty = True
 End Property
+
+'FIXME: buggy function
+Friend Sub MoveToCenter()
+Dim i As Long
+Dim w As Single, h As Single
+i = m_nState And 3&
+If i <> 1 Then 'if not maximize
+ With m_tRectEx
+  w = (.Right.a - .Left.a) * 0.5!
+  h = (.Bottom.a - .Top.a) * 0.5!
+  .Left.a = -w
+  .Left.b = 0.5!
+  .Top.a = -h
+  .Top.b = 0.5!
+  .Right.a = w
+  .Right.b = 0.5!
+  .Bottom.a = h
+  .Bottom.b = 0.5!
+ End With
+End If
+If i Then 'if not normal
+ With m_tRectEx_Backup
+  w = (.Right.a - .Left.a) * 0.5!
+  h = (.Bottom.a - .Top.a) * 0.5!
+  .Left.a = -w
+  .Left.b = 0.5!
+  .Top.a = -h
+  .Top.b = 0.5!
+  .Right.a = w
+  .Right.b = 0.5!
+  .Bottom.a = h
+  .Bottom.b = 0.5!
+ End With
+End If
+m_bSizeDirty = True
+End Sub
 
 Private Sub Class_Initialize()
 m_nType = -1

@@ -46,23 +46,62 @@ Private Type typeFileMgrData
  nArchiveItemIndex As Long
  lpbData As Long
  bData() As Byte
+ 'new:data level
+ nDataLevel As Long
 End Type
 
-Private m_tFiles() As typeFileMgrData '1-based
+Private m_tFiles() As typeFileMgrData '1-based, sparse data
 Private m_nFileCount As Long
 
 Private Type typeFileMgrArchiveData
  sName As String
  obj As clsSimpleTarFile 'nothing=unused
+ 'new:data level
+ nDataLevel As Long
 End Type
 
 Private m_tArchive() As typeFileMgrArchiveData
 Private m_nArchiveCount As Long
 
+'////////new:data level
+
+Private m_nDataLevel As Long
+
 Friend Sub Destroy()
 Erase m_tFiles, m_tArchive
 m_nFileCount = 0
 m_nArchiveCount = 0
+m_nDataLevel = 0
+End Sub
+
+Friend Sub AddDataLevel(ByVal nDataLevel As Long)
+If nDataLevel <= m_nDataLevel Then Exit Sub
+m_nDataLevel = nDataLevel
+End Sub
+
+Friend Sub RemoveDataLevel(ByVal nDataLevel As Long)
+Dim t As typeFileMgrData
+Dim i As Long
+t.nSize = -1
+'///
+If nDataLevel <= 0 Then
+ Destroy
+Else
+ For i = 1 To m_nFileCount
+  If m_tFiles(i).nSize >= 0 And m_tFiles(i).nDataLevel >= nDataLevel Then
+   m_tFiles(i) = t
+  End If
+ Next i
+ '///
+ For i = 1 To m_nArchiveCount
+  If Not m_tArchive(i).obj Is Nothing And m_tArchive(i).nDataLevel >= nDataLevel Then
+   m_tArchive(i).sName = vbNullString
+   Set m_tArchive(i).obj = Nothing
+  End If
+ Next i
+ '///
+ m_nDataLevel = nDataLevel - 1
+End If
 End Sub
 
 Friend Function pFindFile(ByVal s As String) As String
@@ -136,8 +175,8 @@ FilePointer = m_tFiles(nIndex).lpbData
 End Property
 
 Friend Sub CloseArchiveFile(ByVal nIndex As Long)
-Dim i As Long
 Dim t As typeFileMgrData
+Dim i As Long
 '///
 If nIndex <= 0 Or nIndex > m_nArchiveCount Then Exit Sub
 If m_tArchive(nIndex).obj Is Nothing Then Exit Sub
@@ -175,6 +214,7 @@ Dim i As Long, j As Long
 Dim nArchiveIndex As Long
 Dim s1 As String
 Dim b As Boolean
+Dim bData() As Byte
 '///
 s = Replace(s, "/", "\")
 j = Len(s)
@@ -197,7 +237,13 @@ For i = 1 To m_nFileCount
  End If
 Next i
 '///
+b = LCase(Right(s, 5)) = ".lzma"
 s1 = pFindFile(s)
+If s1 = vbNullString And Not b Then
+ '///check *.lzma file
+ b = True
+ s1 = pFindFile(s + ".lzma")
+End If
 If s1 = vbNullString Then
  '///maybe in archive file
  i = InStrRev(s, "\")
@@ -227,6 +273,7 @@ If s1 = vbNullString Then
   .nArchiveIndex = nArchiveIndex
   .nArchiveItemIndex = i
   .lpbData = m_tArchive(nArchiveIndex).obj.FilePointer(i)
+  .nDataLevel = m_nDataLevel
  End With
 Else
  Err.Clear
@@ -246,10 +293,28 @@ Else
   .sName = s
   .nSize = i
   If i > 0 Then
-   ReDim .bData(i - 1)
-   Get #1, 1, .bData
-   .lpbData = VarPtr(.bData(0))
+   If b Then '*.lzma file
+    ReDim bData(i - 1)
+    Get #1, 1, bData
+    If LZMADecompress_Correct_Simple(bData, .bData) Then
+     Err.Clear
+     i = UBound(.bData)
+     If Err.Number Then
+      .nSize = 0
+     Else
+      .nSize = i + 1
+      .lpbData = VarPtr(.bData(0))
+     End If
+    Else
+     .nSize = 0
+    End If
+   Else
+    ReDim .bData(i - 1)
+    Get #1, 1, .bData
+    .lpbData = VarPtr(.bData(0))
+   End If
   End If
+  .nDataLevel = m_nDataLevel
  End With
  '///
  Close
@@ -257,30 +322,121 @@ End If
 LoadFile = j
 End Function
 
-Friend Function FindArchiveFile(ByVal s As String) As Long
+Friend Function FindOpenedArchiveFile(ByVal s As String) As Long
 Dim i As Long
 s = LCase(s)
 For i = 1 To m_nArchiveCount
  If Not m_tArchive(i).obj Is Nothing Then
   If s = LCase(m_tArchive(i).sName) Then
-   FindArchiveFile = i
+   FindOpenedArchiveFile = i
    Exit Function
   End If
  End If
 Next i
 End Function
 
-Friend Function FindFile(ByVal s As String) As Long
+Friend Function FindOpenedFile(ByVal s As String) As Long
 Dim i As Long
 s = LCase(s)
 For i = 1 To m_nFileCount
  If m_tFiles(i).nSize >= 0 Then
   If s = LCase(m_tFiles(i).sName) Then
-   FindFile = i
+   FindOpenedFile = i
    Exit Function
   End If
  End If
 Next i
+End Function
+
+Friend Sub pEnumerateFile(ByVal s As String, ByRef sFiles() As String, ByRef nCount As Long, ByRef nMax As Long)
+Dim h As Long, t As WIN32_FIND_DATA
+Dim s1 As String
+Dim i As Long, j As Long, m As Long
+Dim nArchiveIndex As Long
+Dim nIndex() As Long
+Dim b As Boolean
+'///
+If Right(s, 1) <> "\" Then s = s + "\"
+'///check filesystem
+h = FindFirstFile(s + "*", t)
+If h = 0 Or h = -1 Then
+Else
+ Do
+  If (t.dwFileAttributes And vbDirectory) = 0 Then
+   s1 = StrConv(t.cFileName, vbUnicode)
+   i = InStr(1, s1, vbNullChar)
+   If i > 0 Then s1 = Left(s1, i - 1)
+   '///
+   nCount = nCount + 1
+   If nCount > nMax Then
+    nMax = nMax + 256&
+    ReDim Preserve sFiles(1 To nMax)
+   End If
+   sFiles(nCount) = s + s1
+  End If
+ Loop While FindNextFile(h, t)
+ FindClose h
+End If
+'///check archive
+i = InStrRev(s, "\")
+Do While i > 1
+ b = False
+ If i > 4 Then b = b Or LCase(Mid(s, i - 4, 4)) = ".tar"
+ If i > 9 Then b = b Or LCase(Mid(s, i - 9, 9)) = ".tar.lzma"
+ If b Then
+  nArchiveIndex = LoadArchiveFile(Left(s, i - 1))
+  If nArchiveIndex > 0 Then
+   m = m_tArchive(nArchiveIndex).obj.FindAllFiles(Mid(s, i + 1) + "*", nIndex)
+   '///
+   If nCount + m > nMax Then
+    nMax = nCount + m + 256&
+    ReDim Preserve sFiles(1 To nMax)
+   End If
+   '///
+   s1 = Left(s, i)
+   For j = 1 To m
+    sFiles(nCount + j) = s1 + m_tArchive(nArchiveIndex).obj.FileName(nIndex(j))
+   Next j
+   nCount = nCount + m
+  End If
+ End If
+ i = InStrRev(s, "\", i - 1)
+Loop
+'///over
+End Sub
+
+Friend Function EnumerateFile(ByVal s As String, ByRef sFiles() As String) As Long
+On Error Resume Next
+Dim i As Long, j As Long
+Dim nCount As Long, nMax As Long
+Dim s1 As String
+'///
+Erase sFiles
+'///
+s = Replace(s, "/", "\")
+j = Len(s)
+Do
+ i = j
+ s = Replace(s, "\\", "\")
+ j = Len(s)
+Loop Until i = j
+If Right(s, 1) <> "\" Then s = s + "\"
+'///
+If Mid(s, 2, 1) = ":" Then
+ pEnumerateFile s, sFiles, nCount, nMax
+Else
+ For i = 1 To m_nPathCount
+  s1 = Space(Len(m_sPath(i)) + Len(s) + 1024&)
+  PathCombine s1, m_sPath(i), s
+  j = InStr(1, s1, vbNullChar)
+  If j > 0 Then s1 = Left(s1, j - 1)
+  '///
+  pEnumerateFile s1, sFiles, nCount, nMax
+  '///
+ Next i
+End If
+'///
+EnumerateFile = nCount
 End Function
 
 Friend Function LoadArchiveFile(ByVal s As String) As Long
@@ -329,6 +485,7 @@ End If
 With m_tArchive(j)
  .sName = s
  Set .obj = obj
+ .nDataLevel = m_nDataLevel
 End With
 LoadArchiveFile = j
 End Function

@@ -751,11 +751,11 @@ a:
 Close
 End Function
 
-Private Sub ITreeStorageBuilder_EndNode()
+Private Sub ITreeStorageBuilder_EndNode(ByRef Cancel As Boolean)
 'do nothing
 End Sub
 
-Private Sub ITreeStorageBuilder_NewAttribute(ByVal lpName As Long, ByVal nNameLength As Long, ByVal lpValue As Long, ByVal nValueLength As Long)
+Private Sub ITreeStorageBuilder_NewAttribute(ByVal lpName As Long, ByVal nNameLength As Long, ByVal lpValue As Long, ByVal nValueLength As Long, ByRef Cancel As Boolean)
 m_nNodeCount = m_nNodeCount + 1
 ReDim Preserve m_tNodes(1 To m_nNodeCount)
 With m_tNodes(m_nNodeCount)
@@ -787,11 +787,11 @@ End With
 Set ITreeStorageBuilder_NewNode = obj
 End Function
 
-Private Sub ITreeStorageBuilder_SetName(ByVal lp As Long, ByVal nLength As Long)
+Private Sub ITreeStorageBuilder_SetName(ByVal lp As Long, ByVal nLength As Long, ByRef Cancel As Boolean)
 SetNameEx lp, nLength
 End Sub
 
-Private Sub ITreeStorageBuilder_SetValue(ByVal lp As Long, ByVal nLength As Long)
+Private Sub ITreeStorageBuilder_SetValue(ByVal lp As Long, ByVal nLength As Long, ByRef Cancel As Boolean)
 SetValueEx lp, nLength
 End Sub
 

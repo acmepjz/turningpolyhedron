@@ -116,6 +116,28 @@
     </appearance>
     <onEnter condition="onGroundCount=1;main=true" event="game-finished"/>
   </tileType>
+  <tileType id="checkpoint">
+    <name>Checkpoint</name>
+    <appearance>
+      <!-- TODO: -->
+      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader>
+      <shader shaderProgram="standard" ambient="0,1,1" effectStates="FillMode=WIREFRAME;">
+        <mesh type="cube" s="1,1,1"/>
+      </shader>
+    </appearance>
+    <!-- TODO: -->
+  </tileType>
+  <tileType id="floating-checkpoint" supporter="false" tilt-supporter="false" non-block="true">
+    <appearance>
+      <!-- TODO: -->
+      <shader shaderProgram="standard" ambient="0,1,1" effectStates="FillMode=WIREFRAME;">
+        <mesh type="cube" s="1,1,1" c="0,0,1"/>
+      </shader>
+    </appearance>
+    <!-- TODO: -->
+  </tileType>
   <tileType id="ice" index="9" type="ice">
     <name>Ice</name>
     <description>Ice are slippery. If the block is not rough enough and is completely on the ice, it will slip until get off the ice or hit the wall.</description>
@@ -168,8 +190,8 @@
     <description>After you stand on a tricky ground, it will turn to thin ground.</description>
     <appearance>
       <!-- TODO: -->
-      <shader templateName="simple1_fixed" ambient="0.3,0.3,0.3" diffuse="0.3,0.3,0.3" specular="0.4,0.4,0.3" specularHardness="50">
-        <mesh type="cube" s="1,1,0.25" c="0,0,1" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      <shader templateName="simple1_fixed" ambient="0.4,0.2,0" diffuse="0.4,0.2,0" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" s="1,1,0.3" p="0,0,-0.25" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader>
     </appearance>
     <onLeave condition="pressure=2~" event="convertTo:thin-ground"/>

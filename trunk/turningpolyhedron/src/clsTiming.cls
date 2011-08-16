@@ -191,7 +191,7 @@ If bRun Then
  QueryPerformanceCounter a
  GetMs = (t1 + a - t2) / nFreq * 1000
  #Else
- t1_1 = t1_1 + GetTickCount - t2_1
+ GetMs = t1_1 + GetTickCount - t2_1
  #End If
 Else
  #If UsePerformanceCounter Then
