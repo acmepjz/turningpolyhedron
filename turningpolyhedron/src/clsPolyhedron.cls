@@ -666,8 +666,9 @@ If bMove Then
  '///onLeave and onMoveLeave events
  SendEventEx EventTypeOnLeave, m_tOldState
  SendEventEx EventTypeOnMoveLeave, m_tOldState
+ '///
+ Move = m_tState.nState
 End If
-Move = m_tState.nState
 End Function
 
 Friend Sub SendEvent(ByVal nEventType As Long, Optional ByVal IsOld As Boolean)

@@ -15,9 +15,54 @@ Option Explicit
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
-Private m_tData() As typeMeshMgrData
+Private m_tData() As typeMeshMgrData '1-based, continuous data
 Private m_nCount As Long
 Private m_nMax As Long
+
+'////////new:data level
+
+Private Type typeMeshMgrDataLevel
+ nDataLevel As Long
+ nCount As Long
+End Type
+
+Private m_tDataLevelArray() As typeMeshMgrDataLevel '1-based
+Private m_nDataLevelCount As Long
+
+Friend Sub AddDataLevel(ByVal nDataLevel As Long)
+If m_nDataLevelCount > 0 Then
+ If nDataLevel <= m_tDataLevelArray(m_nDataLevelCount).nDataLevel Then
+  Exit Sub
+ End If
+End If
+m_nDataLevelCount = m_nDataLevelCount + 1
+ReDim Preserve m_tDataLevelArray(1 To m_nDataLevelCount)
+m_tDataLevelArray(m_nDataLevelCount).nDataLevel = nDataLevel
+m_tDataLevelArray(m_nDataLevelCount).nCount = m_nCount
+End Sub
+
+Friend Sub RemoveDataLevel(ByVal nDataLevel As Long)
+Dim i As Long, j As Long
+If nDataLevel <= 0 Then
+ Destroy
+ElseIf m_nDataLevelCount > 0 Then
+ For i = m_nDataLevelCount To 1 Step -1
+  If m_tDataLevelArray(i).nDataLevel < nDataLevel Then Exit For
+ Next i
+ If i < m_nDataLevelCount Then
+  m_nDataLevelCount = i
+  i = i + 1
+  '///
+  j = m_tDataLevelArray(i).nCount
+  If j < m_nCount Then
+   m_nCount = j
+   m_nMax = j
+   If j > 0 Then ReDim Preserve m_tData(1 To j) _
+   Else Erase m_tData
+  End If
+ End If
+End If
+End Sub
 
 Friend Property Get Mesh(ByVal nIndex As Long) As D3DXMesh
 Set Mesh = m_tData(nIndex).objMesh
@@ -35,6 +80,9 @@ Friend Sub Destroy()
 Erase m_tData
 m_nCount = 0
 m_nMax = 0
+'---
+Erase m_tDataLevelArray
+m_nDataLevelCount = 0
 End Sub
 
 Friend Function pReadComponent(ByVal s As String, ByRef n As Long) As Boolean

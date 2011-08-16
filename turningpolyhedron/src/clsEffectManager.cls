@@ -13,6 +13,8 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
+#Const HasInternalInstance = False
+
 'TODO:use collection for fast look up (?)
 
 Private Declare Function VarPtrArray Lib "msvbvm60.dll" Alias "VarPtr" (Ptr() As Any) As Long
@@ -21,22 +23,36 @@ Private Declare Sub ZeroMemory Lib "kernel32.dll" Alias "RtlZeroMemory" (ByRef D
 
 '////////effects
 
-Private m_tEffect() As typeFakeDXEffect '1-based
+Private m_tEffect() As typeFakeDXEffect '1-based, continuous data
 Private m_nEffectCount As Long, m_nEffectMax As Long
 
 Private m_nLastIndex As Long
 
 '////////mesh instance
 
+#If HasInternalInstance Then
 Private m_tInst As typeMeshInstanceCollection
+#End If
 
 'WARNING:dirty array, only avaliable during DrawInstanceEx --> ISort2_Compare
 Private m_tInstDirty() As typeMeshInstanceData
 
 '////////appearances
 
-Private m_tAppr() As typeAppearanceData '1-based
+Private m_tAppr() As typeAppearanceData '1-based, continuous data
 Private m_nApprCount As Long, m_nApprMax As Long
+
+'////////new:data level
+
+Private Type typeEffectMgrDataLevel
+ nDataLevel As Long
+ nEffectCount As Long
+ nApprCount As Long
+ nReserved As Long
+End Type
+
+Private m_tDataLevelArray() As typeEffectMgrDataLevel '1-based
+Private m_nDataLevelCount As Long
 
 '////////constants
 
@@ -46,6 +62,50 @@ Private m_sOutputName(31) As String
 Private m_sOutputSemantics(31) As String
 
 Implements ISort2
+
+Friend Sub AddDataLevel(ByVal nDataLevel As Long)
+If m_nDataLevelCount > 0 Then
+ If nDataLevel <= m_tDataLevelArray(m_nDataLevelCount).nDataLevel Then
+  Exit Sub
+ End If
+End If
+m_nDataLevelCount = m_nDataLevelCount + 1
+ReDim Preserve m_tDataLevelArray(1 To m_nDataLevelCount)
+m_tDataLevelArray(m_nDataLevelCount).nDataLevel = nDataLevel
+m_tDataLevelArray(m_nDataLevelCount).nEffectCount = m_nEffectCount
+m_tDataLevelArray(m_nDataLevelCount).nApprCount = m_nApprCount
+End Sub
+
+Friend Sub RemoveDataLevel(ByVal nDataLevel As Long)
+Dim i As Long, j As Long
+If nDataLevel <= 0 Then
+ Destroy
+ElseIf m_nDataLevelCount > 0 Then
+ For i = m_nDataLevelCount To 1 Step -1
+  If m_tDataLevelArray(i).nDataLevel < nDataLevel Then Exit For
+ Next i
+ If i < m_nDataLevelCount Then
+  m_nDataLevelCount = i
+  i = i + 1
+  '///
+  j = m_tDataLevelArray(i).nEffectCount
+  If j < m_nEffectCount Then
+   m_nEffectCount = j
+   m_nEffectMax = j
+   If j > 0 Then ReDim Preserve m_tEffect(1 To j) _
+   Else Erase m_tEffect
+  End If
+  '///
+  j = m_tDataLevelArray(i).nApprCount
+  If j < m_nApprCount Then
+   m_nApprCount = j
+   m_nApprMax = j
+   If j > 0 Then ReDim Preserve m_tAppr(1 To j) _
+   Else Erase m_tAppr
+  End If
+ End If
+End If
+End Sub
 
 Friend Sub SetTexture(ByVal nIndex As Long, ByVal nType As enumFakeDXEffectArgumentType, ByVal obj As Direct3DBaseTexture9)
 Dim t As Long
@@ -72,19 +132,27 @@ End If
 End Sub
 
 Friend Sub Destroy()
-Erase m_tEffect, m_tInst.tInstance, m_tInst.nInstOrder, m_tAppr
+Erase m_tEffect, m_tAppr
 m_nEffectCount = 0
 m_nEffectMax = 0
+#If HasInternalInstance Then
+Erase m_tInst.tInstance, m_tInst.nInstOrder
 m_tInst.nInstCount = 0
 m_tInst.nInstUnused = 0
 m_tInst.bInstDirty = False
+#End If
 m_nApprCount = 0
 m_nApprMax = 0
+'---
+Erase m_tDataLevelArray
+m_nDataLevelCount = 0
 End Sub
 
+#If HasInternalInstance Then
 Friend Sub ClearInstance()
 ClearInstanceEx m_tInst
 End Sub
+#End If
 
 Friend Sub ClearInstanceEx(ByRef tInst As typeMeshInstanceCollection)
 Erase tInst.tInstance, tInst.nInstOrder
@@ -99,9 +167,11 @@ m_nApprCount = 0
 m_nApprMax = 0
 End Sub
 
+#If HasInternalInstance Then
 Friend Property Get InstanceCount() As Long
 InstanceCount = m_tInst.nInstCount
 End Property
+#End If
 
 Friend Property Get AppearanceCount() As Long
 AppearanceCount = m_nApprCount
@@ -131,9 +201,11 @@ tInst.bInstDirty = True
 pAddEmptyInstance = idx
 End Function
 
+#If HasInternalInstance Then
 Friend Function AddInstance(ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld As D3DMATRIX) As Long
 AddInstance = AddInstanceEx(m_tInst, nEffectIndex, nMeshIndex, matWorld)
 End Function
+#End If
 
 Friend Function AddInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld As D3DMATRIX) As Long
 Dim idx As Long
@@ -147,9 +219,11 @@ If nEffectIndex > 0 And nEffectIndex <= m_nEffectCount And nMeshIndex > 0 Then
 End If
 End Function
 
+#If HasInternalInstance Then
 Friend Function AddInstanceFromAppearance(ByVal nIndex As Long, ByRef matWorld As D3DMATRIX) As Long
 AddInstanceFromAppearance = AddInstanceFromAppearanceEx(m_tInst, nIndex, matWorld)
 End Function
+#End If
 
 'returns root node (and last node)
 Friend Function AddInstanceFromAppearanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nIndex As Long, ByRef matWorld As D3DMATRIX, Optional ByRef nLastInstIndex As Long) As Long
@@ -172,9 +246,11 @@ If nIndex > 0 And nIndex <= m_nApprCount Then
 End If
 End Function
 
+#If HasInternalInstance Then
 Friend Sub RemoveInstance(ByVal nIndex As Long)
 RemoveInstanceEx m_tInst, nIndex
 End Sub
+#End If
 
 'WARNING: Don't use this function to remove non-root node, or there will be severe bug!
 Friend Sub RemoveInstanceEx(ByRef tInst As typeMeshInstanceCollection, ByVal nIndex As Long, Optional ByVal bRefreshInstOrder As Boolean = True)
@@ -295,6 +371,7 @@ If bRefreshInstOrder And tInst.bInstDirty Then
 End If
 End Sub
 
+#If HasInternalInstance Then
 Friend Property Get InstanceEffectIndex(ByVal nIndex As Long) As Long
 InstanceEffectIndex = m_tInst.tInstance(nIndex).nEffectIndex
 End Property
@@ -334,6 +411,7 @@ End Property
 Friend Sub DrawInstance(Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
 DrawInstanceEx m_tInst, bSetupLight, bUseExistingTransform
 End Sub
+#End If
 
 'has some code copied from SetupEffect
 Friend Sub DrawInstanceEx(ByRef tInst As typeMeshInstanceCollection, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
@@ -452,9 +530,11 @@ End If
 d3dd9.SetTransform D3DTS_WORLD, matBackup
 End Sub
 
+#If HasInternalInstance Then
 Friend Function AddHWInstance(ByVal nEffectIndex As Long, ByVal nMeshIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
 AddHWInstance = AddHWInstanceEx(m_tInst, nEffectIndex, nMeshIndex, matWorld, nStart, nEnd)
 End Function
+#End If
 
 'returns root node (and last node)
 'TODO:per-instance color support, etc.
@@ -536,9 +616,11 @@ Set tInst.tInstance(i).objInstanceBuffer = objInstanceBuffer
 AddHWInstanceEx = i
 End Function
 
+#If HasInternalInstance Then
 Friend Function AddHWInstanceFromAppearance(ByVal nIndex As Long, ByRef matWorld() As D3DMATRIX, ByVal nStart As Long, ByVal nEnd As Long) As Long
 AddHWInstanceFromAppearance = AddHWInstanceFromAppearanceEx(m_tInst, nIndex, matWorld, nStart, nEnd)
 End Function
+#End If
 
 'returns root node (and last node)
 'TODO:per-instance color support, etc.

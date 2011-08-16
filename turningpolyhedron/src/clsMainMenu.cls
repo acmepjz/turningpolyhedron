@@ -24,7 +24,7 @@ If m_idxForm Then Exit Sub
 '///
 With FakeDXUIControls(1)
  '///main menu test
- With .AddNewChildren(FakeCtl_None, 0, 0, 0, 0, , , False, , , , "frmMenu", , , 1, 1)
+ With .AddNewChildren(FakeCtl_None, 0, 0, 0, 0, , , False, , , , , , , 1, 1)
   m_idxForm = .Index
   Set .EventObject = Me
   '///some buttons, including settings
@@ -37,7 +37,10 @@ End With
 End Sub
 
 Friend Sub Show()
-If m_idxForm Then FakeDXUIControls(m_idxForm).Show
+Create
+FakeDXAppChangeRootObject &H7&, Me, Me
+FakeDXUIControls(m_idxForm).Show
+objCamera.MoveTargetTo Vec3
 End Sub
 
 Friend Sub Hide()
@@ -48,6 +51,19 @@ Private Function IFakeDXAppEvent_OnEvent(ByVal nType As Long, ByVal nParam1 As L
 Dim Button As Long
 '///
 Select Case nType
+Case FakeDXAppEvent_KeyDown 'TEST ONLY
+ Select Case nParam1 'TEST ONLY
+ Case vbKeyF2 'TEST ONLY
+  objGame.ShowLevelFileSelection 'TEST ONLY
+ Case vbKeyF3 'test only
+  Dim s() As String
+  Dim i As Long, m As Long
+  m = objFileMgr.EnumerateFile("levels", s)
+  'm = objFileMgr.EnumerateFile("texture.tar.lzma", s)
+  For i = 1 To m
+   Debug.Print s(i)
+  Next i
+ End Select 'TEST ONLY
 Case FakeDXAppEvent_MouseDown
  Button = nParam3 And &HFFFF&
  Select Case Button
@@ -88,7 +104,7 @@ Case FakeCtl_Event_Click
  '///TEST ONLY
  Case "cmdDanger"
   With New clsFakeCommonDialog
-   If .VBGetOpenFileName(s, , , , , "XML Level file|*.xml", , App.Path + "\data\") Then
+   If .VBGetOpenFileName(s, , , , , "XML Level file|*.xml;*.xml.lzma", , App.Path + "\data\") Then
     i = objFileMgr.LoadFile(s)
     If i > 0 Then
      Set obj1 = New clsTreeStorageNode
@@ -98,9 +114,7 @@ Case FakeCtl_Event_Click
        If objGameMgr.AddLevelDataFromNode(obj1) Then
         objGameMgr.CreateLevelRuntimeData
         '///change mode TODO:
-        Set FakeDXAppEvent = objGame
-        Set FakeDXAppRootObject = objGame
-        objGameMgr.FollowCurrentPolyhedron = True
+        objGame.ShowGame
         '///
        Else
         bErr = True
@@ -116,6 +130,7 @@ Case FakeCtl_Event_Click
    End If
   End With
   If bErr Then
+   Show
    With New clsFakeDXUIMsgBox
     .MsgBox "Error when loading level file:" + vbCrLf + s, vbExclamation, "Error"
    End With
@@ -123,6 +138,10 @@ Case FakeCtl_Event_Click
  End Select
 End Select
 End Function
+
+Private Sub IRenderableObject_Hide()
+Hide
+End Sub
 
 Private Sub IRenderableObject_Render(ByVal nType As enumRenderPassType, ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera, ByVal IsEffectBegin As Boolean, ByVal IsSceneBegin As Boolean)
 Select Case nType
@@ -146,6 +165,9 @@ Case RenderPass_Main
 Case RenderPass_FogVolume
  'TODO:
 Case RenderPass_Overlay
- 'TODO:
+' If Not IsSceneBegin Then d3dd9.BeginScene
+' FakeDXGDIDrawText FakeDXUIDefaultFont, objText.GetText("Turning Polyhedron"), _
+' 0, 16, d3dpp.BackBufferWidth, 32, , DT_CENTER Or DT_SINGLELINE Or DT_NOCLIP, , , , , , , , True
+' If Not IsSceneBegin Then d3dd9.EndScene
 End Select
 End Sub

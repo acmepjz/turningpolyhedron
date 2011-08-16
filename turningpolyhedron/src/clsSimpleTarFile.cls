@@ -346,10 +346,10 @@ For i = 1 To m_nFileCount
   If LCase(m_tFiles(i).sName) Like Filter Then
    m = m + 1
    If m > m2 Then
-    m2 = m2 + 16&
+    m2 = m2 + 256&
     ReDim Preserve nIndex(1 To m2)
-    nIndex(m) = i
    End If
+   nIndex(m) = i
   End If
  End If
 Next i

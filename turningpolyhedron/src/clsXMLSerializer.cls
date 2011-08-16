@@ -709,6 +709,8 @@ Dim nStackPointer As Long
 Dim nStackSize As Long
 Dim tStack() As typeXMLReadStack
 '///
+Dim Cancel As Boolean
+'///
 If nLength > 0 Then
  tSA.cbElements = 1
  tSA.cDims = 1
@@ -808,7 +810,8 @@ If nLength > 0 Then
     If d2(i) <> [">"] Then Exit Function
     i = i + 1
     '///raise event and pop stack
-    objOut.EndNode
+    objOut.EndNode Cancel
+    If Cancel Then Exit Function
     nStackPointer = nStackPointer - 1
     If nStackPointer < 0 Then Exit Do
     Set objOut = tStack(nStackPointer).obj
@@ -824,6 +827,7 @@ If nLength > 0 Then
       ReDim Preserve tStack(nStackSize - 1)
      End If
      Set objOut = objOut.NewNode
+     If objOut Is Nothing Then Exit Function
     End If
     Set tStack(nStackPointer).obj = objOut
     '///read and save name
@@ -833,7 +837,8 @@ If nLength > 0 Then
      .lps = c1
      .nLength = c
     End With
-    If c > 0 Then objOut.SetName VarPtr(d2(0)) + c1 * 2&, c * 2&
+    If c > 0 Then objOut.SetName VarPtr(d2(0)) + c1 * 2&, c * 2&, Cancel
+    If Cancel Then Exit Function
     '///read attributes (if any)
     Do
      pSkipSpaces d2, i, m
@@ -847,7 +852,8 @@ If nLength > 0 Then
       If d2(i) <> [">"] Then Exit Function
       i = i + 1
       '///raise event and pop stack
-      objOut.EndNode
+      objOut.EndNode Cancel
+      If Cancel Then Exit Function
       nStackPointer = nStackPointer - 1
       If nStackPointer < 0 Then Exit Do
       Set objOut = tStack(nStackPointer).obj
@@ -910,7 +916,8 @@ If nLength > 0 Then
        '///
       Loop
       c = c - c2
-      If c > 0 Then objOut.SetValue VarPtr(d2(0)) + j * 2&, c * 2&
+      If c > 0 Then objOut.SetValue VarPtr(d2(0)) + j * 2&, c * 2&, Cancel
+      If Cancel Then Exit Function
       '///
       Exit Do
      Case Else
@@ -940,7 +947,8 @@ If nLength > 0 Then
       End Select
       '///raise event
       c3 = VarPtr(d2(0))
-      objOut.NewAttribute c3 + c1 * 2&, c * 2&, c3 + c2 * 2&, j * 2&
+      objOut.NewAttribute c3 + c1 * 2&, c * 2&, c3 + c2 * 2&, j * 2&, Cancel
+      If Cancel Then Exit Function
      End Select
     Loop
    End Select

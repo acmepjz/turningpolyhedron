@@ -16,3 +16,13 @@ Option Explicit
 Public Sub Render(ByVal nType As enumRenderPassType, ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera, ByVal IsEffectBegin As Boolean, ByVal IsSceneBegin As Boolean)
 '
 End Sub
+
+''???
+'Public Sub Show()
+''
+'End Sub
+
+'???
+Public Sub Hide()
+'
+End Sub

@@ -380,7 +380,8 @@ Public Type typeTileType
  '&H400=not supportable
  nObjType As Long '0 to nInteractionCount; 0="default"
  nBlockHeight As Long 'used when "blocked" is set; <=0 means infinity
- nReserved4 As Long
+ '---new:data level
+ nDataLevel As Long
  '///
  'TODO:multiple appearances
  nApprIndex As Long
@@ -475,6 +476,8 @@ Public Type typeMapData_PolyhedronMerge
 End Type
 
 Public Type typeLevelData
+ sName As String
+ '////////
  'map data (tiles)
  nMapDataCount As Long
  tMapData() As typeMapData '1-based

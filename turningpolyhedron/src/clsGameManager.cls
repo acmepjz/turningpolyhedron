@@ -19,7 +19,7 @@ Private Const m_fAnimTime As Single = 250 'TODO:different time for different ani
 
 '////////object type data
 
-Private m_tObjType() As typeObjectType
+Private m_tObjType() As typeObjectType '1-based, continuous data
 Private m_nObjTypeCount As Long, m_nObjTypeMax As Long
 
 Private m_nObjInteraction() As Long '0 to nInteractionCount,0 to nInteractionCount; 0="default"
@@ -29,7 +29,7 @@ Private m_bObjInteractionDirty As Boolean
 
 Private Const m_nTileTypeCount_Max As Long = 1024&
 
-Private m_tTileType() As typeTileType
+Private m_tTileType() As typeTileType '1-based, sparse and continuous data
 Private m_nTileTypeCount As Long 'fixed index, start with 1 (this is not count, but just max index)
 Private m_nTileTypeCount2 As Long 'dynamic index, start with m_nTileTypeCount_Max+1
 Private m_nTileTypeMax As Long '=UBound(m_tTileType)
@@ -40,9 +40,11 @@ Private m_nTileTypeMap(1 To m_nTileTypeCount_Max) As Long
 
 '////////level data (TEST ONLY)
 
-Private m_bIsRuntime As Boolean
-
 Private m_tLevel As typeLevelData
+
+'runtime data
+
+Private m_bIsRuntime As Boolean
 
 Private m_tMapDataInst() As typeMapDataRuntime '1 to map data count
 Private m_tTileAnim() As typeCustomTileAnimation '1-based
@@ -69,6 +71,89 @@ Private m_bAutoReset As Boolean, m_bReset As Boolean
 '////////render settings
 
 Private m_bFollowPolyhedron As Boolean
+
+'////////new:data level
+
+Private Type typeGameMgrDataLevel
+ nDataLevel As Long
+ nObjTypeCount As Long
+ nTileTypeCount As Long
+ nTileTypeCount2 As Long
+ nTileTypeMap(1 To m_nTileTypeCount_Max) As Long
+End Type
+
+Private m_nDataLevel As Long
+Private m_tDataLevelArray() As typeGameMgrDataLevel '1-based
+Private m_nDataLevelCount As Long
+
+Friend Sub AddDataLevel(ByVal nDataLevel As Long)
+If nDataLevel <= m_nDataLevel Then Exit Sub
+If m_nDataLevelCount > 0 Then
+ If nDataLevel < m_tDataLevelArray(m_nDataLevelCount).nDataLevel Then
+  Exit Sub
+ End If
+End If
+'///
+m_nDataLevelCount = m_nDataLevelCount + 1
+ReDim Preserve m_tDataLevelArray(1 To m_nDataLevelCount)
+m_tDataLevelArray(m_nDataLevelCount).nDataLevel = nDataLevel
+m_tDataLevelArray(m_nDataLevelCount).nObjTypeCount = m_nObjTypeCount
+m_tDataLevelArray(m_nDataLevelCount).nTileTypeCount = m_nTileTypeCount
+m_tDataLevelArray(m_nDataLevelCount).nTileTypeCount2 = m_nTileTypeCount2
+CopyMemory m_tDataLevelArray(m_nDataLevelCount).nTileTypeMap(1), m_nTileTypeMap(1), m_nTileTypeCount_Max * 4&
+'///
+m_nDataLevel = nDataLevel
+End Sub
+
+Friend Sub RemoveDataLevel(ByVal nDataLevel As Long)
+Dim i As Long, j As Long
+Dim t As typeTileType
+If nDataLevel <= 0 Then
+ Destroy
+ElseIf m_nDataLevelCount > 0 Then
+ For i = m_nDataLevelCount To 1 Step -1
+  If m_tDataLevelArray(i).nDataLevel < nDataLevel Then Exit For
+ Next i
+ If i < m_nDataLevelCount Then
+  If i > 0 Then m_nDataLevel = m_tDataLevelArray(i).nDataLevel _
+  Else m_nDataLevel = 0
+  '///
+  m_nDataLevelCount = i
+  i = i + 1
+  '///
+  j = m_tDataLevelArray(i).nObjTypeCount
+  If j < m_nObjTypeCount Then
+   m_nObjTypeCount = j
+   m_nObjTypeMax = j
+   If j > 0 Then ReDim Preserve m_tObjType(1 To j) _
+   Else Erase m_tObjType
+   m_bObjInteractionDirty = True
+  End If
+  '///
+  m_nTileTypeCount = m_tDataLevelArray(i).nTileTypeCount
+  For i = 1 To m_nTileTypeCount
+   If m_tTileType(i).nIndex > 0 And m_tTileType(i).nDataLevel >= nDataLevel Then _
+   m_tTileType(i) = t
+  Next i
+  For i = m_nTileTypeCount + 1 To m_nTileTypeCount_Max
+   m_tTileType(i) = t
+  Next i
+  '///
+  j = m_tDataLevelArray(i).nTileTypeCount2
+  If j < m_nTileTypeCount2 Then
+   m_nTileTypeCount2 = j
+   m_nTileTypeMax = m_nTileTypeCount_Max + j
+   ReDim Preserve m_tTileType(1 To m_nTileTypeMax)
+  End If
+  '///
+  CopyMemory m_nTileTypeMap(1), m_tDataLevelArray(i).nTileTypeMap(1), m_nTileTypeCount_Max * 4&
+ End If
+End If
+End Sub
+
+Friend Property Get LevelName() As String
+LevelName = m_tLevel.sName
+End Property
 
 Friend Property Get AutoReset() As Boolean
 AutoReset = m_bAutoReset
@@ -712,12 +797,12 @@ If nIndex > 0 And nIndex <= m_nTileAnimMax Then
 End If
 End Sub
 
-Friend Sub ClearLevelData()
+Friend Sub ClearLevelData(Optional ByVal bClearTileTypeMap As Boolean = True)
 Dim t As typeLevelData
 Dim i As Long
 m_tLevel = t
 'reset dynamic-mapped tile index
-Erase m_nTileTypeMap
+If bClearTileTypeMap Then Erase m_nTileTypeMap
 'reset runtime
 ClearLevelRuntimeData
 '///
@@ -1410,14 +1495,16 @@ End Select
 '///
 For i = 1 To objNode.SubNodeCount
  If objNode.SubNodeType(i) = 0 Then
-  'TODO:
-  Debug.Assert False
-'  Select Case objNode.GetSubNodeNameAsString(i)
-'  Case "name"
-'  End Select
+  'TODO:other
+  Select Case objNode.GetSubNodeNameAsString(i)
+  Case "name"
+   m_tLevel.sName = objNode.GetSubNodeValueAsString(i)
+  End Select
  Else
   Set obj = objNode.SubNodeObject(i)
   Select Case obj.GetNameAsString
+  Case "name"
+   m_tLevel.sName = objNode.GetValueAsString
   Case "mapData"
    tLevel.nMapDataCount = tLevel.nMapDataCount + 1
    ReDim Preserve tLevel.tMapData(1 To tLevel.nMapDataCount)
@@ -1533,6 +1620,10 @@ m_nTileTypeCount2 = 0
 m_nTileTypeMax = 0
 '///
 ClearLevelData
+'///
+m_nDataLevel = 0
+Erase m_tDataLevelArray
+m_nDataLevelCount = 0
 End Sub
 
 'Friend Sub ClearObjectTypes()

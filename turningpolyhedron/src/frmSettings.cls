@@ -18,9 +18,6 @@ Private m_tAdapterModes() As D3DDISPLAYMODE '0-based
 
 Private m_nFSAAMode As Long
 
-'dirty workaround for show in center of screen. TODO:
-Private m_tDefaultPos As typeFakeDXUIRectEx
-
 'control index
 Private m_idx(127) As Long
 
@@ -168,11 +165,10 @@ GetDXModes
 '///
 'TODO:
 '///
-With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, -200, -200, _
-200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
+With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
+400, 400, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"))
  Set .EventObject = Me
  m_idx(IDC_Main) = .Index
- m_tDefaultPos = .RectangleEx
  '///tab control
  With .AddNewChildren(FakeCtl_TabStrip, 8, 8, -8, -40, &H3003000, , , , , , , , , 1, 1)
   '///graphics
@@ -362,7 +358,7 @@ FakeDXUIControls(m_idx(IDC_DepthOfField)).ListViewObject.SelectedRow = objRender
 FakeDXUIControls(m_idx(IDC_RadialBlur)).Value = objRenderTest.RadialBlurEnabled And 1&
 '///over
 With FakeDXUIControls(idx)
- .RectangleEx = m_tDefaultPos 'dirty code:centering window
+ .MoveToCenter
  .Show 1
 End With
 End Sub

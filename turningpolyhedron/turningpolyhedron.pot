@@ -6,6 +6,10 @@ msgstr ""
 msgid "Abort"
 msgstr ""
 
+#.   objText.GetText("Abort the game and back to the main menu.")
+msgid "Abort the game and back to the main menu."
+msgstr ""
+
 #.      .AddItem objText.GetText("Accurate algorithm")
 msgid "Accurate algorithm"
 msgstr ""
@@ -30,8 +34,13 @@ msgstr ""
 msgid "Approximate algorithm"
 msgstr ""
 
+#. ' '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 #.  '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 msgid "Are you sure?"
+msgstr ""
+
+#.   .AddButton objText.GetText("Back to main menu"), &H101&, _
+msgid "Back to main menu"
 msgstr ""
 
 #.        s = CStr(j) + " " + objText.GetText("Bytes")
@@ -54,6 +63,8 @@ msgstr ""
 #.   s = objText.GetText("Cancel")
 #.   .AddNewChildren FakeCtl_Button, -64, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
 #.  .AddNewChildren FakeCtl_Button, -64, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1
+#.   .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
+#.   .AddNewChildren FakeCtl_Button, -72, -12, -8, 12, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancelProgress", 1, 0.5, 1, 0.5
 msgid "Cancel"
 msgstr ""
 
@@ -61,8 +72,8 @@ msgstr ""
 msgid "Change the antialiasing settings."
 msgstr ""
 
-#.  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
 #.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
+#.   .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
 msgid "Change the game settings."
 msgstr ""
 
@@ -139,15 +150,16 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#.  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+#.   .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
 msgid "Exit"
 msgstr ""
 
+#. ' '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 #.  '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 msgid "Exit game"
 msgstr ""
 
-#.  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+#.   .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
 msgid "Exit the game and return to desktop."
 msgstr ""
 
@@ -163,6 +175,7 @@ msgstr ""
 
 #.   .AddNewChildren FakeCtl_Label, 8, -64, 80, -40, , , , , objText.GetText("File name"), , , , 1, , 1
 #.    .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
+#.     .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
 msgid "File name"
 msgstr ""
 
@@ -195,6 +208,10 @@ msgstr ""
 msgid "Game"
 msgstr ""
 
+#.   i = .MsgBox(objText.GetText("Game over. Watch your step next time!"), _
+msgid "Game over. Watch your step next time!"
+msgstr ""
+
 #.    .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
 msgid "Graphics"
 msgstr ""
@@ -217,6 +234,10 @@ msgstr ""
 
 #.     s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
 msgid "Input folder name"
+msgstr ""
+
+#.     .AddColumn objText.GetText("Level count"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
+msgid "Level count"
 msgstr ""
 
 #.      .AddItem objText.GetText("Low")
@@ -248,6 +269,10 @@ msgstr ""
 msgid "My Documents"
 msgstr ""
 
+#.     .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 160
+msgid "Name"
+msgstr ""
+
 #.  .AddNewChildren FakeCtl_Button, -88, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("New folder"), , "cmdNewFolder", 1, , 1
 #.     s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
 msgid "New folder"
@@ -261,6 +286,7 @@ msgstr ""
 #.   s = objText.GetText("OK")
 #.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 #.   s = objText.GetText("OK")
+#.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 msgid "OK"
 msgstr ""
 
@@ -269,13 +295,21 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
+#.   objText.GetText("Oops"), &H100&, 160)
+msgid "Oops"
+msgstr ""
+
 #.   Else s = objText.GetText("Open")
 #. If DlgTitle = € Then m_sTitle = objText.GetText("Open") Else m_sTitle = DlgTitle
 msgid "Open"
 msgstr ""
 
-#.  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
-#. 200, 200, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"), , , 0.5, 0.5, 0.5, 0.5)
+#.   .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Open other file"), , "cmdOpen", 1, , 1
+msgid "Open other file"
+msgstr ""
+
+#. 400, 400, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"))
+#.   .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
 msgid "Options"
 msgstr ""
 
@@ -287,8 +321,16 @@ msgstr ""
 msgid "Radial blur"
 msgstr ""
 
+#.   .AddNewChildren FakeCtl_Button, 8, 8, 72, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Refresh"), , "cmdRefresh"
+msgid "Refresh"
+msgstr ""
+
 #.    .AddNewChildren FakeCtl_Label, 10, y, 198, y + Height, , , , , objText.GetText("Resolution")
 msgid "Resolution"
+msgstr ""
+
+#.   objText.GetText("Restart current level.")
+msgid "Restart current level."
 msgstr ""
 
 #.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
@@ -306,6 +348,10 @@ msgstr ""
 
 #. If DlgTitle = € Then m_sTitle = objText.GetText("Save as") Else m_sTitle = DlgTitle
 msgid "Save as"
+msgstr ""
+
+#.  , False, , objText.GetText("Select level"))
+msgid "Select level"
 msgstr ""
 
 #.    , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
@@ -328,8 +374,17 @@ msgstr ""
 msgid "The folder already exists. Please input a different name."
 msgstr ""
 
+#.   .AddButton objText.GetText("Try again"), &H100&, _
+msgid "Try again"
+msgstr ""
+
 #. frm.Caption = objText.GetText("Turning Polyhedron")
+#. ' FakeDXGDIDrawText FakeDXUIDefaultFont, objText.GetText("Turning Polyhedron"), _
 msgid "Turning Polyhedron"
+msgstr ""
+
+#.     .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
+msgid "Type"
 msgstr ""
 
 #.    objText.GetText("Vertical synchronization"), , , , , , , , , objText.GetText("Enables vertical synchronization."))
