@@ -16,6 +16,7 @@ msgid "Abort"
 msgstr "终止"
 
 #. objText.GetText("Abort the game and back to the main menu.")
+#. objText.GetText("Abort the game and back to the main menu.")
 msgid "Abort the game and back to the main menu."
 msgstr "中止当前游戏，并且返回主菜单。"
 
@@ -48,6 +49,16 @@ msgstr "近似算法"
 msgid "Are you sure?"
 msgstr "你确定吗？"
 
+#. .AddButton objText.GetText("Back to game"), vbCancel, _
+msgid "Back to game"
+msgstr "返回游戏"
+
+#. objText.GetText("Back to level selection screen and select another level to play.")
+#. objText.GetText("Back to level selection screen and select another level to play.")
+msgid "Back to level selection screen and select another level to play."
+msgstr "返回关卡选择画面，玩其它的关卡。"
+
+#. .AddButton objText.GetText("Back to main menu"), &H101&, _
 #. .AddButton objText.GetText("Back to main menu"), &H101&, _
 msgid "Back to main menu"
 msgstr "返回主菜单"
@@ -73,6 +84,7 @@ msgstr "初始化D3D9设备失败!!!"
 #. .AddNewChildren FakeCtl_Button, -64, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
 #. .AddNewChildren FakeCtl_Button, -64, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1
 #. .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
+#. .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
 #. .AddNewChildren FakeCtl_Button, -72, -12, -8, 12, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancelProgress", 1, 0.5, 1, 0.5
 msgid "Cancel"
 msgstr "取消"
@@ -102,6 +114,10 @@ msgstr "选择文件夹"
 #. .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
 msgid "Close"
 msgstr "关闭"
+
+#. objText.GetText("Continue playing the game.")
+msgid "Continue playing the game."
+msgstr "继续玩游戏。"
 
 #. .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("Depth of field")
 msgid "Depth of field"
@@ -156,8 +172,18 @@ msgstr "启用体积雾效果。"
 #. .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #. objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 #. .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#. .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
+#. + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 msgid "Error"
 msgstr "错误"
+
+#. .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
+msgid "Error when loading level %d in level collection file:"
+msgstr "读取下列关卡集合文件的第%d关时出现错误："
+
+#. .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
+msgid "Error when loading level file:"
+msgstr "读取关卡文件时出现错误："
 
 #. .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
 msgid "Exit"
@@ -221,6 +247,10 @@ msgstr "游戏"
 msgid "Game over. Watch your step next time!"
 msgstr "游戏结束。下次请看清地面！"
 
+#. i = .MsgBox(objText.GetText("Game paused"), _
+msgid "Game paused"
+msgstr "游戏暂停"
+
 #. .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
 msgid "Graphics"
 msgstr "图像"
@@ -245,9 +275,26 @@ msgstr "正在初始化..."
 msgid "Input folder name"
 msgstr "输入文件夹名称"
 
+#. s1 = objText.GetText("Level")
+#. If obj Is Nothing Then s = objText.GetText("Level") + " " + CStr(i) _
+#. .List(j, 2) = objText.GetText("Level")
+#. If s = vbNullString Then s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) _
+#. Else s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) + ": " + s
+msgid "Level"
+msgstr "关卡"
+
+#. s1 = objText.GetText("Level collection")
+#. .List(j, 2) = objText.GetText("Level collection")
+msgid "Level collection"
+msgstr "关卡集合"
+
 #. .AddColumn objText.GetText("Level count"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
 msgid "Level count"
 msgstr "关卡数量"
+
+#. .AddColumn objText.GetText("Level number"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
+msgid "Level number"
+msgstr "关卡编号"
 
 #. .AddItem objText.GetText("Low")
 msgid "Low"
@@ -279,6 +326,7 @@ msgid "My Documents"
 msgstr "我的文档"
 
 #. .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 160
+#. .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 320
 msgid "Name"
 msgstr "名称"
 
@@ -296,6 +344,7 @@ msgstr "否"
 #. .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 #. s = objText.GetText("OK")
 #. .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
+#. .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
 msgid "OK"
 msgstr "确定"
 
@@ -322,9 +371,18 @@ msgstr "打开其它文件"
 msgid "Options"
 msgstr "选项"
 
+#. .AddButton objText.GetText("Other levels"), &H102&, _
+#. .AddButton objText.GetText("Other levels"), &H102&, _
+msgid "Other levels"
+msgstr "其它关卡"
+
 #. objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
 msgid "Post process"
 msgstr "后期处理"
+
+#. FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Processing..."))
+msgid "Processing..."
+msgstr "处理中..."
 
 #. objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
 msgid "Radial blur"
@@ -339,8 +397,13 @@ msgid "Resolution"
 msgstr "分辨率"
 
 #. objText.GetText("Restart current level.")
+#. objText.GetText("Restart current level.")
 msgid "Restart current level."
 msgstr "重新开始本关。"
+
+#. .AddButton objText.GetText("Restart level"), &H100&, _
+msgid "Restart level"
+msgstr "重玩本关"
 
 #. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
 #. FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
@@ -359,9 +422,17 @@ msgstr "保存"
 msgid "Save as"
 msgstr "另存为"
 
+#. .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
+msgid "Select a level and start the game."
+msgstr "选择一个关卡并开始游戏。"
+
 #. , False, , objText.GetText("Select level"))
 msgid "Select level"
 msgstr "选择关卡"
+
+#. FakeDXUIControls(m_idxForm2).Caption = Replace(objText.GetText("Selet level in %s"), "%s", m_sLevelName)
+msgid "Selet level in %s"
+msgstr "在 %s 中选择关卡"
 
 #. , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
 msgid "Set the quality of HDR blur."
@@ -370,6 +441,10 @@ msgstr "设置HDR模糊的质量。"
 #. objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
 msgid "Shadow"
 msgstr "阴影"
+
+#. .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
+msgid "Start game"
+msgstr "开始游戏"
 
 #. s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
 msgid "Tahoma"
@@ -403,6 +478,10 @@ msgstr "垂直同步"
 #. objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
 msgid "Volumetric fog"
 msgstr "体积雾"
+
+#. If .VBGetOpenFileName(s, , , , , objText.GetText("XML level file") + "|*.xml;*.xml.lzma", , App.Path + "\data\") Then
+msgid "XML level file"
+msgstr "XML关卡文件"
 
 #. s = objText.GetText("Yes")
 msgid "Yes"

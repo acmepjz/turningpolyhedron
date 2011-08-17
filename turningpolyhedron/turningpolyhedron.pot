@@ -6,7 +6,8 @@ msgstr ""
 msgid "Abort"
 msgstr ""
 
-#.   objText.GetText("Abort the game and back to the main menu.")
+#.  objText.GetText("Abort the game and back to the main menu.")
+#.  objText.GetText("Abort the game and back to the main menu.")
 msgid "Abort the game and back to the main menu."
 msgstr ""
 
@@ -39,7 +40,17 @@ msgstr ""
 msgid "Are you sure?"
 msgstr ""
 
-#.   .AddButton objText.GetText("Back to main menu"), &H101&, _
+#.  .AddButton objText.GetText("Back to game"), vbCancel, _
+msgid "Back to game"
+msgstr ""
+
+#.  objText.GetText("Back to level selection screen and select another level to play.")
+#.  objText.GetText("Back to level selection screen and select another level to play.")
+msgid "Back to level selection screen and select another level to play."
+msgstr ""
+
+#.  .AddButton objText.GetText("Back to main menu"), &H101&, _
+#.  .AddButton objText.GetText("Back to main menu"), &H101&, _
 msgid "Back to main menu"
 msgstr ""
 
@@ -64,6 +75,7 @@ msgstr ""
 #.   .AddNewChildren FakeCtl_Button, -64, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
 #.  .AddNewChildren FakeCtl_Button, -64, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1
 #.   .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
+#.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -72, -12, -8, 12, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancelProgress", 1, 0.5, 1, 0.5
 msgid "Cancel"
 msgstr ""
@@ -92,6 +104,10 @@ msgstr ""
 #.    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
 #.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
 msgid "Close"
+msgstr ""
+
+#.  objText.GetText("Continue playing the game.")
+msgid "Continue playing the game."
 msgstr ""
 
 #.    .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("Depth of field")
@@ -147,7 +163,17 @@ msgstr ""
 #.    .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #.        objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 #.        .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#.   .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
+#.     + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 msgid "Error"
+msgstr ""
+
+#.     .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
+msgid "Error when loading level %d in level collection file:"
+msgstr ""
+
+#.   .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
+msgid "Error when loading level file:"
 msgstr ""
 
 #.   .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
@@ -208,8 +234,12 @@ msgstr ""
 msgid "Game"
 msgstr ""
 
-#.   i = .MsgBox(objText.GetText("Game over. Watch your step next time!"), _
+#.  i = .MsgBox(objText.GetText("Game over. Watch your step next time!"), _
 msgid "Game over. Watch your step next time!"
+msgstr ""
+
+#.  i = .MsgBox(objText.GetText("Game paused"), _
+msgid "Game paused"
 msgstr ""
 
 #.    .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
@@ -236,8 +266,25 @@ msgstr ""
 msgid "Input folder name"
 msgstr ""
 
+#.    s1 = objText.GetText("Level")
+#.   If obj Is Nothing Then s = objText.GetText("Level") + " " + CStr(i) _
+#.    .List(j, 2) = objText.GetText("Level")
+#.   If s = vbNullString Then s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) _
+#.   Else s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) + ": " + s
+msgid "Level"
+msgstr ""
+
+#.    s1 = objText.GetText("Level collection")
+#.    .List(j, 2) = objText.GetText("Level collection")
+msgid "Level collection"
+msgstr ""
+
 #.     .AddColumn objText.GetText("Level count"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
 msgid "Level count"
+msgstr ""
+
+#.     .AddColumn objText.GetText("Level number"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
+msgid "Level number"
 msgstr ""
 
 #.      .AddItem objText.GetText("Low")
@@ -270,6 +317,7 @@ msgid "My Documents"
 msgstr ""
 
 #.     .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 160
+#.     .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 320
 msgid "Name"
 msgstr ""
 
@@ -287,6 +335,7 @@ msgstr ""
 #.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 #.   s = objText.GetText("OK")
 #.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
+#.   .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
 msgid "OK"
 msgstr ""
 
@@ -295,7 +344,7 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
-#.   objText.GetText("Oops"), &H100&, 160)
+#.  objText.GetText("Oops"), &H100&, 160)
 msgid "Oops"
 msgstr ""
 
@@ -313,8 +362,17 @@ msgstr ""
 msgid "Options"
 msgstr ""
 
+#.  .AddButton objText.GetText("Other levels"), &H102&, _
+#.  .AddButton objText.GetText("Other levels"), &H102&, _
+msgid "Other levels"
+msgstr ""
+
 #.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
 msgid "Post process"
+msgstr ""
+
+#.  FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Processing..."))
+msgid "Processing..."
 msgstr ""
 
 #.    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
@@ -329,8 +387,13 @@ msgstr ""
 msgid "Resolution"
 msgstr ""
 
-#.   objText.GetText("Restart current level.")
+#.  objText.GetText("Restart current level.")
+#.  objText.GetText("Restart current level.")
 msgid "Restart current level."
+msgstr ""
+
+#.  .AddButton objText.GetText("Restart level"), &H100&, _
+msgid "Restart level"
 msgstr ""
 
 #.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Restore"), x, y
@@ -350,8 +413,16 @@ msgstr ""
 msgid "Save as"
 msgstr ""
 
+#.   .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
+msgid "Select a level and start the game."
+msgstr ""
+
 #.  , False, , objText.GetText("Select level"))
 msgid "Select level"
+msgstr ""
+
+#.      FakeDXUIControls(m_idxForm2).Caption = Replace(objText.GetText("Selet level in %s"), "%s", m_sLevelName)
+msgid "Selet level in %s"
 msgstr ""
 
 #.    , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
@@ -360,6 +431,10 @@ msgstr ""
 
 #.    objText.GetText("Shadow"), , , , , , , , , objText.GetText("Enables shadow effect."))
 msgid "Shadow"
+msgstr ""
+
+#.   .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
+msgid "Start game"
 msgstr ""
 
 #. s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
@@ -374,7 +449,7 @@ msgstr ""
 msgid "The folder already exists. Please input a different name."
 msgstr ""
 
-#.   .AddButton objText.GetText("Try again"), &H100&, _
+#.  .AddButton objText.GetText("Try again"), &H100&, _
 msgid "Try again"
 msgstr ""
 
@@ -393,6 +468,10 @@ msgstr ""
 
 #.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
 msgid "Volumetric fog"
+msgstr ""
+
+#.    If .VBGetOpenFileName(s, , , , , objText.GetText("XML level file") + "|*.xml;*.xml.lzma", , App.Path + "\data\") Then
+msgid "XML level file"
 msgstr ""
 
 #.   s = objText.GetText("Yes")

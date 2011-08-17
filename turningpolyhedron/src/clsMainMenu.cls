@@ -27,11 +27,10 @@ With FakeDXUIControls(1)
  With .AddNewChildren(FakeCtl_None, 0, 0, 0, 0, , , False, , , , , , , 1, 1)
   m_idxForm = .Index
   Set .EventObject = Me
-  '///some buttons, including settings
+  '///some buttons
   .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+  .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
   .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
-  '///following items are TEST ONLY
-  .AddNewChildren(FakeCtl_Button, 108, -32, 180, -8, , , , , "Danger!!!", , "cmdDanger", , 1, , 1).ForeColor = &HFF0000
  End With
 End With
 End Sub
@@ -50,20 +49,9 @@ End Sub
 Private Function IFakeDXAppEvent_OnEvent(ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
 Dim Button As Long
 '///
+If FakeDXUIModalStackCount > 0 Then Exit Function
+'///
 Select Case nType
-Case FakeDXAppEvent_KeyDown 'TEST ONLY
- Select Case nParam1 'TEST ONLY
- Case vbKeyF2 'TEST ONLY
-  objGame.ShowLevelFileSelection 'TEST ONLY
- Case vbKeyF3 'test only
-  Dim s() As String
-  Dim i As Long, m As Long
-  m = objFileMgr.EnumerateFile("levels", s)
-  'm = objFileMgr.EnumerateFile("texture.tar.lzma", s)
-  For i = 1 To m
-   Debug.Print s(i)
-  Next i
- End Select 'TEST ONLY
 Case FakeDXAppEvent_MouseDown
  Button = nParam3 And &HFFFF&
  Select Case Button
@@ -87,9 +75,6 @@ End Select
 End Function
 
 Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
-Dim i As Long, bErr As Boolean
-Dim obj1 As clsTreeStorageNode, v1 As D3DVECTOR
-Dim s As String
 '///
 Select Case nType
 Case FakeCtl_Event_Click
@@ -99,42 +84,10 @@ Case FakeCtl_Event_Click
  '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
  ' End With
   FakeDXAppRequestUnload = True '???
+ Case "cmdStart"
+  objGame.ShowLevelFileSelection
  Case "cmdOptions"
   frmSettings.Show
- '///TEST ONLY
- Case "cmdDanger"
-  With New clsFakeCommonDialog
-   If .VBGetOpenFileName(s, , , , , "XML Level file|*.xml;*.xml.lzma", , App.Path + "\data\") Then
-    i = objFileMgr.LoadFile(s)
-    If i > 0 Then
-     Set obj1 = New clsTreeStorageNode
-     With New clsXMLSerializer
-      If .ReadNode(objFileMgr.FilePointer(i), objFileMgr.FileSize(i), obj1) Then
-       objGameMgr.ClearLevelData
-       If objGameMgr.AddLevelDataFromNode(obj1) Then
-        objGameMgr.CreateLevelRuntimeData
-        '///change mode TODO:
-        objGame.ShowGame
-        '///
-       Else
-        bErr = True
-       End If
-      Else
-       bErr = True
-      End If
-     End With
-     objFileMgr.CloseFile i
-    Else
-     bErr = True
-    End If
-   End If
-  End With
-  If bErr Then
-   Show
-   With New clsFakeDXUIMsgBox
-    .MsgBox "Error when loading level file:" + vbCrLf + s, vbExclamation, "Error"
-   End With
-  End If
  End Select
 End Select
 End Function
