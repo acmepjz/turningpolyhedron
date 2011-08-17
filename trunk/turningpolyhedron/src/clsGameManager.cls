@@ -131,13 +131,13 @@ ElseIf m_nDataLevelCount > 0 Then
   End If
   '///
   m_nTileTypeCount = m_tDataLevelArray(i).nTileTypeCount
-  For i = 1 To m_nTileTypeCount
-   If m_tTileType(i).nIndex > 0 And m_tTileType(i).nDataLevel >= nDataLevel Then _
-   m_tTileType(i) = t
-  Next i
-  For i = m_nTileTypeCount + 1 To m_nTileTypeCount_Max
-   m_tTileType(i) = t
-  Next i
+  For j = 1 To m_nTileTypeCount
+   If m_tTileType(j).nIndex > 0 And m_tTileType(j).nDataLevel >= nDataLevel Then _
+   m_tTileType(j) = t
+  Next j
+  For j = m_nTileTypeCount + 1 To m_nTileTypeCount_Max
+   m_tTileType(j) = t
+  Next j
   '///
   j = m_tDataLevelArray(i).nTileTypeCount2
   If j < m_nTileTypeCount2 Then
@@ -1483,8 +1483,7 @@ ParseMapPolyhedronDataFromNode = True
 End Function
 
 Friend Function AddLevelDataFromNodeEx(ByVal objNode As clsTreeStorageNode, ByRef tLevel As typeLevelData) As Boolean
-Dim i As Long, j As Long, k As Long
-Dim s As String
+Dim i As Long
 Dim obj As clsTreeStorageNode
 '///
 Select Case objNode.GetNameAsString
@@ -1504,7 +1503,7 @@ For i = 1 To objNode.SubNodeCount
   Set obj = objNode.SubNodeObject(i)
   Select Case obj.GetNameAsString
   Case "name"
-   m_tLevel.sName = objNode.GetValueAsString
+   m_tLevel.sName = obj.GetValueAsString
   Case "mapData"
    tLevel.nMapDataCount = tLevel.nMapDataCount + 1
    ReDim Preserve tLevel.tMapData(1 To tLevel.nMapDataCount)
@@ -1514,30 +1513,7 @@ For i = 1 To objNode.SubNodeCount
    ReDim Preserve tLevel.tPolyhedron(1 To tLevel.nPolyhedronCount)
    If Not ParseMapPolyhedronDataFromNode(obj, tLevel.tPolyhedron(tLevel.nPolyhedronCount)) Then Exit Function
   Case "tileMapping"
-   s = obj.GetSubNodeValueAsStringByName("id")
-   If s <> "" Then
-    k = -Val(obj.GetSubNodeValueAsStringByName("index"))
-    If k > 0 And k <= m_nTileTypeCount_Max Then
-     j = 0
-     For j = 1 To m_nTileTypeCount
-      If m_tTileType(j).nIndex > 0 Then
-       If m_tTileType(j).sID = s Then
-        j = -j
-        Exit For
-       End If
-      End If
-     Next j
-     If j >= 0 Then
-      For j = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
-       If m_tTileType(j).sID = s Then
-        j = -j
-        Exit For
-       End If
-      Next j
-     End If
-     If j < 0 Then m_nTileTypeMap(k) = -j
-    End If
-   End If
+   If Not ParseTileMapping(obj) Then Exit Function
   Case "polyhedronMerge"
    tLevel.nPolyMergeCount = tLevel.nPolyMergeCount + 1
    ReDim Preserve tLevel.tPolyMerge(1 To tLevel.nPolyMergeCount)
@@ -1547,6 +1523,80 @@ For i = 1 To objNode.SubNodeCount
 Next i
 '///
 AddLevelDataFromNodeEx = True
+End Function
+
+Friend Function ParseTileMapping(ByVal objNode As clsTreeStorageNode) As Boolean
+Dim j As Long, k As Long
+Dim s As String
+'///
+s = objNode.GetSubNodeValueAsStringByName("id")
+If s <> "" Then
+ k = -Val(objNode.GetSubNodeValueAsStringByName("index"))
+ If k > 0 And k <= m_nTileTypeCount_Max Then
+  j = 0
+  For j = 1 To m_nTileTypeCount
+   If m_tTileType(j).nIndex > 0 Then
+    If m_tTileType(j).sID = s Then
+     j = -j
+     Exit For
+    End If
+   End If
+  Next j
+  If j >= 0 Then
+   For j = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
+    If m_tTileType(j).sID = s Then
+     j = -j
+     Exit For
+    End If
+   Next j
+  End If
+  If j < 0 Then m_nTileTypeMap(k) = -j
+ End If
+End If
+'///
+ParseTileMapping = True
+End Function
+
+Friend Function LoadLevelCollectionFromNode(ByVal objNode As clsTreeStorageNode, ByRef nLevelCount As Long, ByRef objLevels() As clsTreeStorageNode, Optional ByRef sName As String) As Boolean
+Dim i As Long
+Dim obj As clsTreeStorageNode
+Dim m As Long
+'///
+Erase objLevels
+nLevelCount = 0
+'///
+Select Case objNode.GetNameAsString
+Case "levelCollection"
+Case Else
+ Exit Function
+End Select
+'///
+For i = 1 To objNode.SubNodeCount
+ If objNode.SubNodeType(i) = 0 Then
+  'TODO:other
+  Select Case objNode.GetSubNodeNameAsString(i)
+  Case "name"
+   sName = objNode.GetSubNodeValueAsString(i)
+  End Select
+ Else
+  Set obj = objNode.SubNodeObject(i)
+  Select Case obj.GetNameAsString
+  Case "name"
+   sName = obj.GetValueAsString
+  Case "tileMapping"
+   If Not ParseTileMapping(obj) Then Exit Function
+  Case "level"
+   nLevelCount = nLevelCount + 1
+   If nLevelCount > m Then
+    m = m + 16&
+    ReDim Preserve objLevels(1 To m)
+   End If
+   Set objLevels(nLevelCount) = obj
+  End Select
+ End If
+Next i
+'///
+LoadLevelCollectionFromNode = True
 End Function
 
 'Friend Function GenerateMeshFromLevelData(ByRef tMapDataInst() As typeMapDataRuntime, ByRef tInst As typeMeshInstanceCollection, Optional ByVal bRuntime As Boolean = True) As Boolean
