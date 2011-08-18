@@ -14,7 +14,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private m_bAnimationEnabled As Boolean
-Private m_fDamping As Single
+Private m_fDamping As Single, m_fDamping_1 As Single, m_fDamping_2 As Single
 
 Private m_tViewPos As D3DVECTOR
 Private m_tViewAt As D3DVECTOR
@@ -48,18 +48,36 @@ If m_bAnimationEnabled <> b Then
 End If
 End Property
 
-Friend Property Get LinearDamping() As Single
+Friend Property Get LinearDamping(Optional ByVal bStopAnimation As Boolean = True) As Single
 LinearDamping = m_fDamping
 End Property
 
-Friend Property Let LinearDamping(ByVal f As Single)
+Friend Property Let LinearDamping(Optional ByVal bStopAnimation As Boolean = True, ByVal f As Single)
 m_fDamping = f
+If bStopAnimation Then m_fDamping_1 = f
+End Property
+
+Friend Property Get RealLinearDamping() As Single
+RealLinearDamping = m_fDamping_1
+End Property
+
+Friend Property Let RealLinearDamping(ByVal f As Single)
+m_fDamping_1 = f
+End Property
+
+Friend Property Get DampingOfDamping() As Single
+DampingOfDamping = m_fDamping_2
+End Property
+
+Friend Property Let DampingOfDamping(ByVal f As Single)
+m_fDamping_2 = f
 End Property
 
 Friend Sub StopAnimation()
 m_tViewPos_1 = m_tViewPos
 m_tViewAt_1 = m_tViewAt
 m_tViewUp_1 = m_tViewUp
+m_fDamping_1 = m_fDamping '???
 'TODO:
 End Sub
 
@@ -285,9 +303,11 @@ Dim mat As D3DMATRIX
 If Not m_bAnimationEnabled Then
  StopAnimation
 Else
- m_tViewPos_1 = D3DXVec3Lerp(m_tViewPos, m_tViewPos_1, m_fDamping)
- m_tViewAt_1 = D3DXVec3Lerp(m_tViewAt, m_tViewAt_1, m_fDamping)
- m_tViewUp_1 = D3DXVec3Lerp(m_tViewUp, m_tViewUp_1, m_fDamping)
+ m_fDamping_1 = m_fDamping + (m_fDamping_1 - m_fDamping) * m_fDamping_2
+ '///
+ m_tViewPos_1 = D3DXVec3Lerp(m_tViewPos, m_tViewPos_1, m_fDamping_1)
+ m_tViewAt_1 = D3DXVec3Lerp(m_tViewAt, m_tViewAt_1, m_fDamping_1)
+ m_tViewUp_1 = D3DXVec3Lerp(m_tViewUp, m_tViewUp_1, m_fDamping_1)
  m_fDist_1 = D3DXVec3Length(D3DXVec3Subtract(m_tViewPos_1, m_tViewAt_1))
 End If
 D3DXMatrixLookAtLH mat, m_tViewPos_1, m_tViewAt_1, m_tViewUp_1

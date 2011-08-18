@@ -570,6 +570,7 @@ objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
 objCamera.SetCamrea Vec3(0, 9.6, -6), Vec3, Vec3(, , 1), True
 objCamera.AnimationEnabled = True
 objCamera.LinearDamping = 0.5
+objCamera.DampingOfDamping = 0.9
 'objRenderTest.CreateShadowMap 1024 'new
 'objRenderTest.SetShadowState True, Atn(1), 0.1, 20   'point
 'objRenderTest.SetShadowState True, 16, -100, 100  'directional

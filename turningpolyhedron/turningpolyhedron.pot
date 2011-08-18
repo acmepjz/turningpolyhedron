@@ -8,6 +8,7 @@ msgstr ""
 
 #.  objText.GetText("Abort the game and back to the main menu.")
 #.  objText.GetText("Abort the game and back to the main menu.")
+#.  objText.GetText("Abort the game and back to the main menu.")
 msgid "Abort the game and back to the main menu."
 msgstr ""
 
@@ -46,9 +47,11 @@ msgstr ""
 
 #.  objText.GetText("Back to level selection screen and select another level to play.")
 #.  objText.GetText("Back to level selection screen and select another level to play.")
+#.  objText.GetText("Back to level selection screen and select another level to play.")
 msgid "Back to level selection screen and select another level to play."
 msgstr ""
 
+#.  .AddButton objText.GetText("Back to main menu"), &H101&, _
 #.  .AddButton objText.GetText("Back to main menu"), &H101&, _
 #.  .AddButton objText.GetText("Back to main menu"), &H101&, _
 msgid "Back to main menu"
@@ -104,6 +107,10 @@ msgstr ""
 #.    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
 #.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
 msgid "Close"
+msgstr ""
+
+#.  i = .MsgBox(objText.GetText("Congratulations! You have finished this level."), _
+msgid "Congratulations! You have finished this level."
 msgstr ""
 
 #.  objText.GetText("Continue playing the game.")
@@ -163,11 +170,13 @@ msgstr ""
 #.    .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #.        objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 #.        .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#.    + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 #.   .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
 #.     + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 msgid "Error"
 msgstr ""
 
+#.    .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
 #.     .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
 msgid "Error when loading level %d in level collection file:"
 msgstr ""
@@ -267,11 +276,13 @@ msgid "Input folder name"
 msgstr ""
 
 #.    s1 = objText.GetText("Level")
-#.   If obj Is Nothing Then s = objText.GetText("Level") + " " + CStr(i) _
 #.    .List(j, 2) = objText.GetText("Level")
-#.   If s = vbNullString Then s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) _
-#.   Else s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) + ": " + s
 msgid "Level"
+msgstr ""
+
+#.   If obj Is Nothing Then s = Replace(objText.GetText("Level %d"), "%d", CStr(i)) _
+#.   m_sCurrentLevelName = Replace(objText.GetText("Level %d"), "%d", CStr(m_nCurrentLevelIndex))
+msgid "Level %d"
 msgstr ""
 
 #.    s1 = objText.GetText("Level collection")
@@ -326,6 +337,10 @@ msgstr ""
 msgid "New folder"
 msgstr ""
 
+#.   .AddButton objText.GetText("Next level"), &H103&, _
+msgid "Next level"
+msgstr ""
+
 #.   s = objText.GetText("No")
 msgid "No"
 msgstr ""
@@ -364,7 +379,12 @@ msgstr ""
 
 #.  .AddButton objText.GetText("Other levels"), &H102&, _
 #.  .AddButton objText.GetText("Other levels"), &H102&, _
+#.  .AddButton objText.GetText("Other levels"), &H102&, _
 msgid "Other levels"
+msgstr ""
+
+#.   objText.GetText("Play next level.")
+msgid "Play next level."
 msgstr ""
 
 #.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
@@ -389,9 +409,11 @@ msgstr ""
 
 #.  objText.GetText("Restart current level.")
 #.  objText.GetText("Restart current level.")
+#.  objText.GetText("Restart current level.")
 msgid "Restart current level."
 msgstr ""
 
+#.  .AddButton objText.GetText("Restart level"), &H100&, _
 #.  .AddButton objText.GetText("Restart level"), &H100&, _
 msgid "Restart level"
 msgstr ""

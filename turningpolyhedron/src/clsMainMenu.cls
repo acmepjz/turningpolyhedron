@@ -40,6 +40,7 @@ Create
 FakeDXAppChangeRootObject &H7&, Me, Me
 FakeDXUIControls(m_idxForm).Show
 objCamera.MoveTargetTo Vec3
+objCamera.RealLinearDamping = 1
 End Sub
 
 Friend Sub Hide()

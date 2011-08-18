@@ -17,6 +17,7 @@ msgstr "终止"
 
 #. objText.GetText("Abort the game and back to the main menu.")
 #. objText.GetText("Abort the game and back to the main menu.")
+#. objText.GetText("Abort the game and back to the main menu.")
 msgid "Abort the game and back to the main menu."
 msgstr "中止当前游戏，并且返回主菜单。"
 
@@ -55,9 +56,11 @@ msgstr "返回游戏"
 
 #. objText.GetText("Back to level selection screen and select another level to play.")
 #. objText.GetText("Back to level selection screen and select another level to play.")
+#. objText.GetText("Back to level selection screen and select another level to play.")
 msgid "Back to level selection screen and select another level to play."
 msgstr "返回关卡选择画面，玩其它的关卡。"
 
+#. .AddButton objText.GetText("Back to main menu"), &H101&, _
 #. .AddButton objText.GetText("Back to main menu"), &H101&, _
 #. .AddButton objText.GetText("Back to main menu"), &H101&, _
 msgid "Back to main menu"
@@ -114,6 +117,10 @@ msgstr "选择文件夹"
 #. .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
 msgid "Close"
 msgstr "关闭"
+
+#. i = .MsgBox(objText.GetText("Congratulations! You have finished this level."), _
+msgid "Congratulations! You have finished this level."
+msgstr "恭喜你完成本关！"
 
 #. objText.GetText("Continue playing the game.")
 msgid "Continue playing the game."
@@ -172,11 +179,13 @@ msgstr "启用体积雾效果。"
 #. .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #. objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 #. .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#. + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 #. .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
 #. + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 msgid "Error"
 msgstr "错误"
 
+#. .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
 #. .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
 msgid "Error when loading level %d in level collection file:"
 msgstr "读取下列关卡集合文件的第%d关时出现错误："
@@ -276,12 +285,14 @@ msgid "Input folder name"
 msgstr "输入文件夹名称"
 
 #. s1 = objText.GetText("Level")
-#. If obj Is Nothing Then s = objText.GetText("Level") + " " + CStr(i) _
 #. .List(j, 2) = objText.GetText("Level")
-#. If s = vbNullString Then s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) _
-#. Else s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) + ": " + s
 msgid "Level"
 msgstr "关卡"
+
+#. If obj Is Nothing Then s = Replace(objText.GetText("Level %d"), "%d", CStr(i)) _
+#. m_sCurrentLevelName = Replace(objText.GetText("Level %d"), "%d", CStr(m_nCurrentLevelIndex))
+msgid "Level %d"
+msgstr "第%d关"
 
 #. s1 = objText.GetText("Level collection")
 #. .List(j, 2) = objText.GetText("Level collection")
@@ -335,6 +346,10 @@ msgstr "名称"
 msgid "New folder"
 msgstr "新建文件夹"
 
+#. .AddButton objText.GetText("Next level"), &H103&, _
+msgid "Next level"
+msgstr "下一关"
+
 #. s = objText.GetText("No")
 msgid "No"
 msgstr "否"
@@ -373,8 +388,13 @@ msgstr "选项"
 
 #. .AddButton objText.GetText("Other levels"), &H102&, _
 #. .AddButton objText.GetText("Other levels"), &H102&, _
+#. .AddButton objText.GetText("Other levels"), &H102&, _
 msgid "Other levels"
 msgstr "其它关卡"
+
+#. objText.GetText("Play next level.")
+msgid "Play next level."
+msgstr "玩下一关。"
 
 #. objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
 msgid "Post process"
@@ -398,9 +418,11 @@ msgstr "分辨率"
 
 #. objText.GetText("Restart current level.")
 #. objText.GetText("Restart current level.")
+#. objText.GetText("Restart current level.")
 msgid "Restart current level."
 msgstr "重新开始本关。"
 
+#. .AddButton objText.GetText("Restart level"), &H100&, _
 #. .AddButton objText.GetText("Restart level"), &H100&, _
 msgid "Restart level"
 msgstr "重玩本关"
