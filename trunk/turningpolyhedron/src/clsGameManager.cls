@@ -62,7 +62,7 @@ Private m_tEvent() As typeMapDataEvent '0-based
 Private m_nEventStart As Long, m_nEventEnd As Long, m_nEventMax As Long
 Private m_bPolyhedronDirty As Boolean
 
-Private m_bGameOver As Boolean
+Private m_bGameOver As Boolean, m_bGameFinished As Boolean
 
 '////////game logic settings
 
@@ -744,6 +744,10 @@ Friend Property Get IsGameOver() As Boolean
 IsGameOver = m_bGameOver
 End Property
 
+Friend Property Get IsGameFinished() As Boolean
+IsGameFinished = m_bGameFinished And Not m_bGameOver '?
+End Property
+
 Friend Sub ClearLevelRuntimeData()
 Dim t As typeMeshInstanceCollection
 '///
@@ -761,6 +765,7 @@ m_bPolyhedronDirty = False
 m_nTileAnimMax = 0
 m_nTileAnimFirstUnused = 0
 m_bGameOver = False
+m_bGameFinished = False
 '///
 m_bRuntimeDirty = True
 End Sub
@@ -2531,6 +2536,8 @@ Case 3 'teleport
  'TODO:animation
  If tEvent.nStringParamCount > 0 And _
  t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+  objCamera.RealLinearDamping = 1
+  '///
   m_bPolyhedronDirty = True
   '///
   For i = 0 To tEvent.nStringParamCount - 1
@@ -2652,8 +2659,10 @@ Case 9 'absolute-move
  Debug.Print "TODO:absolute-move"
 Case 10 'game-finished
  Debug.Print "TODO:game-finished"
+ m_bGameFinished = True 'test only but wrong code
 Case 11 'game-finished:unconditional
  Debug.Print "TODO:game-finished:unconditional"
+ m_bGameFinished = True
 Case 12 'checkpoint
  Debug.Print "TODO:checkpoint"
 Case &H100 To &H1FF 'game-over:*

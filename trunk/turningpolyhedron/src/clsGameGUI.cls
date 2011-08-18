@@ -48,7 +48,7 @@ Private m_sLevelName As String, m_sLevelFile As String, m_nLevelType As Long
 Private m_nLevelCountInLevelCollection As Long, m_objLevels() As clsTreeStorageNode
 Private m_nTreeStorageLevel As Long
 
-Private m_nCurrentLevelIndex As Long
+Private m_nCurrentLevelIndex As Long, m_sCurrentLevelName As String
 
 '////////level files
 
@@ -328,7 +328,7 @@ With FakeDXUIControls(m_idxForm)
  .MoveToCenter
  .Show 1
 End With
-'m_nGUIState = IDS_SelectLevel
+If m_nLevelIdxCount = 0 Then RefreshLevelList
 End Sub
 
 Friend Sub ShowLevelSelection()
@@ -344,12 +344,12 @@ Create
 HideLevelFileSelection
 FakeDXAppChangeRootObject &H7&, Me, Me, Me
 objGameMgr.FollowCurrentPolyhedron = True
-'m_nGUIState = IDS_InGame
+objCamera.RealLinearDamping = 1
 End Sub
 
 Friend Sub PauseGame()
 Dim i As Long
-'///
+'///stupid MsgBox
 With New clsFakeDXUIMsgBox
  .AddButton objText.GetText("Back to game"), vbCancel, _
  objText.GetText("Continue playing the game.")
@@ -362,19 +362,12 @@ With New clsFakeDXUIMsgBox
  i = .MsgBox(objText.GetText("Game paused"), _
  &H4800007F, , &H100&, 160)
 End With
-Select Case i
-Case &H101&
- BackToMainMenu
-Case &H102&
- BackToLevelSelection
-Case &H100&
- RestartCurrentLevel
-End Select
+pProcessMenuAction i
 End Sub
 
 Friend Sub DisplayGameOverMenu()
 Dim i As Long
-'///
+'///stupid MsgBox
 With New clsFakeDXUIMsgBox
  .AddButton objText.GetText("Try again"), &H100&, _
  objText.GetText("Restart current level.")
@@ -386,13 +379,49 @@ With New clsFakeDXUIMsgBox
  vbInformation Or &H2800000F, _
  objText.GetText("Oops"), &H100&, 160)
 End With
+pProcessMenuAction i
+End Sub
+
+Friend Sub DisplayGameFinishedMenu()
+Dim i As Long
+'///stupid MsgBox
+With New clsFakeDXUIMsgBox
+ If m_nLevelType = 1 And m_nCurrentLevelIndex < m_nLevelCountInLevelCollection Then
+  .AddButton objText.GetText("Next level"), &H103&, _
+  objText.GetText("Play next level.")
+ End If
+ .AddButton objText.GetText("Other levels"), &H102&, _
+ objText.GetText("Back to level selection screen and select another level to play.")
+ .AddButton objText.GetText("Restart level"), &H100&, _
+ objText.GetText("Restart current level.")
+ .AddButton objText.GetText("Back to main menu"), &H101&, _
+ objText.GetText("Abort the game and back to the main menu.")
+ i = .MsgBox(objText.GetText("Congratulations! You have finished this level."), _
+ vbInformation Or &H2800000F, , &H100&, 160)
+End With
+pProcessMenuAction i
+End Sub
+
+Friend Sub pProcessMenuAction(ByVal i As Long)
 Select Case i
+Case &H100&
+ RestartCurrentLevel
 Case &H101&
  BackToMainMenu
 Case &H102&
  BackToLevelSelection
-Case Else
- RestartCurrentLevel
+Case &H103&
+ If m_nLevelType = 1 And m_nCurrentLevelIndex < m_nLevelCountInLevelCollection Then
+  i = m_nCurrentLevelIndex + 1
+  m_nCurrentLevelIndex = i
+  If LoadNodeAndPlay(m_objLevels(i)) Then Exit Sub
+  '///show error message
+  With New clsFakeDXUIMsgBox
+   .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
+   + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
+  End With
+ End If
+ BackToLevelSelection
 End Select
 End Sub
 
@@ -447,6 +476,7 @@ Case FakeDXAppEvent_KeyDown
   If i > objGameMgr.PolyhedronCount Then i = 1
   objGameMgr.CurrentPolyhedron = i
   objGameMgr.FollowCurrentPolyhedron = True
+  objCamera.RealLinearDamping = 1
   Exit Function
  Case vbKeyR
   RestartCurrentLevel
@@ -457,7 +487,7 @@ Case FakeDXAppEvent_KeyDown
  Case vbKeyEscape
   PauseGame
   Exit Function
- Case vbKeyF12
+ Case vbKeyF12 'TEST ONLY
   With New clsFakeDXUIInputBox
    m_sRecord = Trim(.InputBox("Input moves:", , , , True, vbVertical))
   End With
@@ -484,6 +514,7 @@ Case FakeDXAppEvent_KeyDown
    If objGameMgr.CanPlayerMovePolyhedron Then
     If objGameMgr.MoveCurrentPolyhedron(i) Then
      objGameMgr.FollowCurrentPolyhedron = True
+     objCamera.RealLinearDamping = 1
     End If
    End If
   End If
@@ -552,6 +583,7 @@ End Function
 Friend Sub RestartCurrentLevel()
 objGameMgr.ResetOnNextUpdate = True
 objGameMgr.FollowCurrentPolyhedron = True
+objCamera.RealLinearDamping = 1
 m_sRecord = ""
 m_nRecordPos = 0
 End Sub
@@ -566,7 +598,7 @@ With FakeDXUIControls(m_idxLevels).ListViewObject
  .Clear
  For i = 1 To m_nLevelCountInLevelCollection
   Set obj = m_objLevels(i).GetSubNodeObjectByName("name")
-  If obj Is Nothing Then s = objText.GetText("Level") + " " + CStr(i) _
+  If obj Is Nothing Then s = Replace(objText.GetText("Level %d"), "%d", CStr(i)) _
   Else s = obj.GetValueAsString
   .AddItem CStr(i), , i, s
  Next i
@@ -583,9 +615,14 @@ FakeDXAppAddDataLevel 2
 b = m_nLevelType = 0
 objGameMgr.ClearLevelData b
 If objGameMgr.AddLevelDataFromNode(obj) Then
+ '///get level name
+ s2 = objGameMgr.LevelName
  If b Then
-  s2 = objGameMgr.LevelName
   If s2 <> vbNullString Then m_sLevelName = s2
+  m_sCurrentLevelName = m_sLevelName
+ Else
+  m_sCurrentLevelName = Replace(objText.GetText("Level %d"), "%d", CStr(m_nCurrentLevelIndex))
+  If s2 <> vbNullString Then m_sCurrentLevelName = m_sCurrentLevelName + ": " + s2
  End If
  '///
  objGameMgr.CreateLevelRuntimeData
@@ -824,6 +861,8 @@ End If
 '///
 If objGameMgr.IsGameOver Then
  DisplayGameOverMenu
+ElseIf objGameMgr.IsGameFinished Then
+ DisplayGameFinishedMenu
 End If
 End Property
 
@@ -848,8 +887,6 @@ Hide
 End Sub
 
 Private Sub IRenderableObject_Render(ByVal nType As enumRenderPassType, ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera, ByVal IsEffectBegin As Boolean, ByVal IsSceneBegin As Boolean)
-Dim s As String
-'///
 Select Case nType
 Case RenderPass_Main
  If Not IsEffectBegin Then
@@ -874,16 +911,9 @@ Case RenderPass_Main
 Case RenderPass_FogVolume
  'TODO:
 Case RenderPass_Overlay
- If m_nLevelType Then
-  s = objGameMgr.LevelName
-  If s = vbNullString Then s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) _
-  Else s = objText.GetText("Level") + " " + CStr(m_nCurrentLevelIndex) + ": " + s
- Else
-  s = m_sLevelName
- End If
- If s <> vbNullString Then
+ If m_sCurrentLevelName <> vbNullString Then
   If Not IsSceneBegin Then d3dd9.BeginScene
-  FakeDXGDIDrawText FakeDXUIDefaultFont, s, 0, 16, d3dpp.BackBufferWidth - 16, 32, 0.75, DT_RIGHT Or DT_SINGLELINE Or DT_NOCLIP, , , &HFF000000, , , , , True
+  FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCurrentLevelName, 0, 16, d3dpp.BackBufferWidth - 16, 32, 0.75, DT_RIGHT Or DT_SINGLELINE Or DT_NOCLIP, , , &HFF000000, , , , , True
   If Not IsSceneBegin Then d3dd9.EndScene
  End If
 End Select
