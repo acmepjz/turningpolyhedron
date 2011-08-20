@@ -45,6 +45,7 @@ Class=clsMainMenu; src\clsMainMenu.cls
 Class=clsGameGUI; src\clsGameGUI.cls
 Class=IFakeDXAppEvent; src\IFakeDXAppEvent.cls
 Class=IRenderableObject; src\IRenderableObject.cls
+Class=clsFakeDXUILogger; src\clsFakeDXUILogger.cls
 IconForm="frmMain"
 Startup="frmMain"
 HelpFile=""

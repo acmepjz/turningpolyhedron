@@ -772,6 +772,7 @@ If m_tLevel.nPolyhedronCount > 0 Then
 End If
 '///
 ProcessMapEvents
+ProcessPolyhedronMerge
 '///
 m_bRuntimeDirty = False
 CreateLevelRuntimeData = True
@@ -896,22 +897,7 @@ If IsNumeric(s) Then
   End If
  End If
 ElseIf s <> "" Then
- For lps = 1 To m_nTileTypeCount
-  If m_tTileType(lps).nIndex > 0 Then
-   If m_tTileType(lps).sID = s Then
-    nIndex = lps
-    Exit For
-   End If
-  End If
- Next lps
- If nIndex = 0 Then
-  For lps = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
-   If m_tTileType(lps).sID = s Then
-    nIndex = lps
-    Exit For
-   End If
-  Next lps
- End If
+ nIndex = FindTileType(s)
  If nIndex = 0 Then 'not found
   Debug.Assert False
   Exit Function
@@ -1054,22 +1040,7 @@ If m > 0 Then
   End If
   'find tile named with sID? TODO:use a collection to look up
   If sID <> "" Then
-   For lps = 1 To m_nTileTypeCount
-    If m_tTileType(lps).nIndex > 0 Then
-     If m_tTileType(lps).sID = sID Then
-      nIndex = lps
-      Exit For
-     End If
-    End If
-   Next lps
-   If nIndex = 0 Then
-    For lps = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
-     If m_tTileType(lps).sID = sID Then
-      nIndex = lps
-      Exit For
-     End If
-    Next lps
-   End If
+   nIndex = FindTileType(sID)
    If nIndex = 0 Then 'not found
     Debug.Assert False
     Exit Function
@@ -1588,24 +1559,8 @@ s = objNode.GetSubNodeValueAsStringByName("id")
 If s <> "" Then
  k = -Val(objNode.GetSubNodeValueAsStringByName("index"))
  If k > 0 And k <= m_nTileTypeCount_Max Then
-  j = 0
-  For j = 1 To m_nTileTypeCount
-   If m_tTileType(j).nIndex > 0 Then
-    If m_tTileType(j).sID = s Then
-     j = -j
-     Exit For
-    End If
-   End If
-  Next j
-  If j >= 0 Then
-   For j = m_nTileTypeCount_Max + 1 To m_nTileTypeCount_Max + m_nTileTypeCount2
-    If m_tTileType(j).sID = s Then
-     j = -j
-     Exit For
-    End If
-   Next j
-  End If
-  If j < 0 Then m_nTileTypeMap(k) = -j
+  j = FindTileType(s)
+  If j > 0 Then m_nTileTypeMap(k) = j
  End If
 End If
 '///
@@ -1746,7 +1701,7 @@ Friend Property Get ObjectTypeName(ByVal nIndex As Long) As String
 ObjectTypeName = m_tObjType(nIndex).sName
 End Property
 
-Friend Function FindObjectType(ByVal sName As String) As Long
+Friend Function FindObjectType(ByRef sName As String) As Long
 Dim i As Long
 For i = 1 To m_nObjTypeCount
  If sName = m_tObjType(i).sName Then
@@ -1760,7 +1715,7 @@ Friend Property Get TileTypeID(ByVal nIndex As Long) As String
 TileTypeID = m_tTileType(nIndex).sID
 End Property
 
-Friend Function FindTileType(ByVal sID As String) As Long
+Friend Function FindTileType(ByRef sID As String) As Long
 Dim i As Long
 For i = 1 To m_nTileTypeCount
  If m_tTileType(i).nIndex = i Then
@@ -2567,6 +2522,26 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
 End If
 End Sub
 
+Friend Function FindPolyhedron(ByRef s As String) As Long
+Dim i As Long
+For i = 1 To m_tLevel.nPolyhedronCount
+ If m_tLevel.tPolyhedron(i).sID = s Then
+  FindPolyhedron = i
+  Exit Function
+ End If
+Next i
+End Function
+
+Friend Function FindMapData(ByRef s As String) As Long
+Dim i As Long
+For i = 1 To m_tLevel.nMapDataCount
+ If m_tLevel.tMapData(i).sID = s Then
+  FindMapData = i
+  Exit Function
+ End If
+Next i
+End Function
+
 Friend Sub DispatchTileEvent(ByRef t As typeMapDataEvent, ByRef tEvent As typeTileEventAction)
 Dim tNew As typeMapDataEvent
 Dim mat As D3DMATRIX
@@ -2618,11 +2593,8 @@ Case 3 'teleport
     Exit Sub
    End If
    'show new polyhedron
-   s = Left(s, j - 1)
-   For k = 1 To m_tLevel.nPolyhedronCount
-    If m_tLevel.tPolyhedron(k).sID = s Then Exit For
-   Next k
-   If k > m_tLevel.nPolyhedronCount Then
+   k = FindPolyhedron(Left(s, j - 1))
+   If k = 0 Then
     Debug.Assert False
     Exit Sub
    End If
@@ -2934,7 +2906,10 @@ If m_bPolyhedronDirty Then
    End If
   End If
  Next i
+ '???
+ ProcessPolyhedronMerge
 End If
+'///
 m_bPolyhedronDirty = False
 End Sub
 
@@ -2969,10 +2944,8 @@ If i <> 0 Then
  'get id
  idx = Val(s)
  If idx <= 0 Or idx > m_tLevel.nMapDataCount Then
-  For idx = 1 To m_tLevel.nMapDataCount
-   If s = m_tLevel.tMapData(idx).sID Then Exit For
-  Next idx
-  If idx > m_tLevel.nMapDataCount Then Exit Sub
+  idx = FindMapData(s)
+  If idx = 0 Then Exit Sub
  End If
  tEvent.p.nMapDataIndex = idx
  tEvent.p.x = 0
@@ -3038,4 +3011,133 @@ Else '<tag>
  Next idx
 End If
 '///
+End Sub
+
+Friend Sub ProcessPolyhedronMerge()
+Dim idx As Long
+Dim i As Long, j As Long, k As Long, m As Long
+Dim x1 As Long, y1 As Long, z1 As Long
+Dim x2 As Long, y2 As Long, z2 As Long
+Dim p1 As typePolyhedronPosition, p2 As typePolyhedronPosition
+Dim b As Boolean
+'TODO:adjacency support
+'TODO:non-cuboid polyhedron merge
+For idx = 1 To m_tLevel.nPolyMergeCount
+ m = m_tLevel.tPolyMerge(idx).nSrcCount
+ Select Case m
+ Case 2
+  i = FindPolyhedron(m_tLevel.tPolyMerge(idx).sSrcID(0))
+  If i > 0 Then
+   If (m_tPolyInst(i).nFlags And &H100&) <> 0 And m_tPolyInst(i).nAnimType = 0 Then
+    j = FindPolyhedron(m_tLevel.tPolyMerge(idx).sSrcID(1))
+    If j > 0 Then
+     If (m_tPolyInst(j).nFlags And &H100&) <> 0 And m_tPolyInst(j).nAnimType = 0 Then
+      '///
+      p1 = m_objPoly(i).Position
+      p2 = m_objPoly(j).Position
+      If p1.p.nMapDataIndex = p2.p.nMapDataIndex Then
+       m_objPoly(i).GetCurrentSize x1, y1, z1
+       m_objPoly(j).GetCurrentSize x2, y2, z2
+       '///
+       b = False
+       If p1.p.x = p2.p.x Then
+        If p1.p.y = p2.p.y Then
+         If x1 = x2 And y1 = y2 Then
+          If p1.p.z + z1 = p2.p.z Then
+           z1 = z1 + z2
+           b = True
+          ElseIf p2.p.z + z2 = p1.p.z Then
+           z1 = z1 + z2
+           p1 = p2
+           b = True
+          End If
+         End If
+        ElseIf p1.p.z = p2.p.z Then
+         If x1 = x2 And z1 = z2 Then
+          If p1.p.y + y1 = p2.p.y Then
+           y1 = y1 + y2
+           b = True
+          ElseIf p2.p.y + y2 = p1.p.y Then
+           y1 = y1 + y2
+           p1 = p2
+           b = True
+          End If
+         End If
+        End If
+       ElseIf p1.p.y = p2.p.y And p1.p.z = p2.p.z Then
+        If y1 = y2 And z1 = z2 Then
+         If p1.p.x + x1 = p2.p.x Then
+          x1 = x1 + x2
+          b = True
+         ElseIf p2.p.x + x2 = p1.p.x Then
+          x1 = x1 + x2
+          p1 = p2
+          b = True
+         End If
+        End If
+       End If
+       '///??? may be buggy
+       If b Then
+        k = FindPolyhedron(m_tLevel.tPolyMerge(idx).sDestID)
+        If k > 0 Then
+         m_objPoly(k).GetSize x2, y2, z2
+         If x1 = x2 Then
+          If y1 = y2 And z1 = z2 Then
+           p1.nFirstEdgeIndex = 0
+           p1.nGroundFaceIndex = 0
+          ElseIf y1 = z2 And z1 = y2 Then
+           p1.nFirstEdgeIndex = 0
+           p1.nGroundFaceIndex = 2
+          Else
+           b = False
+          End If
+         ElseIf x1 = y2 Then
+          If y1 = x2 And z1 = z2 Then
+           p1.nFirstEdgeIndex = 1
+           p1.nGroundFaceIndex = 0
+          ElseIf y1 = z2 And z1 = x2 Then
+           p1.nFirstEdgeIndex = 1
+           p1.nGroundFaceIndex = 3
+          Else
+           b = False
+          End If
+         ElseIf x1 = z2 Then
+          If y1 = x2 And z1 = y2 Then
+           p1.nFirstEdgeIndex = 1
+           p1.nGroundFaceIndex = 2
+          ElseIf y1 = y2 And z1 = x2 Then
+           p1.nFirstEdgeIndex = 0
+           p1.nGroundFaceIndex = 3
+          Else
+           b = False
+          End If
+         Else
+          b = False
+         End If
+         If b Then
+          m_tPolyInst(i).nFlags = m_tPolyInst(i).nFlags And Not &H100&
+          m_tPolyInst(j).nFlags = m_tPolyInst(j).nFlags And Not &H100&
+          If m_tPolyInst(k).nFlags And &H100& Then '??? err???
+           Debug.Assert False
+           m_objPoly(k).SendEvent EventTypeOnLeave
+          Else
+           m_tPolyInst(k).nFlags = m_tPolyInst(k).nFlags Or &H100&
+          End If
+          m_objPoly(k).Position = p1
+          m_nCurrentPolyhedron = k
+          m_bPolyhedronDirty = True
+          '///
+          objLogger.AddMessage "Polyhedron merged" 'debug
+         End If
+        End If
+       End If
+      End If
+     End If
+    End If
+   End If
+  End If
+ Case Else
+  'currently unsupported. TODO:
+ End Select
+Next idx
 End Sub
