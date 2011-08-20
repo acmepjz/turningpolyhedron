@@ -394,6 +394,8 @@ ret.fTiltTangent = 0
 ret.fPressure = 0
 ret.nOnGroundCount = 0
 Erase ret.tOnGroundPos
+ret.nHitTestCount = 0
+Erase ret.tHitTestPos
 '///
 Select Case m_tLogic.nShape
 Case &H111 To &HFFF
@@ -469,7 +471,7 @@ Case &H111 To &HFFF
     End If
    End If
    '///
-   objGameMgr.HitTest p1, tHitTest, m_nIndex, nHeight
+   objGameMgr.HitTest p1, tHitTest, ret, m_nIndex, nHeight, nHeight2, z, ret.nTiltY = 0
    Select Case tHitTest.nType
    Case 0
     If ret.nTiltY = 0 Then
@@ -552,6 +554,9 @@ Case &H111 To &HFFF
   ret.fTiltTangent = ret.nTiltY / i
   f = Sqr(y * y - i * i) / i
   If ret.fTiltTangent > f Then ret.fTiltTangent = f
+  '///
+  ret.nHitTestCount = 0
+  Erase ret.tHitTestPos
  End If
 Case Else
  'TODO:
@@ -690,10 +695,18 @@ If tState.nTiltY = 0 Then
   tEvent.fPressure = tState.fPressure
   tEvent.nOnGroundCount = tState.nOnGroundCount
   '///
-  For i = 1 To tState.nOnGroundCount
-   tEvent.p = tState.tOnGroundPos(i)
-   objGameMgr.AddMapEvent tEvent
-  Next i
+  Select Case nEventType
+  Case EventTypeOnHitTest
+   For i = 1 To tState.nHitTestCount
+    tEvent.p = tState.tHitTestPos(i)
+    objGameMgr.AddMapEvent tEvent
+   Next i
+  Case Else
+   For i = 1 To tState.nOnGroundCount
+    tEvent.p = tState.tOnGroundPos(i)
+    objGameMgr.AddMapEvent tEvent
+   Next i
+  End Select
  End If
 End If
 End Sub

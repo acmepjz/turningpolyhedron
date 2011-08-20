@@ -343,6 +343,7 @@ Public Type typeTileEvent
  '4=onMoveLeave
  '5=onPressKey
  '6=on[Custom]Event
+ '7=onHitTest
  nConditionCount As Long
  tCondition() As typeTileEventCondition '1-based
  nEventCount As Long
@@ -356,6 +357,7 @@ Public Enum enumEventType
  EventTypeOnMoveLeave = 4
  EventTypeOnPressKey = 5
  EventTypeOnCustomEvent = 6
+ EventTypeOnHitTest = 7
 End Enum
 
 Public Type typeTileType
@@ -477,6 +479,7 @@ End Type
 
 Public Type typeLevelData
  sName As String
+ nCheckPointCount As Long
  '////////
  'map data (tiles)
  nMapDataCount As Long
@@ -593,6 +596,8 @@ Public Type typePolyhedronState
  nOnGroundCount As Long 'if nTiltY>0 then it means tilt count
  tOnGroundPos() As typeMapPosition '1-based
  '///
+ nHitTestCount As Long
+ tHitTestPos() As typeMapPosition '1-based
  'TODO:more
 End Type
 
