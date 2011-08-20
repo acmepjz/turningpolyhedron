@@ -84,6 +84,8 @@ Public FakeDXAppRequestUnload As Boolean, FakeDXAppCanUnload As Boolean
 
 Public FakeDXAppMainLoopCallback As IMainLoopCallback
 
+Public objLogger As New clsFakeDXUILogger
+
 '////////receives unprocessed window event
 
 Public FakeDXAppEvent As IFakeDXAppEvent
@@ -288,6 +290,9 @@ With d3dd9
   If Not FakeDXAppRootObject Is Nothing Then
    FakeDXAppRootObject.Render RenderPass_Overlay, objRenderTest, objCamera, False, True
   End If
+  '///logger
+  objLogger.Render 8, 64, d3dpp.BackBufferWidth - 8, d3dpp.BackBufferHeight - 64
+  '///
   .EndScene
   '////////over
   .Present ByVal 0, ByVal 0, 0, ByVal 0
@@ -487,8 +492,8 @@ On Error Resume Next
 Dim i As Long
 Dim s As String
 Dim obj As clsTreeStorageNode
-'///
-'FakeDXAppBeginLog
+'///init logger
+objLogger.CreateNew , , , DT_NOCLIP
 '///
 FakeDXAppMyGamesPath = Space(1024)
 SHGetSpecialFolderPath 0, FakeDXAppMyGamesPath, CSIDL_PERSONAL, 1

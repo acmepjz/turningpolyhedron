@@ -385,7 +385,7 @@ d3dd9.SetTexture 1, Nothing
 End Sub
 
 Public Function FakeDXGDIDrawText(ByRef tFont As typeFakeDXGDILogFont, ByVal lpStr As String, ByVal nLeft As Single, ByVal nTop As Single, Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal nZoom As Single = 1, Optional ByVal wFormat As D3DXDRAWTEXTFORMAT, _
-Optional ByVal nColor As Long = -1, Optional ByVal nTextLODBias As Single = -0.5, Optional ByVal nShadowColor As Long = 0, Optional ByVal nShadowOffsetX As Long = 2, Optional ByVal nShadowOffsetY As Long = 2, Optional ByVal nShadowLODBias As Single = 1.5, Optional ByVal nAngle As Single, Optional ByVal bSingle As Boolean, Optional ByRef nWidthReturn As Single, Optional ByRef nHeightReturn As Single) As Single
+Optional ByVal nColor As Long = -1, Optional ByVal nTextLODBias As Single = -0.5, Optional ByVal nShadowColor As Long = 0, Optional ByVal nShadowOffsetX As Long = 2, Optional ByVal nShadowOffsetY As Long = 2, Optional ByVal nShadowLODBias As Single = 1.5, Optional ByVal nAngle As Single, Optional ByVal bSingle As Boolean, Optional ByRef nWidthReturn As Single, Optional ByRef nHeightReturn As Single, Optional ByVal bFlush As Boolean = True) As Single
 Dim mat As D3DMATRIX
 Dim p As D3DRECT
 Dim obj As Direct3DDevice9
@@ -415,7 +415,7 @@ If Not bNoDraw Then
   p.Y2 = nHeight + nShadowOffsetY
   obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nShadowLODBias)
   tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nShadowColor
-  tFont.objSprite.Flush
+  If bFlush Then tFont.objSprite.Flush
  End If
  If nColor Then
   p.x1 = 0
@@ -429,7 +429,7 @@ If Not bNoDraw Then
    nHeightReturn = p.Y2 * nZoom
   End If
   FakeDXGDIDrawText = tFont.objFont.DrawTextW(tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nColor) * nZoom
-  tFont.objSprite.Flush
+  If bFlush Then tFont.objSprite.Flush
  End If
  '///
  If bSingle Then tFont.objSprite.End
