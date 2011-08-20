@@ -53,6 +53,11 @@ Dim Button As Long
 If FakeDXUIModalStackCount > 0 Then Exit Function
 '///
 Select Case nType
+Case FakeDXAppEvent_KeyDown
+ 'test only
+ If nParam1 = vbKeyF12 Then
+  objLogger.AddMessage "HEHE" + CStr(Rnd) + "Wgf"
+ End If
 Case FakeDXAppEvent_MouseDown
  Button = nParam3 And &HFFFF&
  Select Case Button
