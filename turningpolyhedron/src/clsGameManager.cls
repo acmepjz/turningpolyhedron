@@ -62,6 +62,7 @@ Private m_tEvent() As typeMapDataEvent '0-based
 Private m_nEventStart As Long, m_nEventEnd As Long, m_nEventMax As Long
 Private m_bPolyhedronDirty As Boolean
 
+Private m_nCheckPointRemaining As Long
 Private m_bGameOver As Boolean, m_bGameFinished As Boolean
 
 '////////game logic settings
@@ -85,6 +86,15 @@ End Type
 Private m_nDataLevel As Long
 Private m_tDataLevelArray() As typeGameMgrDataLevel '1-based
 Private m_nDataLevelCount As Long
+
+Friend Property Get CheckPointCount() As Long
+CheckPointCount = m_tLevel.nCheckPointCount
+End Property
+
+Friend Property Get CheckPointRemaining() As Long
+If m_bRuntimeDirty Then Exit Property
+CheckPointRemaining = m_nCheckPointRemaining
+End Property
 
 Friend Sub AddDataLevel(ByVal nDataLevel As Long)
 If nDataLevel <= m_nDataLevel Then Exit Sub
@@ -234,6 +244,25 @@ If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then _
 IsPolyhedronVisible = m_tPolyInst(nPolyhedronIndex).nFlags And &H100&
 End Property
 
+Friend Function GetNextVisiblePolyhedron(Optional ByVal nPolyhedronIndex As Long = -1) As Long
+Dim i As Long
+'///
+If m_bRuntimeDirty Then Exit Function
+'///
+If nPolyhedronIndex < 0 Then nPolyhedronIndex = m_nCurrentPolyhedron
+If nPolyhedronIndex <= 0 Or nPolyhedronIndex > m_tLevel.nPolyhedronCount Then nPolyhedronIndex = 0
+'///
+For i = 1 To m_tLevel.nPolyhedronCount
+ nPolyhedronIndex = nPolyhedronIndex + 1
+ If nPolyhedronIndex > m_tLevel.nPolyhedronCount Then nPolyhedronIndex = 1
+ '///
+ If m_tPolyInst(nPolyhedronIndex).nFlags And &H100& Then
+  GetNextVisiblePolyhedron = nPolyhedronIndex
+  Exit Function
+ End If
+Next i
+End Function
+
 Friend Function MoveCurrentPolyhedron(ByVal nDirection As Long) As Long
 MoveCurrentPolyhedron = MovePolyhedron(m_nCurrentPolyhedron, nDirection)
 End Function
@@ -374,6 +403,7 @@ For idx = 1 To m_tLevel.nPolyhedronCount
      m_bPolyhedronDirty = True
      m_objPoly(idx).SendEvent EventTypeOnEnter
      m_objPoly(idx).SendEvent EventTypeOnMoveEnter
+     m_objPoly(idx).SendEvent EventTypeOnHitTest
     End If
    Else
     m_tPolyInst(idx).fAnimValue(0) = f
@@ -711,6 +741,9 @@ m_bIsRuntime = bRuntime
 m_bPolyhedronDirty = False
 If Not GenerateMeshFromLevelDataEx(m_tLevel, m_tMapDataInst, m_tLevelInst, bRuntime) Then Exit Function
 '///
+m_nCurrentPolyhedron = 0
+m_nCheckPointRemaining = m_tLevel.nCheckPointCount
+'///
 If m_tLevel.nPolyhedronCount > 0 Then
  ReDim m_objPoly(1 To m_tLevel.nPolyhedronCount)
  ReDim m_tPolyInst(1 To m_tLevel.nPolyhedronCount)
@@ -724,14 +757,18 @@ If m_tLevel.nPolyhedronCount > 0 Then
  Next i
  '///
  For i = 1 To m_tLevel.nPolyhedronCount
-  If m_tPolyInst(i).nFlags And &H100& Then m_objPoly(i).CheckPolyhedronStateAndResponse
+  If m_tPolyInst(i).nFlags And &H100& Then
+   If m_nCurrentPolyhedron = 0 Then m_nCurrentPolyhedron = i
+   m_objPoly(i).CheckPolyhedronStateAndResponse
+  End If
  Next i
  '///
  For i = 1 To m_tLevel.nPolyhedronCount
-  If m_tPolyInst(i).nFlags And &H100& Then m_objPoly(i).SendEvent EventTypeOnEnter
+  If m_tPolyInst(i).nFlags And &H100& Then
+   m_objPoly(i).SendEvent EventTypeOnEnter
+   m_objPoly(i).SendEvent EventTypeOnHitTest
+  End If
  Next i
- '///set current polyhedron to the first one
- m_nCurrentPolyhedron = 1
 End If
 '///
 ProcessMapEvents
@@ -883,7 +920,7 @@ End If
 ParseTileTypeFromString = nIndex
 End Function
 
-Friend Function ParseMapTypeArrayFromNode(ByVal objNode As clsTreeStorageNode, ByRef tMap As typeMapData) As Boolean
+Friend Function ParseMapTypeArrayFromNode(ByVal objNode As clsTreeStorageNode, ByRef tMap As typeMapData, ByRef nCheckPointCount As Long) As Boolean
 Dim s As String
 Dim b As Boolean
 Dim d() As Integer, lp As Long, lps As Long, m As Long
@@ -896,6 +933,8 @@ Dim nNewIndex As Long
 Dim nPropertyIndex As Long
 Dim sTag As String
 Dim nCount As Long
+'///
+Dim nCheckPoint As Long
 '///
 s = Replace(Replace(Replace(Replace(objNode.GetValueAsString, _
 vbCr, ""), vbLf, ""), vbTab, ""), " ", "")
@@ -1040,11 +1079,20 @@ If m > 0 Then
   If nNewIndex < 0 And nNewIndex >= -m_nTileTypeCount_Max Then
    m_nTileTypeMap(-nNewIndex) = nIndex
   End If
+  '///checkpoint?
+  nCheckPoint = 0
+  If nIndex > 0 Then
+   If m_tTileType(nIndex).nFlags And &H2& Then nCheckPoint = 1
+  End If
   '///put data
   For lps = 1 To nCount
    tMap.nTypeArray(i, j, k) = nIndex
    tMap.sTagArray(i, j, k) = sTag
    tMap.nPropertyArray(i, j, k) = nPropertyIndex
+   '///
+   If nCheckPointCount >= 0 Then _
+   nCheckPointCount = nCheckPointCount + nCheckPoint
+   '///
    'next pos
    If lps < nCount Then
     i = i + 1
@@ -1189,7 +1237,7 @@ For i = 1 To objNode.SubNodeCount
   Set obj = objNode.SubNodeObject(i)
   Select Case obj.GetNameAsString
   Case "typeArray"
-   If Not ParseMapTypeArrayFromNode(obj, tLevel.tMapData(nIndex)) Then
+   If Not ParseMapTypeArrayFromNode(obj, tLevel.tMapData(nIndex), tLevel.nCheckPointCount) Then
     Exit Function
    End If
   Case "property"
@@ -1501,14 +1549,14 @@ For i = 1 To objNode.SubNodeCount
  If objNode.SubNodeType(i) = 0 Then
   'TODO:other
   Select Case objNode.GetSubNodeNameAsString(i)
-  Case "name"
-   m_tLevel.sName = objNode.GetSubNodeValueAsString(i)
+  Case "checkpointCount"
+   tLevel.nCheckPointCount = Val(objNode.GetSubNodeValueAsString(i)) Or &H80000000
   End Select
  Else
   Set obj = objNode.SubNodeObject(i)
   Select Case obj.GetNameAsString
   Case "name"
-   m_tLevel.sName = obj.GetValueAsString
+   tLevel.sName = obj.GetValueAsString
   Case "mapData"
    tLevel.nMapDataCount = tLevel.nMapDataCount + 1
    ReDim Preserve tLevel.tMapData(1 To tLevel.nMapDataCount)
@@ -1526,6 +1574,8 @@ For i = 1 To objNode.SubNodeCount
   End Select
  End If
 Next i
+'///
+tLevel.nCheckPointCount = tLevel.nCheckPointCount And &H7FFFFFFF
 '///
 AddLevelDataFromNodeEx = True
 End Function
@@ -1578,11 +1628,11 @@ End Select
 '///
 For i = 1 To objNode.SubNodeCount
  If objNode.SubNodeType(i) = 0 Then
-  'TODO:other
-  Select Case objNode.GetSubNodeNameAsString(i)
-  Case "name"
-   sName = objNode.GetSubNodeValueAsString(i)
-  End Select
+'  'TODO:other
+'  Select Case objNode.GetSubNodeNameAsString(i)
+'  Case "name"
+'   sName = objNode.GetSubNodeValueAsString(i)
+'  End Select
  Else
   Set obj = objNode.SubNodeObject(i)
   Select Case obj.GetNameAsString
@@ -1914,6 +1964,8 @@ Case "onPressKey"
  ParseEventType = EventTypeOnPressKey
 Case "onCustomEvent", "onTriggeredEvent", "onEvent"
  ParseEventType = EventTypeOnCustomEvent
+Case "onHitTest"
+ ParseEventType = EventTypeOnHitTest
 End Select
 End Function
 
@@ -2407,7 +2459,7 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
 End If
 End Function
 
-Friend Sub HitTest(ByRef tPos As typeMapPosition, ByRef ret As typeMapDataHitTest, Optional ByVal nExcludePolyhedronIndex As Long, Optional ByVal nHeight As Long = 1)
+Friend Sub HitTest(ByRef tPos As typeMapPosition, ByRef ret As typeMapDataHitTest, ByRef ret2 As typePolyhedronState, ByVal nExcludePolyhedronIndex As Long, ByVal nHeight As Long, ByVal nHeight2 As Long, ByVal nRawHeight As Long, ByVal bCalculateHitTestPos As Boolean)
 Dim idx As Long
 Dim i As Long, j As Long, k As Long
 Dim sz As Long, ez As Long
@@ -2497,6 +2549,12 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
        ret.nObjType = m_tTileType(i).nObjType
       End If
      End If
+     '///???
+     If k > 0 And k <= nRawHeight And bCalculateHitTestPos Then
+      ret2.nHitTestCount = ret2.nHitTestCount + 1
+      ReDim Preserve ret2.tHitTestPos(1 To ret2.nHitTestCount)
+      ret2.tHitTestPos(ret2.nHitTestCount) = p
+     End If
      '///
     End If
     '///
@@ -2550,6 +2608,7 @@ Case 3 'teleport
      If m_objPoly(t.nPolyhedronIndex).SetPositionFromString(s, m_tLevel) Then
       m_objPoly(t.nPolyhedronIndex).CheckPolyhedronStateAndResponse '???
       m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnEnter
+      m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnHitTest
      Else
       Debug.Assert False
      End If
@@ -2568,6 +2627,7 @@ Case 3 'teleport
     Exit Sub
    End If
    If m_tPolyInst(k).nFlags And &H100& Then '??? err???
+    Debug.Assert False
     m_objPoly(k).SendEvent EventTypeOnLeave
    Else
     m_tPolyInst(k).nFlags = m_tPolyInst(k).nFlags Or &H100&
@@ -2575,10 +2635,13 @@ Case 3 'teleport
    If m_objPoly(k).SetPositionFromString(Mid(tEvent.sStringParam(i), j + 1), m_tLevel) Then
     m_objPoly(k).CheckPolyhedronStateAndResponse '???
     m_objPoly(k).SendEvent EventTypeOnEnter
+    m_objPoly(k).SendEvent EventTypeOnHitTest
    Else
     Debug.Assert False
     Exit Sub
    End If
+   'set current polyhedron to new one
+   If i = 0 Then m_nCurrentPolyhedron = k
   Next i
   '///hide old polyhedron (???)
   m_tPolyInst(t.nPolyhedronIndex).nFlags = _
@@ -2658,13 +2721,14 @@ Case 8 'move:back
 Case 9 'absolute-move
  Debug.Print "TODO:absolute-move"
 Case 10 'game-finished
- Debug.Print "TODO:game-finished"
- m_bGameFinished = True 'test only but wrong code
+ 'TODO:animation (?)
+ If m_nCheckPointRemaining <= 0 Then _
+ m_bGameFinished = True 'test only. TODO:custom winning condition support
 Case 11 'game-finished:unconditional
- Debug.Print "TODO:game-finished:unconditional"
- m_bGameFinished = True
+ 'TODO:animation (?)
+ m_bGameFinished = True 'test only
 Case 12 'checkpoint
- Debug.Print "TODO:checkpoint"
+ m_nCheckPointRemaining = m_nCheckPointRemaining - 1
 Case &H100 To &H1FF 'game-over:*
  m_bPolyhedronDirty = True
  Select Case tEvent.nType

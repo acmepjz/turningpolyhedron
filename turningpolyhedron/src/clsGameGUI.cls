@@ -470,13 +470,11 @@ Case FakeDXAppEvent_KeyDown
  Case vbKeyRight
   i = 3
  Case vbKeySpace
-  'TODO:when a polyhedron is falling then can't change polyhedron index
-  'TODO:skip invalid polyhedron
-  i = objGameMgr.CurrentPolyhedron + 1
-  If i > objGameMgr.PolyhedronCount Then i = 1
-  objGameMgr.CurrentPolyhedron = i
-  objGameMgr.FollowCurrentPolyhedron = True
-  objCamera.RealLinearDamping = 1
+  If objGameMgr.CanPlayerMovePolyhedron Then
+   objGameMgr.CurrentPolyhedron = objGameMgr.GetNextVisiblePolyhedron
+   objGameMgr.FollowCurrentPolyhedron = True
+   objCamera.RealLinearDamping = 1
+  End If
   Exit Function
  Case vbKeyR
   RestartCurrentLevel

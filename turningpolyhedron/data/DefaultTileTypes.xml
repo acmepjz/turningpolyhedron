@@ -116,7 +116,7 @@
     </appearance>
     <onEnter condition="onGroundCount=1;main=true" event="game-finished"/>
   </tileType>
-  <tileType id="checkpoint">
+  <tileType id="checkpoint" checkpoint="true">
     <name>Checkpoint</name>
     <appearance>
       <!-- TODO: -->
@@ -128,8 +128,9 @@
       </shader>
     </appearance>
     <!-- TODO: -->
+    <onEnter event="checkpoint;convertTo:1"/>
   </tileType>
-  <tileType id="floating-checkpoint" supporter="false" tilt-supporter="false" non-block="true">
+  <tileType id="floating-checkpoint" checkpoint="true" supporter="false" tilt-supporter="false" non-block="true">
     <appearance>
       <!-- TODO: -->
       <shader shaderProgram="standard" ambient="0,1,1" effectStates="FillMode=WIREFRAME;">
@@ -137,6 +138,7 @@
       </shader>
     </appearance>
     <!-- TODO: -->
+    <onHitTest event="checkpoint;convertTo:0"/>
   </tileType>
   <tileType id="ice" index="9" type="ice">
     <name>Ice</name>
@@ -160,7 +162,7 @@
         	texcoord0="rect_unwrap"/>
       </shader>
     </appearance>
-    <onMoveEnter condition="pressure=2~" event="move"/>
+    <onMoveEnter condition="onGroundCount=1;pressure=2~" event="move"/>
   </tileType>
   <tileType id="wall" index="11" blocked="true" block-height="1">
     <name>Wall</name>
