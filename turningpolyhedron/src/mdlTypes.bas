@@ -475,6 +475,36 @@ Public Type typeMapData_PolyhedronMerge
  nSrcCount As Long
  sSrcID() As String '0-based
  sDestID As String
+ 'TODO:etc.
+End Type
+
+Public Type typeMapPosition
+ nMapDataIndex As Long
+ x As Long
+ y As Long
+ z As Long
+End Type
+
+Public Type typeMapData_WinningCondition '48 bytes
+ nType As Long
+ '0=logic condition
+ '1=moveCondition
+ '2=checkpointCondition
+ '3=gameFinishedCondition
+ nFlags As Long
+ '&H1=persistent
+ '&H2=invert
+ '///
+ nParams(3) As Long
+ 'logicCondition: min,max,first child,*
+ 'moveCondition: src count,size-x,size-y,*
+ 'checkpointCondition: min,max,*,*
+ 'gameFinishedCondition: *,*,*,*
+ '///
+ NextSibling As Long
+ '///moveCondition
+ nSrcIndex() As Long '0-based
+ tPos As typeMapPosition
 End Type
 
 Public Type typeLevelData
@@ -489,7 +519,10 @@ Public Type typeLevelData
  tPolyhedron() As typeMapData_Polyhedron '1-based
  'polyhedron merge
  nPolyMergeCount As Long
- tPolyMerge() As typeMapData_PolyhedronMerge
+ tPolyMerge() As typeMapData_PolyhedronMerge '1-based
+ 'winning condition
+ nWinningConditionCount As Long
+ tWinningCondition() As typeMapData_WinningCondition '1-based, root node is the last one
 End Type
 
 Public Type typePolyhedronFaceLogic
@@ -522,13 +555,6 @@ Public Type typePolyhedronLogic
  '///
  nFaceCount As Long
  tFace() As typePolyhedronFaceLogic '0-based
-End Type
-
-Public Type typeMapPosition
- nMapDataIndex As Long
- x As Long
- y As Long
- z As Long
 End Type
 
 Public Type typePolyhedronPosition

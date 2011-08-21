@@ -140,9 +140,7 @@ End Function
 
 Friend Function ParsePolyhedronPosition(ByVal s As String, ByRef tPos As typePolyhedronPosition, ByRef tLevel As typeLevelData) As Boolean
 Dim v As Variant
-Dim s1 As String
-Dim i As Long, j As Long, k As Long, m As Long
-Dim idx As Long
+Dim i As Long, m As Long
 '///
 v = Split(s, ":")
 m = UBound(v)
@@ -151,61 +149,9 @@ If m < 0 Then
  Exit Function
 End If
 '///get position
-s = v(0)
-i = InStr(1, s, "(")
-If i > 0 Then
- s1 = Mid(s, i + 1)
- s = Left(s, i - 1)
-Else
- i = InStr(1, s, ".")
- If i > 0 Then
-  s1 = Mid(s, i + 1)
-  s = Left(s, i - 1)
-  i = -1
- End If
-End If
-idx = Val(s)
-If idx <= 0 Or idx > tLevel.nMapDataCount Then
- For idx = 1 To tLevel.nMapDataCount
-  If s = tLevel.tMapData(idx).sID Then Exit For
- Next idx
- If idx > tLevel.nMapDataCount Then
-  Debug.Assert False
-  Exit Function
- End If
-End If
-tPos.p.nMapDataIndex = idx
-tPos.p.x = 0
-tPos.p.y = 0
-tPos.p.z = 0
-If i > 0 Then
- tPos.p.x = Val(s1) 'FIXME: no sanity check :-3
- i = InStr(1, s1, ",")
- If i > 0 Then
-  tPos.p.y = Val(Mid(s1, i + 1))
-  i = InStr(i + 1, s1, ",")
-  If i > 0 Then
-   tPos.p.z = Val(Mid(s1, i + 1))
-  End If
- End If
-ElseIf i < 0 Then
- Do
-  For k = 0 To tLevel.tMapData(idx).nSize(2) - 1
-   For j = 0 To tLevel.tMapData(idx).nSize(1) - 1
-    For i = 0 To tLevel.tMapData(idx).nSize(0) - 1
-     If tLevel.tMapData(idx).sTagArray(i, j, k) = s1 Then
-      tPos.p.x = i
-      tPos.p.y = j
-      tPos.p.z = k
-      Exit Do
-     End If
-    Next i
-   Next j
-  Next k
-  'err: not found
-  Debug.Assert False
-  Exit Function
- Loop While False
+If Not objGameMgr.FindPositionEx(tLevel, v(0), tPos.p) Then
+ Debug.Assert False
+ Exit Function
 End If
 '///get direction,etc.
 i = 0
