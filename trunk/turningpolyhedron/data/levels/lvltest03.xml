@@ -6,13 +6,17 @@
     1*20;
     1,1,11,1,1,1,1,1,1,1;
     1*30;
-    1*9,11;
-    11,1*9;1*20;
+    1*5,goal*3,1,11;
+    11,1*4,goal*3,1*2;
+    1*20;
     ]]></typeArray>
-    <polyhedron shape="2x3x4" p="6,2:0:0:0" tiltable="false" supportable="false" autoSize="true">
+    <polyhedron id="main" shape="2x3x4" p="6,2:0:0:0" tiltable="false" supportable="false" autoSize="true">
       <appearance><shader templateName="simple1_fixed" ambient="0.2,0.2,0.2" diffuse="0.2,0.2,0.2" specular="0.4,0.4,0.3" specularHardness="50">
         <mesh type="cube" bevel="1;0.05" bevelNormalSmoothness="1"/>
       </shader></appearance>
     </polyhedron>
   </mapData>
+  <winningCondition>
+    <moveCondition src="main" target="m1(5,6,0)" targetSize="3,2"/>
+  </winningCondition>
 </level>

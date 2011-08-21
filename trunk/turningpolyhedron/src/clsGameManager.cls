@@ -64,6 +64,9 @@ Private m_bPolyhedronDirty As Boolean
 
 Private m_nCheckPointRemaining As Long
 Private m_bGameOver As Boolean, m_bGameFinished As Boolean
+Private m_bGameFinishedEvent As Boolean
+
+Private m_nWinningConditionValue() As Boolean  '(not inverted) value
 
 '////////game logic settings
 
@@ -429,6 +432,62 @@ For idx = 1 To m_tLevel.nPolyhedronCount
 Next idx
 '////////update event (?)
 ProcessMapEvents
+'////////check winning condition (?)
+If m_tLevel.nWinningConditionCount > 0 Then
+ For idx = 1 To m_tLevel.nWinningConditionCount
+  If (m_tLevel.tWinningCondition(idx).nFlags And 1&) = 0 Or Not m_nWinningConditionValue(idx) Then
+   Select Case m_tLevel.tWinningCondition(idx).nType
+   Case 0 'logical
+    i = m_tLevel.tWinningCondition(idx).nParams(2)
+    j = 0
+    Do While i > 0
+     If m_nWinningConditionValue(i) Xor ((m_tLevel.tWinningCondition(i).nFlags And 2&) <> 0) Then
+      j = j + 1
+     End If
+     i = m_tLevel.tWinningCondition(i).NextSibling
+    Loop
+    m_nWinningConditionValue(idx) = _
+    j >= m_tLevel.tWinningCondition(idx).nParams(0) And _
+    j <= m_tLevel.tWinningCondition(idx).nParams(1)
+   Case 1 'move
+    m_nWinningConditionValue(idx) = False
+    For i = 0 To m_tLevel.tWinningCondition(idx).nParams(0) - 1
+     j = m_tLevel.tWinningCondition(idx).nSrcIndex(i)
+     If j > 0 And j <= m_tLevel.nPolyhedronCount Then
+      If (m_tPolyInst(j).nFlags And &H100&) <> 0 And m_tPolyInst(j).nAnimType = 0 Then
+       p = m_objPoly(j).Position
+       If p.p.nMapDataIndex = m_tLevel.tWinningCondition(idx).tPos.nMapDataIndex Then
+        If p.p.x = m_tLevel.tWinningCondition(idx).tPos.x Then
+         If p.p.y = m_tLevel.tWinningCondition(idx).tPos.y Then
+          If p.p.z = m_tLevel.tWinningCondition(idx).tPos.z Then
+           m_objPoly(j).GetCurrentSize j, k
+           If j = m_tLevel.tWinningCondition(idx).nParams(1) Then
+            If k = m_tLevel.tWinningCondition(idx).nParams(2) Then
+             m_nWinningConditionValue(idx) = True
+             Exit For
+            End If
+           End If
+          End If
+         End If
+        End If
+       End If
+      End If
+     End If
+    Next i
+   Case 2 'checkpoint
+    j = m_tLevel.nCheckPointCount - m_nCheckPointRemaining
+    m_nWinningConditionValue(idx) = _
+    j >= m_tLevel.tWinningCondition(idx).nParams(0) And _
+    j <= m_tLevel.tWinningCondition(idx).nParams(1)
+   Case 3 'game-finished event
+    m_nWinningConditionValue(idx) = m_bGameFinishedEvent
+   End Select
+  End If
+ Next idx
+ i = m_tLevel.nWinningConditionCount
+ m_bGameFinished = m_nWinningConditionValue(i) Xor ((m_tLevel.tWinningCondition(i).nFlags And 2&) <> 0)
+ m_bGameFinishedEvent = False
+End If
 '///tile animation
 For idx = 1 To m_nTileAnimMax
  i = m_tTileAnim(idx).nInstIndex
@@ -744,6 +803,12 @@ If Not GenerateMeshFromLevelDataEx(m_tLevel, m_tMapDataInst, m_tLevelInst, bRunt
 m_nCurrentPolyhedron = 0
 m_nCheckPointRemaining = m_tLevel.nCheckPointCount
 '///
+If m_tLevel.nWinningConditionCount > 0 Then
+ ReDim m_nWinningConditionValue(1 To m_tLevel.nWinningConditionCount)
+Else
+ Erase m_nWinningConditionValue
+End If
+'///
 If m_tLevel.nPolyhedronCount > 0 Then
  ReDim m_objPoly(1 To m_tLevel.nPolyhedronCount)
  ReDim m_tPolyInst(1 To m_tLevel.nPolyhedronCount)
@@ -794,6 +859,7 @@ Erase m_tPolyInst
 Erase m_tEvent
 Erase m_tMapDataInst
 Erase m_tTileAnim
+Erase m_nWinningConditionValue
 m_tLevelInst = t
 m_nCurrentPolyhedron = 0
 m_nEventStart = 0
@@ -804,6 +870,7 @@ m_nTileAnimMax = 0
 m_nTileAnimFirstUnused = 0
 m_bGameOver = False
 m_bGameFinished = False
+m_bGameFinishedEvent = False
 '///
 m_bRuntimeDirty = True
 End Sub
@@ -1398,6 +1465,7 @@ For i = 1 To objNode.SubNodeCount
    Case Else
     s = Replace(s, "x", "*")
     s = Replace(s, "X", "*")
+    s = Replace(s, ",", "*")
     k = Val(s) And &HF&
     If k = 0 Then
      Debug.Assert False
@@ -1506,6 +1574,157 @@ tPoly.nFlags = nFlags
 ParseMapPolyhedronDataFromNode = True
 End Function
 
+'<=0: failed
+'>0 : winning condition node index
+Friend Function ParseWinningConditionFromNode(ByVal objNode As clsTreeStorageNode, ByRef tLevel As typeLevelData) As Long
+Dim i As Long, j As Long, k As Long, m As Long, n As Long
+Dim v As Variant
+Dim s As String
+Dim t As typeMapData_WinningCondition
+'///
+Select Case objNode.GetNameAsString
+Case "winningCondition"
+ t.nType = 0
+ t.nParams(0) = &H80000000
+ t.nParams(1) = &H80000000
+Case "moveCondition"
+ t.nType = 1
+ t.nParams(1) = 1
+ t.nParams(2) = 1
+Case "checkpointCondition"
+ t.nType = 2
+ t.nParams(0) = &H80000000
+ t.nParams(1) = &H80000000
+Case "gameFinishedCondition"
+ t.nType = 3
+Case Else
+ Debug.Assert False
+ Exit Function
+End Select
+'///get attributes
+m = objNode.SubNodeCount
+For i = 1 To m
+ If objNode.SubNodeType(i) = 0 Then
+  s = objNode.GetSubNodeValueAsString(i)
+  Select Case objNode.GetSubNodeNameAsString(i)
+  Case "persistent"
+   t.nFlags = pFlagsFromBooleanString(s, t.nFlags, &H1&)
+  Case "invert"
+   t.nFlags = pFlagsFromBooleanString(s, t.nFlags, &H2&)
+  Case "src"
+   If t.nType = 1 Then
+    On Error Resume Next
+    Err.Clear
+    v = Split(s, "|")
+    t.nParams(0) = UBound(v) + 1
+    If Err.Number Then t.nParams(0) = 0
+    On Error GoTo 0
+    '///
+    If t.nParams(0) > 0 Then
+     ReDim t.nSrcIndex(t.nParams(0) - 1)
+     For j = 0 To t.nParams(0) - 1
+      t.nSrcIndex(j) = FindPolyhedron(Trim(v(j)))
+      If t.nSrcIndex(j) = 0 Then
+       Debug.Assert False
+       Exit Function
+      End If
+     Next j
+    End If
+   Else
+    Debug.Assert False
+    Exit Function
+   End If
+  Case "target"
+   If t.nType = 1 Then
+    If Not FindPosition(s, t.tPos) Then
+     Debug.Assert False
+     Exit Function
+    End If
+   Else
+    Debug.Assert False
+    Exit Function
+   End If
+  Case "targetSize"
+   If t.nType = 1 Then
+    s = Replace(s, "x", ",")
+    s = Replace(s, "X", ",")
+    s = Replace(s, "*", ",")
+    j = InStr(1, s, ",")
+    If j > 0 Then
+     t.nParams(1) = Val(Left(s, j - 1))
+     t.nParams(2) = Val(Mid(s, j + 1))
+    Else
+     t.nParams(1) = Val(s)
+     t.nParams(2) = 1
+    End If
+   Else
+    Debug.Assert False
+    Exit Function
+   End If
+  Case "count"
+   If t.nType = 0 Or t.nType = 2 Then
+    s = Trim(s)
+    j = InStr(1, s, "~")
+    '///
+    If j = 1 Then
+     t.nParams(0) = 0
+    Else
+     If Left(s, 1) = "-" Then t.nParams(0) = &H80000000 Or Val(Mid(s, 2)) _
+     Else t.nParams(0) = Val(s)
+    End If
+    '///
+    If j > 0 Then
+     s = Trim(Mid(s, j + 1))
+     If s = vbNullString Then
+      t.nParams(1) = &H7FFFFFFF
+     Else
+      If Left(s, 1) = "-" Then t.nParams(1) = &H80000000 Or Val(Mid(s, 2)) _
+      Else t.nParams(1) = Val(s)
+     End If
+    Else
+     t.nParams(1) = t.nParams(0)
+    End If
+   Else
+    Debug.Assert False
+    Exit Function
+   End If
+  Case Else
+   Debug.Assert False
+   Exit Function
+  End Select
+ End If
+Next i
+'///get subnodes
+If t.nType = 0 Then
+ j = 0
+ n = 0
+ For i = 1 To m
+  If objNode.SubNodeType(i) Then
+   k = ParseWinningConditionFromNode(objNode.SubNodeObject(i), tLevel)
+   If k = 0 Then Exit Function
+   '///
+   If j = 0 Then t.nParams(2) = k _
+   Else tLevel.tWinningCondition(j).NextSibling = k
+   j = k
+   '///
+   n = n + 1
+  End If
+ Next i
+ If t.nParams(0) And &H80000000 Then t.nParams(0) = n - (t.nParams(0) And &H7FFFFFFF)
+ If t.nParams(1) And &H80000000 Then t.nParams(1) = n - (t.nParams(1) And &H7FFFFFFF)
+ElseIf t.nType = 2 Then
+ n = tLevel.nCheckPointCount And &H7FFFFFFF
+ If t.nParams(0) And &H80000000 Then t.nParams(0) = n - (t.nParams(0) And &H7FFFFFFF)
+ If t.nParams(1) And &H80000000 Then t.nParams(1) = n - (t.nParams(1) And &H7FFFFFFF)
+End If
+'///over
+i = tLevel.nWinningConditionCount + 1
+tLevel.nWinningConditionCount = i
+ReDim Preserve tLevel.tWinningCondition(1 To i)
+tLevel.tWinningCondition(i) = t
+ParseWinningConditionFromNode = i
+End Function
+
 Friend Function AddLevelDataFromNodeEx(ByVal objNode As clsTreeStorageNode, ByRef tLevel As typeLevelData) As Boolean
 Dim i As Long
 Dim obj As clsTreeStorageNode
@@ -1542,6 +1761,10 @@ For i = 1 To objNode.SubNodeCount
    tLevel.nPolyMergeCount = tLevel.nPolyMergeCount + 1
    ReDim Preserve tLevel.tPolyMerge(1 To tLevel.nPolyMergeCount)
    If Not ParseMapPolyMergeDataFromNode(obj, tLevel.tPolyMerge(tLevel.nPolyMergeCount)) Then Exit Function
+  Case "winningCondition"
+   tLevel.nWinningConditionCount = 0
+   Erase tLevel.tWinningCondition
+   If ParseWinningConditionFromNode(obj, tLevel) <= 0 Then Exit Function
   End Select
  End If
 Next i
@@ -2542,6 +2765,68 @@ For i = 1 To m_tLevel.nMapDataCount
 Next i
 End Function
 
+Friend Function FindPosition(ByRef s As String, ByRef ret As typeMapPosition) As Boolean
+FindPosition = FindPositionEx(m_tLevel, s, ret)
+End Function
+
+Friend Function FindPositionEx(ByRef tLevel As typeLevelData, ByVal s As String, ByRef ret As typeMapPosition) As Boolean
+Dim s1 As String
+Dim i As Long, j As Long, k As Long
+Dim idx As Long
+'///
+i = InStr(1, s, "(")
+If i > 0 Then
+ s1 = Mid(s, i + 1)
+ s = Left(s, i - 1)
+Else
+ i = InStr(1, s, ".")
+ If i > 0 Then
+  s1 = Mid(s, i + 1)
+  s = Left(s, i - 1)
+  i = -1
+ End If
+End If
+idx = Val(s)
+If idx <= 0 Or idx > tLevel.nMapDataCount Then
+ idx = FindMapData(s)
+ If idx = 0 Then Exit Function
+End If
+ret.nMapDataIndex = idx
+ret.x = 0
+ret.y = 0
+ret.z = 0
+If i > 0 Then
+ ret.x = Val(s1) 'FIXME: no sanity check :-3
+ i = InStr(1, s1, ",")
+ If i > 0 Then
+  ret.y = Val(Mid(s1, i + 1))
+  i = InStr(i + 1, s1, ",")
+  If i > 0 Then
+   ret.z = Val(Mid(s1, i + 1))
+  End If
+ End If
+ElseIf i < 0 Then
+ Do
+  For k = 0 To tLevel.tMapData(idx).nSize(2) - 1
+   For j = 0 To tLevel.tMapData(idx).nSize(1) - 1
+    For i = 0 To tLevel.tMapData(idx).nSize(0) - 1
+     If tLevel.tMapData(idx).sTagArray(i, j, k) = s1 Then
+      ret.x = i
+      ret.y = j
+      ret.z = k
+      Exit Do
+     End If
+    Next i
+   Next j
+  Next k
+  '///not found
+  Exit Function
+ Loop While False
+End If
+'///over
+FindPositionEx = True
+End Function
+
 Friend Sub DispatchTileEvent(ByRef t As typeMapDataEvent, ByRef tEvent As typeTileEventAction)
 Dim tNew As typeMapDataEvent
 Dim mat As D3DMATRIX
@@ -2694,8 +2979,11 @@ Case 9 'absolute-move
  Debug.Print "TODO:absolute-move"
 Case 10 'game-finished
  'TODO:animation (?)
- If m_nCheckPointRemaining <= 0 Then _
- m_bGameFinished = True 'test only. TODO:custom winning condition support
+ If m_tLevel.nWinningConditionCount > 0 Then
+  m_bGameFinishedEvent = True
+ ElseIf m_nCheckPointRemaining <= 0 Then
+  m_bGameFinished = True 'test only. TODO:custom winning condition support
+ End If
 Case 11 'game-finished:unconditional
  'TODO:animation (?)
  m_bGameFinished = True 'test only
