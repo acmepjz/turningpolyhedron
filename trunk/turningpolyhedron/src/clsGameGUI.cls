@@ -659,7 +659,7 @@ For i = 1 To m_nLevelIdxCount
   Exit For
  End If
 Next i
-If i > m_nLevelIdxCount Then m_nLevelIdxCount = 0
+If i > m_nLevelIdxCount Then i = 0
 '///verify
 bErr = True
 idx = objFileMgr.LoadFile(s)

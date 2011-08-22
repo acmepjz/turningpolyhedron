@@ -300,7 +300,9 @@ Dim b As Boolean
 '///
 Select Case nCurrentState
 Case 0 'not moveable
-Case 1 'moveable
+Case -1 'falling
+ StartPolyhedronAnimationByType nPolyhedronIndex, -1
+Case 1 '(???) moveable
  If nReserved1 And 7& Then
   '???????? TODO:(nReserved1) tilt animation
   StartPolyhedronAnimationByType nPolyhedronIndex, (nReserved1 And 7&) Or 8&
@@ -318,8 +320,14 @@ Case 1 'moveable
   StartPolyhedronAnimationByType nPolyhedronIndex, 1
   SetPolyhedronAnimationStack4 nPolyhedronIndex
  End If
-Case -1 'falling
- StartPolyhedronAnimationByType nPolyhedronIndex, -1
+Case 2 'slip
+ StartPolyhedronAnimationByType nPolyhedronIndex, 2
+ '///
+ t1 = m_objPoly(nPolyhedronIndex).PolyhedronState(True)
+ t2 = m_objPoly(nPolyhedronIndex).PolyhedronState
+ t2.nTiltY = t2.nTiltY * t1.nTiltX - t1.nTiltY * t2.nTiltX
+ Debug.Assert t2.nTiltY <= 0
+ SetPolyhedronAnimationStack4 nPolyhedronIndex, (t2.nTiltY < 0) And 8& '???
 Case Else
  Debug.Assert False
 End Select
@@ -398,11 +406,11 @@ For idx = 1 To m_tLevel.nPolyhedronCount
  If m_tPolyInst(idx).nFlags And &H100& Then
   nAnimType = m_tPolyInst(idx).nAnimType
   Select Case nAnimType
-  Case 1, &H8& To &HF& 'rolling
+  Case 1, 2, &H8& To &HF& 'rolling
    f = m_tPolyInst(idx).fAnimValue(0) + dt
    If f > m_fAnimTime Then
     StartPolyhedronAnimationByStack idx
-    If nAnimType = 1 Or (nAnimType And 1&) = 0 Then
+    If m_tPolyInst(idx).nAnimType = 0 Then '?
      m_bPolyhedronDirty = True
      m_objPoly(idx).SendEvent EventTypeOnEnter
      m_objPoly(idx).SendEvent EventTypeOnMoveEnter
@@ -683,6 +691,36 @@ For idx = 1 To m_tLevel.nPolyhedronCount
      End Select
      mat1.m44 = 1
     End With
+    '///
+    Select Case nAnimType
+    Case 2 'slip
+     p = m_objPoly(idx).Position(True)
+     m_objPoly(idx).GetCurrentSizeEx p, i, j, k
+     With m_tLevel.tMapData(p.p.nMapDataIndex)
+      Select Case (p.nGroundEdgeIndex - p.nFirstEdgeIndex) And 3&
+      Case 0
+       v.x = .fPos(0).x + p.p.x * .fPos(1).x + p.p.y * .fPos(2).x + p.p.z * .fPos(3).x
+       v.y = .fPos(0).y + p.p.x * .fPos(1).y + p.p.y * .fPos(2).y + p.p.z * .fPos(3).y
+       v.z = .fPos(0).z + p.p.x * .fPos(1).z + p.p.y * .fPos(2).z + p.p.z * .fPos(3).z
+      Case 1
+       v.x = .fPos(0).x + p.p.x * .fPos(1).x + (p.p.y + j) * .fPos(2).x + p.p.z * .fPos(3).x
+       v.y = .fPos(0).y + p.p.x * .fPos(1).y + (p.p.y + j) * .fPos(2).y + p.p.z * .fPos(3).y
+       v.z = .fPos(0).z + p.p.x * .fPos(1).z + (p.p.y + j) * .fPos(2).z + p.p.z * .fPos(3).z
+      Case 2
+       v.x = .fPos(0).x + (p.p.x + i) * .fPos(1).x + (p.p.y + j) * .fPos(2).x + p.p.z * .fPos(3).x
+       v.y = .fPos(0).y + (p.p.x + i) * .fPos(1).y + (p.p.y + j) * .fPos(2).y + p.p.z * .fPos(3).y
+       v.z = .fPos(0).z + (p.p.x + i) * .fPos(1).z + (p.p.y + j) * .fPos(2).z + p.p.z * .fPos(3).z
+      Case 3
+       v.x = .fPos(0).x + (p.p.x + i) * .fPos(1).x + p.p.y * .fPos(2).x + p.p.z * .fPos(3).x
+       v.y = .fPos(0).y + (p.p.x + i) * .fPos(1).y + p.p.y * .fPos(2).y + p.p.z * .fPos(3).y
+       v.z = .fPos(0).z + (p.p.x + i) * .fPos(1).z + p.p.y * .fPos(2).z + p.p.z * .fPos(3).z
+      End Select
+     End With
+     f = m_tPolyInst(idx).fAnimValue(0) / m_fAnimTime
+     mat1.m41 = v.x + (mat1.m41 - v.x) * f
+     mat1.m42 = v.y + (mat1.m42 - v.y) * f
+     mat1.m43 = v.z + (mat1.m43 - v.z) * f
+    End Select
     '///
     D3DXMatrixMultiply m_tPolyInst(idx).matWorld, mat, mat1
     '///get center pos
@@ -2042,6 +2080,8 @@ Case "slippery"
  t.nType = 2
 Case "superSlippery"
  t.nType = 3
+Case "blocked"
+ t.nType = 4
 Case "game-over"
  j = 0
  Select Case s1
@@ -2176,14 +2216,14 @@ For ii = 1 To ret.nConditionCount
     lps = lps - 1
    End If
   Else
-   lps = InStr(1, s, "!")
+   lps = InStr(1, s, "~")
    If lps > 0 Then
-    If Mid(s, lps + 1, 1) = "!" Then
+    s1 = Trim(Mid(s, lps + 1))
+    If Mid(s, lps - 1, 1) = "!" Then
      nCompareType = 3
-     s1 = Trim(Mid(s, lps + 2))
+     lps = lps - 1
     Else
      nCompareType = 2
-     s1 = Trim(Mid(s, lps + 1))
     End If
    Else
     Debug.Assert False
@@ -2645,6 +2685,7 @@ Dim p As typeMapPosition
 Dim tState As typePolyhedronState
 '///
 ret.nType = -1
+ret.nTileType = 0
 ret.nObjType = 0
 '///check if it's on some polyhedron
 For idx = 1 To m_tLevel.nPolyhedronCount
@@ -2669,11 +2710,13 @@ For idx = 1 To m_tLevel.nPolyhedronCount
         If m_tPolyInst(idx).nFlags And &H40& Then ret.nType = &H80000000 Or k _
         Else ret.nType = &H80010000 Or k
        End If
+       ret.nTileType = &H80000000 Or idx
        ret.nObjType = m_tLevel.tPolyhedron(idx).nObjType
        Exit Sub
       ElseIf tPos.z = p.z + k And (m_tPolyInst(idx).nFlags And &H10&) <> 0 And tState.nTiltY = 0 Then
        If ret.nType < 0 Then
         ret.nType = 0
+        ret.nTileType = &H80000000 Or idx
         ret.nObjType = m_tLevel.tPolyhedron(idx).nObjType
        End If
       End If
@@ -2719,11 +2762,13 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
       If ez > nHeight Then ez = nHeight
       If (j And &H200&) = 0 Then ret.nType = &H80000000 Or ez _
       Else ret.nType = &H80010000 Or ez
+      ret.nTileType = i
       ret.nObjType = m_tTileType(i).nObjType
       Exit Sub
      ElseIf ez = 0 And (j And &H400&) = 0 Then 'supported
       If ret.nType < 0 Then
        ret.nType = 0
+       ret.nTileType = i
        ret.nObjType = m_tTileType(i).nObjType
       End If
      End If
@@ -2982,39 +3027,45 @@ Case 10 'game-finished
  If m_tLevel.nWinningConditionCount > 0 Then
   m_bGameFinishedEvent = True
  ElseIf m_nCheckPointRemaining <= 0 Then
-  m_bGameFinished = True 'test only. TODO:custom winning condition support
+  m_bGameFinished = True
  End If
 Case 11 'game-finished:unconditional
  'TODO:animation (?)
- m_bGameFinished = True 'test only
+ m_bGameFinished = True
 Case 12 'checkpoint
  m_nCheckPointRemaining = m_nCheckPointRemaining - 1
 Case &H100 To &H1FF 'game-over:*
- m_bPolyhedronDirty = True
- Select Case tEvent.nType
- Case &H103, &H105 'game-over:*:2
-  i = GetMapDataIndirect(t.p)
-  If i <= 0 Then Exit Sub
-  '///
-  k = m_tMapDataInst(t.p.nMapDataIndex).nInstIndex(t.p.x, t.p.y, t.p.z)
-  If k > 0 Then
-   'TODO:correct animation
-   StartTileAnimation k, -1
-  End If
-  m_tMapDataInst(t.p.nMapDataIndex).nTypeArray(t.p.x, t.p.y, t.p.z) = 0
-  m_tMapDataInst(t.p.nMapDataIndex).nInstIndex(t.p.x, t.p.y, t.p.z) = 0
- Case &H101 'game-over:immediately
-  m_bReset = True
- Case Else 'TODO:other type
-  If t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
-   StartPolyhedronAnimation t.nPolyhedronIndex, -1, 0 'TODO:game over type
-  Else 'err???
-   m_bReset = True
-  End If
- End Select
+ ProcessGameOver t.nPolyhedronIndex, tEvent.nType, t.p
 Case Else
  Debug.Assert False
  Exit Sub
+End Select
+End Sub
+
+Friend Sub ProcessGameOver(ByVal nPolyhedronIndex As Long, ByVal nType As Long, ByRef p As typeMapPosition)
+Dim i As Long, k As Long
+'///
+m_bPolyhedronDirty = True
+Select Case nType
+Case &H103, &H105 'game-over:*:2
+ i = GetMapDataIndirect(p)
+ If i <= 0 Then Exit Sub
+ '///
+ k = m_tMapDataInst(p.nMapDataIndex).nInstIndex(p.x, p.y, p.z)
+ If k > 0 Then
+  'TODO:correct animation
+  StartTileAnimation k, -1
+ End If
+ m_tMapDataInst(p.nMapDataIndex).nTypeArray(p.x, p.y, p.z) = 0
+ m_tMapDataInst(p.nMapDataIndex).nInstIndex(p.x, p.y, p.z) = 0
+Case &H101 'game-over:immediately
+ m_bReset = True
+Case Else 'TODO:other type
+ If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
+  StartPolyhedronAnimation nPolyhedronIndex, -1, 0 'TODO:game over type
+ Else 'err???
+  m_bReset = True
+ End If
 End Select
 End Sub
 

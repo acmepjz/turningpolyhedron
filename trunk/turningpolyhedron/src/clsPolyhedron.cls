@@ -23,6 +23,8 @@ Private m_tOldPos As typePolyhedronPosition
 Private m_tState As typePolyhedronState
 Private m_tOldState As typePolyhedronState
 
+Private m_nSlipDirection As Long '0=disabled 1=direction 0,etc...
+
 Friend Property Get PolyhedronFlags() As Long
 PolyhedronFlags = m_tLogic.nFlags
 End Property
@@ -309,12 +311,46 @@ CanChangeGroundEdgeIndex = True
 End Function
 
 Friend Sub CheckPolyhedronStateAndResponse()
+Dim i As Long
+Dim tPos As typePolyhedronPosition
+Dim tState As typePolyhedronState
+'///
 CheckPolyhedronStateEx m_tPos, m_tState, False
 '///response
 'TODO:if state changed then play some animation (e.g. tilt angle changed)
 Select Case m_tState.nState
 Case -1 'falling
  objGameMgr.StartPolyhedronAnimation m_nIndex, -1, 0
+Case 2 'slippery
+ If m_nSlipDirection > 0 Then
+  tPos = m_tPos
+  If objGameMgr.GetAdjacentPositionInPlace(tPos.p, m_nSlipDirection - 1, i) Then
+   'TODO:non-retangular shape
+   tPos.nFirstEdgeIndex = (tPos.nFirstEdgeIndex - i + m_nSlipDirection - 1) And 3& '???
+   '///check
+   CheckPolyhedronStateEx tPos, tState, False
+   If tState.nState Then
+    m_tOldPos = m_tPos
+    m_tOldState = m_tState
+    m_tPos = tPos
+    m_tState = tState
+    'TODO:events
+    'wrong code because some tile receives event more than one
+    SendEventEx EventTypeOnLeave, m_tOldState
+    SendEventEx EventTypeOnMoveLeave, m_tOldState
+    'animation
+    objGameMgr.StartPolyhedronAnimation m_nIndex, 2, 0
+    'over
+    m_nSlipDirection = i + 1
+   Else
+    m_nSlipDirection = 0
+   End If
+  Else 'err???
+   m_nSlipDirection = 0
+  End If
+ End If
+Case &H100 To &H1FF 'game over
+ objGameMgr.ProcessGameOver m_nIndex, m_tState.nState, m_tPos.p
 End Select
 End Sub
 
@@ -342,6 +378,10 @@ ret.nOnGroundCount = 0
 Erase ret.tOnGroundPos
 ret.nHitTestCount = 0
 Erase ret.tHitTestPos
+ret.nTileTypeCount = 0
+Erase ret.nTileTypes
+ret.nObjTypeCount = 0
+Erase ret.nObjTypes
 '///
 Select Case m_tLogic.nShape
 Case &H111 To &HFFF
@@ -428,8 +468,27 @@ Case &H111 To &HFFF
       ReDim Preserve ret.tOnGroundPos(1 To nMax)
      End If
      ret.tOnGroundPos(ret.nOnGroundCount) = p1
+     '///add type
+     If tHitTest.nTileType Then
+      For tmp = 1 To ret.nTileTypeCount
+       If ret.nTileTypes(tmp) = tHitTest.nTileType Then Exit For
+      Next tmp
+      If tmp > ret.nTileTypeCount Then
+       ret.nTileTypeCount = ret.nTileTypeCount + 1
+       ReDim Preserve ret.nTileTypes(1 To ret.nTileTypeCount)
+       ret.nTileTypes(ret.nTileTypeCount) = tHitTest.nTileType
+      End If
+     End If
      '///
-     'TODO:check object interaction
+     For tmp = 1 To ret.nObjTypeCount
+      If ret.nObjTypes(tmp) = tHitTest.nObjType Then Exit For
+     Next tmp
+     If tmp > ret.nObjTypeCount Then
+      ret.nObjTypeCount = ret.nObjTypeCount + 1
+      ReDim Preserve ret.nObjTypes(1 To ret.nObjTypeCount)
+      ret.nObjTypes(ret.nObjTypeCount) = tHitTest.nObjType
+     End If
+     '///
     End If
    Case -1 'no supporter
     If j = 1 Then bFirstEmpty = True
@@ -468,6 +527,11 @@ Case &H111 To &HFFF
         ret.nOnGroundCount = 0
         nMax = 16
         ReDim ret.tOnGroundPos(1 To nMax)
+        '///???
+        ret.nTileTypeCount = 0
+        Erase ret.nTileTypes
+        ret.nObjTypeCount = 0
+        Erase ret.nObjTypes
        End If
        '///record
        ret.nOnGroundCount = ret.nOnGroundCount + 1
@@ -476,8 +540,27 @@ Case &H111 To &HFFF
         ReDim Preserve ret.tOnGroundPos(1 To nMax)
        End If
        ret.tOnGroundPos(ret.nOnGroundCount) = p1
+       '///add type
+       If tHitTest.nTileType Then
+        For tmp = 1 To ret.nTileTypeCount
+         If ret.nTileTypes(tmp) = tHitTest.nTileType Then Exit For
+        Next tmp
+        If tmp > ret.nTileTypeCount Then
+         ret.nTileTypeCount = ret.nTileTypeCount + 1
+         ReDim Preserve ret.nTileTypes(1 To ret.nTileTypeCount)
+         ret.nTileTypes(ret.nTileTypeCount) = tHitTest.nTileType
+        End If
+       End If
        '///
-       'TODO:check object interaction
+       For tmp = 1 To ret.nObjTypeCount
+        If ret.nObjTypes(tmp) = tHitTest.nObjType Then Exit For
+       Next tmp
+       If tmp > ret.nObjTypeCount Then
+        ret.nObjTypeCount = ret.nObjTypeCount + 1
+        ReDim Preserve ret.nObjTypes(1 To ret.nObjTypeCount)
+        ret.nObjTypes(ret.nObjTypeCount) = tHitTest.nObjType
+       End If
+       '///
       End If
      Else 'not tiltable
       If tmp > 0 Then
@@ -493,6 +576,29 @@ Case &H111 To &HFFF
    '///
   Next i
  Next j
+ '///check object interaction
+ If nState = 1 Then
+  j = 0
+  For i = 1 To ret.nObjTypeCount
+   k = objGameMgr.GetObjectInteractionType(m_tLogic.nObjType, ret.nObjTypes(i))
+   Select Case k
+   Case 0 'moveable
+   Case 1 'not-moveable (???)
+    Debug.Print "TODO:not-moveable"
+   Case 2 'slippery
+    If ret.nTiltY = 0 Then j = j + 1 '??
+   Case 3 'superSlippery
+    j = ret.nObjTypeCount + 1
+   Case 4 'blocked (???)
+    nState = 0
+   Case &H100& 'game-over (falling)
+    If nState = 1 Then nState = -1
+   Case &H101& To &H1FF& 'game-over (other)
+    If nState = 1 Then nState = k
+   End Select
+  Next i
+  If j > 0 And j >= ret.nObjTypeCount And nState = 1 Then nState = 2
+ End If
  '///over, calc tangent
  ret.nState = nState
  If ret.nTiltY > 0 Then
@@ -553,7 +659,7 @@ End Function
 
 '0=can't move
 '1=OK
-'other --> same as CheckPolyhedronStateEx
+'(obsolete) other --> same as CheckPolyhedronStateEx
 'TODO:etc.
 Friend Function Move(ByVal nDirection As Long, Optional ByVal bAllowFalling As Boolean) As Long
 Dim tPos As typePolyhedronPosition
@@ -561,6 +667,8 @@ Dim tState As typePolyhedronState
 Dim nTiltGroundEdgeDelta As Long '????????
 Dim m As Long
 Dim bMove As Boolean
+'///
+m_nSlipDirection = 0
 '///check if other polyhedron is on
 If objGameMgr.IsOtherPolyhedronOn(m_nIndex) Then Exit Function
 '///get new nGroundEdgeIndex
@@ -596,29 +704,31 @@ End If
 'check new state
 bMove = False
 Select Case tState.nState
-Case 1 'TODO:etc.
- bMove = True
+Case 0
 Case -1 'falling
  bMove = bAllowFalling
+Case Else 'TODO:etc.
+ bMove = True
 End Select
 If bMove Then
  m_tOldPos = m_tPos
  m_tOldState = m_tState
  m_tPos = tPos
  m_tState = tState
+ '///
+ If tState.nState = 2 Then m_nSlipDirection = nDirection + 1
  '///update animation (TEST ONLY)
- If tState.nState = -1 Then tState.nState = 1
  If nTiltGroundEdgeDelta And 1& Then
-  objGameMgr.StartPolyhedronAnimation m_nIndex, tState.nState, nTiltGroundEdgeDelta
+  objGameMgr.StartPolyhedronAnimation m_nIndex, 1, nTiltGroundEdgeDelta
  Else
   'TODO:etc.
-  objGameMgr.StartPolyhedronAnimation m_nIndex, tState.nState, 0
+  objGameMgr.StartPolyhedronAnimation m_nIndex, 1, 0
  End If
  '///onLeave and onMoveLeave events
  SendEventEx EventTypeOnLeave, m_tOldState
  SendEventEx EventTypeOnMoveLeave, m_tOldState
  '///
- Move = m_tState.nState
+ Move = (m_tState.nState <> 0) And 1& '??
 End If
 End Function
 
@@ -640,6 +750,8 @@ If tState.nTiltY = 0 Then
   tEvent.nPolyhedronIndex = m_nIndex
   tEvent.fPressure = tState.fPressure
   tEvent.nOnGroundCount = tState.nOnGroundCount
+  tEvent.nTileTypeCount = tState.nTileTypeCount
+  tEvent.nObjTypeCount = tState.nObjTypeCount
   '///
   Select Case nEventType
   Case EventTypeOnHitTest
