@@ -257,9 +257,10 @@ Public Type typeObjectInteractionType
  nType As Long
  '---should use only 31 bits
  '0=moveable (default)
- '1=not-moveable
+ '1=not-moveable (???)
  '2=slippery
  '3=superSlippery
+ '4=blocked (???)
  '&H100=game-over
  '&H101=game-over:immediately
  '&H102=game-over:breakdown
@@ -577,6 +578,7 @@ Public Type typePolyhedronInstance
  nAnimType As Long
  '0=none
  '1=rolling (standard)
+ '2=slip (?)
  '&H8-&HF=rolling+nTiltGroundEdgeDelta (&H8 or nTiltGroundEdgeDelta) (???)
  '---bit0=rolling? bit1=direction bit2=fall to ground?
  '---&H9 &HB &HD &HF = rolling
@@ -611,6 +613,8 @@ Public Type typePolyhedronState
  '-1=fall (TODO:if it isn't fragile then it's OK)
  '0 =can't move
  '1 =OK
+ '2 =slippery (?)
+ '&H100-&H1FF:game-over (?)
  'TODO:etc.
  '///
  nTiltX As Long 'x pos (should always>0)
@@ -624,6 +628,13 @@ Public Type typePolyhedronState
  '///
  nHitTestCount As Long
  tHitTestPos() As typeMapPosition '1-based
+ '///
+ nTileTypeCount As Long
+ nTileTypes() As Long '1-based
+ '///
+ nObjTypeCount As Long
+ nObjTypes() As Long '1-based
+ '///
  'TODO:more
 End Type
 
@@ -633,6 +644,11 @@ Public Type typeMapDataHitTest
  '&H8000xxxx : this position is blocked, low-word is block height (1-nHeight)
  '-1 : can't stand on there (maybe no supporter or something's supporter=false)
  '0: stand on something
+ '///
+ nTileType As Long
+ '&H8000xxxx some polyhedron
+ '>=0: some tile
+ '///
  nObjType As Long
 End Type
 
