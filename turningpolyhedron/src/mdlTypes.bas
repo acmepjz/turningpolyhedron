@@ -289,6 +289,11 @@ Public Type typeTileEventCondition
  '2=onGroundCount[n]
  '3=onDifferentType[b]
  '4=eventType[s]
+ '---
+ '5=tileTypeCount[n]
+ '6=objectTypeCount[n]
+ '7=checkpoint[n]
+ '8=checkpointRemaining[n]
  '----polyhedron properties[b]
  '--&H101=discardable
  '--&H102=main
@@ -301,6 +306,12 @@ Public Type typeTileEventCondition
  '----other polyhedron properties
  '--&H121=objectType [s]
  '--&H122=objectID [s]
+ '----POLYHEDRON EVENT ONLY
+ '&H1001=tileType [s]
+ '&H1002=objectTypeContains [s]
+ '&H1003=tileTypeContains [s]
+ '&H1004=target [s]
+ '&H1005=targetSize [s]
  '========data type
  '1 [b]=boolean
  '2 [n]=number(integer or float)
@@ -308,8 +319,8 @@ Public Type typeTileEventCondition
  nCompareType As Long
  '0="=" (default)
  '1="!="
- '2=like ("!") [string only]
- '3=doesn't like ("!!") [string only]
+ '2=like ("~") [string only]
+ '3=doesn't like ("!~") [string only]
  nValue1 As Single
  nValue2 As Single
  nStringValueCount As Long
@@ -470,6 +481,9 @@ Public Type typeMapData_Polyhedron
  'TODO:controller, etc.
  '///
  nApprIndex As Long 'TODO:
+ '///new:polyhedron events
+ nEventCount As Long
+ tEvent() As typeTileEvent '1-based
 End Type
 
 Public Type typeMapData_PolyhedronMerge
@@ -654,14 +668,22 @@ End Type
 
 Public Type typeMapDataEvent
  nEventType As Long
+ '&H1000000=polyhedron event
  '///event (not polyhedron) position
  p As typeMapPosition
  '///polyhedron arguments
  nPolyhedronIndex As Long
  fPressure As Single
  nOnGroundCount As Long
- nTileTypeCount As Long 'currently unsupported
- nObjTypeCount As Long 'currently unsupported
+ nTileTypeCount As Long
+ nObjTypeCount As Long
  '///custom event and triggered event
  sEventType As String
+ '////////POLYHEDRON EVENT ONLY
+ nFirstEdgeIndex As Long
+ nGroundFaceIndex As Long
+ nGroundEdgeIndex As Long
+ tOnGroundPos() As typeMapPosition '1-based
+ nTileTypes() As Long '1-based
+ nObjTypes() As Long '1-based
 End Type

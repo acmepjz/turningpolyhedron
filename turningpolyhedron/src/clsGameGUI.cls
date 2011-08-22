@@ -837,8 +837,9 @@ If m_nRecordPos > 0 Then
    If objGameMgr.CanPlayerMovePolyhedron Then
     i = objGameMgr.MoveCurrentPolyhedron(i)
     If i Then objGameMgr.FollowCurrentPolyhedron = True
-    If i <> 1 Then
-     Debug.Print "???"
+    If i <> 1 Then '???
+     Debug.Print "Invalid move"
+     objLogger.AddMessage "Invalid move", , &HFFFF0000
      bErr = True
     End If
     m_nRecordPos = m_nRecordPos + 1
