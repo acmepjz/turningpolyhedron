@@ -327,25 +327,26 @@ Case 2 'slippery
   If objGameMgr.GetAdjacentPositionInPlace(tPos.p, m_nSlipDirection - 1, i) Then
    'TODO:non-retangular shape
    tPos.nFirstEdgeIndex = (tPos.nFirstEdgeIndex - i + m_nSlipDirection - 1) And 3& '???
+   m_nSlipDirection = 0
    '///check
    CheckPolyhedronStateEx tPos, tState, False
    If tState.nState Then
-    m_tOldPos = m_tPos
-    m_tOldState = m_tState
-    m_tPos = tPos
-    m_tState = tState
-    'TODO:events
-    'wrong code because some tile receives event more than one
-    SendEventEx EventTypeOnLeave, m_tOldState
-    SendEventEx EventTypeOnMoveLeave, m_tOldState
-    'animation
-    objGameMgr.StartPolyhedronAnimation m_nIndex, 2, 0
-    'over
-    m_nSlipDirection = i + 1
-   Else
-    m_nSlipDirection = 0
+    If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX <= 0 Then
+     m_tOldPos = m_tPos
+     m_tOldState = m_tState
+     m_tPos = tPos
+     m_tState = tState
+     'TODO:events
+     'wrong code because some tile receives event more than one
+     SendEventEx EventTypeOnLeave, m_tOldState, m_tOldPos
+     SendEventEx EventTypeOnMoveLeave, m_tOldState, m_tOldPos
+     'animation
+     objGameMgr.StartPolyhedronAnimation m_nIndex, 2, 0
+     'over
+     m_nSlipDirection = i + 1
+    End If
    End If
-  Else 'err???
+  Else
    m_nSlipDirection = 0
   End If
  End If
@@ -725,8 +726,8 @@ If bMove Then
   objGameMgr.StartPolyhedronAnimation m_nIndex, 1, 0
  End If
  '///onLeave and onMoveLeave events
- SendEventEx EventTypeOnLeave, m_tOldState
- SendEventEx EventTypeOnMoveLeave, m_tOldState
+ SendEventEx EventTypeOnLeave, m_tOldState, m_tOldPos
+ SendEventEx EventTypeOnMoveLeave, m_tOldState, m_tOldPos
  '///
  Move = (m_tState.nState <> 0) And 1& '??
 End If
@@ -734,13 +735,13 @@ End Function
 
 Friend Sub SendEvent(ByVal nEventType As Long, Optional ByVal IsOld As Boolean)
 If IsOld Then
- SendEventEx nEventType, m_tOldState
+ SendEventEx nEventType, m_tOldState, m_tOldPos
 Else
- SendEventEx nEventType, m_tState
+ SendEventEx nEventType, m_tState, m_tPos
 End If
 End Sub
 
-Friend Sub SendEventEx(ByVal nEventType As Long, ByRef tState As typePolyhedronState)
+Friend Sub SendEventEx(ByVal nEventType As Long, ByRef tState As typePolyhedronState, ByRef tPos As typePolyhedronPosition)
 Dim tEvent As typeMapDataEvent
 Dim i As Long
 '///
@@ -764,6 +765,19 @@ If tState.nTiltY = 0 Then
     tEvent.p = tState.tOnGroundPos(i)
     objGameMgr.AddMapEvent tEvent
    Next i
+  End Select
+  '///new: polyhedron event
+  Select Case nEventType
+  Case EventTypeOnEnter, EventTypeOnLeave, EventTypeOnMoveEnter, EventTypeOnMoveLeave, EventTypeOnPressKey
+   tEvent.nEventType = nEventType Or &H1000000
+   tEvent.p = tPos.p
+   tEvent.nFirstEdgeIndex = tPos.nFirstEdgeIndex
+   tEvent.nGroundFaceIndex = tPos.nGroundFaceIndex
+   tEvent.nGroundEdgeIndex = tPos.nGroundEdgeIndex
+   tEvent.tOnGroundPos = tState.tOnGroundPos
+   tEvent.nTileTypes = tState.nTileTypes
+   tEvent.nObjTypes = tState.nObjTypes
+   objGameMgr.AddMapEvent tEvent
   End Select
  End If
 End If
