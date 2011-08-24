@@ -4,7 +4,7 @@ Option Explicit
 Public Const FakeDXUISliderSize As Long = 12
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
-Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hWnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
     x As Long
     y As Long
@@ -253,6 +253,9 @@ Public Const d_Pressed1 = &HF88655
 Public Const d_Pressed2 = &HD2370A
 
 Public Sub FakeDXUIPushModalWindow(ByVal nIndex As Long)
+If FakeDXUIModalStackCount > 0 Then
+ If FakeDXUIModalStack(FakeDXUIModalStackCount) = nIndex Then Exit Sub
+End If
 FakeDXUIModalStackCount = FakeDXUIModalStackCount + 1
 If FakeDXUIModalStackCount > FakeDXUIModalStackMax Then
  FakeDXUIModalStackMax = FakeDXUIModalStackMax + 64
@@ -297,7 +300,7 @@ With FakeDXUIControls(1)
  .SetRightEx nRight, 0
  .SetBottomEx nBottom, 0
 End With
-FakeDXUI_IME.Create frmMain.hwnd '?
+FakeDXUI_IME.Create frmMain.hWnd '?
 '///
 ReDim FakeDXUIModalStack(1 To 64)
 FakeDXUIModalStackCount = 0
@@ -469,7 +472,7 @@ FakeDXUIPopup_ToolTipText_Caption = s
 '///
 If x < 0 Or y < 0 Then
  GetCursorPos p
- ScreenToClient frmMain.hwnd, p
+ ScreenToClient frmMain.hWnd, p
  x = p.x
  y = p.y
 End If
@@ -516,7 +519,7 @@ If FakeDXUIControlCount > 0 Then
  d3dd9.SetRenderState D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA
  d3dd9.SetRenderState D3DRS_SCISSORTESTENABLE, 1
  r.x2 = d3dpp.BackBufferWidth
- r.Y2 = d3dpp.BackBufferHeight
+ r.y2 = d3dpp.BackBufferHeight
  d3dd9.SetScissorRect r
  '///render main
  FakeDXUIControls(1).Render

@@ -98,6 +98,7 @@ msgstr "修改消除锯齿选项。"
 
 #. .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
 #. .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#. objText.GetText("Change the game settings.")
 msgid "Change the game settings."
 msgstr "修改游戏设置选项。"
 
@@ -108,6 +109,10 @@ msgstr "修改图形选项。"
 #. , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
 msgid "Change the screen resolution."
 msgstr "设置屏幕分辨率。"
+
+#. objText.GetText("Checkpoints: ") + CStr(m - objGameMgr.CheckPointRemaining) + "/" + CStr(m), _
+msgid "Checkpoints: "
+msgstr "记录点个数: "
 
 #. If DlgTitle = € Then m_sTitle = objText.GetText("Choose folder") Else m_sTitle = DlgTitle
 msgid "Choose folder"
@@ -332,6 +337,10 @@ msgstr "最小化"
 msgid "Modification time"
 msgstr "修改时间"
 
+#. objText.GetText("Moves: ") + CStr(m_nMoves) + vbCrLf + _
+msgid "Moves: "
+msgstr "移动次数: "
+
 #. .AddItem objText.GetText("My Documents"), , -2
 msgid "My Documents"
 msgstr "我的文档"
@@ -383,6 +392,7 @@ msgstr "打开其它文件"
 
 #. 400, 400, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"))
 #. .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#. .AddButton objText.GetText("Options"), &H200&, _
 msgid "Options"
 msgstr "选项"
 

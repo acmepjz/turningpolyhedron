@@ -39,7 +39,7 @@ Private m_idxForm As Long, m_idxLvFile As Long
 Private m_idxForm2 As Long, m_idxLevels As Long
 Private m_idxProgressForm As Long, m_idxProgress As Long
 
-'////////level file verify
+'////////level file verify and other
 
 Implements ITreeStorageBuilder
 
@@ -49,6 +49,7 @@ Private m_nLevelCountInLevelCollection As Long, m_objLevels() As clsTreeStorageN
 Private m_nTreeStorageLevel As Long
 
 Private m_nCurrentLevelIndex As Long, m_sCurrentLevelName As String
+Private m_nMoves As Long
 
 '////////level files
 
@@ -357,6 +358,8 @@ With New clsFakeDXUIMsgBox
  objText.GetText("Restart current level.")
  .AddButton objText.GetText("Other levels"), &H102&, _
  objText.GetText("Back to level selection screen and select another level to play.")
+ .AddButton objText.GetText("Options"), &H200&, _
+ objText.GetText("Change the game settings.")
  .AddButton objText.GetText("Back to main menu"), &H101&, _
  objText.GetText("Abort the game and back to the main menu.")
  i = .MsgBox(objText.GetText("Game paused"), _
@@ -422,6 +425,8 @@ Case &H103&
   End With
  End If
  BackToLevelSelection
+Case &H200&
+ frmSettings.Show
 End Select
 End Sub
 
@@ -513,6 +518,7 @@ Case FakeDXAppEvent_KeyDown
     If objGameMgr.MoveCurrentPolyhedron(i) Then
      objGameMgr.FollowCurrentPolyhedron = True
      objCamera.RealLinearDamping = 1
+     m_nMoves = m_nMoves + 1
     End If
    End If
   End If
@@ -584,6 +590,7 @@ objGameMgr.FollowCurrentPolyhedron = True
 objCamera.RealLinearDamping = 1
 m_sRecord = ""
 m_nRecordPos = 0
+m_nMoves = 0
 End Sub
 
 Friend Sub DisplayLevelInLevelCollection()
@@ -624,8 +631,8 @@ If objGameMgr.AddLevelDataFromNode(obj) Then
  End If
  '///
  objGameMgr.CreateLevelRuntimeData
- '///change mode TODO:
  ShowGame
+ m_nMoves = 0
  LoadNodeAndPlay = True
 Else
  FakeDXAppRemoveDataLevel 2
@@ -836,9 +843,11 @@ If m_nRecordPos > 0 Then
   If i >= 0 And i < 4 Then
    If objGameMgr.CanPlayerMovePolyhedron Then
     i = objGameMgr.MoveCurrentPolyhedron(i)
-    If i Then objGameMgr.FollowCurrentPolyhedron = True
+    If i Then
+     objGameMgr.FollowCurrentPolyhedron = True
+     m_nMoves = m_nMoves + 1
+    End If
     If i <> 1 Then '???
-     Debug.Print "Invalid move"
      objLogger.AddMessage "Invalid move", , &HFFFF0000
      bErr = True
     End If
@@ -886,6 +895,8 @@ Hide
 End Sub
 
 Private Sub IRenderableObject_Render(ByVal nType As enumRenderPassType, ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera, ByVal IsEffectBegin As Boolean, ByVal IsSceneBegin As Boolean)
+Dim m As Long
+'///
 Select Case nType
 Case RenderPass_Main
  If Not IsEffectBegin Then
@@ -910,11 +921,14 @@ Case RenderPass_Main
 Case RenderPass_FogVolume
  'TODO:
 Case RenderPass_Overlay
- If m_sCurrentLevelName <> vbNullString Then
-  If Not IsSceneBegin Then d3dd9.BeginScene
-  FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCurrentLevelName, 0, 16, d3dpp.BackBufferWidth - 16, 32, 0.75, DT_RIGHT Or DT_SINGLELINE Or DT_NOCLIP, , , &HFF000000, , , , , True
-  If Not IsSceneBegin Then d3dd9.EndScene
- End If
+ If Not IsSceneBegin Then d3dd9.BeginScene
+ FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCurrentLevelName, 0, 16, d3dpp.BackBufferWidth - 16, 32, 0.75, DT_RIGHT Or DT_SINGLELINE Or DT_NOCLIP, , , &HFF000000, , , , , True
+ m = objGameMgr.CheckPointCount
+ FakeDXGDIDrawText FakeDXUIDefaultFont, _
+ objText.GetText("Moves: ") + CStr(m_nMoves) + vbCrLf + _
+ objText.GetText("Checkpoints: ") + CStr(m - objGameMgr.CheckPointRemaining) + "/" + CStr(m), _
+ d3dpp.BackBufferWidth - 128, 48, 128, 32, 0.5, DT_NOCLIP, , , &HFF000000, , , , , True
+ If Not IsSceneBegin Then d3dd9.EndScene
 End Select
 End Sub
 
