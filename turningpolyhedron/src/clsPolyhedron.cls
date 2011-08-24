@@ -315,6 +315,8 @@ Dim i As Long
 Dim tPos As typePolyhedronPosition
 Dim tState As typePolyhedronState
 '///
+'FIXME:
+'should add some tilt checking in CheckPolyhedronStateEx when bMoving=False
 CheckPolyhedronStateEx m_tPos, m_tState, False
 '///response
 'TODO:if state changed then play some animation (e.g. tilt angle changed)

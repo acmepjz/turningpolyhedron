@@ -2,6 +2,7 @@ Attribute VB_Name = "mdlMain"
 Option Explicit
 
 #Const UseSubclass = False
+#Const VideoCaptureEnabled = True
 
 'Private Declare Function GetStdHandle Lib "kernel32.dll" (ByVal nStdHandle As Long) As Long
 'Private Declare Function AllocConsole Lib "kernel32.dll" () As Long
@@ -135,6 +136,13 @@ Public objGameMgr As New clsGameManager
 '////////settings
 Public frmSettings As New frmSettings
 
+#If VideoCaptureEnabled Then
+Private Declare Function MessageBeep Lib "user32.dll" (ByVal wType As Long) As Long
+
+Public frmVideo As New frmVideoOptions
+Public m_bRecordingVideo As Boolean
+#End If
+
 Public Sub CreateVertexDeclaration()
 ReDim m_tDefVertexDecl(0 To 63)
 m_tDefVertexDecl(0) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
@@ -170,18 +178,48 @@ End Sub
 
 Public Sub FakeDXAppProcessKeyEvent()
 Dim dx As Single, dz As Single
-If GetActiveWindow = d3dpp.hDeviceWindow And FakeDXUIActiveWindow = 0 Then
- If GetAsyncKeyState(vbKeyA) And &H8000& Then
-  dx = -0.5
- ElseIf GetAsyncKeyState(vbKeyD) And &H8000& Then
-  dx = 0.5
+If GetActiveWindow = d3dpp.hDeviceWindow Then
+ If FakeDXUIActiveWindow = 0 Then
+  If GetAsyncKeyState(vbKeyA) And &H8000& Then
+   dx = -0.5
+  ElseIf GetAsyncKeyState(vbKeyD) And &H8000& Then
+   dx = 0.5
+  End If
+  If GetAsyncKeyState(vbKeyS) And &H8000& Then
+   dz = -0.5
+  ElseIf GetAsyncKeyState(vbKeyW) And &H8000& Then
+   dz = 0.5
+  End If
+  If dx <> 0 Or dz <> 0 Then objCamera.MoveByLocalCoordinatesLH dx, 0, dz
  End If
- If GetAsyncKeyState(vbKeyS) And &H8000& Then
-  dz = -0.5
- ElseIf GetAsyncKeyState(vbKeyW) And &H8000& Then
-  dz = 0.5
+ #If VideoCaptureEnabled Then
+ If GetAsyncKeyState(vbKeyF8) = &H8001 Then
+  If frmVideo.BeginRecording Then
+   m_bRecordingVideo = Not m_bRecordingVideo
+   If m_bRecordingVideo Then
+    frmMain.Caption = "Video capture started"
+    MessageBeep vbInformation
+   Else
+    frmMain.Caption = "Video capture paused"
+    MessageBeep 0
+   End If
+  Else
+   frmMain.Caption = "Failed to begin video capture"
+   MessageBeep vbCritical
+  End If
+ ElseIf GetAsyncKeyState(vbKeyF9) = &H8001 Then
+  If GetAsyncKeyState(vbKeyControl) And &H8000& Then
+   frmVideo.Show
+  Else
+   If frmVideo.BeginRecording Then
+    frmVideo.EndRecording
+    frmMain.Caption = objText.GetText("Turning Polyhedron")
+    MessageBeep vbInformation
+   End If
+   m_bRecordingVideo = False
+  End If
  End If
- If dx <> 0 Or dz <> 0 Then objCamera.MoveByLocalCoordinatesLH dx, 0, dz
+ #End If
 End If
 End Sub
 
@@ -284,18 +322,25 @@ With d3dd9
   "Landscape Triangles:" + CStr(MyMini_IndexCount) + vbCrLf + _
   "Fog Triangles:" + CStr(MyMini_FogIndexCount)
   FakeDXGDIDrawText FakeDXUIDefaultFont, s, 16, 16, 128, 64, 0.5, DT_NOCLIP, -1, , &HFF000000, , , , , True
-  '///UI
-  FakeDXUIRender
-  '///custom text
+  '///custom overlay (order?)
   If Not FakeDXAppRootObject Is Nothing Then
    FakeDXAppRootObject.Render RenderPass_Overlay, objRenderTest, objCamera, False, True
   End If
+  '///UI
+  FakeDXUIRender
   '///logger
   objLogger.Render 8, 64, d3dpp.BackBufferWidth - 8, d3dpp.BackBufferHeight - 64
   '///
   .EndScene
   '////////over
   .Present ByVal 0, ByVal 0, 0, ByVal 0
+  '///
+  #If VideoCaptureEnabled Then
+  If m_bRecordingVideo Then
+   frmVideo.RecordFrame
+   frmMain.Caption = "Video capture started, size = " + Format(frmVideo.RecordFileSize / 1048576, "0.00") + "MB"
+  End If
+  #End If
  End If
 End With
 End Sub

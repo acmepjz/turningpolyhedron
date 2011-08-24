@@ -89,6 +89,7 @@ msgstr ""
 
 #.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
 #.   .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#.  objText.GetText("Change the game settings.")
 msgid "Change the game settings."
 msgstr ""
 
@@ -98,6 +99,10 @@ msgstr ""
 
 #.    , , , , , , , , , , , , objText.GetText("Change the screen resolution."))
 msgid "Change the screen resolution."
+msgstr ""
+
+#.  objText.GetText("Checkpoints: ") + CStr(m - objGameMgr.CheckPointRemaining) + "/" + CStr(m), _
+msgid "Checkpoints: "
 msgstr ""
 
 #. If DlgTitle = € Then m_sTitle = objText.GetText("Choose folder") Else m_sTitle = DlgTitle
@@ -323,6 +328,10 @@ msgstr ""
 msgid "Modification time"
 msgstr ""
 
+#.  objText.GetText("Moves: ") + CStr(m_nMoves) + vbCrLf + _
+msgid "Moves: "
+msgstr ""
+
 #.        .AddItem objText.GetText("My Documents"), , -2
 msgid "My Documents"
 msgstr ""
@@ -374,6 +383,7 @@ msgstr ""
 
 #. 400, 400, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"))
 #.   .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#.  .AddButton objText.GetText("Options"), &H200&, _
 msgid "Options"
 msgstr ""
 
