@@ -687,3 +687,4 @@ Public Type typeMapDataEvent
  nTileTypes() As Long '1-based
  nObjTypes() As Long '1-based
 End Type
+

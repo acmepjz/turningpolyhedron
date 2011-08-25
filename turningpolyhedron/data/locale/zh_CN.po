@@ -494,6 +494,7 @@ msgstr "文件夹已经存在。请输入一个不同的名称。"
 msgid "Try again"
 msgstr "再试一次"
 
+#. frmMain.Caption = objText.GetText("Turning Polyhedron")
 #. frm.Caption = objText.GetText("Turning Polyhedron")
 #. ' FakeDXGDIDrawText FakeDXUIDefaultFont, objText.GetText("Turning Polyhedron"), _
 msgid "Turning Polyhedron"
@@ -502,6 +503,16 @@ msgstr "摇立体"
 #. .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
 msgid "Type"
 msgstr "类型"
+
+#. .AddButton objText.GetText("Undo"), &H104&, _
+#. .AddButton objText.GetText("Undo"), &H104&, _
+msgid "Undo"
+msgstr "撤消"
+
+#. objText.GetText("Undo last move.")
+#. objText.GetText("Undo last move.")
+msgid "Undo last move."
+msgstr "撤消上一步移动。"
 
 #. objText.GetText("Vertical synchronization"), , , , , , , , , objText.GetText("Enables vertical synchronization."))
 msgid "Vertical synchronization"

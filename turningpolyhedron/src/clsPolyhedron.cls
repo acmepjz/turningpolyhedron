@@ -25,6 +25,69 @@ Private m_tOldState As typePolyhedronState
 
 Private m_nSlipDirection As Long '0=disabled 1=direction 0,etc...
 
+'////////undo support (experimental)
+
+Private Type typePolyhedronUndoData
+ nUndoIndex As Long
+ '///
+ tPos As typePolyhedronPosition
+ 'tOldPos As typePolyhedronPosition
+ tState As typePolyhedronState
+ 'tOldState As typePolyhedronState
+ 'nSlipDirection As Long
+End Type
+
+Private m_tUndo() As typePolyhedronUndoData '1-based
+Private m_nUndoCount As Long, m_nUndoMax As Long
+Private m_bUndoDirty As Boolean
+
+Friend Sub AddUndoIndex(ByVal nUndoIndex As Long)
+If Not m_bUndoDirty Then Exit Sub
+'///
+If m_nUndoCount > 0 Then
+ If m_tUndo(m_nUndoCount).nUndoIndex < nUndoIndex Then
+  m_nUndoCount = m_nUndoCount + 1
+ Else
+  Debug.Assert False '???
+ End If
+Else
+ m_nUndoCount = m_nUndoCount + 1
+End If
+'///
+If m_nUndoCount > m_nUndoMax Then
+ m_nUndoMax = m_nUndoMax + 256&
+ ReDim Preserve m_tUndo(1 To m_nUndoMax)
+End If
+'///
+m_tUndo(m_nUndoCount).nUndoIndex = nUndoIndex
+m_tUndo(m_nUndoCount).tPos = m_tPos
+'m_tUndo(m_nUndoCount).tOldPos = m_tOldPos
+m_tUndo(m_nUndoCount).tState = m_tState
+'m_tUndo(m_nUndoCount).tOldState = m_tOldState
+'m_tUndo(m_nUndoCount).nSlipDirection = m_nSlipDirection
+'///
+m_bUndoDirty = False
+End Sub
+
+Friend Sub Undo(ByVal nUndoIndex As Long)
+Dim i As Long
+For i = m_nUndoCount To 1 Step -1
+ If m_tUndo(i).nUndoIndex <= nUndoIndex Then Exit For '???
+Next i
+If i <= 0 Or i > m_nUndoCount Then Exit Sub
+If i = m_nUndoCount And Not m_bUndoDirty Then Exit Sub
+'///
+m_tPos = m_tUndo(i).tPos
+'m_tOldPos = m_tUndo(i).tOldPos
+m_tState = m_tUndo(i).tState
+'m_tOldState = m_tUndo(i).tOldState
+'m_nSlipDirection = m_tUndo(i).nSlipDirection
+m_nSlipDirection = 0
+'///
+m_bUndoDirty = False
+m_nUndoCount = i
+End Sub
+
 Friend Property Get PolyhedronFlags() As Long
 PolyhedronFlags = m_tLogic.nFlags
 End Property
@@ -46,6 +109,7 @@ If IsOld Then
  m_tOldPos = tPos
 Else
  m_tPos = tPos
+ m_bUndoDirty = True
 End If
 End Property
 
@@ -54,6 +118,7 @@ Dim t As typePolyhedronPosition
 If ParsePolyhedronPosition(s, t, tLevel) Then
  m_tPos = t
  SetPositionFromString = True
+ m_bUndoDirty = True
 End If
 End Function
 
@@ -136,6 +201,11 @@ m_tLogic.nFlags = tLevel.tPolyhedron(nPolyhedronIndex).nFlags
 If m_tLogic.nFlags And &H100& Then
  If Not ParsePolyhedronPosition(tLevel.tPolyhedron(nPolyhedronIndex).sPos, m_tPos, tLevel) Then Exit Function
 End If
+'///
+Erase m_tUndo
+m_nUndoCount = 0
+m_nUndoMax = 0
+m_bUndoDirty = True
 '///
 CreateIndirect = True
 End Function
@@ -318,6 +388,7 @@ Dim tState As typePolyhedronState
 'FIXME:
 'should add some tilt checking in CheckPolyhedronStateEx when bMoving=False
 CheckPolyhedronStateEx m_tPos, m_tState, False
+m_bUndoDirty = True
 '///response
 'TODO:if state changed then play some animation (e.g. tilt angle changed)
 Select Case m_tState.nState
@@ -664,7 +735,7 @@ End Function
 '1=OK
 '(obsolete) other --> same as CheckPolyhedronStateEx
 'TODO:etc.
-Friend Function Move(ByVal nDirection As Long, Optional ByVal bAllowFalling As Boolean) As Long
+Friend Function Move(ByVal nDirection As Long, Optional ByVal bAllowFalling As Boolean, Optional ByVal nUndoIndex As Long = -1) As Long
 Dim tPos As typePolyhedronPosition
 Dim tState As typePolyhedronState
 Dim nTiltGroundEdgeDelta As Long '????????
@@ -714,6 +785,11 @@ Case Else 'TODO:etc.
  bMove = True
 End Select
 If bMove Then
+ '///new:undo
+ If nUndoIndex >= 0 Then objGameMgr.AddUndoIndex nUndoIndex
+ '///
+ m_bUndoDirty = True
+ '///
  m_tOldPos = m_tPos
  m_tOldState = m_tState
  m_tPos = tPos
