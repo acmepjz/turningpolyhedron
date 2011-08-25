@@ -44,6 +44,8 @@ Private m_tLevel As typeLevelData
 
 'runtime data
 
+Private m_bRuntimeDirty As Boolean
+
 Private m_bIsRuntime As Boolean
 
 Private m_tMapDataInst() As typeMapDataRuntime '1 to map data count
@@ -56,8 +58,6 @@ Private m_tPolyInst() As typePolyhedronInstance '1 to polyhedron count
 
 Private m_nCurrentPolyhedron As Long
 
-Private m_bRuntimeDirty As Boolean
-
 Private m_tEvent() As typeMapDataEvent '0-based
 Private m_nEventStart As Long, m_nEventEnd As Long, m_nEventMax As Long
 Private m_bPolyhedronDirty As Boolean
@@ -67,6 +67,40 @@ Private m_bGameOver As Boolean, m_bGameFinished As Boolean
 Private m_bGameFinishedEvent As Boolean
 
 Private m_nWinningConditionValue() As Boolean  '(not inverted) value
+
+'////////undo support (experimental)
+
+#Const UndoPolyhedronAnimation = False
+
+Private Type typeGameMgrUndoData
+ nUndoIndex As Long
+ nFlags As Long
+ '&H1=MapDataInst, etc. dirty
+ '&H2=PolyInst, etc. dirty
+ '&H4=some numbers dirty (but always save)
+ '&H8=WinningConditionValue dirty
+ '///MapDataInst, etc.
+ tMapDataInst() As typeMapDataRuntime
+ tTileAnim() As typeCustomTileAnimation
+ nTileAnimMax As Long
+ nTileAnimFirstUnused As Long
+ tLevelInst As typeMeshInstanceCollection
+ '///PolyInst, etc. (excluding animation)
+ tPolyInst() As typePolyhedronInstance
+ '///some numbers (always save)
+ nCurrentPolyhedron As Long
+ nCheckPointRemaining As Long
+ bPolyhedronDirty As Boolean
+ bGameOver As Boolean
+ bGameFinished As Boolean
+ bGameFinishedEvent As Boolean
+ '///
+ nWinningConditionValue() As Boolean
+End Type
+
+Private m_tUndo() As typeGameMgrUndoData '1-based
+Private m_nUndoCount As Long, m_nUndoMax As Long
+Private m_nUndoDirtyFlags As Long
 
 '////////game logic settings
 
@@ -89,6 +123,133 @@ End Type
 Private m_nDataLevel As Long
 Private m_tDataLevelArray() As typeGameMgrDataLevel '1-based
 Private m_nDataLevelCount As Long
+
+Friend Sub AddUndoIndex(ByVal nUndoIndex As Long)
+Dim i As Long
+'///
+If m_bRuntimeDirty Then Exit Sub
+'///
+If m_nUndoDirtyFlags Then
+ If m_nUndoCount > 0 Then
+  If m_tUndo(m_nUndoCount).nUndoIndex < nUndoIndex Then
+   m_nUndoCount = m_nUndoCount + 1
+  Else
+   Debug.Assert False '???
+  End If
+ Else
+  m_nUndoCount = m_nUndoCount + 1
+ End If
+ '///
+ If m_nUndoCount > m_nUndoMax Then
+  m_nUndoMax = m_nUndoMax + 256&
+  ReDim Preserve m_tUndo(1 To m_nUndoMax)
+ End If
+ '///
+ m_tUndo(m_nUndoCount).nUndoIndex = nUndoIndex
+ m_tUndo(m_nUndoCount).nFlags = m_nUndoDirtyFlags
+ '///
+ If m_nUndoDirtyFlags And 1& Then
+  m_tUndo(m_nUndoCount).tMapDataInst = m_tMapDataInst
+  m_tUndo(m_nUndoCount).tTileAnim = m_tTileAnim
+  m_tUndo(m_nUndoCount).nTileAnimMax = m_nTileAnimMax
+  m_tUndo(m_nUndoCount).nTileAnimFirstUnused = m_nTileAnimFirstUnused
+  m_tUndo(m_nUndoCount).tLevelInst = m_tLevelInst
+ End If
+ '///
+ If m_nUndoDirtyFlags And 2& Then
+  m_tUndo(m_nUndoCount).tPolyInst = m_tPolyInst
+ End If
+ '///
+ m_tUndo(m_nUndoCount).nCurrentPolyhedron = m_nCurrentPolyhedron
+ m_tUndo(m_nUndoCount).nCheckPointRemaining = m_nCheckPointRemaining
+ m_tUndo(m_nUndoCount).bPolyhedronDirty = m_bPolyhedronDirty
+ m_tUndo(m_nUndoCount).bGameOver = m_bGameOver
+ m_tUndo(m_nUndoCount).bGameFinished = m_bGameFinished
+ m_tUndo(m_nUndoCount).bGameFinishedEvent = m_bGameFinishedEvent
+ '///
+ If m_nUndoDirtyFlags And 8& Then
+  m_tUndo(m_nUndoCount).nWinningConditionValue = m_nWinningConditionValue
+ End If
+ '///
+End If
+m_nUndoDirtyFlags = 0
+'///polyhedron
+For i = 1 To m_tLevel.nPolyhedronCount
+ m_objPoly(i).AddUndoIndex nUndoIndex
+Next i
+End Sub
+
+Friend Sub Undo(ByVal nUndoIndex As Long)
+Dim i As Long, j As Long
+'///
+If m_bRuntimeDirty Then Exit Sub
+'///
+For i = m_nUndoCount To 1 Step -1
+ If m_tUndo(i).nUndoIndex <= nUndoIndex Then Exit For '???
+Next i
+If i > 0 And i <= m_nUndoCount Then
+ If i < m_nUndoCount Then m_nUndoDirtyFlags = -1
+ If m_nUndoDirtyFlags Then
+  '///
+  If m_nUndoDirtyFlags And 1& Then
+   For j = i To 1 Step -1
+    If m_tUndo(j).nFlags And 1& Then Exit For
+   Next j
+   If j > 0 Then
+    m_tMapDataInst = m_tUndo(j).tMapDataInst
+    m_tTileAnim = m_tUndo(j).tTileAnim
+    m_nTileAnimMax = m_tUndo(j).nTileAnimMax
+    m_nTileAnimFirstUnused = m_tUndo(j).nTileAnimFirstUnused
+    m_tLevelInst = m_tUndo(j).tLevelInst
+   End If
+  End If
+  '///
+  If m_nUndoDirtyFlags And 2& Then
+   For j = i To 1 Step -1
+    If m_tUndo(j).nFlags And 2& Then Exit For
+   Next j
+   If j > 0 Then
+    m_tPolyInst = m_tUndo(j).tPolyInst
+   End If
+  End If
+  #If UndoPolyhedronAnimation Then
+  #Else
+  For j = 1 To m_tLevel.nPolyhedronCount
+   m_tPolyInst(j).nAnimType = 0
+   m_tPolyInst(j).nAnimStackIndex = 0
+  Next j
+  #End If
+  '///
+  m_nCurrentPolyhedron = m_tUndo(i).nCurrentPolyhedron
+  m_nCheckPointRemaining = m_tUndo(i).nCheckPointRemaining
+  m_bPolyhedronDirty = m_tUndo(i).bPolyhedronDirty
+  m_bGameOver = m_tUndo(i).bGameOver
+  m_bGameFinished = m_tUndo(i).bGameFinished
+  m_bGameFinishedEvent = m_tUndo(i).bGameFinishedEvent
+  '///
+  If m_nUndoDirtyFlags And 8& Then
+   For j = i To 1 Step -1
+    If m_tUndo(j).nFlags And 8& Then Exit For
+   Next j
+   If j > 0 Then
+    m_nWinningConditionValue = m_tUndo(j).nWinningConditionValue
+   End If
+  End If
+  '///clear event ???
+  Erase m_tEvent
+  m_nEventStart = 0
+  m_nEventEnd = 0
+  m_nEventMax = 0
+  '///
+  m_nUndoDirtyFlags = 0
+  m_nUndoCount = i
+ End If
+End If
+'///polyhedron
+For i = 1 To m_tLevel.nPolyhedronCount
+ m_objPoly(i).Undo nUndoIndex
+Next i
+End Sub
 
 Friend Property Get CheckPointCount() As Long
 CheckPointCount = m_tLevel.nCheckPointCount
@@ -266,15 +427,15 @@ For i = 1 To m_tLevel.nPolyhedronCount
 Next i
 End Function
 
-Friend Function MoveCurrentPolyhedron(ByVal nDirection As Long) As Long
-MoveCurrentPolyhedron = MovePolyhedron(m_nCurrentPolyhedron, nDirection)
+Friend Function MoveCurrentPolyhedron(ByVal nDirection As Long, Optional ByVal nUndoIndex As Long = -1) As Long
+MoveCurrentPolyhedron = MovePolyhedron(m_nCurrentPolyhedron, nDirection, nUndoIndex)
 End Function
 
-Friend Function MovePolyhedron(ByVal nPolyhedronIndex As Long, ByVal nDirection As Long) As Long
+Friend Function MovePolyhedron(ByVal nPolyhedronIndex As Long, ByVal nDirection As Long, Optional ByVal nUndoIndex As Long = -1) As Long
 If m_bRuntimeDirty Then Exit Function
 If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
  If m_tPolyInst(nPolyhedronIndex).nFlags And &H100& Then
-  MovePolyhedron = m_objPoly(nPolyhedronIndex).Move(nDirection)
+  MovePolyhedron = m_objPoly(nPolyhedronIndex).Move(nDirection, , nUndoIndex)
  End If
 End If
 End Function
@@ -288,6 +449,8 @@ If nInstIndex > 0 Then
  t.nAnimType = nType
  t.matWorld = m_tLevelInst.tInstance(nInstIndex).matWorld '???
  m_tTileAnim(i) = t
+ '///
+ m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 1&
 End If
 End Sub
 
@@ -343,6 +506,12 @@ If i > 0 Then
  i = m_tPolyInst(nPolyhedronIndex).nAnimStack(i)
 End If
 StartPolyhedronAnimationByType nPolyhedronIndex, i
+'///
+#If UndoPolyhedronAnimation Then
+m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 2&
+#Else
+m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 4&
+#End If
 End Sub
 
 'internal function
@@ -350,6 +519,12 @@ End Sub
 Friend Sub StartPolyhedronAnimationByType(ByVal nPolyhedronIndex As Long, ByVal nType As Long)
 Erase m_tPolyInst(nPolyhedronIndex).fAnimValue
 m_tPolyInst(nPolyhedronIndex).nAnimType = nType
+'///
+#If UndoPolyhedronAnimation Then
+m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 2&
+#Else
+m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 4&
+#End If
 End Sub
 
 'internal function
@@ -375,6 +550,12 @@ Else
   End If
  End If
 End If
+'///
+#If UndoPolyhedronAnimation Then
+m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 2&
+#Else
+m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 4&
+#End If
 End Sub
 
 Friend Function GetPolyhedronCenterPos(ByVal nPolyhedronIndex As Long) As D3DVECTOR
@@ -393,6 +574,7 @@ Dim v As D3DVECTOR, v2 As D3DVECTOR
 Dim i As Long, j As Long, k As Long
 Dim p As typePolyhedronPosition
 Dim nAnimType As Long
+Dim b As Boolean
 '///
 If m_bRuntimeDirty Then Exit Sub
 '////////reset?
@@ -427,6 +609,10 @@ For idx = 1 To m_tLevel.nPolyhedronCount
     i = m_tPolyInst(idx).nFlags
     'hide this polyhedron
     m_tPolyInst(idx).nFlags = i And Not &H100&
+    #If UndoPolyhedronAnimation Then
+    #Else
+    m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 2&
+    #End If
     If (i And &H1&) = 0 Then 'if not discardable
      'TODO:game over
      m_bGameOver = True
@@ -436,6 +622,12 @@ For idx = 1 To m_tLevel.nPolyhedronCount
     m_tPolyInst(idx).fAnimValue(0) = f
    End If
   End Select
+  '///
+  #If UndoPolyhedronAnimation Then
+  If nAnimType Then m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 2&
+  #Else
+  If nAnimType Then m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 4&
+  #End If
  End If
 Next idx
 '////////update event (?)
@@ -444,6 +636,8 @@ ProcessMapEvents
 If m_tLevel.nWinningConditionCount > 0 Then
  For idx = 1 To m_tLevel.nWinningConditionCount
   If (m_tLevel.tWinningCondition(idx).nFlags And 1&) = 0 Or Not m_nWinningConditionValue(idx) Then
+   b = m_nWinningConditionValue(idx)
+   '///
    Select Case m_tLevel.tWinningCondition(idx).nType
    Case 0 'logical
     i = m_tLevel.tWinningCondition(idx).nParams(2)
@@ -490,6 +684,8 @@ If m_tLevel.nWinningConditionCount > 0 Then
    Case 3 'game-finished event
     m_nWinningConditionValue(idx) = m_bGameFinishedEvent
    End Select
+   '///
+   If b <> m_nWinningConditionValue(idx) Then m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 8&
   End If
  Next idx
  i = m_tLevel.nWinningConditionCount
@@ -536,6 +732,8 @@ For idx = 1 To m_nTileAnimMax
     m_tLevelInst.tInstance(i).matWorld = mat
    End If
   End Select
+  '///
+  m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 1&
  End If
 Next idx
 '///TODO:other
@@ -910,6 +1108,11 @@ m_bGameOver = False
 m_bGameFinished = False
 m_bGameFinishedEvent = False
 '///
+Erase m_tUndo
+m_nUndoCount = 0
+m_nUndoMax = 0
+m_nUndoDirtyFlags = -1
+'///
 m_bRuntimeDirty = True
 End Sub
 
@@ -928,6 +1131,8 @@ Else
  GetEmptyTileAnimation = m_nTileAnimFirstUnused
  m_nTileAnimFirstUnused = m_tTileAnim(m_nTileAnimFirstUnused).nInstIndex And &H7FFFFFFF
 End If
+'///
+m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 1&
 End Function
 
 'internal
@@ -941,6 +1146,8 @@ If nIndex > 0 And nIndex <= m_nTileAnimMax Then
   t.nInstIndex = &H80000000 Or m_nTileAnimFirstUnused
   m_tTileAnim(nIndex) = t
   m_nTileAnimFirstUnused = nIndex
+  '///
+  m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 1&
  End If
 End If
 End Sub
@@ -2964,6 +3171,7 @@ Case 3 'teleport
  t.nPolyhedronIndex > 0 And t.nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
   objCamera.RealLinearDamping = 1
   '///
+  m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 2&
   m_bPolyhedronDirty = True
   '///
   For i = 0 To tEvent.nStringParamCount - 1
@@ -3030,6 +3238,8 @@ Case 4 'convertTo
   i = GetMapDataIndirect(ps(idx))
   If i >= 0 And i <> j Then
    m_bPolyhedronDirty = True
+   m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 1&
+   '///
    k = m_tMapDataInst(ps(idx).nMapDataIndex).nInstIndex(ps(idx).x, ps(idx).y, ps(idx).z)
    If k > 0 Then
     'TODO:correct animation
@@ -3119,10 +3329,13 @@ Friend Sub ProcessGameOver(ByVal nPolyhedronIndex As Long, ByVal nType As Long, 
 Dim i As Long, k As Long
 '///
 m_bPolyhedronDirty = True
+'///
 Select Case nType
 Case &H103, &H105 'game-over:*:2
  i = GetMapDataIndirect(p)
  If i <= 0 Then Exit Sub
+ '///
+ m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 1&
  '///
  k = m_tMapDataInst(p.nMapDataIndex).nInstIndex(p.x, p.y, p.z)
  If k > 0 Then
@@ -3132,12 +3345,12 @@ Case &H103, &H105 'game-over:*:2
  m_tMapDataInst(p.nMapDataIndex).nTypeArray(p.x, p.y, p.z) = 0
  m_tMapDataInst(p.nMapDataIndex).nInstIndex(p.x, p.y, p.z) = 0
 Case &H101 'game-over:immediately
- m_bReset = True
+ m_bGameOver = True
 Case Else 'TODO:other type
  If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
   StartPolyhedronAnimation nPolyhedronIndex, -1, 0 'TODO:game over type
  Else 'err???
-  m_bReset = True
+  m_bGameOver = True
  End If
 End Select
 End Sub
@@ -3653,7 +3866,9 @@ For idx = 1 To m_tLevel.nPolyMergeCount
          Else
           b = False
          End If
-         If b Then
+         If b Then 'finally, it merged
+          m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 2&
+          '///
           m_tPolyInst(i).nFlags = m_tPolyInst(i).nFlags And Not &H100&
           m_tPolyInst(j).nFlags = m_tPolyInst(j).nFlags And Not &H100&
           If m_tPolyInst(k).nFlags And &H100& Then '??? err???
@@ -3666,7 +3881,7 @@ For idx = 1 To m_tLevel.nPolyMergeCount
           m_nCurrentPolyhedron = k
           m_bPolyhedronDirty = True
           '///
-          objLogger.AddMessage "Polyhedron merged" 'debug
+          'objLogger.AddMessage "Polyhedron merged" 'debug
          End If
         End If
        End If

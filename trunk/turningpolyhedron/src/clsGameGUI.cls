@@ -354,6 +354,10 @@ Dim i As Long
 With New clsFakeDXUIMsgBox
  .AddButton objText.GetText("Back to game"), vbCancel, _
  objText.GetText("Continue playing the game.")
+ If m_nMoves > 0 Then
+  .AddButton objText.GetText("Undo"), &H104&, _
+  objText.GetText("Undo last move.")
+ End If
  .AddButton objText.GetText("Restart level"), &H100&, _
  objText.GetText("Restart current level.")
  .AddButton objText.GetText("Other levels"), &H102&, _
@@ -372,6 +376,10 @@ Friend Sub DisplayGameOverMenu()
 Dim i As Long
 '///stupid MsgBox
 With New clsFakeDXUIMsgBox
+ If m_nMoves > 0 Then
+  .AddButton objText.GetText("Undo"), &H104&, _
+  objText.GetText("Undo last move.")
+ End If
  .AddButton objText.GetText("Try again"), &H100&, _
  objText.GetText("Restart current level.")
  .AddButton objText.GetText("Other levels"), &H102&, _
@@ -405,6 +413,13 @@ End With
 pProcessMenuAction i
 End Sub
 
+Friend Sub UndoLastMove()
+If m_nMoves > 0 Then
+ m_nMoves = m_nMoves - 1
+ objGameMgr.Undo m_nMoves
+End If
+End Sub
+
 Friend Sub pProcessMenuAction(ByVal i As Long)
 Select Case i
 Case &H100&
@@ -425,6 +440,8 @@ Case &H103&
   End With
  End If
  BackToLevelSelection
+Case &H104&
+ UndoLastMove
 Case &H200&
  frmSettings.Show
 End Select
@@ -487,6 +504,9 @@ Case FakeDXAppEvent_KeyDown
  Case vbKeyQ '??
   BackToMainMenu
   Exit Function
+ Case vbKeyU
+  UndoLastMove
+  Exit Function
  Case vbKeyEscape
   PauseGame
   Exit Function
@@ -515,7 +535,7 @@ Case FakeDXAppEvent_KeyDown
    i = i And 3&
    '///
    If objGameMgr.CanPlayerMovePolyhedron Then
-    If objGameMgr.MoveCurrentPolyhedron(i) Then
+    If objGameMgr.MoveCurrentPolyhedron(i, m_nMoves) Then
      objGameMgr.FollowCurrentPolyhedron = True
      objCamera.RealLinearDamping = 1
      m_nMoves = m_nMoves + 1

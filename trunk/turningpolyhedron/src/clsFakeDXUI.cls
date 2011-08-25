@@ -811,6 +811,9 @@ Else
  m_nClosing = 0
  m_bVisible = False
 End If
+'///fix some bug (?)
+FakeDXUIFocus = 0
+'///
 FakeDXUIRemoveModalWindow m_nIndex
 End Sub
 
@@ -984,11 +987,11 @@ FakeDXGDIStretchBltExColored nLeft - 4, nTop - 4, nRight + 4, nBottom + 4, kk, 3
 r.x1 = nLeft + m_tClientMargin.Left
 r.y1 = nTop + m_tClientMargin.Top
 r.x2 = nRight - m_tClientMargin.Right
-r.Y2 = nBottom - m_tClientMargin.Bottom
+r.y2 = nBottom - m_tClientMargin.Bottom
 '////////
 pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
 i = r.x2 - r.x1
-j = r.Y2 - r.y1
+j = r.y2 - r.y1
 If i > 4 And j > 4 Then 'size limit ???
  m_objListView.Width = i
  m_objListView.Height = j
@@ -1036,7 +1039,7 @@ If i > 4 And j > 4 Then 'size limit ???
  If r.x1 < r0.x1 Then r.x1 = r0.x1
  If r.y1 < r0.y1 Then r.y1 = r0.y1
  If r.x2 > r0.x2 Then r.x2 = r0.x2
- If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
+ If r.y2 > r0.y2 Then r.y2 = r0.y2
  d3dd9.SetScissorRect r
  m_objListView.Render nLeft + 4, nTop + 4, nOpacity
  '///
@@ -1053,7 +1056,7 @@ If nChildIndex <= 0 Or nChildIndex > m_nChildrenCount Then Exit Sub
 Set obj = FakeDXUIControls(m_idxChildren(nChildIndex))
 '///update scrollbar
 r1.x1 = r.x2 - r.x1
-r1.y1 = r.Y2 - r.y1
+r1.y1 = r.y2 - r.y1
 w = obj.Width
 h = obj.Height
 r2 = obj.RectangleEx
@@ -1098,7 +1101,7 @@ r1 = r
 If r1.x1 < r0.x1 Then r1.x1 = r0.x1
 If r1.y1 < r0.y1 Then r1.y1 = r0.y1
 If r1.x2 > r0.x2 Then r1.x2 = r0.x2
-If r1.Y2 > r0.Y2 Then r1.Y2 = r0.Y2
+If r1.y2 > r0.y2 Then r1.y2 = r0.y2
 d3dd9.SetScissorRect r1
 '///
 obj.Render r.x1, r.y1, nOpacity, bEnabled
@@ -1475,10 +1478,10 @@ Case 7 'textbox
  r.x1 = nLeft + m_tClientMargin.Left
  r.y1 = nTop + m_tClientMargin.Top
  r.x2 = nRight - m_tClientMargin.Right
- r.Y2 = nBottom - m_tClientMargin.Bottom
+ r.y2 = nBottom - m_tClientMargin.Bottom
  If m_objTextBox.MultiLine Then pRenderScrollBars nLeft, nTop, nRight, nBottom, nOpacity, , , bEnabled
  i = r.x2 - r.x1
- j = r.Y2 - r.y1
+ j = r.y2 - r.y1
  If i > 4 And j > 4 Then 'size limit ???
   m_objTextBox.Width = i
   m_objTextBox.Height = j
@@ -1527,7 +1530,7 @@ Case 7 'textbox
   If r.x1 < r0.x1 Then r.x1 = r0.x1
   If r.y1 < r0.y1 Then r.y1 = r0.y1
   If r.x2 > r0.x2 Then r.x2 = r0.x2
-  If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
+  If r.y2 > r0.y2 Then r.y2 = r0.y2
   d3dd9.SetScissorRect r
   m_objTextBox.Render nLeft + m_tClientMargin.Left, nTop + m_tClientMargin.Top, nOpacity, bEnabled, FakeDXUIFocus = m_nIndex
   '///
@@ -1562,16 +1565,16 @@ Case 9 'combobox
   r.x1 = nLeft + 4
   r.y1 = nTop + 4
   r.x2 = nRight - 20
-  r.Y2 = nBottom - 4
+  r.y2 = nBottom - 4
   m_objTextBox.Width = r.x2 - r.x1
-  m_objTextBox.Height = r.Y2 - r.y1
+  m_objTextBox.Height = r.y2 - r.y1
   'If m_objTextBox.ScrollValue(0) < 0 Then m_objTextBox.ScrollValue(0) = 0
   '///
   d3dd9.GetScissorRect r0
   If r.x1 < r0.x1 Then r.x1 = r0.x1
   If r.y1 < r0.y1 Then r.y1 = r0.y1
   If r.x2 > r0.x2 Then r.x2 = r0.x2
-  If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
+  If r.y2 > r0.y2 Then r.y2 = r0.y2
   d3dd9.SetScissorRect r
   m_objTextBox.Render nLeft + 4, nTop + 4, nOpacity, bEnabled, FakeDXUIFocus = m_nIndex
   '///
@@ -1650,7 +1653,7 @@ If idxAutoScrollControl > 0 Then
  r.x1 = nLeft + m_tClientMargin.Left
  r.y1 = nTop + m_tClientMargin.Top
  r.x2 = nRight - m_tClientMargin.Right
- r.Y2 = nBottom - m_tClientMargin.Bottom
+ r.y2 = nBottom - m_tClientMargin.Bottom
  RenderAutoScrollObject r, idxAutoScrollControl, nOpacity, bEnabled
  Exit Sub
 End If
@@ -1661,11 +1664,11 @@ If m_nChildrenCount > 0 And Not bNoChild Then
  r.x1 = nLeft
  r.y1 = nTop
  r.x2 = nRight
- r.Y2 = nBottom
+ r.y2 = nBottom
  If r.x1 < r0.x1 Then r.x1 = r0.x1
  If r.y1 < r0.y1 Then r.y1 = r0.y1
  If r.x2 > r0.x2 Then r.x2 = r0.x2
- If r.Y2 > r0.Y2 Then r.Y2 = r0.Y2
+ If r.y2 > r0.y2 Then r.y2 = r0.y2
  d3dd9.SetScissorRect r
  '///
  nLeft = nLeft + m_tClientMargin.Left
