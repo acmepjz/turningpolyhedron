@@ -10,7 +10,7 @@ Public Type typeMeshInstanceData 'N bytes :(
  'TODO:etc.
  '///???
  nNextInstIndex As Long
- nChildInstIndex As Long
+ 'nChildInstIndex As Long
  '///
  nEffectIndex As Long '<=0 is unused, if <0 then is &H80000000 | (next unused index)
  nMeshIndex As Long 'must >0
@@ -18,6 +18,7 @@ Public Type typeMeshInstanceData 'N bytes :(
  Visible As Boolean 'TODO:
  '///when nType=0
  matWorld As D3DMATRIX
+ v As D3DXVECTOR4 '??? temp variable, game manager animation workaround only
  '///when nType=1-15
  nCount As Long
  nInstanceVertexSize As Long
@@ -446,6 +447,12 @@ Public Type typeMapDataRuntime
  nInstIndex() As Long
 End Type
 
+Public Type typeMapData_PolyhedronStability
+ nFaceIndexMask As Long
+ nValue As Long
+ 'TODO:other
+End Type
+
 Public Type typeMapData_Polyhedron
  sID As String
  nShape As Long
@@ -484,6 +491,9 @@ Public Type typeMapData_Polyhedron
  '///new:polyhedron events
  nEventCount As Long
  tEvent() As typeTileEvent '1-based
+ '///new:stability test
+ nStabilityCount As Long
+ tStability() As typeMapData_PolyhedronStability '1-based
 End Type
 
 Public Type typeMapData_PolyhedronMerge
@@ -617,7 +627,7 @@ Public Type typeCustomTileAnimation
  '2=fade in (TODO:)
  '-1=falling <-- should be breakdown ?
  '///
- matWorld As D3DMATRIX
+ 'matWorld As D3DMATRIX
  '///
  fAnimValue(3) As Single
 End Type

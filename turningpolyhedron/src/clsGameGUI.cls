@@ -367,7 +367,7 @@ With New clsFakeDXUIMsgBox
  .AddButton objText.GetText("Back to main menu"), &H101&, _
  objText.GetText("Abort the game and back to the main menu.")
  i = .MsgBox(objText.GetText("Game paused"), _
- &H4800007F, , &H100&, 160)
+ &H2800007F, , &H100&, 160)
 End With
 pProcessMenuAction i
 End Sub

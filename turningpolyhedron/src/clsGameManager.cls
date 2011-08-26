@@ -435,7 +435,7 @@ Friend Function MovePolyhedron(ByVal nPolyhedronIndex As Long, ByVal nDirection 
 If m_bRuntimeDirty Then Exit Function
 If nPolyhedronIndex > 0 And nPolyhedronIndex <= m_tLevel.nPolyhedronCount Then
  If m_tPolyInst(nPolyhedronIndex).nFlags And &H100& Then
-  MovePolyhedron = m_objPoly(nPolyhedronIndex).Move(nDirection, , nUndoIndex)
+  MovePolyhedron = m_objPoly(nPolyhedronIndex).Move(nDirection, m_tLevel.tPolyhedron(nPolyhedronIndex), , nUndoIndex)
  End If
 End If
 End Function
@@ -447,7 +447,12 @@ If nInstIndex > 0 Then
  i = GetEmptyTileAnimation
  t.nInstIndex = nInstIndex
  t.nAnimType = nType
- t.matWorld = m_tLevelInst.tInstance(nInstIndex).matWorld '???
+ '///
+ Do While nInstIndex > 0
+  CopyMemory m_tLevelInst.tInstance(nInstIndex).v, m_tLevelInst.tInstance(nInstIndex).matWorld.m41, 16&
+  nInstIndex = m_tLevelInst.tInstance(nInstIndex).nNextInstIndex
+ Loop
+ '///
  m_tTileAnim(i) = t
  '///
  m_nUndoDirtyFlags = m_nUndoDirtyFlags Or 1&
@@ -703,33 +708,43 @@ For idx = 1 To m_nTileAnimMax
     RemoveTileAnimation idx, True
    Else
     m_tTileAnim(idx).fAnimValue(0) = f
-    mat = m_tTileAnim(idx).matWorld
     f = f / m_fAnimTime
     f = 1 / (1.01 - f * f) - 1
-    mat.m43 = mat.m43 - f
-    m_tLevelInst.tInstance(i).matWorld = mat
+    Do While i > 0
+     m_tLevelInst.tInstance(i).matWorld.m43 = _
+     m_tLevelInst.tInstance(i).v.z - f
+     i = m_tLevelInst.tInstance(i).nNextInstIndex
+    Loop
    End If
   Case 2 'fade in TODO:
    If f > m_fAnimTime Then
-    m_tLevelInst.tInstance(i).matWorld = m_tTileAnim(idx).matWorld
+    Do While i > 0
+     m_tLevelInst.tInstance(i).matWorld.m43 = m_tLevelInst.tInstance(i).v.z
+     i = m_tLevelInst.tInstance(i).nNextInstIndex
+    Loop
     RemoveTileAnimation idx, False
    Else
     m_tTileAnim(idx).fAnimValue(0) = f
-    mat = m_tTileAnim(idx).matWorld
     f = 1 - f / m_fAnimTime
     f = 1 / (1.01 - f * f) - 1
-    mat.m43 = mat.m43 - f
-    m_tLevelInst.tInstance(i).matWorld = mat
+    Do While i > 0
+     m_tLevelInst.tInstance(i).matWorld.m43 = _
+     m_tLevelInst.tInstance(i).v.z - f
+     i = m_tLevelInst.tInstance(i).nNextInstIndex
+    Loop
    End If
   Case -1 'falling
    If f > 3000 Then
     RemoveTileAnimation idx, True
    Else
     m_tTileAnim(idx).fAnimValue(0) = f
-    mat = m_tTileAnim(idx).matWorld
     f = f / 190
-    mat.m43 = mat.m43 - f * f
-    m_tLevelInst.tInstance(i).matWorld = mat
+    f = f * f
+    Do While i > 0
+     m_tLevelInst.tInstance(i).matWorld.m43 = _
+     m_tLevelInst.tInstance(i).v.z - f
+     i = m_tLevelInst.tInstance(i).nNextInstIndex
+    Loop
    End If
   End Select
   '///
@@ -941,19 +956,21 @@ For idx = 1 To m_tLevel.nPolyhedronCount
    End Select
   End If
   i = m_tPolyInst(idx).nInstIndex
-  If i > 0 Then
+  Do While i > 0
    'TODO:multiple objects
    m_tLevelInst.tInstance(i).Visible = True
    m_tLevelInst.tInstance(i).matWorld = m_tPolyInst(idx).matWorld
-  End If
+   i = m_tLevelInst.tInstance(i).nNextInstIndex
+  Loop
  Else
   'invisible
   i = m_tPolyInst(idx).nInstIndex
-  If i > 0 Then
+  Do While i > 0
    'TODO:multiple objects
    m_tLevelInst.tInstance(i).Visible = False
    m_tLevelInst.tInstance(i).matWorld = m_tPolyInst(idx).matWorld
-  End If
+   i = m_tLevelInst.tInstance(i).nNextInstIndex
+  Loop
  End If
 Next idx
 '///follow polyhedron?
@@ -1060,7 +1077,7 @@ If m_tLevel.nPolyhedronCount > 0 Then
  For i = 1 To m_tLevel.nPolyhedronCount
   If m_tPolyInst(i).nFlags And &H100& Then
    If m_nCurrentPolyhedron = 0 Then m_nCurrentPolyhedron = i
-   m_objPoly(i).CheckPolyhedronStateAndResponse
+   m_objPoly(i).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(i)
   End If
  Next i
  '///
@@ -1812,6 +1829,10 @@ For i = 1 To objNode.SubNodeCount
     End Select
    End If
    tPoly.nApprIndex = objEffectMgr.AddAppearanceFromNode(obj, nSizeX, nSizeY, nSizeZ)
+  Case "stability"
+   tPoly.nStabilityCount = tPoly.nStabilityCount + 1
+   ReDim Preserve tPoly.tStability(1 To tPoly.nStabilityCount)
+   If Not ParseMapPolyhedronStabilityDataFromNode(obj, tPoly.tStability(tPoly.nStabilityCount)) Then Exit Function
   Case Else
    'new: polyhedron event
    j = ParseEventType(s)
@@ -1826,6 +1847,70 @@ Next i
 '///over
 tPoly.nFlags = nFlags
 ParseMapPolyhedronDataFromNode = True
+End Function
+
+Friend Function ParseMapPolyhedronStabilityDataFromNode(ByVal objNode As clsTreeStorageNode, ByRef t As typeMapData_PolyhedronStability) As Boolean
+Dim i As Long, j As Long, k As Long
+Dim s As String
+Dim v As Variant
+'///
+Dim nMask(31) As Long
+j = 1
+For i = 0 To 29
+ nMask(i) = j
+ j = j + j
+Next i
+nMask(30) = &H40000000
+nMask(31) = &H80000000
+'///
+t.nFaceIndexMask = -1
+'///
+For i = 1 To objNode.SubNodeCount
+ If objNode.SubNodeType(i) = 0 Then
+  s = objNode.GetSubNodeValueAsString(i)
+  Select Case objNode.GetSubNodeNameAsString(i)
+  Case "faceIndex"
+   t.nFaceIndexMask = 0
+   '///
+   v = Split(s, ",")
+   For j = 0 To UBound(v)
+    s = Trim(v(j))
+    If IsNumeric(s) Then
+     k = Val(s)
+    Else
+     Select Case s
+     Case "bottom", "down"
+      k = 0
+     Case "top", "up"
+      k = 1
+     Case "front"
+      k = 2
+     Case "right"
+      k = 3
+     Case "back"
+      k = 4
+     Case "left"
+      k = 5
+     Case Else
+      k = -1
+     End Select
+    End If
+    '///
+    If k >= 0 And k < 32 Then
+     t.nFaceIndexMask = t.nFaceIndexMask Or nMask(k)
+    End If
+    '///
+   Next j
+  Case "value"
+   t.nValue = Val(s)
+  Case Else
+   'TODO:other
+   Debug.Assert False
+  End Select
+ End If
+Next i
+'///
+ParseMapPolyhedronStabilityDataFromNode = True
 End Function
 
 '<=0: failed
@@ -3182,7 +3267,7 @@ Case 3 'teleport
      'move current polyhedron to new pos
      m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnLeave
      If m_objPoly(t.nPolyhedronIndex).SetPositionFromString(s, m_tLevel) Then
-      m_objPoly(t.nPolyhedronIndex).CheckPolyhedronStateAndResponse '???
+      m_objPoly(t.nPolyhedronIndex).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(t.nPolyhedronIndex) '???
       m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnEnter
       m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnHitTest
      Else
@@ -3206,7 +3291,7 @@ Case 3 'teleport
     m_tPolyInst(k).nFlags = m_tPolyInst(k).nFlags Or &H100&
    End If
    If m_objPoly(k).SetPositionFromString(Mid(tEvent.sStringParam(i), j + 1), m_tLevel) Then
-    m_objPoly(k).CheckPolyhedronStateAndResponse '???
+    m_objPoly(k).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(t.nPolyhedronIndex) '???
     m_objPoly(k).SendEvent EventTypeOnEnter
     m_objPoly(k).SendEvent EventTypeOnHitTest
    Else
@@ -3268,7 +3353,7 @@ Case 5 'move:straight
   p = m_objPoly(t.nPolyhedronIndex).Position
   Select Case m_tLevel.tPolyhedron(t.nPolyhedronIndex).nShape
   Case &H111 To &HFFF
-   m_objPoly(t.nPolyhedronIndex).Move (p.nGroundEdgeIndex - p.nFirstEdgeIndex + 2) And 3&, True
+   m_objPoly(t.nPolyhedronIndex).Move (p.nGroundEdgeIndex - p.nFirstEdgeIndex + 2) And 3&, m_tLevel.tPolyhedron(t.nPolyhedronIndex), True
   Case Else
    Debug.Assert False
   End Select
@@ -3278,7 +3363,7 @@ Case 6 'move:left
   p = m_objPoly(t.nPolyhedronIndex).Position
   Select Case m_tLevel.tPolyhedron(t.nPolyhedronIndex).nShape
   Case &H111 To &HFFF
-   m_objPoly(t.nPolyhedronIndex).Move (p.nGroundEdgeIndex - p.nFirstEdgeIndex - 1) And 3&, True
+   m_objPoly(t.nPolyhedronIndex).Move (p.nGroundEdgeIndex - p.nFirstEdgeIndex - 1) And 3&, m_tLevel.tPolyhedron(t.nPolyhedronIndex), True
   Case Else
    Debug.Assert False
   End Select
@@ -3288,7 +3373,7 @@ Case 7 'move:right
   p = m_objPoly(t.nPolyhedronIndex).Position
   Select Case m_tLevel.tPolyhedron(t.nPolyhedronIndex).nShape
   Case &H111 To &HFFF
-   m_objPoly(t.nPolyhedronIndex).Move (p.nGroundEdgeIndex - p.nFirstEdgeIndex + 1) And 3&, True
+   m_objPoly(t.nPolyhedronIndex).Move (p.nGroundEdgeIndex - p.nFirstEdgeIndex + 1) And 3&, m_tLevel.tPolyhedron(t.nPolyhedronIndex), True
   Case Else
    Debug.Assert False
   End Select
@@ -3298,7 +3383,7 @@ Case 8 'move:back
   p = m_objPoly(t.nPolyhedronIndex).Position
   Select Case m_tLevel.tPolyhedron(t.nPolyhedronIndex).nShape
   Case &H111 To &HFFF
-   m_objPoly(t.nPolyhedronIndex).Move (p.nGroundEdgeIndex - p.nFirstEdgeIndex) And 3&, True
+   m_objPoly(t.nPolyhedronIndex).Move (p.nGroundEdgeIndex - p.nFirstEdgeIndex) And 3&, m_tLevel.tPolyhedron(t.nPolyhedronIndex), True
   Case Else
    Debug.Assert False
   End Select
@@ -3654,7 +3739,7 @@ If m_bPolyhedronDirty Then
   '????????
   If m_tPolyInst(i).nFlags And &H100& Then
    If m_tPolyInst(i).nAnimType = 0 Then
-    m_objPoly(i).CheckPolyhedronStateAndResponse
+    m_objPoly(i).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(i)
    End If
   End If
  Next i
