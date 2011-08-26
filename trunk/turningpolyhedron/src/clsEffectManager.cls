@@ -14,6 +14,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 #Const HasInternalInstance = False
+#Const ChildInstIndexEnabled = False
 
 'TODO:use collection for fast look up (?)
 
@@ -264,7 +265,9 @@ If nIndex <= 0 Or nIndex > m Then Exit Sub
 Do
  If tInst.tInstance(nIndex).nEffectIndex <= 0 Then Exit Do
  '///
+ #If ChildInstIndexEnabled Then
  j = tInst.tInstance(nIndex).nChildInstIndex
+ #End If
  i = tInst.tInstance(nIndex).nNextInstIndex
  '///
  t.nEffectIndex = tInst.nInstUnused Or &H80000000
@@ -273,7 +276,9 @@ Do
  tInst.nInstCount = tInst.nInstCount - 1
  tInst.bInstDirty = True
  '///
+ #If ChildInstIndexEnabled Then
  If j > 0 And j <= m Then RemoveInstanceEx tInst, j, False
+ #End If
  If i > 0 And i <= m Then nIndex = i Else Exit Do
 Loop
 '///
@@ -303,7 +308,9 @@ Do While nStart <= nEnd
   If nIndex <= 0 Or nIndex > m Then Exit Do
   If tInst.tInstance(nIndex).nEffectIndex <= 0 Then Exit Do
   '///
+  #If ChildInstIndexEnabled Then
   j = tInst.tInstance(nIndex).nChildInstIndex
+  #End If
   i = tInst.tInstance(nIndex).nNextInstIndex
   '///
   t.nEffectIndex = tInst.nInstUnused Or &H80000000
@@ -312,7 +319,9 @@ Do While nStart <= nEnd
   tInst.nInstCount = tInst.nInstCount - 1
   tInst.bInstDirty = True
   '///
+  #If ChildInstIndexEnabled Then
   If j > 0 And j <= m Then RemoveInstanceEx tInst, j, False
+  #End If
   nIndex = i
  Loop
  nStart = nStart + 1
@@ -344,7 +353,9 @@ Do While nStart <= nEnd
   If nIndex <= 0 Or nIndex > m Then Exit Do
   If tInst.tInstance(nIndex).nEffectIndex <= 0 Then Exit Do
   '///
+  #If ChildInstIndexEnabled Then
   j = tInst.tInstance(nIndex).nChildInstIndex
+  #End If
   i = tInst.tInstance(nIndex).nNextInstIndex
   '///
   t.nEffectIndex = tInst.nInstUnused Or &H80000000
@@ -353,7 +364,9 @@ Do While nStart <= nEnd
   tInst.nInstCount = tInst.nInstCount - 1
   tInst.bInstDirty = True
   '///
+  #If ChildInstIndexEnabled Then
   If j > 0 And j <= m Then RemoveInstanceEx tInst, j, False
+  #End If
   nIndex = i
  Loop
  nStart = nStart + 1

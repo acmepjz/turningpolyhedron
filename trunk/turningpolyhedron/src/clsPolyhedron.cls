@@ -380,14 +380,14 @@ End If
 CanChangeGroundEdgeIndex = True
 End Function
 
-Friend Sub CheckPolyhedronStateAndResponse()
+Friend Sub CheckPolyhedronStateAndResponse(ByRef tPoly As typeMapData_Polyhedron)
 Dim i As Long
 Dim tPos As typePolyhedronPosition
 Dim tState As typePolyhedronState
 '///
 'FIXME:
 'should add some tilt checking in CheckPolyhedronStateEx when bMoving=False
-CheckPolyhedronStateEx m_tPos, m_tState, False
+CheckPolyhedronStateEx m_tPos, m_tState, False, tPoly
 m_bUndoDirty = True
 '///response
 'TODO:if state changed then play some animation (e.g. tilt angle changed)
@@ -402,7 +402,7 @@ Case 2 'slippery
    tPos.nFirstEdgeIndex = (tPos.nFirstEdgeIndex - i + m_nSlipDirection - 1) And 3& '???
    m_nSlipDirection = 0
    '///check
-   CheckPolyhedronStateEx tPos, tState, False
+   CheckPolyhedronStateEx tPos, tState, False, tPoly
    If tState.nState Then
     If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX <= 0 Then
      m_tOldPos = m_tPos
@@ -430,7 +430,7 @@ End Sub
 
 'TODO:more arguments in typePolyhedronState
 'e.g. all on ground tiles
-Friend Sub CheckPolyhedronStateEx(ByRef tPos As typePolyhedronPosition, ByRef ret As typePolyhedronState, ByVal bMoving As Boolean)
+Friend Sub CheckPolyhedronStateEx(ByRef tPos As typePolyhedronPosition, ByRef ret As typePolyhedronState, ByVal bMoving As Boolean, ByRef tPoly As typeMapData_Polyhedron)
 Dim i As Long, j As Long, k As Long
 Dim x As Long, y As Long, z As Long
 Dim nHeight As Long, nHeight2 As Long
@@ -441,6 +441,15 @@ Dim nDirXDelta As Long, nDirY As Long
 Dim nMax As Long, nState As Long
 Dim f As Single
 Dim bFirstEmpty As Boolean
+'///
+Dim nMask(31) As Long
+j = 1
+For i = 0 To 29
+ nMask(i) = j
+ j = j + j
+Next i
+nMask(30) = &H40000000
+nMask(31) = &H80000000
 '///
 ret.nState = 0
 nState = 1
@@ -569,11 +578,43 @@ Case &H111 To &HFFF
     If ret.nTiltY = 0 Then '????????
      If (m_tLogic.nFlags And &H8&) = 0 Then
       If nState > 0 Then nState = -1 '???
-     ElseIf x + y <= 3 Then '1x1 or 1x2 or 2x1
-      If nState > 0 Then nState = -1
+'     ElseIf tPoly.nStabilityCount > 0 Then 'custom stability support (experimental) TODO:
+'      'TODO:
      Else
-      'TODO:
-      Debug.Assert False
+      If x + y <= 3 Then '1x1 or 1x2 or 2x1
+       If nState > 0 Then nState = -1
+      ElseIf x + y = 4 Then
+       '!!!!!!!!TEST ONLY
+       Dim kkk As Long
+       If x = 2 Then '2x2
+        If m_tLogic.nFlags And &H80& Then
+         If kkk Then
+          If (i Xor j Xor kkk) And 1& Then
+           If nState > 0 Then nState = -1
+          End If
+         Else
+          kkk = ((i Xor j) And 1&) Or 2&
+         End If
+        Else
+         kkk = kkk + 1
+         If kkk > 1 Then
+          If nState > 0 Then nState = -1
+         End If
+        End If
+       Else '1x3 or 3x1
+        If m_tLogic.nFlags And &H80& Then
+         If i <> 2 And j <> 2 Then
+          If nState > 0 Then nState = -1
+         End If
+        Else
+         If nState > 0 Then nState = -1 '???
+        End If
+       End If
+       '!!!!!!!!
+      Else
+       'TODO:
+       Debug.Assert False
+      End If
      End If
     End If
    Case &H80000000 To &H8001FFFF 'block tiltable AND block not tiltable
@@ -650,6 +691,16 @@ Case &H111 To &HFFF
    '///
   Next i
  Next j
+ '///custom stability support (experimental) TODO:
+ If nState = 1 And ret.nTiltY = 0 Then
+  For i = 1 To tPoly.nStabilityCount
+   If tPoly.tStability(i).nFaceIndexMask And nMask(tPos.nGroundFaceIndex) Then
+    'TODO:
+    nState = tPoly.tStability(i).nValue
+    Exit For
+   End If
+  Next i
+ End If
  '///check object interaction
  If nState = 1 Then
   j = 0
@@ -735,7 +786,7 @@ End Function
 '1=OK
 '(obsolete) other --> same as CheckPolyhedronStateEx
 'TODO:etc.
-Friend Function Move(ByVal nDirection As Long, Optional ByVal bAllowFalling As Boolean, Optional ByVal nUndoIndex As Long = -1) As Long
+Friend Function Move(ByVal nDirection As Long, ByRef tPoly As typeMapData_Polyhedron, Optional ByVal bAllowFalling As Boolean, Optional ByVal nUndoIndex As Long = -1) As Long
 Dim tPos As typePolyhedronPosition
 Dim tState As typePolyhedronState
 Dim nTiltGroundEdgeDelta As Long '????????
@@ -761,7 +812,7 @@ If Not MovePosition(tPos, nDirection) Then Exit Function
 'check tilt move first
 If nTiltGroundEdgeDelta And 1& Then
  tPos.nGroundEdgeIndex = (tPos.nGroundEdgeIndex + nTiltGroundEdgeDelta) And 3&
- CheckPolyhedronStateEx tPos, tState, True
+ CheckPolyhedronStateEx tPos, tState, True, tPoly
  If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX > 0 Then 'check tilt angle
   tState.nState = 0
  End If
@@ -773,7 +824,7 @@ If nTiltGroundEdgeDelta And 1& Then
 End If
 'check normal move
 If tState.nState = 0 Then
- CheckPolyhedronStateEx tPos, tState, True
+ CheckPolyhedronStateEx tPos, tState, True, tPoly
 End If
 'check new state
 bMove = False
