@@ -329,6 +329,14 @@ Friend Property Get LevelName() As String
 LevelName = m_tLevel.sName
 End Property
 
+Friend Property Get LevelSolution() As String
+LevelSolution = m_tLevel.sSolution
+End Property
+
+Friend Property Let LevelSolution(ByVal s As String)
+m_tLevel.sSolution = s
+End Property
+
 Friend Property Get AutoReset() As Boolean
 AutoReset = m_bAutoReset
 End Property
@@ -2086,6 +2094,8 @@ For i = 1 To objNode.SubNodeCount
   Select Case obj.GetNameAsString
   Case "name"
    tLevel.sName = obj.GetValueAsString
+  Case "solution"
+   tLevel.sSolution = obj.GetValueAsString
   Case "mapData"
    tLevel.nMapDataCount = tLevel.nMapDataCount + 1
    ReDim Preserve tLevel.tMapData(1 To tLevel.nMapDataCount)
