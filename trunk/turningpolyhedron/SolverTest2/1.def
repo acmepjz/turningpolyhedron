@@ -28,3 +28,7 @@ GADestroyPool
 GARun
 GAGetPoolItem
 GAGetFitness
+
+GetAvaliableRandomMapGenerators
+GetAvaliableRandomMapOptions
+GetAvaliableGAOptions

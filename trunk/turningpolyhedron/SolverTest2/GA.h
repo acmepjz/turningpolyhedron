@@ -22,6 +22,14 @@ static int GANode_Compare(const void* a,const void* b){
 typedef void (__stdcall * GACallbackFunc)(void* UserData,int CurrentGeneration,int GenerationCount,int* Cancel);
 
 class GA{
+public:
+	struct Settings{
+		int RandomFitness;
+		double FirstReproduce;
+		double ReproduceDecay;
+		double ReproduceCountDecay;
+		double MutationProbability;
+	};
 private:
 	int m_nPoolSize;
 	GABase** Pool;
@@ -65,33 +73,44 @@ public:
 		Pool=NULL;
 		Node=NULL;
 	}
-	bool Run(int GenerationCount,int RandomFitness,std::ostream* out,GACallbackFunc Callback,void* UserData){
+	bool Run(int GenerationCount,const Settings& t,std::ostream* out,GACallbackFunc Callback,void* UserData){
 		int i,j;
 		int Cancel=0;
 		for(i=0;i<m_nPoolSize;i++){
 			Pool[i]->CreateRandom();
 		}
-		for(int t=0;t<GenerationCount;t++){
-			if(out) (*out)<<"Running generation "<<(t+1)<<"...\r";
+		for(int times=0;times<GenerationCount;times++){
+			if(out) (*out)<<"Running generation "<<(times+1)<<"...\r";
 			if(Callback){
-				Callback(UserData,t,GenerationCount,&Cancel);
+				Callback(UserData,times,GenerationCount,&Cancel);
 				if(Cancel) break;
 			}
 			for(i=0;i<m_nPoolSize;i++){
 				Node[i].Index=i;
-				Node[i].Fitness=Pool[i]->CalcFitness()+int(genrand_real2()*RandomFitness);
+				Node[i].Fitness=Pool[i]->CalcFitness()+int(genrand_real2()*t.RandomFitness);
 			}
 			qsort(Node,m_nPoolSize,sizeof(GANode),GANode_Compare);
-			//
-			i=0;
-			j=m_nPoolSize-1;
-			while(i<j){
-				int m=1;
-				for(int k=0;k<m&&i<j;k++,j--){
-					Pool[Node[j].Index]->CopyFrom(Pool[Node[i].Index]);
-					Pool[Node[j].Index]->RandomMutation();
+			//reproduce
+			{
+				double f=t.FirstReproduce;
+				i=0;
+				j=m_nPoolSize-1;
+				while(i<j){
+					if(genrand_real2()<f){
+						for(;i<j;j--){
+							Pool[Node[j].Index]->CopyFrom(Pool[Node[i].Index]);
+							if(genrand_real2()>t.ReproduceCountDecay) break;
+						}
+					}
+					f*=t.ReproduceDecay;
+					i++;
 				}
-				i++;
+			}
+			//mutation
+			for(i=0;i<m_nPoolSize;i++){
+				if(genrand_real2()<t.MutationProbability){
+					Pool[i]->RandomMutation();
+				}
 			}
 		}
 		for(i=0;i<m_nPoolSize;i++){

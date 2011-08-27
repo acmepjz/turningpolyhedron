@@ -38,3 +38,9 @@ Public Declare Function GARun Lib "SolverTest2.dll" (ByVal obj As Long, ByVal Ge
 Public Declare Function GAGetPoolItem Lib "SolverTest2.dll" (ByVal obj As Long, ByVal Index As Long) As Long
 Public Declare Function GAGetFitness Lib "SolverTest2.dll" (ByVal obj As Long, ByVal Index As Long) As Long
 
+'settings function
+
+Public Declare Function GetAvaliableRandomMapGenerators Lib "SolverTest2.dll" (ByRef lpOut As Any, ByVal SizePerString As Long, ByVal MaxCount As Long) As Long
+Public Declare Function GetAvaliableRandomMapOptions Lib "SolverTest2.dll" (ByVal sType As String, ByRef lpOut As Any, ByVal SizePerString As Long, ByVal MaxCount As Long) As Long
+Public Declare Function GetAvaliableGAOptions Lib "SolverTest2.dll" (ByRef lpOut As Any, ByVal SizePerString As Long, ByVal MaxCount As Long) As Long
+

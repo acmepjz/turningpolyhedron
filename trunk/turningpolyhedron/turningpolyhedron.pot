@@ -79,7 +79,8 @@ msgstr ""
 #.  .AddNewChildren FakeCtl_Button, -64, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1
 #.   .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
-#.   .AddNewChildren FakeCtl_Button, -72, -12, -8, 12, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancelProgress", 1, 0.5, 1, 0.5
+#.   .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel3", 1, 1, 1, 1
+#.  .AddNewChildren FakeCtl_Button, -72, -12, -8, 12, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 0.5, 1, 0.5
 msgid "Cancel"
 msgstr ""
 
@@ -177,8 +178,13 @@ msgstr ""
 #.        .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #.    + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 #.   .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
+#.    .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
 #.     + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 msgid "Error"
+msgstr ""
+
+#.    .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
+msgid "Error generating random level."
 msgstr ""
 
 #.    .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
@@ -254,6 +260,14 @@ msgstr ""
 
 #.  i = .MsgBox(objText.GetText("Game paused"), _
 msgid "Game paused"
+msgstr ""
+
+#.  m_objRandomMapProgress.CreateAndShow objText.GetText("Generating...")
+msgid "Generating..."
+msgstr ""
+
+#.     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Generations")
+msgid "Generations"
 msgstr ""
 
 #.    .AddTab objText.GetText("Graphics"), , , , , objText.GetText("Change the graphics settings.")
@@ -341,6 +355,10 @@ msgstr ""
 msgid "Name"
 msgstr ""
 
+#.     .AddNewChildren FakeCtl_Button, -72, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("New"), , "cmdSeed", 1, , 1
+msgid "New"
+msgstr ""
+
 #.  .AddNewChildren FakeCtl_Button, -88, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("New folder"), , "cmdNewFolder", 1, , 1
 #.     s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
 msgid "New folder"
@@ -360,6 +378,7 @@ msgstr ""
 #.   s = objText.GetText("OK")
 #.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
+#.   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK3", 1, 1, 1, 1
 msgid "OK"
 msgstr ""
 
@@ -377,7 +396,7 @@ msgstr ""
 msgid "Open"
 msgstr ""
 
-#.   .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Open other file"), , "cmdOpen", 1, , 1
+#.   .AddNewChildren FakeCtl_Button, -328, 8, -208, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Open other file"), , "cmdOpen", 1, , 1
 msgid "Open other file"
 msgstr ""
 
@@ -397,16 +416,30 @@ msgstr ""
 msgid "Play next level."
 msgstr ""
 
+#.     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Pool size")
+msgid "Pool size"
+msgstr ""
+
 #.    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
 msgid "Post process"
 msgstr ""
 
-#.  FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Processing..."))
+#. objProgress.CreateAndShow objText.GetText("Processing...")
 msgid "Processing..."
 msgstr ""
 
 #.    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
 msgid "Radial blur"
+msgstr ""
+
+#.   .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
+#.  objText.GetText("Random level"))
+#.    m_sLevelName = objText.GetText("Random level")
+msgid "Random level"
+msgstr ""
+
+#.     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Random seed")
+msgid "Random seed"
 msgstr ""
 
 #.   .AddNewChildren FakeCtl_Button, 8, 8, 72, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Refresh"), , "cmdRefresh"
@@ -492,6 +525,7 @@ msgid "Turning Polyhedron"
 msgstr ""
 
 #.     .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
+#.     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Type")
 msgid "Type"
 msgstr ""
 
