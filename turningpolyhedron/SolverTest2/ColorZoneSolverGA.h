@@ -26,14 +26,15 @@ public:
 		int i,j;
 		StartX=int(genrand_real2()*(m_nWidth-SizeX+1));
 		StartY=int(genrand_real2()*(m_nHeight-SizeY+1));
-		EndX=int(genrand_real2()*(m_nWidth-SizeX+1));
-		EndY=int(genrand_real2()*(m_nHeight-SizeY+1));
 		int sz[3]={SizeX,SizeY,SizeZ};
 		i=int(genrand_real2()*3);
 		EndSizeX=sz[i];
 		sz[i]=sz[2];
 		i=int(genrand_real2()*2);
 		EndSizeY=sz[i];
+		//
+		EndX=int(genrand_real2()*(m_nWidth-EndSizeX+1));
+		EndY=int(genrand_real2()*(m_nHeight-EndSizeY+1));
 		//
 		memset(m_bMapData,0,1<<(m_nWidthShift+m_nHeightShift));
 		for(j=0;j<m_nHeight;j++){

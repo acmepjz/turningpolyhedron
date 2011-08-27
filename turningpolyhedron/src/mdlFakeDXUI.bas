@@ -4,7 +4,7 @@ Option Explicit
 Public Const FakeDXUISliderSize As Long = 12
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
-Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hWnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
     x As Long
     y As Long
@@ -300,7 +300,7 @@ With FakeDXUIControls(1)
  .SetRightEx nRight, 0
  .SetBottomEx nBottom, 0
 End With
-FakeDXUI_IME.Create frmMain.hWnd '?
+FakeDXUI_IME.Create frmMain.hwnd '?
 '///
 ReDim FakeDXUIModalStack(1 To 64)
 FakeDXUIModalStackCount = 0
@@ -472,7 +472,7 @@ FakeDXUIPopup_ToolTipText_Caption = s
 '///
 If x < 0 Or y < 0 Then
  GetCursorPos p
- ScreenToClient frmMain.hWnd, p
+ ScreenToClient frmMain.hwnd, p
  x = p.x
  y = p.y
 End If
@@ -609,6 +609,14 @@ Public Function FakeDXUIFindControl(ByVal sName As String, Optional ByVal nParen
 Dim i As Long
 If nParent > 0 And nParent <= FakeDXUIControlCount Then
  'TODO:
+ For i = 1 To FakeDXUIControlCount
+  If FakeDXUIControls(i).Parent = nParent Then
+   If FakeDXUIControls(i).Name = sName Then
+    FakeDXUIFindControl = i
+    Exit Function
+   End If
+  End If
+ Next i
 Else
  For i = 1 To FakeDXUIControlCount
   If FakeDXUIControls(i).Name = sName Then

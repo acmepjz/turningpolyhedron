@@ -12,6 +12,42 @@
 #include "GA.h"
 using namespace std;
 
+static const char *SimpleSolverGATypes[]={
+	"SimpleSolverGA",
+	"Width","15",
+	"Height","10",
+	"SizeX","1",
+	"SizeY","1",
+	"SizeZ","2",
+	NULL
+};
+static const char *ColorZoneSolverGATypes[]={
+	"ColorZoneSolverGA",
+	"Width","8",
+	"Height","8",
+	"SizeX","1",
+	"SizeY","1",
+	"SizeZ","2",
+	"ColorCount","2",
+	"AllowEmpty","0",
+	NULL
+};
+
+static const char **SolverTypes[]={
+	SimpleSolverGATypes,
+	ColorZoneSolverGATypes,
+	NULL
+};
+
+static const char *GATypes[]={
+	"RandomFitness","5",
+	"FirstReproduce","1.0",
+	"ReproduceDecay","1.0",
+	"ReproduceCountDecay","0.0",
+	"MutationProbability","0.5",
+	NULL
+};
+
 GABase* FactoryFunction(map<string,string>& obj){
 	const string& Type=obj["Type"];
 	if(Type=="SimpleSolverGA"){
@@ -92,6 +128,8 @@ void __stdcall StdMapDestroy(map<string,string>* obj){
 	delete obj;
 }
 void __stdcall StdMapAdd(map<string,string>* obj,const char* key,const char* value){
+	if(!key) key="";
+	if(!value) value="";
 	(*obj)[key]=value;
 }
 void __stdcall StdMapAddFromString(map<string,string>* obj,const char* s,int delim1,int delim2,short bRemoveSpace){
@@ -99,6 +137,8 @@ void __stdcall StdMapAddFromString(map<string,string>* obj,const char* s,int del
 	int idx=0;
 	int keys,keye;
 	int vals,vale;
+	//
+	if(!s) return;
 	//
 	c=s[idx];
 	for(;;){
@@ -129,18 +169,19 @@ void __stdcall StdMapAddFromString(map<string,string>* obj,const char* s,int del
 	}
 }
 int __stdcall StdMapQuery(map<string,string>* obj,const char* key,char* value,int len){
+	if(!key) key="";
 	map<string,string>::iterator it=obj->find(key);
 	if(it!=obj->end()){
-		strncpy(value,it->second.c_str(),len);
+		if(value) strncpy(value,it->second.c_str(),len);
 		return it->second.size();
 	}else{
-		value[0]='\0';
+		if(value) value[0]='\0';
 		return -1;
 	}
 }
 map<string,string>* __stdcall StdMapCreateFromString(const char* s,int delim1,int delim2,short bRemoveSpace){
 	map<string,string> *obj=new map<string,string>();
-	StdMapAddFromString(obj,s,delim1,delim2,bRemoveSpace);
+	if(s) StdMapAddFromString(obj,s,delim1,delim2,bRemoveSpace);
 	return obj;
 }
 
@@ -179,19 +220,72 @@ void __stdcall GADestroyPool(GA* obj){
 	obj->Destroy();
 }
 bool __stdcall GARun(GA* obj,int GenerationCount,map<string,string>* objMap,GACallbackFunc Callback,void* UserData){
-	int RandomFitness=0;
+	//default value
+	GA::Settings t={5,1.0,1.0,0.0,0.5};
 	//
 	if(objMap){
-		RandomFitness=atoi((*objMap)["RandomFitness"].c_str());
+		map<string,string>::iterator it;
+		it=objMap->find("RandomFitness");
+		if(it!=objMap->end()) t.RandomFitness=atoi(it->second.c_str());
+		it=objMap->find("FirstReproduce");
+		if(it!=objMap->end()) t.FirstReproduce=atof(it->second.c_str());
+		it=objMap->find("ReproduceDecay");
+		if(it!=objMap->end()) t.ReproduceDecay=atof(it->second.c_str());
+		it=objMap->find("ReproduceCountDecay");
+		if(it!=objMap->end()) t.ReproduceCountDecay=atof(it->second.c_str());
+		it=objMap->find("MutationProbability");
+		if(it!=objMap->end()) t.MutationProbability=atof(it->second.c_str());
 	}
 	//
-	return obj->Run(GenerationCount,RandomFitness,NULL,Callback,UserData);
+	return obj->Run(GenerationCount,t,NULL,Callback,UserData);
 }
 GABase* __stdcall GAGetPoolItem(GA* obj,int Index){
 	return (*obj)(Index);
 }
 int __stdcall GAGetFitness(GA* obj,int Index){
 	return obj->Fitness(Index);
+}
+
+//settings function
+
+int __stdcall GetAvaliableRandomMapGenerators(char* out,int SizePerString,int MaxCount){
+	int i;
+	for(i=0;SolverTypes[i]!=NULL;i++){
+		if(out && i<MaxCount){
+			strncpy(out,SolverTypes[i][0],SizePerString);
+			out+=SizePerString;
+		}
+	}
+	return i;
+}
+
+int __stdcall GetAvaliableRandomMapOptions(const char* sType,char* out,int SizePerString,int MaxCount){
+	int i,j;
+	for(i=0;SolverTypes[i]!=NULL;i++){
+		if(!strcmp(sType,SolverTypes[i][0])){
+			MaxCount*=2;
+			for(j=1;SolverTypes[i][j]!=NULL;j++){
+				if(out && j-1<MaxCount){
+					strncpy(out,SolverTypes[i][j],SizePerString);
+					out+=SizePerString;
+				}
+			}
+			return (j-1)/2;
+		}
+	}
+	return 0;
+}
+
+int __stdcall GetAvaliableGAOptions(char* out,int SizePerString,int MaxCount){
+	int i;
+	MaxCount*=2;
+	for(i=0;GATypes[i]!=NULL;i++){
+		if(out && i<MaxCount){
+			strncpy(out,GATypes[i],SizePerString);
+			out+=SizePerString;
+		}
+	}
+	return i/2;
 }
 
 #else
@@ -217,7 +311,9 @@ int main(){
 		cout<<"ERROR: Can't create object"<<endl;
 		return -1;
 	}
-	test.Run(100,5,&cout,NULL,NULL);
+	//
+	GA::Settings t={5,1.0,1.0,0.0,0.5};
+	test.Run(100,t,&cout,NULL,NULL);
 	//
 	ofstream f("out.xml");
 	test(0)->OutputXML(f,true);

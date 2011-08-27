@@ -41,7 +41,11 @@ Private m_idxForm2 As Long, m_idxLevels As Long
 Implements ITreeStorageBuilder
 
 Private m_bGetLevelName As Boolean
-Private m_sLevelName As String, m_sLevelFile As String, m_nLevelType As Long
+Private m_sLevelName As String, m_sLevelFile As String
+Private m_nLevelType As Long
+'0=level
+'1=level collection
+'2=random level (experimental)
 Private m_nLevelCountInLevelCollection As Long, m_objLevels() As clsTreeStorageNode
 Private m_nTreeStorageLevel As Long
 
@@ -60,11 +64,18 @@ End Type
 Private m_tLevelIdx() As typeGameLevelIndex
 Private m_nLevelIdxCount As Long, m_nLevelIdxMax As Long
 
-'////////random map
+'////////random map (experimental)
+
+Private m_idxFormRnd As Long, m_idxFormRnd_1 As Long, m_idxSeed As Long
+Private m_nRndOptionsTop As Long
 
 Private m_objRandomMapProgress As clsProgressDialog
 
 Implements IRandomMap
+
+Private Type typeString
+ s(127) As Byte
+End Type
 
 Friend Sub LoadLevelList(ByVal fn As String)
 Dim obj As New clsTreeStorageNode
@@ -234,6 +245,10 @@ DisplayLevelList
 End Sub
 
 Friend Sub Create()
+Dim y As Long
+Dim t() As typeString, s As String, s2 As String
+Dim i As Long, m As Long
+'///
 If m_idxForm Then Exit Sub
 '///
 With FakeDXUIControls(1)
@@ -259,9 +274,9 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
   .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
   .AddNewChildren FakeCtl_Button, 8, 8, 72, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Refresh"), , "cmdRefresh"
-  .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Open other file"), , "cmdOpen", 1, , 1
+  .AddNewChildren FakeCtl_Button, -328, 8, -208, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Open other file"), , "cmdOpen", 1, , 1
   '///TEST ONLY
-  .AddNewChildren FakeCtl_Button, -72, 104, -8, 128, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , "Random", , "cmdRandom", 1, , 1
+  .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
  End With
  '///form 2
  With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
@@ -282,6 +297,70 @@ With FakeDXUIControls(1)
   '///some buttons
   .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
+ End With
+ '///random level
+ ReDim t(255)
+ '///
+ With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
+ FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_TitleBar Or FFS_Sizable, , False, , _
+ objText.GetText("Random level"))
+  m_idxFormRnd = .Index
+  Set .EventObject = Me
+  '///
+  With .AddNewChildren(FakeCtl_None, 0, 0, 0, -40, FCS_CanGetFocus Or FCS_TabStop Or FCS_AutoScroll, , , , , , , , , 1, 1)
+   With .AddNewChildren(FakeCtl_None, 0, 0, 572, 320)
+    m_idxFormRnd_1 = .Index
+    '///
+    y = 8
+    '///combobox
+    .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Type")
+    With .AddNewChildren(FakeCtl_ComboBox, 168, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop, , , , , , "ga__Type", , , 1).ListViewObject
+     .FullRowSelect = True
+     .AddColumn vbNullString
+     '///
+     m = GetAvaliableRandomMapGenerators(t(0), 128, 256)
+     For i = 0 To m - 1
+      s = StrConv(t(i).s, vbUnicode)
+      s = Left(s, InStr(1, s, vbNullChar) - 1)
+      .AddItem s
+     Next i
+     '///
+    End With
+    y = y + 32
+    '///
+    .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Pool size")
+    .AddNewChildren FakeCtl_TextBox, 168, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect Or FTS_NumberOnly Or FTS_UpDown, , , , , "100", "txtPoolSize", , , 1
+    y = y + 32
+    '///
+    .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Generations")
+    .AddNewChildren FakeCtl_TextBox, 168, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect Or FTS_NumberOnly Or FTS_UpDown, , , , , "100", "txtGenerations", , , 1
+    y = y + 32
+    '///
+    .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Random seed")
+    m_idxSeed = .AddNewChildren(FakeCtl_TextBox, 168, y, -80, y + 24, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect, , , , , "100", "txtSeed", , , 1).Index
+    .AddNewChildren FakeCtl_Button, -72, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("New"), , "cmdSeed", 1, , 1
+    y = y + 32
+    '///GA options
+    y = y + 8
+    m = GetAvaliableGAOptions(t(0), 128, 128)
+    For i = 0 To m - 1
+     s = StrConv(t(i + i).s, vbUnicode)
+     s = Left(s, InStr(1, s, vbNullChar) - 1)
+     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , s
+     s2 = StrConv(t(i + i + 1).s, vbUnicode)
+     s2 = Left(s2, InStr(1, s2, vbNullChar) - 1)
+     .AddNewChildren FakeCtl_TextBox, 168, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect, , , , , s2, "ga__" + s, , , 1
+     y = y + 32
+    Next i
+    '///
+    m_nRndOptionsTop = y + 8
+    '///
+    .SetBottomEx m_nRndOptionsTop, 0
+   End With
+  End With
+  '///some buttons
+  .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK3", 1, 1, 1, 1
+  .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel3", 1, 1, 1, 1
  End With
 End With
 '///load level index and show item
@@ -388,7 +467,7 @@ Friend Sub DisplayGameFinishedMenu()
 Dim i As Long
 '///stupid MsgBox
 With New clsFakeDXUIMsgBox
- If m_nLevelType = 1 And m_nCurrentLevelIndex < m_nLevelCountInLevelCollection Then
+ If (m_nLevelType = 1 And m_nCurrentLevelIndex < m_nLevelCountInLevelCollection) Or m_nLevelType = 2 Then
   .AddButton objText.GetText("Next level"), &H103&, _
   objText.GetText("Play next level.")
  End If
@@ -429,6 +508,9 @@ Case &H103&
    .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
    + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
   End With
+ ElseIf m_nLevelType = 2 Then
+  NewRandomSeed
+  If GenerateRandomLevelAndPlay Then Exit Sub
  End If
  BackToLevelSelection
 Case &H104&
@@ -447,8 +529,14 @@ With FakeDXUIControls(m_idxForm)
  .MoveToCenter
  .Show 1
 End With
-If m_nLevelType Then
+If m_nLevelType = 1 Then
  With FakeDXUIControls(m_idxForm2)
+  .MoveToCenter
+  .Show 1
+ End With
+ElseIf m_nLevelType = 2 Then
+ NewRandomSeed
+ With FakeDXUIControls(m_idxFormRnd)
   .MoveToCenter
   .Show 1
  End With
@@ -631,7 +719,7 @@ Dim b As Boolean
 FakeDXAppRemoveDataLevel 2
 FakeDXAppAddDataLevel 2
 '///
-b = m_nLevelType = 0
+b = m_nLevelType <> 1
 objGameMgr.ClearLevelData b
 If objGameMgr.AddLevelDataFromNode(obj) Then
  '///get level name
@@ -773,11 +861,14 @@ End If
 End Function
 
 'TEST ONLY
-Friend Sub RandomTest()
-Dim objMap As Long, objMap2 As Long
+Friend Function GenerateRandomLevelAndPlay() As Boolean
+Dim objMap As Long
 Dim objGA As Long
+Dim nPoolSize As Long, nGenerations As Long
+Dim sRandomSeed As String
 Dim s As String, m As Long
-Dim b As Boolean
+Dim i As Long, j As Long
+Dim b As Boolean, bCancel As Boolean
 Dim obj As New clsTreeStorageNode
 '///
 Dim objCallback As IRandomMap
@@ -789,53 +880,104 @@ CopyMemory m, ByVal lpUserData, 4&
 CopyMemory lpCallback, ByVal m + 28&, 4&
 Set objCallback = Nothing
 '///
-Set m_objRandomMapProgress = New clsProgressDialog
-m_objRandomMapProgress.CreateAndShow "Generating..."
+objMap = StdMapCreate
+'///get settings
+With FakeDXUIControls(m_idxFormRnd_1)
+ For i = 1 To .ChildrenCount
+  s = FakeDXUIControls(.Children(i)).Name
+  Select Case s
+  Case "ga__Type"
+   With FakeDXUIControls(.Children(i)).ListViewObject
+    j = .SelectedRow
+    If j > 0 And j <= .RowCount Then
+     StdMapAdd objMap, "Type", .List(j, 1)
+    End If
+   End With
+  Case "txtPoolSize"
+   nPoolSize = Val(FakeDXUIControls(.Children(i)).Text)
+  Case "txtGenerations"
+   nGenerations = Val(FakeDXUIControls(.Children(i)).Text)
+  Case "txtSeed"
+   sRandomSeed = FakeDXUIControls(.Children(i)).Text
+  Case Else
+   Select Case Left(s, 4)
+   Case "ga__", "opt_"
+    StdMapAdd objMap, Mid(s, 5), FakeDXUIControls(.Children(i)).Text
+   End Select
+  End Select
+ Next i
+End With
 '///
-MTInitFromString CStr(Timer)
-'///
-'s = "Type SimpleSolverGA Width 15 Height 10 SizeX 1 SizeY 1 SizeZ 2"
-s = "Type ColorZoneSolverGA Width 5 Height 5 SizeX 1 SizeY 1 SizeZ 2 ColorCount 4"
-'///
-objMap = StdMapCreateFromString(s, 32, 32, True)
-objMap2 = StdMapCreateFromString("RandomFitness 10", 32, 32, True)
+MTInitFromString sRandomSeed
 '///
 objGA = GACreate
-If GACreatePool(objGA, objMap, 5) Then
- If GARun(objGA, 5, objMap2, lpCallback, lpUserData) Then
+If GACreatePool(objGA, objMap, nPoolSize) Then
+ '///
+ Set m_objRandomMapProgress = New clsProgressDialog
+ m_objRandomMapProgress.CreateAndShow objText.GetText("Generating...")
+ '///
+ If GARun(objGA, nGenerations, objMap, lpCallback, lpUserData) Then
   s = Space(65536)
   m = GABaseOutputToString(GAGetPoolItem(objGA, 0), ByVal StrPtr(s), 131072, 1)
   b = True
  End If
+ '///
+ bCancel = m_objRandomMapProgress.Cancel
+ m_objRandomMapProgress.HideAndDestroy
+ Set m_objRandomMapProgress = Nothing
+ '///
 End If
 GADestroy objGA
 '///
 StdMapDestroy objMap
-StdMapDestroy objMap2
 '///
-m_objRandomMapProgress.HideAndDestroy
-Set m_objRandomMapProgress = Nothing
-'///
-If b Then
- With New clsXMLSerializer
-  b = .ReadNode(StrPtr(s), m, obj)
- End With
+If Not bCancel Then
  If b Then
-  m_nLevelType = 0
-  m_sLevelName = "Random level"
-  b = LoadNodeAndPlay(obj)
+  With New clsXMLSerializer
+   b = .ReadNode(StrPtr(s), m, obj)
+  End With
+  If b Then
+   m_nLevelType = 2
+   m_sLevelName = objText.GetText("Random level")
+   b = LoadNodeAndPlay(obj)
+  End If
+  GenerateRandomLevelAndPlay = b
+ End If
+ If Not b Then
+  With New clsFakeDXUIMsgBox
+   .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
+  End With
  End If
 End If
-If Not b Then
- Debug.Print "ERR"
+End Function
+
+Friend Sub ShowRandomLevelSelection()
+Create
+NewRandomSeed
+'///
+With FakeDXUIControls(m_idxFormRnd)
+ .MoveToCenter
+ .Show 1
+End With
+End Sub
+
+Friend Sub NewRandomSeed()
+Dim i As Long, s As String
+If m_idxSeed Then
+ MTInitFromString Format(Timer, "00000.000")
+ For i = 1 To 4
+  s = s + Right("00000000" + Hex(MTGenRandInt32), 8)
+ Next i
+ FakeDXUIControls(m_idxSeed).Text = s
 End If
 End Sub
 
 Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
-Dim s As String
+Dim s As String, s2 As String
 Dim bDblClickLevelFile As Boolean
 Dim bDblClickLevel As Boolean
-Dim i As Long
+Dim i As Long, y As Long, m As Long
+Dim t() As typeString
 '///
 Select Case nType
 Case FakeCtl_Event_Click
@@ -849,6 +991,10 @@ Case FakeCtl_Event_Click
   bDblClickLevel = True
  Case "cmdCancel2"
   FakeDXUIControls(m_idxForm2).Hide
+ Case "cmdOK3"
+  GenerateRandomLevelAndPlay
+ Case "cmdCancel3"
+  FakeDXUIControls(m_idxFormRnd).Hide
  Case "cmdRefresh"
   RefreshLevelList
  Case "cmdOpen"
@@ -857,8 +1003,43 @@ Case FakeCtl_Event_Click
     LoadFileAndPlay s
    End If
   End With
- Case "cmdRandom" 'TEST ONLY
-  RandomTest
+ Case "cmdRandom"
+  ShowRandomLevelSelection
+ Case "ga__Type"
+  '///remove old controls
+  With FakeDXUIControls(m_idxFormRnd_1)
+   For i = .ChildrenCount To 1 Step -1
+    Select Case Left(FakeDXUIControls(.Children(i)).Name, 4)
+    Case "lbl_", "opt_"
+     .RemoveChildren i, False, True
+    End Select
+   Next i
+  End With
+  '///
+  i = obj.ListViewObject.SelectedRow
+  If i > 0 And i <= obj.ListViewObject.RowCount Then
+   s = obj.ListViewObject.List(i, 1)
+   '///random map options
+   ReDim t(255)
+   m = GetAvaliableRandomMapOptions(s, t(0), 128, 128)
+   '///
+   y = m_nRndOptionsTop + 8
+   With FakeDXUIControls(m_idxFormRnd_1)
+    For i = 0 To m - 1
+     s = StrConv(t(i + i).s, vbUnicode)
+     s = Left(s, InStr(1, s, vbNullChar) - 1)
+     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , s, , "lbl_"
+     s2 = StrConv(t(i + i + 1).s, vbUnicode)
+     s2 = Left(s2, InStr(1, s2, vbNullChar) - 1)
+     .AddNewChildren FakeCtl_TextBox, 168, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect, , , , , s2, "opt_" + s, , , 1
+     y = y + 32
+    Next i
+    .SetBottomEx .TopEx.a + y + 8, 0
+   End With
+   '///over
+  End If
+ Case "cmdSeed"
+  NewRandomSeed
  End Select
 Case FakeCtl_Event_DblClick
  Select Case obj.Name
@@ -963,6 +1144,7 @@ objMainMenu.Show
 End Sub
 
 Friend Sub HideLevelFileSelection()
+If m_idxFormRnd Then FakeDXUIControls(m_idxFormRnd).Hide
 If m_idxForm2 Then FakeDXUIControls(m_idxForm2).Hide
 If m_idxForm Then FakeDXUIControls(m_idxForm).Hide
 End Sub
