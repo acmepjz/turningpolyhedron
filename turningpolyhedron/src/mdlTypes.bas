@@ -534,6 +534,7 @@ End Type
 
 Public Type typeLevelData
  sName As String
+ sSolution As String 'include in level file, for reference only
  nCheckPointCount As Long
  '////////
  'map data (tiles)

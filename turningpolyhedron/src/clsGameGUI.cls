@@ -31,13 +31,10 @@ Private m_nRecordPos As Long
 '
 'Private m_nGUIState As enumGameGUIState
 
-Private m_bCancel As Boolean
-
 '////////controls
 
 Private m_idxForm As Long, m_idxLvFile As Long
 Private m_idxForm2 As Long, m_idxLevels As Long
-Private m_idxProgressForm As Long, m_idxProgress As Long
 
 '////////level file verify and other
 
@@ -62,6 +59,12 @@ End Type
 
 Private m_tLevelIdx() As typeGameLevelIndex
 Private m_nLevelIdxCount As Long, m_nLevelIdxMax As Long
+
+'////////random map
+
+Private m_objRandomMapProgress As clsProgressDialog
+
+Implements IRandomMap
 
 Friend Sub LoadLevelList(ByVal fn As String)
 Dim obj As New clsTreeStorageNode
@@ -151,13 +154,9 @@ Dim s As String
 Dim i As Long, j As Long, m As Long
 Dim objSerializer As ITreeSerializer
 Dim obj As New Collection
-'///
-m_bCancel = False
+Dim objProgress As New clsProgressDialog
 '///show form
-Create
-FakeDXUIControls(m_idxProgressForm).MoveToCenter
-FakeDXUIControls(m_idxProgressForm).Show 1
-FakeDXAppMainLoop , True
+objProgress.CreateAndShow objText.GetText("Processing...")
 '///get file list and combine to existing files
 m = objFileMgr.EnumerateFile("levels", sFiles)
 If m > 0 Then
@@ -200,7 +199,7 @@ Set obj = Nothing
 Erase sFiles
 '///verify file
 Set objSerializer = New clsXMLSerializer
-FakeDXUIControls(m_idxProgress).Max = m_nLevelIdxCount
+objProgress.SetProgress , m_nLevelIdxCount
 j = 0
 For i = 1 To m_nLevelIdxCount
  If pVerifyLevelFile(m_tLevelIdx(i).sFileName, objSerializer) Then
@@ -213,12 +212,11 @@ For i = 1 To m_nLevelIdxCount
  End If
  '///
  If objTiming.GetMs > 50 Then
-  FakeDXUIControls(m_idxProgress).Value = i
-  FakeDXUIControls(m_idxProgress).Caption = Format(i / m_nLevelIdxCount, "0%")
+  objProgress.SetProgress i, , Format(i / m_nLevelIdxCount, "0%")
   FakeDXAppMainLoop , True
  End If
  '///
- If m_bCancel Then
+ If objProgress.Cancel Then
   m_nLevelIdxCount = i
   Exit For
  End If
@@ -230,7 +228,7 @@ If m_nLevelIdxCount < m_nLevelIdxMax Then
  Else Erase m_tLevelIdx
 End If
 '///hide form
-FakeDXUIControls(m_idxProgressForm).Hide
+objProgress.HideAndDestroy
 '///over
 DisplayLevelList
 End Sub
@@ -262,6 +260,8 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
   .AddNewChildren FakeCtl_Button, 8, 8, 72, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Refresh"), , "cmdRefresh"
   .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Open other file"), , "cmdOpen", 1, , 1
+  '///TEST ONLY
+  .AddNewChildren FakeCtl_Button, -72, 104, -8, 128, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , "Random", , "cmdRandom", 1, , 1
  End With
  '///form 2
  With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
@@ -282,15 +282,6 @@ With FakeDXUIControls(1)
   '///some buttons
   .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
- End With
- '///progress form
- With .AddNewChildren(FakeCtl_Form, 0, 0, 256, 96, _
- FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Processing..."))
-  m_idxProgressForm = .Index
-  Set .EventObject = Me
-  '///
-  m_idxProgress = .AddNewChildren(FakeCtl_ProgressBar, 8, -10, -80, 10, FTS_UpperCaseOnly, , , , , , , , 0.5, 1, 0.5).Index
-  .AddNewChildren FakeCtl_Button, -72, -12, -8, 12, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancelProgress", 1, 0.5, 1, 0.5
  End With
 End With
 '///load level index and show item
@@ -414,7 +405,7 @@ pProcessMenuAction i
 End Sub
 
 Friend Sub UndoLastMove()
-If m_nMoves > 0 Then
+If m_nMoves > 0 And m_nRecordPos = 0 Then
  m_nMoves = m_nMoves - 1
  objGameMgr.Undo m_nMoves
 End If
@@ -473,6 +464,7 @@ Dim v1 As D3DVECTOR, v2 As D3DVECTOR, v3 As D3DVECTOR
 Dim f As Single
 Dim i As Long
 Dim Button As Long
+Dim s As String
 '///
 Static nOldX As Long, nOldY As Long
 Static vx As D3DVECTOR, vy As D3DVECTOR
@@ -512,10 +504,12 @@ Case FakeDXAppEvent_KeyDown
   Exit Function
  Case vbKeyF12 'TEST ONLY
   With New clsFakeDXUIInputBox
-   m_sRecord = Trim(.InputBox("Input moves:", , , , True, vbVertical))
+   s = Trim(.InputBox("Input moves:", , objGameMgr.LevelSolution, , True, vbVertical))
   End With
-  If m_sRecord <> "" Then m_nRecordPos = 1 _
-  Else m_nRecordPos = 0
+  If s <> vbNullString Then
+   m_sRecord = s
+   m_nRecordPos = 1
+  End If
   Exit Function
  End Select
  If i >= 0 Then
@@ -768,6 +762,75 @@ Else
 End If
 End Sub
 
+Private Function IRandomMap_Callback(ByVal nCurrentGeneration As Long, ByVal nGenerationCount As Long) As Long
+If Not m_objRandomMapProgress Is Nothing Then
+ If objTiming.GetMs > 50 Then
+  m_objRandomMapProgress.SetProgress nCurrentGeneration, nGenerationCount
+  FakeDXAppMainLoop , True
+ End If
+ If m_objRandomMapProgress.Cancel Then IRandomMap_Callback = 1
+End If
+End Function
+
+'TEST ONLY
+Friend Sub RandomTest()
+Dim objMap As Long, objMap2 As Long
+Dim objGA As Long
+Dim s As String, m As Long
+Dim b As Boolean
+Dim obj As New clsTreeStorageNode
+'///
+Dim objCallback As IRandomMap
+Dim lpCallback As Long, lpUserData As Long
+'///
+Set objCallback = Me
+lpUserData = ObjPtr(objCallback)
+CopyMemory m, ByVal lpUserData, 4&
+CopyMemory lpCallback, ByVal m + 28&, 4&
+Set objCallback = Nothing
+'///
+Set m_objRandomMapProgress = New clsProgressDialog
+m_objRandomMapProgress.CreateAndShow "Generating..."
+'///
+MTInitFromString CStr(Timer)
+'///
+'s = "Type SimpleSolverGA Width 15 Height 10 SizeX 1 SizeY 1 SizeZ 2"
+s = "Type ColorZoneSolverGA Width 5 Height 5 SizeX 1 SizeY 1 SizeZ 2 ColorCount 4"
+'///
+objMap = StdMapCreateFromString(s, 32, 32, True)
+objMap2 = StdMapCreateFromString("RandomFitness 10", 32, 32, True)
+'///
+objGA = GACreate
+If GACreatePool(objGA, objMap, 5) Then
+ If GARun(objGA, 5, objMap2, lpCallback, lpUserData) Then
+  s = Space(65536)
+  m = GABaseOutputToString(GAGetPoolItem(objGA, 0), ByVal StrPtr(s), 131072, 1)
+  b = True
+ End If
+End If
+GADestroy objGA
+'///
+StdMapDestroy objMap
+StdMapDestroy objMap2
+'///
+m_objRandomMapProgress.HideAndDestroy
+Set m_objRandomMapProgress = Nothing
+'///
+If b Then
+ With New clsXMLSerializer
+  b = .ReadNode(StrPtr(s), m, obj)
+ End With
+ If b Then
+  m_nLevelType = 0
+  m_sLevelName = "Random level"
+  b = LoadNodeAndPlay(obj)
+ End If
+End If
+If Not b Then
+ Debug.Print "ERR"
+End If
+End Sub
+
 Private Function IFakeDXUIEvent_OnEvent(ByVal obj As clsFakeDXUI, ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
 Dim s As String
 Dim bDblClickLevelFile As Boolean
@@ -794,8 +857,8 @@ Case FakeCtl_Event_Click
     LoadFileAndPlay s
    End If
   End With
- Case "cmdCancelProgress"
-  m_bCancel = True
+ Case "cmdRandom" 'TEST ONLY
+  RandomTest
  End Select
 Case FakeCtl_Event_DblClick
  Select Case obj.Name
@@ -862,7 +925,7 @@ If m_nRecordPos > 0 Then
   End Select
   If i >= 0 And i < 4 Then
    If objGameMgr.CanPlayerMovePolyhedron Then
-    i = objGameMgr.MoveCurrentPolyhedron(i)
+    i = objGameMgr.MoveCurrentPolyhedron(i, m_nMoves)
     If i Then
      objGameMgr.FollowCurrentPolyhedron = True
      m_nMoves = m_nMoves + 1
