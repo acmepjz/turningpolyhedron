@@ -288,6 +288,15 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
     m_idx(IDC_RadialBlur) = .Index
    End With
    y = y + HeightStep
+   '///new:video capture options
+   If FakeDXAppVideoCaptureEnabled Then
+    .AddNewChildren FakeCtl_Button, 10, y, -10, y + Height, FCS_CanGetFocus Or FCS_TabStop, , , , _
+    objText.GetText("Video capture options") + " (Ctrl+F9)", , "cmdVideoCapture", , , 1, , , , _
+    objText.GetText("Change the video capture options.")
+   End If
+   y = y + HeightStep
+   '///over
+   .SetBottomEx y + 8, 0
   End With
   '///game
   y = 10
@@ -466,6 +475,8 @@ Case FakeCtl_Event_Click
   Hide
  Case "cmdCancel"
   Hide
+ Case "cmdVideoCapture"
+  FakeDXAppShowVideoCaptureOptions
  End Select
 Case FakeCtl_Event_Unload
  obj.Hide

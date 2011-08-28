@@ -12,6 +12,10 @@ msgstr ""
 msgid "Abort the game and back to the main menu."
 msgstr ""
 
+#.  With .AddNewChildren(FakeCtl_Button, -72, 8, -8, 32, FCS_CanGetFocus Or FCS_TabStop, False, , , objText.GetText("About"), , "cmdAbout", 1, , 1)
+msgid "About"
+msgstr ""
+
 #.      .AddItem objText.GetText("Accurate algorithm")
 msgid "Accurate algorithm"
 msgstr ""
@@ -73,6 +77,10 @@ msgstr ""
 msgid "Can't create device!!!"
 msgstr ""
 
+#.   .MsgBox objText.GetText("Can't create encoder list"), vbCritical, objText.GetText("Error")
+msgid "Can't create encoder list"
+msgstr ""
+
 #.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
 #.   s = objText.GetText("Cancel")
 #.   .AddNewChildren FakeCtl_Button, -64, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
@@ -102,6 +110,10 @@ msgstr ""
 msgid "Change the screen resolution."
 msgstr ""
 
+#.     objText.GetText("Change the video capture options.")
+msgid "Change the video capture options."
+msgstr ""
+
 #.  objText.GetText("Checkpoints: ") + CStr(m - objGameMgr.CheckPointRemaining) + "/" + CStr(m), _
 msgid "Checkpoints: "
 msgstr ""
@@ -112,7 +124,12 @@ msgstr ""
 
 #.    FakeDXUIShowToolTipText m_nIndex, objText.GetText("Close"), x, y
 #.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default Or FBS_Cancel, , , , objText.GetText("Close"), , "cmdCancel", 1, , 1
+#.  .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Close"), , "cmdClose", 1, 1, 1, 1
 msgid "Close"
+msgstr ""
+
+#.  With .AddNewChildren(FakeCtl_Button, -72, 40, -8, 64, FCS_CanGetFocus Or FCS_TabStop, False, , , objText.GetText("Configure"), , "cmdConfig", 1, , 1)
+msgid "Configure"
 msgstr ""
 
 #.  i = .MsgBox(objText.GetText("Congratulations! You have finished this level."), _
@@ -125,6 +142,10 @@ msgstr ""
 
 #.    .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("Depth of field")
 msgid "Depth of field"
+msgstr ""
+
+#.    .AddColumn objText.GetText("Description"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
+msgid "Description"
 msgstr ""
 
 #.        .AddItem objText.GetText("Desktop"), , -1
@@ -171,6 +192,11 @@ msgstr ""
 msgid "Enables volumetric fog effect."
 msgstr ""
 
+#.  .AddNewChildren FakeCtl_Label, 8, 8, -8, 32, , , , , objText.GetText("Encoder"), , , , , 1
+msgid "Encoder"
+msgstr ""
+
+#.     .MsgBox objText.GetText("Failed to begin video capture"), vbCritical, objText.GetText("Error")
 #.  MsgBox s2, vbExclamation, objText.GetText("Error")
 #.      .MsgBox sPath + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #.    .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
@@ -180,6 +206,7 @@ msgstr ""
 #.   .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
 #.    .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
 #.     + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
+#.   .MsgBox objText.GetText("Can't create encoder list"), vbCritical, objText.GetText("Error")
 msgid "Error"
 msgstr ""
 
@@ -213,6 +240,10 @@ msgstr ""
 msgid "Extension"
 msgstr ""
 
+#.     .MsgBox objText.GetText("Failed to begin video capture"), vbCritical, objText.GetText("Error")
+msgid "Failed to begin video capture"
+msgstr ""
+
 #.  MsgBox objText.GetText("Can't create D3D9!!!"), vbExclamation, objText.GetText("Fatal Error")
 #.  MsgBox objText.GetText("Can't create device!!!"), vbExclamation, objText.GetText("Fatal Error")
 #. MsgBox "libmini error at " + s + " line " + CStr(nLine), vbCritical, objText.GetText("Fatal Error")
@@ -222,6 +253,7 @@ msgstr ""
 #.   .AddNewChildren FakeCtl_Label, 8, -64, 80, -40, , , , , objText.GetText("File name"), , , , 1, , 1
 #.    .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
 #.     .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
+#.    .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
 msgid "File name"
 msgstr ""
 
@@ -244,6 +276,14 @@ msgstr ""
 
 #.   .AddNewChildren FakeCtl_Label, 8, -32, 96, -8, , , , , objText.GetText("Folder name"), , , , 1, , 1
 msgid "Folder name"
+msgstr ""
+
+#.    .AddColumn objText.GetText("FourCC"), , , efcfSizable Or efcfSortable, 80
+msgid "FourCC"
+msgstr ""
+
+#.  .AddNewChildren FakeCtl_Label, 8, 72, -8, 96, , , , , objText.GetText("Framerate"), , , , , 1
+msgid "Framerate"
 msgstr ""
 
 #.    objText.GetText("Fullscreen"), , , , , , , , , objText.GetText("Determines whether the program should run in full screen mode."))
@@ -292,6 +332,10 @@ msgstr ""
 
 #.     s = Trim(.InputBox(objText.GetText("Input folder name"), objText.GetText("New folder")))
 msgid "Input folder name"
+msgstr ""
+
+#.  .AddNewChildren FakeCtl_Label, 8, 104, -8, 128, , , , , objText.GetText("Key frame every"), , , , , 1
+msgid "Key frame every"
 msgstr ""
 
 #.    s1 = objText.GetText("Level")
@@ -352,6 +396,7 @@ msgstr ""
 
 #.     .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 160
 #.     .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 320
+#.    .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 120
 msgid "Name"
 msgstr ""
 
@@ -428,6 +473,10 @@ msgstr ""
 msgid "Processing..."
 msgstr ""
 
+#.  .AddNewChildren FakeCtl_Label, 8, 40, -8, 64, , , , , objText.GetText("Quality"), , , , , 1
+msgid "Quality"
+msgstr ""
+
 #.    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
 msgid "Radial blur"
 msgstr ""
@@ -502,6 +551,14 @@ msgstr ""
 msgid "Start game"
 msgstr ""
 
+#.  "F8: " + objText.GetText("Start or pause video recording") + vbCrLf + _
+msgid "Start or pause video recording"
+msgstr ""
+
+#.  "F9: " + objText.GetText("Stop video recording"), , , , , 1
+msgid "Stop video recording"
+msgstr ""
+
 #. s = objText.GetText("Tahoma") 'I18N: Do NOT literally translate this string!! Please choose fonts you like in your language. example: "DejaVu Sans;Tahoma"
 msgid "Tahoma"
 msgstr ""
@@ -541,6 +598,19 @@ msgstr ""
 
 #.    objText.GetText("Vertical synchronization"), , , , , , , , , objText.GetText("Enables vertical synchronization."))
 msgid "Vertical synchronization"
+msgstr ""
+
+#.     objText.GetText("Video capture options") + " (Ctrl+F9)", , "cmdVideoCapture", , , 1, , , , _
+#. 600, 256, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Video capture options"))
+msgid "Video capture options"
+msgstr ""
+
+#.     frmMain.Caption = objText.GetText("Video capture paused")
+msgid "Video capture paused"
+msgstr ""
+
+#.    frmMain.Caption = objText.GetText("Video capture started, video size: ") + _
+msgid "Video capture started, video size: "
 msgstr ""
 
 #.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
