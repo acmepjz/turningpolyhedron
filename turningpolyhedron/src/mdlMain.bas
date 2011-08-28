@@ -1,7 +1,7 @@
 Attribute VB_Name = "mdlMain"
 Option Explicit
 
-#Const UseSubclass = False
+#Const UseSubclassInIDE = False
 #Const VideoCaptureEnabled = True
 
 'Private Declare Function GetStdHandle Lib "kernel32.dll" (ByVal nStdHandle As Long) As Long
@@ -137,11 +137,21 @@ Public objGameMgr As New clsGameManager
 Public frmSettings As New frmSettings
 
 #If VideoCaptureEnabled Then
+Public Const FakeDXAppVideoCaptureEnabled As Boolean = True
+
 Private Declare Function MessageBeep Lib "user32.dll" (ByVal wType As Long) As Long
 
 Public frmVideo As New frmVideoOptions
 Public m_bRecordingVideo As Boolean
+#Else
+Public Const FakeDXAppVideoCaptureEnabled As Boolean = False
 #End If
+
+Public Sub FakeDXAppShowVideoCaptureOptions()
+#If VideoCaptureEnabled Then
+frmVideo.Show
+#End If
+End Sub
 
 Public Sub CreateVertexDeclaration()
 ReDim m_tDefVertexDecl(0 To 63)
@@ -197,19 +207,19 @@ If GetActiveWindow = d3dpp.hDeviceWindow Then
   If frmVideo.BeginRecording Then
    m_bRecordingVideo = Not m_bRecordingVideo
    If m_bRecordingVideo Then
-    frmMain.Caption = "Video capture started"
     MessageBeep vbInformation
    Else
-    frmMain.Caption = "Video capture paused"
+    frmMain.Caption = objText.GetText("Video capture paused")
     MessageBeep 0
    End If
   Else
-   frmMain.Caption = "Failed to begin video capture"
-   MessageBeep vbCritical
+   With New clsFakeDXUIMsgBox
+    .MsgBox objText.GetText("Failed to begin video capture"), vbCritical, objText.GetText("Error")
+   End With
   End If
  ElseIf GetAsyncKeyState(vbKeyF9) = &H8001 Then
   If GetAsyncKeyState(vbKeyControl) And &H8000& Then
-   frmVideo.Show
+   FakeDXAppShowVideoCaptureOptions
   Else
    If frmVideo.BeginRecording Then
     frmVideo.EndRecording
@@ -338,7 +348,8 @@ With d3dd9
   #If VideoCaptureEnabled Then
   If m_bRecordingVideo Then
    frmVideo.RecordFrame
-   frmMain.Caption = "Video capture started, size = " + Format(frmVideo.RecordFileSize / 1048576, "0.00") + "MB"
+   frmMain.Caption = objText.GetText("Video capture started, video size: ") + _
+   Format(frmVideo.RecordFileSize / 1048576, "0.00") + "MB"
   End If
   #End If
  End If
@@ -627,7 +638,7 @@ objCamera.DampingOfDamping = 0.9
 objRenderTest.SetFloatParams Vec4(0.5, 0.5, 0.5, 0.5), 50, -0.5, 0.02
 objRenderTest.OrenNayarRoughness = 0
 '////////new:subclass
-#If UseSubclass Then
+#If UseSubclassInIDE Then
 If True Then
 #Else
 If App.LogMode = 1 Then

@@ -72,39 +72,42 @@ RecordFileSize = m_objEncoder.RecordFileSize
 End Property
 
 Friend Sub Create()
-Dim i As Long
+Dim i As Long, s As String
 '///
 If m_idxForm Then Exit Sub
 '///
 If Not m_objEncoder.CreateEncoderList Then
  With New clsFakeDXUIMsgBox
-  .MsgBox "Can't create encoder list", vbCritical, "Error"
+  .MsgBox objText.GetText("Can't create encoder list"), vbCritical, objText.GetText("Error")
  End With
 End If
 '///
 With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
-600, 256, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , "Video capture options")
+600, 256, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Video capture options"))
  m_idxForm = .Index
  Set .EventObject = Me
  '///
- .AddNewChildren FakeCtl_Label, 8, 8, -8, 32, , , , , "Encoder", , , , , 1
+ .AddNewChildren FakeCtl_Label, 8, 8, -8, 32, , , , , objText.GetText("Encoder"), , , , , 1
  With .AddNewChildren(FakeCtl_ComboBox, 80, 8, -80, 32, FCS_CanGetFocus Or FCS_TabStop, , , , , , "cmbEncoder", , , 1)
   With .ListViewObject
    .FullRowSelect = True
    .ColumnHeader = True
-   .AddColumn "Name", , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 128
-   .AddColumn "Description", , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
-   .AddColumn "File name", , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
+   .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 120
+   .AddColumn objText.GetText("FourCC"), , , efcfSizable Or efcfSortable, 80
+   .AddColumn objText.GetText("Description"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
+   .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
    '///
    For i = 0 To m_objEncoder.EncoderCount - 1
-    .AddItem m_objEncoder.EncoderName(i), , i, Array(m_objEncoder.EncoderDescription(i), m_objEncoder.EncoderFileName(i))
+    s = Space(2)
+    CopyMemory ByVal StrPtr(s), m_objEncoder.EncoderFccHandler(i), 4&
+    .AddItem m_objEncoder.EncoderName(i), , i, Array(StrConv(s, vbUnicode), m_objEncoder.EncoderDescription(i), m_objEncoder.EncoderFileName(i))
    Next i
   End With
-  .ComboBoxPrimaryColumn = 2
+  .ComboBoxPrimaryColumn = 3
   .ComboBoxDropdownHeight = 16
  End With
  '///
- .AddNewChildren FakeCtl_Label, 8, 40, -8, 64, , , , , "Quality", , , , , 1
+ .AddNewChildren FakeCtl_Label, 8, 40, -8, 64, , , , , objText.GetText("Quality"), , , , , 1
  With .AddNewChildren(FakeCtl_ScrollBar, 80, 40, -128, 64, FSS_Slider Or FCS_CanGetFocus Or FCS_TabStop, , , , , , "hsQuality", , , 1)
   m_idxSlider = .Index
   .Max = 10000
@@ -116,23 +119,27 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
   m_idxQuality = .Index
  End With
  '///
- With .AddNewChildren(FakeCtl_Button, -72, 8, -8, 32, FCS_CanGetFocus Or FCS_TabStop, False, , , "About", , "cmdAbout", 1, , 1)
+ With .AddNewChildren(FakeCtl_Button, -72, 8, -8, 32, FCS_CanGetFocus Or FCS_TabStop, False, , , objText.GetText("About"), , "cmdAbout", 1, , 1)
   m_idxAbout = .Index
  End With
- With .AddNewChildren(FakeCtl_Button, -72, 40, -8, 64, FCS_CanGetFocus Or FCS_TabStop, False, , , "Config", , "cmdConfig", 1, , 1)
+ With .AddNewChildren(FakeCtl_Button, -72, 40, -8, 64, FCS_CanGetFocus Or FCS_TabStop, False, , , objText.GetText("Configure"), , "cmdConfig", 1, , 1)
   m_idxConfig = .Index
  End With
  '///
- .AddNewChildren FakeCtl_Label, 8, 72, -8, 96, , , , , "Framerate", , , , , 1
+ .AddNewChildren FakeCtl_Label, 8, 72, -8, 96, , , , , objText.GetText("Framerate"), , , , , 1
  With .AddNewChildren(FakeCtl_TextBox, 128, 72, -8, 96, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect Or FTS_NumberOnly Or FTS_UpDown, , , , , "30", "txtFPS", , , 1)
   .SmallChange = 1
  End With
- .AddNewChildren FakeCtl_Label, 8, 104, -8, 128, , , , , "Key frame every", , , , , 1
+ .AddNewChildren FakeCtl_Label, 8, 104, -8, 128, , , , , objText.GetText("Key frame every"), , , , , 1
  With .AddNewChildren(FakeCtl_TextBox, 128, 104, -8, 128, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect Or FTS_NumberOnly Or FTS_UpDown, , , , , "0", "txtFPS_1", , , 1)
   .SmallChange = 1
  End With
  '///
- .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_CanGetFocus Or FCS_TabStop, , , , "Close", , "cmdClose", 1, 1, 1, 1
+ .AddNewChildren FakeCtl_Label, 8, 136, -8, 200, , , , , _
+ "F8: " + objText.GetText("Start or pause video recording") + vbCrLf + _
+ "F9: " + objText.GetText("Stop video recording"), , , , , 1
+ '///
+ .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_CanGetFocus Or FCS_TabStop, , , , objText.GetText("Close"), , "cmdClose", 1, 1, 1, 1
 End With
 '///
 m_nQuality = 7000
@@ -143,8 +150,10 @@ End Sub
 
 Friend Sub Show()
 Create
-FakeDXUIControls(m_idxForm).MoveToCenter
-FakeDXUIControls(m_idxForm).Show 1
+If Not FakeDXUIControls(m_idxForm).Visible Then
+ FakeDXUIControls(m_idxForm).MoveToCenter
+ FakeDXUIControls(m_idxForm).Show 1
+End If
 End Sub
 
 Friend Sub Hide()
