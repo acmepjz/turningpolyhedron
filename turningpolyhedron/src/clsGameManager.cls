@@ -70,6 +70,7 @@ Private m_nWinningConditionValue() As Boolean  '(not inverted) value
 
 Private Type typePolyhedronHitTestTemp
  nPolyhedronIndex As Long
+ nFlags As Long
  sz As Long
  ez As Long
 End Type
@@ -3081,13 +3082,33 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
 End If
 End Function
 
+'internal
+Friend Sub pHitTestCheck(ByVal sz As Long, ByVal ez As Long, ByVal nHeight As Long, ByVal nHeight2 As Long, ByVal nTileType As Long, ByVal nFlags As Long, ByVal nObjType As Long, ByRef ret As typeMapDataHitTest)
+If nHeight > sz And sz < ez And ez > 0 Then 'blocked
+ If ez > nHeight Then ez = nHeight
+ If ret.nType >= -1 Or (ez < (ret.nType And &HFFFF&) And ez >= nHeight2) Then
+  If (nFlags And &H200&) = 0 Then ret.nType = &H80000000 Or ez _
+  Else ret.nType = &H80010000 Or ez
+  ret.nTileType = nTileType
+  ret.nObjType = nObjType
+ End If
+ElseIf ez = 0 And (nFlags And &H400&) = 0 Then 'supported
+ If ret.nType = -1 Then
+  ret.nType = 0
+  ret.nTileType = nTileType
+  ret.nObjType = nObjType
+ End If
+End If
+End Sub
+
 Friend Sub HitTest(ByRef tPos As typeMapPosition, ByRef ret As typeMapDataHitTest, ByRef ret2 As typePolyhedronState, ByVal nExcludePolyhedronIndex As Long, ByVal nHeight As Long, ByVal nHeight2 As Long, ByVal nRawHeight As Long, ByVal bCalculateHitTestPos As Boolean)
 Dim idx As Long
 Dim i As Long, j As Long, k As Long
-Dim nObjType As Long
 Dim sz As Long, ez As Long
 Dim p As typePolyhedronPosition
 Dim tState As typePolyhedronState
+'///
+Dim retBlocked As typeMapDataHitTest
 '///
 Dim ttt() As typePolyhedronHitTestTemp
 Dim ttc As Long
@@ -3108,13 +3129,57 @@ For idx = 1 To m_tLevel.nPolyhedronCount
    'TODO: wrong code if there are adjacency data
    If p.p.nMapDataIndex = tPos.nMapDataIndex Then
     If tState.nTiltY > 0 Then
-     'TODO:
-     'ttt(ttc).nFlags = m_tPolyInst(idx).nFlags And Not &H40& '???
+     'TODO: write correct code
+     '///TEST ONLY, CONTAIN BUGS
+     i = (p.nGroundEdgeIndex - p.nFirstEdgeIndex) And 3&
+     If i And 1& Then 'left,right
+      If tPos.y >= p.p.y And tPos.y < p.p.y + j Then
+       If i And 2& Then 'right
+        If tPos.x >= p.p.x + i - tState.nTiltX And tPos.x < p.p.x + i Then
+         ttc = ttc + 1
+         ttt(ttc).nPolyhedronIndex = idx
+         ttt(ttc).nFlags = m_tPolyInst(idx).nFlags And Not &H50&
+         ttt(ttc).sz = p.p.z - tPos.z
+         ttt(ttc).ez = p.p.z + k - tPos.z
+        End If
+       Else 'left
+        If tPos.x >= p.p.x And tPos.x < p.p.x + tState.nTiltX Then
+         ttc = ttc + 1
+         ttt(ttc).nPolyhedronIndex = idx
+         ttt(ttc).nFlags = m_tPolyInst(idx).nFlags And Not &H50&
+         ttt(ttc).sz = p.p.z - tPos.z
+         ttt(ttc).ez = p.p.z + k - tPos.z
+        End If
+       End If
+      End If
+     Else 'up,down
+      If tPos.x >= p.p.x And tPos.x < p.p.x + i Then
+       If i And 2& Then 'down
+        If tPos.y >= p.p.y + j - tState.nTiltX And tPos.y < p.p.y + j Then
+         ttc = ttc + 1
+         ttt(ttc).nPolyhedronIndex = idx
+         ttt(ttc).nFlags = m_tPolyInst(idx).nFlags And Not &H50&
+         ttt(ttc).sz = p.p.z - tPos.z
+         ttt(ttc).ez = p.p.z + k - tPos.z
+        End If
+       Else 'up
+        If tPos.y >= p.p.y And tPos.y < p.p.y + tState.nTiltX Then
+         ttc = ttc + 1
+         ttt(ttc).nPolyhedronIndex = idx
+         ttt(ttc).nFlags = m_tPolyInst(idx).nFlags And Not &H50&
+         ttt(ttc).sz = p.p.z - tPos.z
+         ttt(ttc).ez = p.p.z + k - tPos.z
+        End If
+       End If
+      End If
+     End If
+     '///
     Else
      If tPos.x >= p.p.x And tPos.x < p.p.x + i Then
       If tPos.y >= p.p.y And tPos.y < p.p.y + j Then
        ttc = ttc + 1
        ttt(ttc).nPolyhedronIndex = idx
+       ttt(ttc).nFlags = m_tPolyInst(idx).nFlags
        ttt(ttc).sz = p.p.z - tPos.z
        ttt(ttc).ez = p.p.z + k - tPos.z
       End If
@@ -3141,57 +3206,39 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
    Do While k > -256 'max iteration
     '///check polyhedron
     For i = 1 To ttc
-     If k >= ttt(i).sz And k < ttt(i).ez Then
+     If k > ttt(i).sz And k <= ttt(i).ez Then
       sz = ttt(i).sz
       ez = ttt(i).ez
       '///
-      i = ttt(i).nPolyhedronIndex
-      nObjType = m_tLevel.tPolyhedron(i).nObjType
-      j = m_tPolyInst(i).nFlags
+      j = ttt(i).nFlags
       j = (((j And &H10&) = 0) And &H400&) Or (((j And &H40&) = 0) And &H200&)
-      i = i Or &H80000000
+      '///
+      i = ttt(i).nPolyhedronIndex
+      pHitTestCheck sz, ez, nHeight, nHeight2, i Or &H80000000, j, m_tLevel.tPolyhedron(i).nObjType, ret
       '///
       Exit For
      End If
     Next i
     '///check map tile
-    If i >= 0 Then
-     i = GetMapDataIndirect(p.p)
-     If i < 0 Then
-      If k < 0 Then Exit Do
-      i = 0
-     End If
+    i = GetMapDataIndirect(p.p)
+    If i < 0 Then
+     If k < 0 Then Exit Do
+     i = 0
     End If
     '///
-    If i <> 0 Then
-     If i > 0 And i <= m_nTileTypeMax Then
-      j = m_tTileType(i).nFlags
-      nObjType = m_tTileType(i).nObjType
-      If j And &H8& Then sz = k _
-      Else sz = k - 1
-      If j And &H100& Then
-       ez = m_tTileType(i).nBlockHeight
-       If ez <= 0 Then ez = &H7FFFFFFF _
-       Else ez = ez + k
-      Else
-       ez = k
-      End If
+    If i > 0 And i <= m_nTileTypeMax Then
+     j = m_tTileType(i).nFlags
+     If j And &H8& Then sz = k _
+     Else sz = k - 1
+     If j And &H100& Then
+      ez = m_tTileType(i).nBlockHeight
+      If ez <= 0 Then ez = &H7FFFFFFF _
+      Else ez = ez + k
+     Else
+      ez = k
      End If
      '///
-     If nHeight > sz And sz < ez And ez > 0 Then 'blocked
-      If ez > nHeight Then ez = nHeight
-      If (j And &H200&) = 0 Then ret.nType = &H80000000 Or ez _
-      Else ret.nType = &H80010000 Or ez
-      ret.nTileType = i
-      ret.nObjType = nObjType
-      Exit Sub
-     ElseIf ez = 0 And (j And &H400&) = 0 Then 'supported
-      If ret.nType < 0 Then
-       ret.nType = 0
-       ret.nTileType = i
-       ret.nObjType = nObjType
-      End If
-     End If
+     pHitTestCheck sz, ez, nHeight, nHeight2, i, j, m_tTileType(i).nObjType, ret
      '///???
      If k > 0 And k <= nRawHeight And bCalculateHitTestPos Then
       ret2.nHitTestCount = ret2.nHitTestCount + 1
