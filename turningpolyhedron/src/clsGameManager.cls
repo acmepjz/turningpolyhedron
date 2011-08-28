@@ -68,6 +68,12 @@ Private m_bGameFinishedEvent As Boolean
 
 Private m_nWinningConditionValue() As Boolean  '(not inverted) value
 
+Private Type typePolyhedronHitTestTemp
+ nPolyhedronIndex As Long
+ sz As Long
+ ez As Long
+End Type
+
 '////////undo support (experimental)
 
 #Const UndoPolyhedronAnimation = False
@@ -1085,7 +1091,7 @@ If m_tLevel.nPolyhedronCount > 0 Then
  For i = 1 To m_tLevel.nPolyhedronCount
   If m_tPolyInst(i).nFlags And &H100& Then
    If m_nCurrentPolyhedron = 0 Then m_nCurrentPolyhedron = i
-   m_objPoly(i).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(i)
+   m_objPoly(i).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(i), False
   End If
  Next i
  '///
@@ -2887,6 +2893,7 @@ Dim idx As Long
 Dim i1 As Long, j1 As Long, k1 As Long, p1 As typePolyhedronPosition
 Dim i2 As Long, j2 As Long, k2 As Long, p2 As typePolyhedronPosition
 Dim tState As typePolyhedronState
+'///
 Select Case m_tLevel.tPolyhedron(nPolyhedronIndex).nShape
 Case &H111 To &HFFF
  tState = m_objPoly(nPolyhedronIndex).PolyhedronState
@@ -2905,11 +2912,54 @@ Case &H111 To &HFFF
       If p2.p.x > p1.p.x - i2 And p2.p.x < p1.p.x + i1 Then
        If p2.p.y > p1.p.y - j2 And p2.p.y < p1.p.y + j1 Then
         If tState.nTiltY > 0 Then
-         'TODO:??? still some bugs
-         If p2.p.z > p1.p.z - tState.nTiltY And p2.p.z <= p1.p.z + k1 Then
-          IsOtherPolyhedronOn = True
-          Exit Function
+         If p2.p.z = p1.p.z + k1 Then 'stand on this block?
+          Select Case (p2.nGroundEdgeIndex - p2.nFirstEdgeIndex) And 3&
+          Case 0 'up
+           If p2.p.y >= p1.p.y And p2.p.y < p1.p.y + j1 Then
+            IsOtherPolyhedronOn = True
+            Exit Function
+           End If
+          Case 1 'left
+           If p2.p.x >= p1.p.x And p2.p.x < p1.p.x + i1 Then
+            IsOtherPolyhedronOn = True
+            Exit Function
+           End If
+          Case 2 'down
+           If p2.p.y + j2 > p1.p.y And p2.p.y + j2 <= p1.p.y + j1 Then
+            IsOtherPolyhedronOn = True
+            Exit Function
+           End If
+          Case 3 'right
+           If p2.p.x + i2 > p1.p.x And p2.p.x + i2 <= p1.p.x + i1 Then
+            IsOtherPolyhedronOn = True
+            Exit Function
+           End If
+          End Select
+         ElseIf p2.p.z + tState.nTiltY > p1.p.z And p2.p.z < p1.p.z + k1 Then 'tilt on this block?
+          Select Case (p2.nGroundEdgeIndex - p2.nFirstEdgeIndex) And 3&
+          Case 0 'up
+           If p2.p.y + tState.nTiltX >= p1.p.y Then
+            IsOtherPolyhedronOn = True
+            Exit Function
+           End If
+          Case 1 'left
+           If p2.p.x + tState.nTiltX >= p1.p.x Then
+            IsOtherPolyhedronOn = True
+            Exit Function
+           End If
+          Case 2 'down
+           If p2.p.y + j2 - tState.nTiltX <= p1.p.y + j1 Then
+            IsOtherPolyhedronOn = True
+            Exit Function
+           End If
+          Case 3 'right
+           If p2.p.x + i2 - tState.nTiltX <= p1.p.x + i1 Then
+            IsOtherPolyhedronOn = True
+            Exit Function
+           End If
+          End Select
          End If
+         '///
         Else
          If p2.p.z = p1.p.z + k1 Then
           IsOtherPolyhedronOn = True
@@ -2923,6 +2973,8 @@ Case &H111 To &HFFF
     End Select
    End If
   Next idx
+ Else
+  '(may or may not implement this) TODO:
  End If
 Case Else
  'TODO:
@@ -3032,45 +3084,39 @@ End Function
 Friend Sub HitTest(ByRef tPos As typeMapPosition, ByRef ret As typeMapDataHitTest, ByRef ret2 As typePolyhedronState, ByVal nExcludePolyhedronIndex As Long, ByVal nHeight As Long, ByVal nHeight2 As Long, ByVal nRawHeight As Long, ByVal bCalculateHitTestPos As Boolean)
 Dim idx As Long
 Dim i As Long, j As Long, k As Long
+Dim nObjType As Long
 Dim sz As Long, ez As Long
-Dim p As typeMapPosition
+Dim p As typePolyhedronPosition
 Dim tState As typePolyhedronState
+'///
+Dim ttt() As typePolyhedronHitTestTemp
+Dim ttc As Long
 '///
 ret.nType = -1
 ret.nTileType = 0
 ret.nObjType = 0
 '///check if it's on some polyhedron
+If m_tLevel.nPolyhedronCount > 0 Then ReDim ttt(1 To m_tLevel.nPolyhedronCount)
 For idx = 1 To m_tLevel.nPolyhedronCount
  If idx <> nExcludePolyhedronIndex And (m_tPolyInst(idx).nFlags And &H100&) <> 0 Then
   'TODO: if it's not a supporter then there should be some event
   Select Case m_tLevel.tPolyhedron(idx).nShape
   Case &H111 To &HFFF
    m_objPoly(idx).GetCurrentSize i, j, k
-   p = m_objPoly(idx).Position.p
+   p = m_objPoly(idx).Position
    tState = m_objPoly(idx).PolyhedronState
-   '///
    'TODO: wrong code if there are adjacency data
-   'TODO: COMPLETELY WRONG CODE --> should combine to the tile checking
-   If p.nMapDataIndex = tPos.nMapDataIndex Then
-    If tPos.x >= p.x And tPos.x < p.x + i Then
-     If tPos.y >= p.y And tPos.y < p.y + j Then
-      If tPos.z > p.z - nHeight And tPos.z < p.z + k Then '???
-       If tState.nTiltY > 0 Then
-        ret.nType = &H80010000 Or k 'WRONG
-       Else
-        If tPos.z > p.z Then k = p.z + k - tPos.z 'WRONG
-        If m_tPolyInst(idx).nFlags And &H40& Then ret.nType = &H80000000 Or k _
-        Else ret.nType = &H80010000 Or k
-       End If
-       ret.nTileType = &H80000000 Or idx
-       ret.nObjType = m_tLevel.tPolyhedron(idx).nObjType
-       Exit Sub
-      ElseIf tPos.z = p.z + k And (m_tPolyInst(idx).nFlags And &H10&) <> 0 And tState.nTiltY = 0 Then
-       If ret.nType < 0 Then
-        ret.nType = 0
-        ret.nTileType = &H80000000 Or idx
-        ret.nObjType = m_tLevel.tPolyhedron(idx).nObjType
-       End If
+   If p.p.nMapDataIndex = tPos.nMapDataIndex Then
+    If tState.nTiltY > 0 Then
+     'TODO:
+     'ttt(ttc).nFlags = m_tPolyInst(idx).nFlags And Not &H40& '???
+    Else
+     If tPos.x >= p.p.x And tPos.x < p.p.x + i Then
+      If tPos.y >= p.p.y And tPos.y < p.p.y + j Then
+       ttc = ttc + 1
+       ttt(ttc).nPolyhedronIndex = idx
+       ttt(ttc).sz = p.p.z - tPos.z
+       ttt(ttc).ez = p.p.z + k - tPos.z
       End If
      End If
     End If
@@ -3086,28 +3132,50 @@ idx = tPos.nMapDataIndex
 If idx > 0 And idx <= m_tLevel.nMapDataCount Then
  If tPos.x >= 0 And tPos.x < m_tLevel.tMapData(idx).nSize(0) Then
   If tPos.y >= 0 And tPos.y < m_tLevel.tMapData(idx).nSize(1) Then
-   p = tPos
-   k = 0
+   p.p = tPos
    For i = 1 To nHeight
-    If Not GetAdjacentPositionInPlaceIfValid(p, 7) Then Exit For
-    k = k + 1
+    GetAdjacentPositionInPlace p.p, 7
    Next i
+   k = nHeight
    '///
    Do While k > -256 'max iteration
-    i = GetMapDataIndirect(p)
-    If i < 0 Then Exit Do
+    '///check polyhedron
+    For i = 1 To ttc
+     If k >= ttt(i).sz And k < ttt(i).ez Then
+      sz = ttt(i).sz
+      ez = ttt(i).ez
+      '///
+      i = ttt(i).nPolyhedronIndex
+      nObjType = m_tLevel.tPolyhedron(i).nObjType
+      j = m_tPolyInst(i).nFlags
+      j = (((j And &H10&) = 0) And &H400&) Or (((j And &H40&) = 0) And &H200&)
+      i = i Or &H80000000
+      '///
+      Exit For
+     End If
+    Next i
+    '///check map tile
+    If i >= 0 Then
+     i = GetMapDataIndirect(p.p)
+     If i < 0 Then
+      If k < 0 Then Exit Do
+      i = 0
+     End If
+    End If
     '///
-    If i > 0 And i <= m_nTileTypeMax Then
-     j = m_tTileType(i).nFlags
-     '///
-     If j And &H8& Then sz = k _
-     Else sz = k - 1
-     If j And &H100& Then
-      ez = m_tTileType(i).nBlockHeight
-      If ez <= 0 Then ez = &H7FFFFFFF _
-      Else ez = ez + k
-     Else
-      ez = k
+    If i <> 0 Then
+     If i > 0 And i <= m_nTileTypeMax Then
+      j = m_tTileType(i).nFlags
+      nObjType = m_tTileType(i).nObjType
+      If j And &H8& Then sz = k _
+      Else sz = k - 1
+      If j And &H100& Then
+       ez = m_tTileType(i).nBlockHeight
+       If ez <= 0 Then ez = &H7FFFFFFF _
+       Else ez = ez + k
+      Else
+       ez = k
+      End If
      End If
      '///
      If nHeight > sz And sz < ez And ez > 0 Then 'blocked
@@ -3115,25 +3183,25 @@ If idx > 0 And idx <= m_tLevel.nMapDataCount Then
       If (j And &H200&) = 0 Then ret.nType = &H80000000 Or ez _
       Else ret.nType = &H80010000 Or ez
       ret.nTileType = i
-      ret.nObjType = m_tTileType(i).nObjType
+      ret.nObjType = nObjType
       Exit Sub
      ElseIf ez = 0 And (j And &H400&) = 0 Then 'supported
       If ret.nType < 0 Then
        ret.nType = 0
        ret.nTileType = i
-       ret.nObjType = m_tTileType(i).nObjType
+       ret.nObjType = nObjType
       End If
      End If
      '///???
      If k > 0 And k <= nRawHeight And bCalculateHitTestPos Then
       ret2.nHitTestCount = ret2.nHitTestCount + 1
       ReDim Preserve ret2.tHitTestPos(1 To ret2.nHitTestCount)
-      ret2.tHitTestPos(ret2.nHitTestCount) = p
+      ret2.tHitTestPos(ret2.nHitTestCount) = p.p
      End If
      '///
     End If
     '///
-    GetAdjacentPositionInPlace p, 6
+    GetAdjacentPositionInPlace p.p, 6
     k = k - 1
    Loop
    Debug.Assert k > -256
@@ -3277,7 +3345,7 @@ Case 3 'teleport
      'move current polyhedron to new pos
      m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnLeave
      If m_objPoly(t.nPolyhedronIndex).SetPositionFromString(s, m_tLevel) Then
-      m_objPoly(t.nPolyhedronIndex).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(t.nPolyhedronIndex) '???
+      m_objPoly(t.nPolyhedronIndex).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(t.nPolyhedronIndex), False '???
       m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnEnter
       m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnHitTest
      Else
@@ -3301,7 +3369,7 @@ Case 3 'teleport
     m_tPolyInst(k).nFlags = m_tPolyInst(k).nFlags Or &H100&
    End If
    If m_objPoly(k).SetPositionFromString(Mid(tEvent.sStringParam(i), j + 1), m_tLevel) Then
-    m_objPoly(k).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(t.nPolyhedronIndex) '???
+    m_objPoly(k).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(t.nPolyhedronIndex), False '???
     m_objPoly(k).SendEvent EventTypeOnEnter
     m_objPoly(k).SendEvent EventTypeOnHitTest
    Else
@@ -3749,7 +3817,7 @@ If m_bPolyhedronDirty Then
   '????????
   If m_tPolyInst(i).nFlags And &H100& Then
    If m_tPolyInst(i).nAnimType = 0 Then
-    m_objPoly(i).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(i)
+    m_objPoly(i).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(i), True
    End If
   End If
  Next i

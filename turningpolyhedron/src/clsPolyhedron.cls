@@ -380,14 +380,14 @@ End If
 CanChangeGroundEdgeIndex = True
 End Function
 
-Friend Sub CheckPolyhedronStateAndResponse(ByRef tPoly As typeMapData_Polyhedron)
+Friend Sub CheckPolyhedronStateAndResponse(ByRef tPoly As typeMapData_Polyhedron, ByVal bUseOldState As Boolean)
 Dim i As Long
 Dim tPos As typePolyhedronPosition
 Dim tState As typePolyhedronState
 '///
 'FIXME:
 'should add some tilt checking in CheckPolyhedronStateEx when bMoving=False
-CheckPolyhedronStateEx m_tPos, m_tState, False, tPoly
+CheckPolyhedronStateEx m_tPos, m_tState, False, bUseOldState, tPoly
 m_bUndoDirty = True
 '///response
 'TODO:if state changed then play some animation (e.g. tilt angle changed)
@@ -402,7 +402,7 @@ Case 2 'slippery
    tPos.nFirstEdgeIndex = (tPos.nFirstEdgeIndex - i + m_nSlipDirection - 1) And 3& '???
    m_nSlipDirection = 0
    '///check
-   CheckPolyhedronStateEx tPos, tState, False, tPoly
+   CheckPolyhedronStateEx tPos, tState, False, bUseOldState, tPoly '<== bUseOldState ????????
    If tState.nState Then
     If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX <= 0 Then
      m_tOldPos = m_tPos
@@ -428,19 +428,19 @@ Case &H100 To &H1FF 'game over
 End Select
 End Sub
 
-'TODO:more arguments in typePolyhedronState
-'e.g. all on ground tiles
-Friend Sub CheckPolyhedronStateEx(ByRef tPos As typePolyhedronPosition, ByRef ret As typePolyhedronState, ByVal bMoving As Boolean, ByRef tPoly As typeMapData_Polyhedron)
+Friend Sub CheckPolyhedronStateEx(ByRef tPos As typePolyhedronPosition, ByRef ret As typePolyhedronState, ByVal bMoving As Boolean, ByVal bUseOldState As Boolean, ByRef tPoly As typeMapData_Polyhedron)
 Dim i As Long, j As Long, k As Long
 Dim x As Long, y As Long, z As Long
 Dim nHeight As Long, nHeight2 As Long
 Dim tmp As Long, tHitTest As typeMapDataHitTest
 Dim p As typeMapPosition
 Dim p1 As typeMapPosition
-Dim nDirXDelta As Long, nDirY As Long
+Dim nDirX As Long, nDirXDelta As Long, nDirY As Long
 Dim nMax As Long, nState As Long
 Dim f As Single
 Dim bFirstEmpty As Boolean
+'///
+Dim nOldTiltX As Long, nOldTiltY As Long
 '///
 Dim nMask(31) As Long
 j = 1
@@ -450,6 +450,11 @@ For i = 0 To 29
 Next i
 nMask(30) = &H40000000
 nMask(31) = &H80000000
+'///
+If bUseOldState Then
+ nOldTiltX = ret.nTiltX
+ nOldTiltY = ret.nTiltY
+End If
 '///
 ret.nState = 0
 nState = 1
@@ -517,14 +522,16 @@ Case &H111 To &HFFF
    End If
   End If
   p1 = p
-  k = (nDirY + nDirXDelta) And 3&
+  nDirX = (nDirY + nDirXDelta) And 3&
   '///get polyhedron height (???)
-  If bMoving Then
+  If bMoving Or (bUseOldState And nOldTiltY > 0) Then
    nHeight = j - 1
    nHeight = y * y - nHeight * nHeight
    'TODO: WRONG CODE --> if wall height is infinity and nHeight>nHeight2 then it produces wrong result
    nHeight2 = -Int(-Sqr(nHeight))
    nHeight = -Int(-Sqr(nHeight + z * z))
+'  ElseIf bUseOldState And nOldTiltY > 0 Then
+'   'TODO:
   Else
    nHeight = z
    nHeight2 = z
@@ -534,7 +541,7 @@ Case &H111 To &HFFF
   '///
   For i = 1 To x
    If i > 1 Then
-    If Not objGameMgr.GetAdjacentPositionInPlace(p1, k, k) Then 'err
+    If Not objGameMgr.GetAdjacentPositionInPlace(p1, nDirX, nDirX) Then 'err
      Debug.Assert False
      Exit Sub
     End If
@@ -812,7 +819,7 @@ If Not MovePosition(tPos, nDirection) Then Exit Function
 'check tilt move first
 If nTiltGroundEdgeDelta And 1& Then
  tPos.nGroundEdgeIndex = (tPos.nGroundEdgeIndex + nTiltGroundEdgeDelta) And 3&
- CheckPolyhedronStateEx tPos, tState, True, tPoly
+ CheckPolyhedronStateEx tPos, tState, True, False, tPoly
  If tState.nTiltY * m_tState.nTiltX - m_tState.nTiltY * tState.nTiltX > 0 Then 'check tilt angle
   tState.nState = 0
  End If
@@ -824,7 +831,7 @@ If nTiltGroundEdgeDelta And 1& Then
 End If
 'check normal move
 If tState.nState = 0 Then
- CheckPolyhedronStateEx tPos, tState, True, tPoly
+ CheckPolyhedronStateEx tPos, tState, True, False, tPoly
 End If
 'check new state
 bMove = False
