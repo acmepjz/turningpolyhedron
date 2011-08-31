@@ -438,7 +438,14 @@ Dim p1 As typeMapPosition
 Dim nDirX As Long, nDirXDelta As Long, nDirY As Long
 Dim nMax As Long, nState As Long
 Dim f As Single
-Dim bFirstEmpty As Boolean
+Dim bFirstEmpty As Boolean, b As Boolean
+'///custom shape
+Dim ci As Long, cj As Long, ck As Long
+Dim cii As Long, cjj As Long, ckk As Long
+Dim cxi As Long, cxj As Long, cxk As Long
+Dim cyi As Long, cyj As Long, cyk As Long
+Dim czi As Long, czj As Long, czk As Long
+Dim v As D3DVECTOR, v1 As D3DVECTOR
 '///
 Dim nOldTiltX As Long, nOldTiltY As Long
 '///
@@ -477,6 +484,30 @@ Case &H111 To &HFFF
  ret.fPressure = z 'TODO:irregular polyhedron
  p = tPos.p
  '///
+ If tPoly.bCustomShapeEnabled Then
+  v = m_tLogic.tFace(tPos.nGroundFaceIndex).vBase(tPos.nGroundEdgeIndex)
+  ci = v.x
+  cj = v.y
+  ck = v.z
+  If ci > 0 Then ci = ci - 1
+  If cj > 0 Then cj = cj - 1
+  If ck > 0 Then ck = ck - 1
+  '///
+  D3DXVec3Normalize v1, D3DXVec3Subtract(m_tLogic.tFace(tPos.nGroundFaceIndex).vBase((tPos.nGroundEdgeIndex - 1) And 3&), v)
+  cxi = v1.x
+  cxj = v1.y
+  cxk = v1.z
+  '///
+  D3DXVec3Normalize v1, D3DXVec3Subtract(m_tLogic.tFace(tPos.nGroundFaceIndex).vBase((tPos.nGroundEdgeIndex + 1) And 3&), v)
+  cyi = v1.x
+  cyj = v1.y
+  cyk = v1.z
+  '///
+  czi = cxj * cyk - cxk * cyj
+  czj = cxk * cyi - cxi * cyk
+  czk = cxi * cyj - cxj * cyi
+ End If
+ '///
  'on-ground edge --> index on ground
  i = (tPos.nGroundEdgeIndex - tPos.nFirstEdgeIndex) And 3&
  Select Case i
@@ -486,9 +517,16 @@ Case &H111 To &HFFF
  Case 1
   nDirY = 3
   nDirXDelta = -1
-  tmp = x
-  x = y
-  y = tmp
+  tmp = x: x = y: y = tmp
+  '///
+  If tPoly.bCustomShapeEnabled Then
+   ci = ci + (x - 1) * cxi
+   cj = cj + (x - 1) * cxj
+   ck = ck + (x - 1) * cxk
+   cxi = -cxi
+   cxj = -cxj
+   cxk = -cxk
+  End If
  Case 2
   nDirY = 2
   For i = 1 To y - 1
@@ -499,6 +537,15 @@ Case &H111 To &HFFF
   Next i
   nDirY = (nDirY + 2) And 3&
   nDirXDelta = -1
+  '///
+  If tPoly.bCustomShapeEnabled Then
+   ci = ci + (x - 1) * cxi
+   cj = cj + (x - 1) * cxj
+   ck = ck + (x - 1) * cxk
+   cxi = -cxi
+   cxj = -cxj
+   cxk = -cxk
+  End If
  Case 3
   nDirY = 3
   For i = 1 To x - 1
@@ -509,9 +556,7 @@ Case &H111 To &HFFF
   Next i
   nDirY = (nDirY + 2) And 3&
   nDirXDelta = 1
-  tmp = x
-  x = y
-  y = tmp
+  tmp = x: x = y: y = tmp
  End Select
  '///check
  For j = 1 To y
@@ -539,6 +584,12 @@ Case &H111 To &HFFF
   '///debug
   'Debug.Print y, z, j, bMoving, nHeight, nHeight2
   '///
+  If tPoly.bCustomShapeEnabled Then
+   cii = ci
+   cjj = cj
+   ckk = ck
+  End If
+  '///
   For i = 1 To x
    If i > 1 Then
     If Not objGameMgr.GetAdjacentPositionInPlace(p1, nDirX, nDirX) Then 'err
@@ -551,142 +602,179 @@ Case &H111 To &HFFF
    Select Case tHitTest.nType
    Case 0
     If ret.nTiltY = 0 Then
-     '///record
-     ret.nOnGroundCount = ret.nOnGroundCount + 1
-     If ret.nOnGroundCount > nMax Then
-      nMax = nMax + 16
-      ReDim Preserve ret.tOnGroundPos(1 To nMax)
+     If tPoly.bCustomShapeEnabled Then
+      b = tPoly.nCustomShape(cii, cjj, ckk)
+     Else
+      b = True
      End If
-     ret.tOnGroundPos(ret.nOnGroundCount) = p1
-     '///add type
-     If tHitTest.nTileType Then
-      For tmp = 1 To ret.nTileTypeCount
-       If ret.nTileTypes(tmp) = tHitTest.nTileType Then Exit For
-      Next tmp
-      If tmp > ret.nTileTypeCount Then
-       ret.nTileTypeCount = ret.nTileTypeCount + 1
-       ReDim Preserve ret.nTileTypes(1 To ret.nTileTypeCount)
-       ret.nTileTypes(ret.nTileTypeCount) = tHitTest.nTileType
+     If b Then
+      '///record
+      ret.nOnGroundCount = ret.nOnGroundCount + 1
+      If ret.nOnGroundCount > nMax Then
+       nMax = nMax + 16
+       ReDim Preserve ret.tOnGroundPos(1 To nMax)
       End If
+      ret.tOnGroundPos(ret.nOnGroundCount) = p1
+      '///add type
+      If tHitTest.nTileType Then
+       For tmp = 1 To ret.nTileTypeCount
+        If ret.nTileTypes(tmp) = tHitTest.nTileType Then Exit For
+       Next tmp
+       If tmp > ret.nTileTypeCount Then
+        ret.nTileTypeCount = ret.nTileTypeCount + 1
+        ReDim Preserve ret.nTileTypes(1 To ret.nTileTypeCount)
+        ret.nTileTypes(ret.nTileTypeCount) = tHitTest.nTileType
+       End If
+      End If
+      '///
+      For tmp = 1 To ret.nObjTypeCount
+       If ret.nObjTypes(tmp) = tHitTest.nObjType Then Exit For
+      Next tmp
+      If tmp > ret.nObjTypeCount Then
+       ret.nObjTypeCount = ret.nObjTypeCount + 1
+       ReDim Preserve ret.nObjTypes(1 To ret.nObjTypeCount)
+       ret.nObjTypes(ret.nObjTypeCount) = tHitTest.nObjType
+      End If
+      '///
      End If
-     '///
-     For tmp = 1 To ret.nObjTypeCount
-      If ret.nObjTypes(tmp) = tHitTest.nObjType Then Exit For
-     Next tmp
-     If tmp > ret.nObjTypeCount Then
-      ret.nObjTypeCount = ret.nObjTypeCount + 1
-      ReDim Preserve ret.nObjTypes(1 To ret.nObjTypeCount)
-      ret.nObjTypes(ret.nObjTypeCount) = tHitTest.nObjType
-     End If
-     '///
     End If
    Case -1 'no supporter
-    If j = 1 Then bFirstEmpty = True
-    If ret.nTiltY = 0 Then '????????
-     If (m_tLogic.nFlags And &H8&) = 0 Then
-      If nState > 0 Then nState = -1 '???
-'     ElseIf tPoly.nStabilityCount > 0 Then 'custom stability support (experimental) TODO:
-'      'TODO:
-     Else
-      If x + y <= 3 Then '1x1 or 1x2 or 2x1
-       If nState > 0 Then nState = -1
-      ElseIf x + y = 4 Then
-       '!!!!!!!!TEST ONLY
-       Dim kkk As Long
-       If x = 2 Then '2x2
-        If m_tLogic.nFlags And &H80& Then
-         If kkk Then
-          If (i Xor j Xor kkk) And 1& Then
+    If tPoly.bCustomShapeEnabled Then
+     b = tPoly.nCustomShape(cii, cjj, ckk)
+    Else
+     b = True
+    End If
+    If b Then
+     If j = 1 Then bFirstEmpty = True
+     If ret.nTiltY = 0 Then '????????
+      If (m_tLogic.nFlags And &H8&) = 0 Then
+       If nState > 0 Then nState = -1 '???
+ '     ElseIf tPoly.nStabilityCount > 0 Then 'custom stability support (experimental) TODO:
+ '      'TODO:
+      Else
+       If x + y <= 3 Then '1x1 or 1x2 or 2x1
+        If nState > 0 Then nState = -1
+       ElseIf x + y = 4 Then
+        '!!!!!!!!TEST ONLY
+        Dim kkk As Long
+        If x = 2 Then '2x2
+         If m_tLogic.nFlags And &H80& Then
+          If kkk Then
+           If (i Xor j Xor kkk) And 1& Then
+            If nState > 0 Then nState = -1
+           End If
+          Else
+           kkk = ((i Xor j) And 1&) Or 2&
+          End If
+         Else
+          kkk = kkk + 1
+          If kkk > 1 Then
+           If nState > 0 Then nState = -1
+          End If
+         End If
+        Else '1x3 or 3x1
+         If m_tLogic.nFlags And &H80& Then
+          If i <> 2 And j <> 2 Then
            If nState > 0 Then nState = -1
           End If
          Else
-          kkk = ((i Xor j) And 1&) Or 2&
-         End If
-        Else
-         kkk = kkk + 1
-         If kkk > 1 Then
-          If nState > 0 Then nState = -1
+          If nState > 0 Then nState = -1 '???
          End If
         End If
-       Else '1x3 or 3x1
-        If m_tLogic.nFlags And &H80& Then
-         If i <> 2 And j <> 2 Then
-          If nState > 0 Then nState = -1
-         End If
-        Else
-         If nState > 0 Then nState = -1 '???
-        End If
+        '!!!!!!!!
+       Else
+        'TODO:
+        Debug.Assert False
        End If
-       '!!!!!!!!
-      Else
-       'TODO:
-       Debug.Assert False
       End If
      End If
     End If
    Case &H80000000 To &H8001FFFF 'block tiltable AND block not tiltable
-    If j = 1 Then
-     nState = 0
-    ElseIf (m_tLogic.nFlags And &H20&) = 0 Then
-     nState = 0
-    Else
-     '///check tilt angle
-     tmp = (tHitTest.nType And &HFFFF&) * ret.nTiltX - ret.nTiltY * (j - 1)
-     If tHitTest.nType < &H80010000 Then 'tiltable
-      '///check height - if it's blocked (???)
-      If (tHitTest.nType And &HFFFF&) > nHeight2 And tmp > 0 Then
-       nState = 0
-      End If
-      '///tile --> doesn't need supporter (???)
-      If nState = -1 Then
-       If Not bFirstEmpty Then nState = 1
+    If tPoly.bCustomShapeEnabled Then
+     b = False
+     tmp = tHitTest.nType And &HFFFF&
+     For k = 0 To z - 1
+      '///
+      If k >= tmp Then Exit For
+      If tPoly.nCustomShape(cii, cjj, ckk) Then
+       b = True
+       Exit For
       End If
       '///
-      If tmp >= 0 Then
-       If tmp > 0 Then
-        ret.nTiltX = j - 1
-        ret.nTiltY = tHitTest.nType And &HFFFF&
-        ret.nOnGroundCount = 0
-        nMax = 16
-        ReDim ret.tOnGroundPos(1 To nMax)
-        '///???
-        ret.nTileTypeCount = 0
-        Erase ret.nTileTypes
-        ret.nObjTypeCount = 0
-        Erase ret.nObjTypes
+      cii = cii + czi
+      cjj = cjj + czj
+      ckk = ckk + czk
+     Next k
+     cii = cii - k * czi
+     cjj = cjj - k * czj
+     ckk = ckk - k * czk
+    Else
+     b = True
+    End If
+    If b Then
+     If j = 1 Then
+      nState = 0
+     ElseIf (m_tLogic.nFlags And &H20&) = 0 Then
+      nState = 0
+     Else
+      '///check tilt angle
+      tmp = (tHitTest.nType And &HFFFF&) * ret.nTiltX - ret.nTiltY * (j - 1)
+      If tHitTest.nType < &H80010000 Then 'tiltable
+       '///check height - if it's blocked (???)
+       If (tHitTest.nType And &HFFFF&) > nHeight2 And tmp > 0 Then
+        nState = 0
        End If
-       '///record
-       ret.nOnGroundCount = ret.nOnGroundCount + 1
-       If ret.nOnGroundCount > nMax Then
-        nMax = nMax + 16
-        ReDim Preserve ret.tOnGroundPos(1 To nMax)
+       '///tile --> doesn't need supporter (???)
+       If nState = -1 Then
+        If Not bFirstEmpty Then nState = 1
        End If
-       ret.tOnGroundPos(ret.nOnGroundCount) = p1
-       '///add type
-       If tHitTest.nTileType Then
-        For tmp = 1 To ret.nTileTypeCount
-         If ret.nTileTypes(tmp) = tHitTest.nTileType Then Exit For
-        Next tmp
-        If tmp > ret.nTileTypeCount Then
-         ret.nTileTypeCount = ret.nTileTypeCount + 1
-         ReDim Preserve ret.nTileTypes(1 To ret.nTileTypeCount)
-         ret.nTileTypes(ret.nTileTypeCount) = tHitTest.nTileType
+       '///
+       If tmp >= 0 Then
+        If tmp > 0 Then
+         ret.nTiltX = j - 1
+         ret.nTiltY = tHitTest.nType And &HFFFF&
+         ret.nOnGroundCount = 0
+         nMax = 16
+         ReDim ret.tOnGroundPos(1 To nMax)
+         '///???
+         ret.nTileTypeCount = 0
+         Erase ret.nTileTypes
+         ret.nObjTypeCount = 0
+         Erase ret.nObjTypes
         End If
+        '///record
+        ret.nOnGroundCount = ret.nOnGroundCount + 1
+        If ret.nOnGroundCount > nMax Then
+         nMax = nMax + 16
+         ReDim Preserve ret.tOnGroundPos(1 To nMax)
+        End If
+        ret.tOnGroundPos(ret.nOnGroundCount) = p1
+        '///add type
+        If tHitTest.nTileType Then
+         For tmp = 1 To ret.nTileTypeCount
+          If ret.nTileTypes(tmp) = tHitTest.nTileType Then Exit For
+         Next tmp
+         If tmp > ret.nTileTypeCount Then
+          ret.nTileTypeCount = ret.nTileTypeCount + 1
+          ReDim Preserve ret.nTileTypes(1 To ret.nTileTypeCount)
+          ret.nTileTypes(ret.nTileTypeCount) = tHitTest.nTileType
+         End If
+        End If
+        '///
+        For tmp = 1 To ret.nObjTypeCount
+         If ret.nObjTypes(tmp) = tHitTest.nObjType Then Exit For
+        Next tmp
+        If tmp > ret.nObjTypeCount Then
+         ret.nObjTypeCount = ret.nObjTypeCount + 1
+         ReDim Preserve ret.nObjTypes(1 To ret.nObjTypeCount)
+         ret.nObjTypes(ret.nObjTypeCount) = tHitTest.nObjType
+        End If
+        '///
        End If
-       '///
-       For tmp = 1 To ret.nObjTypeCount
-        If ret.nObjTypes(tmp) = tHitTest.nObjType Then Exit For
-       Next tmp
-       If tmp > ret.nObjTypeCount Then
-        ret.nObjTypeCount = ret.nObjTypeCount + 1
-        ReDim Preserve ret.nObjTypes(1 To ret.nObjTypeCount)
-        ret.nObjTypes(ret.nObjTypeCount) = tHitTest.nObjType
+      Else 'not tiltable
+       If tmp > 0 Then
+        nState = 0
        End If
-       '///
-      End If
-     Else 'not tiltable
-      If tmp > 0 Then
-       nState = 0
       End If
      End If
     End If
@@ -696,7 +784,20 @@ Case &H111 To &HFFF
     Exit Sub
    End Select
    '///
+   If tPoly.bCustomShapeEnabled Then
+    cii = cii + cxi
+    cjj = cjj + cxj
+    ckk = ckk + cxk
+   End If
+   '///
   Next i
+  '///
+  If tPoly.bCustomShapeEnabled Then
+   ci = ci + cyi
+   cj = cj + cyj
+   ck = ck + cyk
+  End If
+  '///
  Next j
  '///custom stability support (experimental) TODO:
  If nState = 1 And ret.nTiltY = 0 Then

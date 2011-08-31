@@ -25,6 +25,7 @@ class GA{
 public:
 	struct Settings{
 		int RandomFitness;
+		int SeparatePool;
 		double FirstReproduce;
 		double ReproduceDecay;
 		double ReproduceCountDecay;
@@ -80,6 +81,7 @@ public:
 			Pool[i]->CreateRandom();
 		}
 		for(int times=0;times<GenerationCount;times++){
+			int pool_a=0;
 			if(out) (*out)<<"Running generation "<<(times+1)<<"...\r";
 			if(Callback){
 				Callback(UserData,times,GenerationCount,&Cancel);
@@ -88,13 +90,15 @@ public:
 			for(i=0;i<m_nPoolSize;i++){
 				Node[i].Index=i;
 				Node[i].Fitness=Pool[i]->CalcFitness()+int(genrand_real2()*t.RandomFitness);
+				if(Node[i].Fitness>0) pool_a++;
 			}
 			qsort(Node,m_nPoolSize,sizeof(GANode),GANode_Compare);
 			//reproduce
 			{
 				double f=t.FirstReproduce;
 				i=0;
-				j=m_nPoolSize-1;
+				if(t.SeparatePool) j=pool_a-1;
+				else j=m_nPoolSize-1;
 				while(i<j){
 					if(genrand_real2()<f){
 						for(;i<j;j--){
@@ -104,6 +108,21 @@ public:
 					}
 					f*=t.ReproduceDecay;
 					i++;
+				}
+				if(t.SeparatePool){
+					f=t.FirstReproduce;
+					i=pool_a;
+					j=m_nPoolSize-1;
+					while(i<j){
+						if(genrand_real2()<f){
+							for(;i<j;j--){
+								Pool[Node[j].Index]->CopyFrom(Pool[Node[i].Index]);
+								if(genrand_real2()>t.ReproduceCountDecay) break;
+							}
+						}
+						f*=t.ReproduceDecay;
+						i++;
+					}
 				}
 			}
 			//mutation

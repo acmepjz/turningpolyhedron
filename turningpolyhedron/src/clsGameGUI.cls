@@ -430,6 +430,10 @@ With New clsFakeDXUIMsgBox
  End If
  .AddButton objText.GetText("Restart level"), &H100&, _
  objText.GetText("Restart current level.")
+ If m_nLevelType = 2 Then
+  .AddButton objText.GetText("Next level"), &H103&, _
+  objText.GetText("Play next level.")
+ End If
  .AddButton objText.GetText("Other levels"), &H102&, _
  objText.GetText("Back to level selection screen and select another level to play.")
  .AddButton objText.GetText("Options"), &H200&, _

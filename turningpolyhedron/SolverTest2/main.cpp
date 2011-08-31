@@ -19,6 +19,11 @@ static const char *SimpleSolverGATypes[]={
 	"SizeX","1",
 	"SizeY","1",
 	"SizeZ","2",
+	"InitialDensity","0.7",
+	"MutationMaxCount","256",
+	"MutationDecay","0.5",
+	"FailedMutationDecay","0.8",
+	"FailedMutationExtra","0",
 	NULL
 };
 static const char *ColorZoneSolverGATypes[]={
@@ -43,12 +48,15 @@ static const char *GATypes[]={
 	"RandomFitness","5",
 	"FirstReproduce","1.0",
 	"ReproduceDecay","1.0",
-	"ReproduceCountDecay","0.0",
+	"ReproduceCountDecay","0.5",
 	"MutationProbability","0.5",
+	"FailedPool","0",
 	NULL
 };
 
-GABase* FactoryFunction(map<string,string>& obj){
+// -------- internal functions --------
+
+static GABase* FactoryFunction(map<string,string>& obj){
 	const string& Type=obj["Type"];
 	if(Type=="SimpleSolverGA"){
 		SimpleSolverGA::MapSize sz;
@@ -57,6 +65,16 @@ GABase* FactoryFunction(map<string,string>& obj){
 		sz.SizeX=atoi(obj["SizeX"].c_str());
 		sz.SizeY=atoi(obj["SizeY"].c_str());
 		sz.SizeZ=atoi(obj["SizeZ"].c_str());
+		//
+		sz.InitialDensity=atof(obj["InitialDensity"].c_str());
+		if(sz.InitialDensity<0.0) sz.InitialDensity=0.0;
+		else if(sz.InitialDensity>1.0) sz.InitialDensity=1.0;
+		//
+		sz.MutationMaxCount=atoi(obj["MutationMaxCount"].c_str());
+		sz.MutationDecay=atof(obj["MutationDecay"].c_str());
+		sz.FailedMutationDecay=atof(obj["FailedMutationDecay"].c_str());
+		sz.FailedMutationExtra=atoi(obj["FailedMutationExtra"].c_str());
+		//
 		if(sz.SizeX>0&&sz.SizeY>0&&sz.SizeZ>0
 			&&sz.SizeX<sz.Width&&sz.SizeX<sz.Height
 			&&sz.SizeY<sz.Width&&sz.SizeY<sz.Height
@@ -86,7 +104,7 @@ GABase* FactoryFunction(map<string,string>& obj){
 	return NULL;
 }
 
-#ifdef SOLVER_LIB
+// -------- library functions --------
 
 // mersenne twister functions
 
@@ -96,7 +114,7 @@ void __stdcall MTInit(unsigned long s){
 void __stdcall MTInitFromString(const char* lps){
 	string s;
 	if(lps) s=lps;
-	int m=(s.size()+15)&(~8);
+	int m=(s.size()+15)&(~7);
 	s.append("0123456789ABCDEF");
 	init_by_array((unsigned long*)s.c_str(),m/sizeof(unsigned long));
 }
@@ -221,12 +239,14 @@ void __stdcall GADestroyPool(GA* obj){
 }
 bool __stdcall GARun(GA* obj,int GenerationCount,map<string,string>* objMap,GACallbackFunc Callback,void* UserData){
 	//default value
-	GA::Settings t={5,1.0,1.0,0.0,0.5};
+	GA::Settings t={5,1,1.0,1.0,0.5,0.5};
 	//
 	if(objMap){
 		map<string,string>::iterator it;
 		it=objMap->find("RandomFitness");
 		if(it!=objMap->end()) t.RandomFitness=atoi(it->second.c_str());
+		it=objMap->find("FailedPool");
+		if(it!=objMap->end()) t.SeparatePool=atoi(it->second.c_str());
 		it=objMap->find("FirstReproduce");
 		if(it!=objMap->end()) t.FirstReproduce=atof(it->second.c_str());
 		it=objMap->find("ReproduceDecay");
@@ -288,32 +308,57 @@ int __stdcall GetAvaliableGAOptions(char* out,int SizePerString,int MaxCount){
 	return i/2;
 }
 
-#else
+// -------- main functions --------
+
+#ifndef SOLVER_LIB
 
 int main(){
 	string s;
+	//get seed
 	cout<<"Random seed? ";
 	cin>>s;
-	int m=(s.size()+15)&(~8);
+	int m=(s.size()+15)&(~7),i;
 	s.append("0123456789ABCDEF");
 	init_by_array((unsigned long*)s.c_str(),m/sizeof(unsigned long));
-	//
+	//get GA settings
+	int PoolSize,GenerationCount;
 	map<string,string> sz;
-	cout<<"Width,Height,SizeX,SizeY,SizeZ? ";
-	//sz["Type"]="SimpleSolverGA";
-	sz["Type"]="ColorZoneSolverGA";
-	cin>>sz["Width"]>>sz["Height"]>>sz["SizeX"]>>sz["SizeY"]>>sz["SizeZ"];
-	cout<<"ColorCount,AllowEmpty? ";
-	cin>>sz["ColorCount"]>>sz["AllowEmpty"];
+	cout<<"PoolSize? [200] ";
+	cin>>PoolSize;
+	cout<<"GenerationCount? [30] ";
+	cin>>GenerationCount;
+	//
+	for(i=0;GATypes[i]!=NULL;i+=2){
+		cout<<GATypes[i]<<"? ["<<GATypes[i+1]<<"] ";
+		cin>>sz[GATypes[i]];
+	}
+	//get type
+	cout<<"Avaliable random map generators:"<<endl;
+	for(m=0;SolverTypes[m]!=NULL;m++){
+		cout<<m<<"="<<SolverTypes[m][0]<<endl;
+	}
+	cout<<"Type? [0-"<<(m-1)<<"] ";
+	cin>>i;
+	if(i<0||i>=m){
+		cout<<"ERROR: Invalid type"<<endl;
+		return -1;
+	}
+	m=i;
+	//
+	sz["Type"]=SolverTypes[m][0];
+	//
+	for(i=1;SolverTypes[m][i]!=NULL;i+=2){
+		cout<<SolverTypes[m][i]<<"? ["<<SolverTypes[m][i+1]<<"] ";
+		cin>>sz[SolverTypes[m][i]];
+	}
 	//
 	GA test;
-	if(!test.Create(FactoryFunction,sz,100)){
+	if(!test.Create(FactoryFunction,sz,PoolSize)){
 		cout<<"ERROR: Can't create object"<<endl;
 		return -1;
 	}
 	//
-	GA::Settings t={5,1.0,1.0,0.0,0.5};
-	test.Run(100,t,&cout,NULL,NULL);
+	GARun(&test,GenerationCount,&sz,NULL,NULL);
 	//
 	ofstream f("out.xml");
 	test(0)->OutputXML(f,true);

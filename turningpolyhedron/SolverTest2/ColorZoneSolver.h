@@ -43,7 +43,7 @@ public:
 	char& operator()(int x,int y){
 		return m_bMapData[(y<<m_nWidthShift)+x];
 	}
-	bool Solve(std::ostream* out,int* step){
+	bool Solve(std::ostream* out,int* step,char* MovedArea,char* SolutionMovedArea,int* NodesUsed){
 		const int d1[6][2]={
 			{SizeX,SizeY},{SizeY,SizeX},{SizeX,SizeZ},{SizeZ,SizeX},{SizeY,SizeZ},{SizeZ,SizeY}
 		};
@@ -71,7 +71,7 @@ _skip:
 			}
 		}
 		//
-		return SimpleBaseSolver::Solve(out,step);
+		return SimpleBaseSolver::Solve(out,step,MovedArea,SolutionMovedArea,NodesUsed);
 	}
 	~ColorZoneSolver(){
 		if(m_bMapData) free(m_bMapData);
@@ -82,7 +82,7 @@ _skip:
 			"<level>\n";
 		if(OutputSolution){
 			out<<"\t<solution><![CDATA[";
-			Solve(&out,NULL);
+			Solve(&out,NULL,NULL,NULL,NULL);
 			out<<"]]></solution>\n";
 		}
 		//
