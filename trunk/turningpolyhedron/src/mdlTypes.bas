@@ -491,9 +491,12 @@ Public Type typeMapData_Polyhedron
  '///new:polyhedron events
  nEventCount As Long
  tEvent() As typeTileEvent '1-based
- '///new:stability test
+ '///new:stability test (experimental)
  nStabilityCount As Long
  tStability() As typeMapData_PolyhedronStability '1-based
+ '///new:custom shape (experimental)
+ bCustomShapeEnabled As Boolean
+ nCustomShape() As Byte '0-based
 End Type
 
 Public Type typeMapData_PolyhedronMerge

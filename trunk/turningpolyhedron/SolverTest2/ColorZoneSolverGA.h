@@ -45,7 +45,8 @@ public:
 	}
 	int CalcFitness(){
 		int n=0;
-		if(ColorZoneSolver::Solve(NULL,&n)){
+		//TODO:
+		if(ColorZoneSolver::Solve(NULL,&n,NULL,NULL,NULL)){
 			return n;
 		}else{
 			return -10000;

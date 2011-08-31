@@ -38,7 +38,10 @@ public:
 	~SimpleBaseSolver(){
 		if(m_bMapPassabilityData) free(m_bMapPassabilityData);
 	}
-	bool Solve(std::ostream* out,int* step){
+	bool Solve(std::ostream* out,int* step,char* MovedArea,char* SolutionMovedArea,int *NodesUsed){
+		const int d1[6][2]={
+			{SizeX,SizeY},{SizeY,SizeX},{SizeX,SizeZ},{SizeZ,SizeX},{SizeY,SizeZ},{SizeZ,SizeY}
+		};
 		const bool b1[6]={
 			SizeX==EndSizeX&&SizeY==EndSizeY,
 			SizeY==EndSizeX&&SizeX==EndSizeY,
@@ -59,6 +62,8 @@ public:
 		unsigned char *b=(unsigned char*)m_bMapPassabilityData;
 		const int w=1<<m_nWidthShift,h=1<<m_nHeightShift;
 		//
+		if(NodesUsed) *NodesUsed=0;
+		//
 		std::vector<int> v;
 		int i=(StartY<<m_nWidthShift)+StartX;
 		v.push_back(i);
@@ -69,11 +74,28 @@ public:
 			int y0=(i>>m_nWidthShift)&((1<<m_nHeightShift)-1);
 			int idx0=i>>(m_nWidthShift+m_nHeightShift);
 			//
+			if(MovedArea){
+				for(int y=y0;y<y0+d1[idx0][1];y++){
+					for(int x=x0;x<x0+d1[idx0][0];x++){
+						MovedArea[(y<<m_nWidthShift)+x]=1;
+					}
+				}
+			}
+			//
 			if(x0==EndX&&y0==EndY&&b1[idx0]){
-				if(out||step){
+				if(out||step||SolutionMovedArea){
 					std::vector<char> *v1=NULL;
 					if(out) v1=new std::vector<char>();
 					int st=0;
+					//
+					if(SolutionMovedArea){
+						for(int y=y0;y<y0+d1[idx0][1];y++){
+							for(int x=x0;x<x0+d1[idx0][0];x++){
+								SolutionMovedArea[(y<<m_nWidthShift)+x]=1;
+							}
+						}
+					}
+					//
 					for(;;){
 						int j=b[i];
 						if(j==0xFF) break;
@@ -86,6 +108,14 @@ public:
 						y0+=d2[idx0][j][2];
 						idx0=d2[idx0][j][0];
 						//
+						if(SolutionMovedArea){
+							for(int y=y0;y<y0+d1[idx0][1];y++){
+								for(int x=x0;x<x0+d1[idx0][0];x++){
+									SolutionMovedArea[(y<<m_nWidthShift)+x]=1;
+								}
+							}
+						}
+						//
 						i=(((idx0<<m_nHeightShift)+y0)<<m_nWidthShift)+x0;
 					}
 					if(out){
@@ -97,6 +127,7 @@ public:
 					}
 					if(step) *step=st;
 				}
+				if(NodesUsed) *NodesUsed=v.size();
 				return true;
 			}
 			//
@@ -112,6 +143,7 @@ public:
 			}
 		}
 		if(out) (*out)<<"No solution";
+		if(NodesUsed) *NodesUsed=v.size();
 		return false;
 	}
 };
@@ -135,7 +167,7 @@ public:
 	char& operator()(int x,int y){
 		return m_bMapData[(y<<m_nWidthShift)+x];
 	}
-	bool Solve(std::ostream* out,int* step){
+	bool Solve(std::ostream* out,int* step,char* MovedArea,char* SolutionMovedArea,int *NodesUsed){
 		const int d1[6][2]={
 			{SizeX,SizeY},{SizeY,SizeX},{SizeX,SizeZ},{SizeZ,SizeX},{SizeY,SizeZ},{SizeZ,SizeY}
 		};
@@ -160,7 +192,7 @@ _skip:
 			}
 		}
 		//
-		return SimpleBaseSolver::Solve(out,step);
+		return SimpleBaseSolver::Solve(out,step,MovedArea,SolutionMovedArea,NodesUsed);
 	}
 	~SimpleSolver(){
 		if(m_bMapData) free(m_bMapData);
@@ -171,7 +203,7 @@ _skip:
 			"<level>\n";
 		if(OutputSolution){
 			out<<"\t<solution><![CDATA[";
-			Solve(&out,NULL);
+			Solve(&out,NULL,NULL,NULL,NULL);
 			out<<"]]></solution>\n";
 		}
 		out<<"\t<mapData id=\"m1\" shape=\"rect\" c=\"0.5,0.5,0\" size=\""<<m_nWidth<<","<<m_nHeight<<",1\">\n"

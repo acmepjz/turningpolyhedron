@@ -1254,7 +1254,7 @@ Friend Function ParseMapTypeArrayFromNode(ByVal objNode As clsTreeStorageNode, B
 Dim s As String
 Dim b As Boolean
 Dim d() As Integer, lp As Long, lps As Long, m As Long
-Dim C As Long
+Dim c As Long
 Dim i As Long, j As Long, k As Long
 '///
 Dim nIndex As Long
@@ -1284,12 +1284,12 @@ If m > 0 Then
   lps = lp
   b = True
   Do While lp < m
-   C = d(lp)
-   Select Case C
+   c = d(lp)
+   Select Case c
    Case 44, 59, 124, 64, 91, 42
     Exit Do
    End Select
-   b = b And ((C >= &H30& And C <= &H39&) Or C = 45)
+   b = b And ((c >= &H30& And c <= &H39&) Or c = 45)
    lp = lp + 1
   Loop
   If lp > lps Then
@@ -1301,12 +1301,12 @@ If m > 0 Then
    End If
   End If
   '///get [@<new_index>]
-  If C = 64 Then
+  If c = 64 Then
    lp = lp + 1
    lps = lp
    Do While lp < m
-    C = d(lp)
-    Select Case C
+    c = d(lp)
+    Select Case c
     Case 44, 59, 124, 91, 42
      Exit Do
     End Select
@@ -1319,14 +1319,14 @@ If m > 0 Then
    End If
   End If
   '///get ["["<property_index>|<tag>"]"]
-  If C = 91 Then
+  If c = 91 Then
    lp = lp + 1
    lps = lp
    b = True
    Do While lp < m
-    C = d(lp)
-    If C = 93 Then Exit Do
-    b = b And (C >= &H30& And C <= &H39&)
+    c = d(lp)
+    If c = 93 Then Exit Do
+    b = b And (c >= &H30& And c <= &H39&)
     lp = lp + 1
    Loop
    If lp > lps Then
@@ -1338,15 +1338,15 @@ If m > 0 Then
     End If
    End If
    lp = lp + 1
-   If lp < m Then C = d(lp)
+   If lp < m Then c = d(lp)
   End If
   '///get ["*"<count>]
-  If C = 42 Then
+  If c = 42 Then
    lp = lp + 1
    lps = lp
    Do While lp < m
-    C = d(lp)
-    Select Case C
+    c = d(lp)
+    Select Case c
     Case 44, 59, 124
      Exit Do
     End Select
@@ -1423,8 +1423,8 @@ If m > 0 Then
    End If
   Next lps
   '///
-  If lp >= m Then C = 44
-  Select Case C
+  If lp >= m Then c = 44
+  Select Case c
   Case 44 '[","]
    'next pos
    i = i + 1
@@ -1848,6 +1848,9 @@ For i = 1 To objNode.SubNodeCount
    tPoly.nStabilityCount = tPoly.nStabilityCount + 1
    ReDim Preserve tPoly.tStability(1 To tPoly.nStabilityCount)
    If Not ParseMapPolyhedronStabilityDataFromNode(obj, tPoly.tStability(tPoly.nStabilityCount)) Then Exit Function
+  Case "customShape"
+   tPoly.bCustomShapeEnabled = True
+   If Not ParseMapPolyhedronShapeDataFromNode(obj, tPoly) Then Exit Function
   Case Else
    'new: polyhedron event
    j = ParseEventType(s)
@@ -1862,6 +1865,141 @@ Next i
 '///over
 tPoly.nFlags = nFlags
 ParseMapPolyhedronDataFromNode = True
+End Function
+
+Friend Function ParseMapPolyhedronShapeDataFromNode(ByVal objNode As clsTreeStorageNode, ByRef tPoly As typeMapData_Polyhedron) As Boolean
+Dim i As Long, j As Long, k As Long
+Dim x As Long, y As Long, z As Long
+Dim s As String
+Dim d() As Integer, lp As Long, lps As Long, m As Long
+Dim c As Long
+'///
+Dim nValue As Long
+Dim nCount As Long
+'///
+Select Case tPoly.nShape
+Case &H111 To &HFFF
+ x = (tPoly.nShape And &HF00&) \ &H100&
+ y = (tPoly.nShape And &HF0&) \ &H10&
+ z = tPoly.nShape And &HF&
+ If x <= 0 Or y <= 0 Or z <= 0 Then
+  Debug.Assert False
+  Exit Function
+ End If
+ ReDim tPoly.nCustomShape(x - 1, y - 1, z - 1)
+ '///
+ s = Replace(Replace(Replace(Replace(objNode.GetValueAsString, _
+ vbCr, ""), vbLf, ""), vbTab, ""), " ", "")
+ m = Len(s)
+ If m > 0 Then
+  ReDim d(m - 1)
+  CopyMemory d(0), ByVal StrPtr(s), m * 2&
+  '///format: [<value>]["*"<count>]
+  Do
+   nValue = 0
+   nCount = 1
+   '///get [<value>]
+   lps = lp
+   Do While lp < m
+    c = d(lp)
+    Select Case c
+    Case &H30& To &H39&
+    Case Else
+     Exit Do
+    End Select
+    lp = lp + 1
+   Loop
+   If lp > lps Then
+    s = Space(lp - lps)
+    CopyMemory ByVal StrPtr(s), d(lps), (lp - lps) * 2&
+    nValue = Val(s)
+   End If
+   '///get ["*"<count>]
+   If c = 42 Then
+    lp = lp + 1
+    lps = lp
+    Do While lp < m
+     c = d(lp)
+     Select Case c
+     Case 44, 59, 124
+      Exit Do
+     End Select
+     lp = lp + 1
+    Loop
+    If lp > lps Then
+     s = Space(lp - lps)
+     CopyMemory ByVal StrPtr(s), d(lps), (lp - lps) * 2&
+     nCount = Val(s)
+     If nCount <= 0 Then 'invalid count
+      Debug.Assert False
+      Exit Function
+     End If
+    End If
+   End If
+   '///put data
+   nValue = nValue And &HFF&
+   For lps = 1 To nCount
+    tPoly.nCustomShape(i, j, k) = nValue
+    '///
+    'next pos
+    If lps < nCount Then
+     i = i + 1
+     If i >= x Then
+      i = 0
+      j = j + 1
+      If j >= y Then
+       j = 0
+       k = k + 1
+       If k >= z Then Exit Do
+      End If
+     End If
+    End If
+   Next lps
+   '///
+   If lp >= m Then c = 44
+   Select Case c
+   Case 44 '[","]
+    'next pos
+    i = i + 1
+    If i >= x Then
+     i = 0
+     j = j + 1
+     If j >= y Then
+      j = 0
+      k = k + 1
+      If k >= z Then Exit Do
+     End If
+    End If
+   Case 59 '[";"]
+    'next row
+    i = 0
+    j = j + 1
+    If j >= y Then
+     j = 0
+     k = k + 1
+     If k >= z Then Exit Do
+    End If
+   Case 124 '["|"]
+    'next plane
+    i = 0
+    j = 0
+    k = k + 1
+    If k >= z Then Exit Do
+   Case Else 'invalid character
+    Debug.Assert False
+    Exit Function
+   End Select
+   '///over
+   lp = lp + 1
+  Loop While lp < m
+  '///
+ End If
+Case Else
+ Debug.Assert False
+ Exit Function
+End Select
+'///
+ParseMapPolyhedronShapeDataFromNode = True
 End Function
 
 Friend Function ParseMapPolyhedronStabilityDataFromNode(ByVal objNode As clsTreeStorageNode, ByRef t As typeMapData_PolyhedronStability) As Boolean

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<level>
+  <!-- TEST ONLY -->
+  <mapData id="m1" shape="rect" c="0.5,0.5,0" size="8,8,1">
+    <typeArray><![CDATA[1*18,11,1*11,11,1*5,goal*2,1*5,11,goal,1*7,goal*2,1*10]]></typeArray>
+    <polyhedron id="main" shape="2x3x1" p="1,3" tiltable="false" supportable="false">
+    	<customShape>1,1,1,0,1,1</customShape>
+      <appearance><shader templateName="simple1_fixed" ambient="0.2,0.2,0.2" diffuse="0.2,0.2,0.2" specular="0.4,0.4,0.3" specularHardness="50">
+        <mesh type="cube" p="0,0,0" bevel="1;0.05" bevelNormalSmoothness="1"/>
+        <mesh type="cube" p="1,0,0" bevel="1;0.05" bevelNormalSmoothness="1"/>
+        <mesh type="cube" p="0,1,0" bevel="1;0.05" bevelNormalSmoothness="1"/>
+        <mesh type="cube" p="0,2,0" bevel="1;0.05" bevelNormalSmoothness="1"/>
+        <mesh type="cube" p="1,2,0" bevel="1;0.05" bevelNormalSmoothness="1"/>
+      </shader></appearance>
+      <onEnter condition="tileTypeCount=1" event="game-finished"/>
+    </polyhedron>
+  </mapData>
+  <!-- TODO -->
+  <winningCondition>
+    <moveCondition src="main" target="m1(4,4,0)" targetSize="2,3"/>
+    <gameFinishedCondition/>
+  </winningCondition>
+</level>
