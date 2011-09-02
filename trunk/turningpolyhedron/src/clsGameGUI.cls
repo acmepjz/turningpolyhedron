@@ -20,8 +20,13 @@ Implements IFakeDXAppEvent
 Implements IRenderableObject
 Implements IMainLoopCallback
 
+'////////record (experimental)
+
 Private m_sRecord As String
-Private m_nRecordPos As Long
+Private m_nRecordPos As Long, m_fRecordTimer As Single
+
+Private Const m_fMovingTimer As Single = 250
+Private Const m_fSwitchTimer As Single = 500
 
 'Private Enum enumGameGUIState
 ' IDS_Nothing
@@ -76,6 +81,10 @@ Implements IRandomMap
 Private Type typeString
  s(127) As Byte
 End Type
+
+'////////solver (experimental)
+
+Private m_idxFormSolver As Long, m_idxSolverType As Long
 
 Friend Sub LoadLevelList(ByVal fn As String)
 Dim obj As New clsTreeStorageNode
@@ -301,13 +310,17 @@ With FakeDXUIControls(1)
  '///random level
  ReDim t(255)
  '///
- With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
+ With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 440, _
  FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_TitleBar Or FFS_Sizable, , False, , _
  objText.GetText("Random level"))
   m_idxFormRnd = .Index
   Set .EventObject = Me
+  '///some warning
+  .AddNewChildren FakeCtl_Label, 8, 8, -8, -8, FLS_IconExclamation Or FLS_WordWrap, , , , _
+  objText.GetText("Warning: Random level generator is an experimental feature. Inappropriate input arguments may produce wrong result, make the program out of response or crash the program. Use at your own risk."), _
+  , , , , 1, 1
   '///
-  With .AddNewChildren(FakeCtl_None, 0, 0, 0, -40, FCS_CanGetFocus Or FCS_TabStop Or FCS_AutoScroll, , , , , , , , , 1, 1)
+  With .AddNewChildren(FakeCtl_None, 0, 64, 0, -40, FCS_CanGetFocus Or FCS_TabStop Or FCS_AutoScroll, , , , , , , , , 1, 1)
    With .AddNewChildren(FakeCtl_None, 0, 0, 572, 320)
     m_idxFormRnd_1 = .Index
     '///
@@ -329,11 +342,11 @@ With FakeDXUIControls(1)
     y = y + 32
     '///
     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Pool size")
-    .AddNewChildren FakeCtl_TextBox, 168, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect Or FTS_NumberOnly Or FTS_UpDown, , , , , "100", "txtPoolSize", , , 1
+    .AddNewChildren(FakeCtl_TextBox, 168, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect Or FTS_NumberOnly Or FTS_UpDown, , , , , "100", "txtPoolSize", , , 1).SmallChange = 1
     y = y + 32
     '///
     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Generations")
-    .AddNewChildren FakeCtl_TextBox, 168, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect Or FTS_NumberOnly Or FTS_UpDown, , , , , "100", "txtGenerations", , , 1
+    .AddNewChildren(FakeCtl_TextBox, 168, y, -8, y + 24, FCS_CanGetFocus Or FCS_TabStop Or FTS_AutoSelect Or FTS_NumberOnly Or FTS_UpDown, , , , , "100", "txtGenerations", , , 1).SmallChange = 1
     y = y + 32
     '///
     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Random seed")
@@ -361,6 +374,36 @@ With FakeDXUIControls(1)
   '///some buttons
   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK3", 1, 1, 1, 1
   .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel3", 1, 1, 1, 1
+ End With
+ '///solver
+ With .AddNewChildren(FakeCtl_Form, 0, 0, 400, 200, _
+ FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_TitleBar Or FFS_Sizable, , False, , _
+ objText.GetText("Solve level"))
+  m_idxFormSolver = .Index
+  Set .EventObject = Me
+  '///combobox
+  .AddNewChildren FakeCtl_Label, 8, 8, 88, 32, , , , , objText.GetText("Type")
+  With .AddNewChildren(FakeCtl_ComboBox, 96, 8, -8, 32, FCS_CanGetFocus Or FCS_TabStop, , , , , , , , , 1)
+   m_idxSolverType = .Index
+   With .ListViewObject
+    .FullRowSelect = True
+    .AddColumn vbNullString
+    '///
+    m = GetAvaliableSolvers(t(0), 128, 256)
+    For i = 0 To m - 1
+     s = StrConv(t(i).s, vbUnicode)
+     s = Left(s, InStr(1, s, vbNullChar) - 1)
+     .AddItem s
+    Next i
+   End With
+  End With
+  '///some warning
+  .AddNewChildren FakeCtl_Label, 8, 40, -8, -40, FLS_IconExclamation Or FLS_WordWrap, , , , _
+  objText.GetText("Warning: Automatic level solver is an experimental feature. Not all levels can be solved using level solver. Inappropriate solver types may produce wrong result, make the program out of response or crash the program. Use at your own risk."), _
+  , , , , 1, 1
+  '///some buttons
+  .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK4", 1, 1, 1, 1
+  .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel4", 1, 1, 1, 1
  End With
 End With
 '///load level index and show item
@@ -402,6 +445,18 @@ End With
 If m_nLevelIdxCount = 0 Then RefreshLevelList
 End Sub
 
+Friend Sub ShowSolver()
+Create
+With FakeDXUIControls(m_idxFormSolver)
+ .MoveToCenter
+ .Show 1
+End With
+End Sub
+
+Friend Sub HideSolver()
+If m_idxFormSolver Then FakeDXUIControls(m_idxFormSolver).Hide
+End Sub
+
 Friend Sub ShowLevelSelection()
 Create
 With FakeDXUIControls(m_idxForm2)
@@ -434,6 +489,8 @@ With New clsFakeDXUIMsgBox
   .AddButton objText.GetText("Next level"), &H103&, _
   objText.GetText("Play next level.")
  End If
+ .AddButton objText.GetText("Solve level"), &H105&, _
+ objText.GetText("Solve current level using automatic solvers.")
  .AddButton objText.GetText("Other levels"), &H102&, _
  objText.GetText("Back to level selection screen and select another level to play.")
  .AddButton objText.GetText("Options"), &H200&, _
@@ -519,6 +576,8 @@ Case &H103&
  BackToLevelSelection
 Case &H104&
  UndoLastMove
+Case &H105&
+ ShowSolver
 Case &H200&
  frmSettings.Show
 End Select
@@ -551,12 +610,19 @@ Private Sub Class_Terminate()
 SaveLevelList FakeDXAppMyGamesPath + "level_list.xml"
 End Sub
 
+Friend Sub MoveToNextVisiblePolyhedron()
+If objGameMgr.CanPlayerMovePolyhedron Then
+ objGameMgr.CurrentPolyhedron = objGameMgr.GetNextVisiblePolyhedron
+ objGameMgr.FollowCurrentPolyhedron = True
+ objCamera.RealLinearDamping = 1
+End If
+End Sub
+
 Private Function IFakeDXAppEvent_OnEvent(ByVal nType As Long, ByVal nParam1 As Long, ByVal nParam2 As Long, ByVal nParam3 As Long) As Long
 Dim v1 As D3DVECTOR, v2 As D3DVECTOR, v3 As D3DVECTOR
 Dim f As Single
 Dim i As Long
 Dim Button As Long
-Dim s As String
 '///
 Static nOldX As Long, nOldY As Long
 Static vx As D3DVECTOR, vy As D3DVECTOR
@@ -576,11 +642,7 @@ Case FakeDXAppEvent_KeyDown
  Case vbKeyRight
   i = 3
  Case vbKeySpace
-  If objGameMgr.CanPlayerMovePolyhedron Then
-   objGameMgr.CurrentPolyhedron = objGameMgr.GetNextVisiblePolyhedron
-   objGameMgr.FollowCurrentPolyhedron = True
-   objCamera.RealLinearDamping = 1
-  End If
+  If m_nRecordPos = 0 Then MoveToNextVisiblePolyhedron
   Exit Function
  Case vbKeyR
   RestartCurrentLevel
@@ -589,22 +651,16 @@ Case FakeDXAppEvent_KeyDown
   BackToMainMenu
   Exit Function
  Case vbKeyU
-  UndoLastMove
+  If m_nRecordPos = 0 Then UndoLastMove
   Exit Function
  Case vbKeyEscape
   PauseGame
   Exit Function
  Case vbKeyF12 'TEST ONLY
-  With New clsFakeDXUIInputBox
-   s = Trim(.InputBox("Input moves:", , objGameMgr.LevelSolution, , True, vbVertical))
-  End With
-  If s <> vbNullString Then
-   m_sRecord = s
-   m_nRecordPos = 1
-  End If
+  InputMoves
   Exit Function
  End Select
- If i >= 0 Then
+ If i >= 0 And m_nRecordPos = 0 Then
   If Not objGameMgr.CurrentPolyhedronObject Is Nothing Then
    '///TODO:get z direction
    objCamera.GetRealCamera v1, v2, v3
@@ -694,7 +750,7 @@ Friend Sub RestartCurrentLevel()
 objGameMgr.ResetOnNextUpdate = True
 objGameMgr.FollowCurrentPolyhedron = True
 objCamera.RealLinearDamping = 1
-m_sRecord = ""
+m_sRecord = vbNullString
 m_nRecordPos = 0
 m_nMoves = 0
 End Sub
@@ -739,6 +795,8 @@ If objGameMgr.AddLevelDataFromNode(obj) Then
  objGameMgr.CreateLevelRuntimeData
  ShowGame
  m_nMoves = 0
+ m_sRecord = vbNullString
+ m_nRecordPos = 0
  LoadNodeAndPlay = True
 Else
  FakeDXAppRemoveDataLevel 2
@@ -999,6 +1057,36 @@ Case FakeCtl_Event_Click
   GenerateRandomLevelAndPlay
  Case "cmdCancel3"
   FakeDXUIControls(m_idxFormRnd).Hide
+ Case "cmdOK4"
+  With FakeDXUIControls(m_idxSolverType).ListViewObject
+   i = .SelectedRow
+   If i > 0 And i <= .RowCount Then
+    s = .List(i, 1)
+   End If
+  End With
+  '///solve
+  y = objGameMgr.GetSolver(s)
+  If y Then
+   s = Space(65536)
+   m = 131072
+   i = SolverSolve(y, ByVal StrPtr(s), m, ByVal 0, ByVal 0)
+   s = StrConv(LeftB(s, m), vbUnicode)
+   SolverDestroy y
+   If i Then
+    InputMoves s
+   Else
+    With New clsFakeDXUIMsgBox
+     .MsgBox objText.GetText("No solution."), vbInformation, objText.GetText("Solve level")
+    End With
+   End If
+  Else
+   With New clsFakeDXUIMsgBox
+    .MsgBox objText.GetText("Error creating level solver."), vbExclamation, objText.GetText("Error")
+   End With
+  End If
+  '///
+ Case "cmdCancel4"
+  FakeDXUIControls(m_idxFormSolver).Hide
  Case "cmdRefresh"
   RefreshLevelList
  Case "cmdOpen"
@@ -1092,46 +1180,57 @@ Dim bErr As Boolean
 'objGameMgr.UpdateLevelRuntimeData objTiming.GetDelta
 '///
 If m_nRecordPos > 0 Then
- i = Len(m_sRecord)
- If m_nRecordPos <= i Then
-  i = -1
-  Select Case UCase(Mid(m_sRecord, m_nRecordPos, 1))
-  Case "U"
-   i = 0
-  Case "L"
-   i = 1
-  Case "D"
-   i = 2
-  Case "R"
-   i = 3
-  Case Else
-   'TODO:
-   bErr = True
-  End Select
-  If i >= 0 And i < 4 Then
-   If objGameMgr.CanPlayerMovePolyhedron Then
-    i = objGameMgr.MoveCurrentPolyhedron(i, m_nMoves)
-    If i Then
-     objGameMgr.FollowCurrentPolyhedron = True
-     m_nMoves = m_nMoves + 1
+ m_fRecordTimer = m_fRecordTimer - objTiming.GetDelta
+ If m_fRecordTimer < 0 Then
+  i = Len(m_sRecord)
+  If m_nRecordPos <= i Then
+   i = -1
+   Select Case UCase(Mid(m_sRecord, m_nRecordPos, 1))
+   Case "U"
+    i = 0
+   Case "L"
+    i = 1
+   Case "D"
+    i = 2
+   Case "R"
+    i = 3
+   Case "S"
+    i = 4
+   Case Else
+    'TODO:
+    bErr = True
+   End Select
+   Select Case i
+   Case 0 To 3
+    If objGameMgr.CanPlayerMovePolyhedron Then
+     i = objGameMgr.MoveCurrentPolyhedron(i, m_nMoves)
+     If i Then
+      objGameMgr.FollowCurrentPolyhedron = True
+      m_nMoves = m_nMoves + 1
+     End If
+     If i <> 1 Then '???
+      objLogger.AddMessage "Invalid move", , &HFFFF0000
+      bErr = True
+     End If
+     m_nRecordPos = m_nRecordPos + 1
+     m_fRecordTimer = m_fMovingTimer
     End If
-    If i <> 1 Then '???
-     objLogger.AddMessage "Invalid move", , &HFFFF0000
-     bErr = True
-    End If
+   Case 4
+    MoveToNextVisiblePolyhedron
     m_nRecordPos = m_nRecordPos + 1
-   End If
+    m_fRecordTimer = m_fSwitchTimer
+   Case Else
+    'TODO:
+    m_nRecordPos = m_nRecordPos + 1
+   End Select
   Else
-   'TODO:
-   m_nRecordPos = m_nRecordPos + 1
+   bErr = True
   End If
- Else
-  bErr = True
- End If
- '///
- If bErr Then
-  m_sRecord = ""
-  m_nRecordPos = 0
+  '///
+  If bErr Then
+   m_sRecord = vbNullString
+   m_nRecordPos = 0
+  End If
  End If
 End If
 '///
@@ -1251,3 +1350,18 @@ If m_bGetLevelName And nLength > 0 Then
 End If
 m_bGetLevelName = False
 End Sub
+
+'TEST ONLY
+Friend Sub InputMoves(Optional ByVal s As String)
+With New clsFakeDXUIInputBox
+ If s = vbNullString Then s = objGameMgr.LevelSolution
+ s = Trim(.InputBox("Input moves:", , s, , True, vbVertical))
+End With
+If s <> vbNullString Then
+ HideSolver
+ m_sRecord = Replace(Replace(Replace(Replace(s, vbTab, ""), " ", ""), vbCr, ""), vbLf, "")
+ m_nRecordPos = 1
+ m_fRecordTimer = 0
+End If
+End Sub
+

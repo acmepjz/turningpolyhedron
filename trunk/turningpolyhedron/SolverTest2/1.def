@@ -32,3 +32,14 @@ GAGetFitness
 GetAvaliableRandomMapGenerators
 GetAvaliableRandomMapOptions
 GetAvaliableGAOptions
+
+;----------------------
+
+GetAvaliableSolvers
+
+SolverCreate
+SolverDestroy
+SolverSetData
+SolverSolve
+SolverOutputToString
+SolverOutputToFile

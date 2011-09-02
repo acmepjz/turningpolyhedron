@@ -1278,15 +1278,17 @@ Case 2 'label
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
  j = m_nStyle And &H70&
- If j = 0 Then
-  FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft, nTop, nRight - nLeft, nBottom - nTop, m_nFontZoom, _
-  (DT_CENTER And ((m_nStyle And &H300&) = &H100&)) Or _
-  (DT_RIGHT And ((m_nStyle And &H300&) = &H200&)) Or _
-  (DT_WORDBREAK And ((m_nStyle And 1&) <> 0)), i Or m_nForeColor, , , , , , , True
- ElseIf j <= &H40& Then
+ If j > 0 And j <= &H40& Then
   j = 272 + j * 3&
   FakeDXGDIStretchBltColored nLeft, nTop, nLeft + 48, nTop + 48, j, 464, j + 48, 512, 512, i Or &HFFFFFF
+  j = 56
+ Else
+  j = 0
  End If
+ FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + j, nTop, nRight - nLeft - j, nBottom - nTop, m_nFontZoom, _
+ (DT_CENTER And ((m_nStyle And &H300&) = &H100&)) Or _
+ (DT_RIGHT And ((m_nStyle And &H300&) = &H200&)) Or _
+ (DT_WORDBREAK And ((m_nStyle And 1&) <> 0)), i Or m_nForeColor, , , , , , , True
 Case 3 'frame
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)

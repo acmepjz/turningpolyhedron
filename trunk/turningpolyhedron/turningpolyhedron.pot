@@ -88,6 +88,7 @@ msgstr ""
 #.   .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel3", 1, 1, 1, 1
+#.   .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel4", 1, 1, 1, 1
 #.  .AddNewChildren FakeCtl_Button, -72, -12, -8, 12, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 0.5, 1, 0.5
 msgid "Cancel"
 msgstr ""
@@ -205,9 +206,14 @@ msgstr ""
 #.    + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 #.   .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
 #.    .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
+#.     .MsgBox objText.GetText("Error creating level solver."), vbExclamation, objText.GetText("Error")
 #.     + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 #.   .MsgBox objText.GetText("Can't create encoder list"), vbCritical, objText.GetText("Error")
 msgid "Error"
+msgstr ""
+
+#.     .MsgBox objText.GetText("Error creating level solver."), vbExclamation, objText.GetText("Error")
+msgid "Error creating level solver."
 msgstr ""
 
 #.    .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
@@ -410,11 +416,16 @@ msgid "New folder"
 msgstr ""
 
 #.   .AddButton objText.GetText("Next level"), &H103&, _
+#.   .AddButton objText.GetText("Next level"), &H103&, _
 msgid "Next level"
 msgstr ""
 
 #.   s = objText.GetText("No")
 msgid "No"
+msgstr ""
+
+#.      .MsgBox objText.GetText("No solution."), vbInformation, objText.GetText("Solve level")
+msgid "No solution."
 msgstr ""
 
 #.  objText.GetText("OK"), , "cmdOK", 1, 1, 1, 1, , , objText.GetText("Apply changes and close dialog.")
@@ -424,6 +435,7 @@ msgstr ""
 #.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK3", 1, 1, 1, 1
+#.   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK4", 1, 1, 1, 1
 msgid "OK"
 msgstr ""
 
@@ -457,6 +469,7 @@ msgstr ""
 msgid "Other levels"
 msgstr ""
 
+#.   objText.GetText("Play next level.")
 #.   objText.GetText("Play next level.")
 msgid "Play next level."
 msgstr ""
@@ -547,6 +560,16 @@ msgstr ""
 msgid "Shadow"
 msgstr ""
 
+#.  objText.GetText("Solve current level using automatic solvers.")
+msgid "Solve current level using automatic solvers."
+msgstr ""
+
+#.  objText.GetText("Solve level"))
+#.  .AddButton objText.GetText("Solve level"), &H105&, _
+#.      .MsgBox objText.GetText("No solution."), vbInformation, objText.GetText("Solve level")
+msgid "Solve level"
+msgstr ""
+
 #.   .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
 msgid "Start game"
 msgstr ""
@@ -583,6 +606,7 @@ msgstr ""
 
 #.     .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
 #.     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Type")
+#.   .AddNewChildren FakeCtl_Label, 8, 8, 88, 32, , , , , objText.GetText("Type")
 msgid "Type"
 msgstr ""
 
@@ -615,6 +639,14 @@ msgstr ""
 
 #.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
 msgid "Volumetric fog"
+msgstr ""
+
+#.   objText.GetText("Warning: Automatic level solver is an experimental feature. Not all levels can be solved using level solver. Inappropriate solver types may produce wrong result, make the program out of response or crash the program. Use at your own risk."), _
+msgid "Warning: Automatic level solver is an experimental feature. Not all levels can be solved using level solver. Inappropriate solver types may produce wrong result, make the program out of response or crash the program. Use at your own risk."
+msgstr ""
+
+#.   objText.GetText("Warning: Random level generator is an experimental feature. Inappropriate input arguments may produce wrong result, make the program out of response or crash the program. Use at your own risk."), _
+msgid "Warning: Random level generator is an experimental feature. Inappropriate input arguments may produce wrong result, make the program out of response or crash the program. Use at your own risk."
 msgstr ""
 
 #.    If .VBGetOpenFileName(s, , , , , objText.GetText("XML level file") + "|*.xml;*.xml.lzma", , App.Path + "\data\") Then

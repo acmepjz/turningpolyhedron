@@ -131,6 +131,178 @@ Private m_nDataLevel As Long
 Private m_tDataLevelArray() As typeGameMgrDataLevel '1-based
 Private m_nDataLevelCount As Long
 
+'TEST ONLY
+Friend Function GetSolver(ByVal sType As String) As Long
+Dim objMap As Long
+Dim objSolver As Long
+'///
+Dim p As typeMapPosition
+Dim nWidth As Long, nHeight As Long
+Dim nSizeX As Long, nSizeY As Long, nSizeZ As Long
+'///
+Dim nTargetIndex As Long
+Dim nEndX As Long, nEndY As Long
+Dim nEndSizeX As Long, nEndSizeY As Long
+Dim nData() As Long
+Dim s As String
+'///
+Dim i As Long, j As Long, k As Long
+Dim ii As Long, jj As Long
+'///
+If m_bRuntimeDirty Then Exit Function '?
+'///get map data index
+If m_tLevel.nPolyhedronCount <= 0 Then Exit Function
+p = m_objPoly(1).Position.p
+If p.nMapDataIndex <= 0 Or p.nMapDataIndex > m_tLevel.nMapDataCount Then Exit Function
+'///get map size
+nWidth = m_tLevel.tMapData(p.nMapDataIndex).nSize(0)
+nHeight = m_tLevel.tMapData(p.nMapDataIndex).nSize(1)
+ReDim nData(1 To nWidth, 1 To nHeight)
+'///find end point
+If m_tLevel.nWinningConditionCount > 0 Then
+ For i = 1 To m_tLevel.nWinningConditionCount
+  If m_tLevel.tWinningCondition(i).nType = 1 Then
+   If m_tLevel.tWinningCondition(i).nParams(0) > 0 Then nTargetIndex = m_tLevel.tWinningCondition(i).nSrcIndex(0)
+   nEndX = m_tLevel.tWinningCondition(i).tPos.x
+   nEndY = m_tLevel.tWinningCondition(i).tPos.y
+   nEndSizeX = m_tLevel.tWinningCondition(i).nParams(1)
+   nEndSizeY = m_tLevel.tWinningCondition(i).nParams(2)
+   Exit For
+  End If
+ Next i
+Else
+ Do
+  For k = 0 To m_tLevel.tMapData(p.nMapDataIndex).nSize(2) - 1
+   For j = 0 To nHeight - 1
+    For i = 0 To nWidth - 1
+     ii = m_tMapDataInst(p.nMapDataIndex).nTypeArray(i, j, k)
+     If ii > 0 And ii <= m_nTileTypeMax Then
+      If InStr(1, m_tTileType(ii).sID, "goal", vbTextCompare) > 0 Then
+       nEndX = i
+       nEndY = j
+       nEndSizeX = 1
+       nEndSizeY = 1
+       '///
+       For jj = 1 To m_tLevel.nPolyhedronCount
+        If m_objPoly(jj).Position.p.z = k Then
+         nTargetIndex = jj
+         Exit For
+        End If
+       Next jj
+       '///
+       Exit Do
+      End If
+     End If
+    Next i
+   Next j
+  Next k
+ Loop While False
+End If
+'///
+objMap = StdMapCreate
+StdMapAdd objMap, "Type", sType
+StdMapAdd objMap, "Width", CStr(nWidth)
+StdMapAdd objMap, "Height", CStr(nHeight)
+'///TODO:
+If Left(sType, 16) = "MultilevelSolver" Then
+ '///get map data
+ For j = 0 To nHeight - 1
+  For i = 0 To nWidth - 1
+   '///
+   For k = m_tLevel.tMapData(p.nMapDataIndex).nSize(2) - 1 To 0 Step -1
+    ii = m_tMapDataInst(p.nMapDataIndex).nTypeArray(i, j, k)
+    If ii > 0 And ii <= m_nTileTypeMax Then
+     jj = m_tTileType(ii).nFlags
+     If (jj And 8&) = 0 Then
+      If jj And &H100& Then
+       jj = m_tTileType(ii).nBlockHeight
+       If jj > 0 Then k = k + jj _
+       Else k = -1
+      End If
+      Exit For
+     End If
+    End If
+   Next k
+   '///
+   s = s + CStr(k) + " "
+  Next i
+ Next j
+ '///
+ StdMapAdd objMap, "PolyhedronCount", CStr(m_tLevel.nPolyhedronCount)
+ For i = 1 To m_tLevel.nPolyhedronCount
+  p = m_objPoly(i).Position.p
+  m_objPoly(i).GetCurrentSize nSizeX, nSizeY, nSizeZ
+  '///
+  j = i - m_nCurrentPolyhedron
+  If j >= m_tLevel.nPolyhedronCount Then j = j - m_tLevel.nPolyhedronCount _
+  Else If j < 0 Then j = j + m_tLevel.nPolyhedronCount
+  '///
+  StdMapAdd objMap, "Polyhedron" + CStr(j) + "StartX", CStr(p.x)
+  StdMapAdd objMap, "Polyhedron" + CStr(j) + "StartY", CStr(p.y)
+  StdMapAdd objMap, "Polyhedron" + CStr(j) + "StartZ", CStr(p.z)
+  StdMapAdd objMap, "Polyhedron" + CStr(j) + "SizeX", CStr(nSizeX)
+  StdMapAdd objMap, "Polyhedron" + CStr(j) + "SizeY", CStr(nSizeY)
+  StdMapAdd objMap, "Polyhedron" + CStr(j) + "SizeZ", CStr(nSizeZ)
+ Next i
+ '///
+ j = nTargetIndex - m_nCurrentPolyhedron
+ If j >= m_tLevel.nPolyhedronCount Then j = j - m_tLevel.nPolyhedronCount _
+ Else If j < 0 Then j = j + m_tLevel.nPolyhedronCount
+ '///
+ StdMapAdd objMap, "TargetIndex", CStr(j)
+ StdMapAdd objMap, "TargetX", CStr(nEndX)
+ StdMapAdd objMap, "TargetY", CStr(nEndY)
+ StdMapAdd objMap, "TargetSizeX", CStr(nEndSizeX)
+ StdMapAdd objMap, "TargetSizeY", CStr(nEndSizeY)
+ StdMapAdd objMap, "MapData", s
+Else
+ '///get map data
+ For j = 0 To nHeight - 1
+  For i = 0 To nWidth - 1
+   ii = m_tMapDataInst(p.nMapDataIndex).nTypeArray(i, j, 0)
+   If ii > 0 And ii <= m_nTileTypeMax Then
+    If (m_tTileType(ii).nFlags And &H108&) = 0 Then
+     If m_tLevel.tMapData(p.nMapDataIndex).nSize(2) > 1 Then
+      ii = m_tMapDataInst(p.nMapDataIndex).nTypeArray(i, j, 1)
+      If ii > 0 And ii <= m_nTileTypeMax Then
+       If m_tTileType(ii).nFlags And 8& Then
+        ii = 1
+       Else
+        ii = 0
+       End If
+      Else
+       ii = 1
+      End If
+     End If
+    Else
+     ii = 0
+    End If
+   Else
+    ii = 0
+   End If
+   s = s + CStr(ii) + " "
+  Next i
+ Next j
+ '///
+ StdMapAdd objMap, "StartX", CStr(p.x)
+ StdMapAdd objMap, "StartY", CStr(p.y)
+ m_objPoly(1).GetCurrentSize nSizeX, nSizeY, nSizeZ
+ StdMapAdd objMap, "SizeX", CStr(nSizeX)
+ StdMapAdd objMap, "SizeY", CStr(nSizeY)
+ StdMapAdd objMap, "SizeZ", CStr(nSizeZ)
+ StdMapAdd objMap, "EndX", CStr(nEndX)
+ StdMapAdd objMap, "EndY", CStr(nEndY)
+ StdMapAdd objMap, "EndSizeX", CStr(nEndSizeX)
+ StdMapAdd objMap, "EndSizeY", CStr(nEndSizeY)
+ StdMapAdd objMap, "MapData", s
+End If
+'///
+objSolver = SolverCreate(objMap)
+StdMapDestroy objMap
+'///over
+GetSolver = objSolver
+End Function
+
 Friend Sub AddUndoIndex(ByVal nUndoIndex As Long)
 Dim i As Long
 '///

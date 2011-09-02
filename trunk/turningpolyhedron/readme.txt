@@ -1,6 +1,6 @@
 This is Turning Polyhedron, a 3D clone and enhancement to popular game Bloxorz.
 
-License under GNU GPLv3, see COPYING.
+License under GNU GPLv3 or above, see COPYING.
 
 === INSTALL ===
 

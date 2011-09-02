@@ -168,8 +168,8 @@ Or (FFS_Sizable And (Buttons And &H10000000) <> 0), , False, , Title, , , 0.5, 0
  m_idx = .Index
  Set .EventObject = Me
  '///
- If ii > 0 Then .AddNewChildren FakeCtl_Label, 8, 8, 8, 8, ii
- .AddNewChildren FakeCtl_Label, 8 + ((ii > 0) And 56&), 8, -8, -8, FLS_WordWrap, , , , Prompt, , , , , 1, 1
+ 'If ii > 0 Then .AddNewChildren FakeCtl_Label, 8, 8, 8, 8, ii
+ .AddNewChildren FakeCtl_Label, 8, 8, -8, -8, FLS_WordWrap Or ii, , , , Prompt, , , , , 1, 1
  '///
  idx = (Buttons And &HFF00&) \ &H100& + 1
  If Buttons And &H8000000 Then

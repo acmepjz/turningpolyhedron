@@ -8,9 +8,14 @@
 #include <map>
 #include "SimpleSolverGA.h"
 #include "ColorZoneSolverGA.h"
+#include "MultilevelSolver.h"
 #include "GABase.h"
 #include "GA.h"
 using namespace std;
+
+#ifndef WIN32
+#define __stdcall
+#endif
 
 static const char *SimpleSolverGATypes[]={
 	"SimpleSolverGA",
@@ -38,7 +43,7 @@ static const char *ColorZoneSolverGATypes[]={
 	NULL
 };
 
-static const char **SolverTypes[]={
+static const char **RandomMapTypes[]={
 	SimpleSolverGATypes,
 	ColorZoneSolverGATypes,
 	NULL
@@ -56,7 +61,7 @@ static const char *GATypes[]={
 
 // -------- internal functions --------
 
-static GABase* FactoryFunction(map<string,string>& obj){
+static GABase* GAFactoryFunction(map<string,string>& obj){
 	const string& Type=obj["Type"];
 	if(Type=="SimpleSolverGA"){
 		SimpleSolverGA::MapSize sz;
@@ -206,7 +211,7 @@ map<string,string>* __stdcall StdMapCreateFromString(const char* s,int delim1,in
 //GA base object function
 
 GABase* __stdcall GABaseCreate(map<string,string>* objMap){
-	return FactoryFunction(*objMap);
+	return GAFactoryFunction(*objMap);
 }
 void __stdcall GABaseDestroy(GABase* obj){
 	delete obj;
@@ -214,10 +219,11 @@ void __stdcall GABaseDestroy(GABase* obj){
 int __stdcall GABaseOutputToString(GABase* obj,char* s,int len,bool OutputSolution){
 	stringstream out;
 	obj->OutputXML(out,OutputSolution);
-	strncpy(s,out.str().c_str(),len);
+	if(s) strncpy(s,out.str().c_str(),len);
 	return out.str().size();
 }
 void __stdcall GABaseOutputToFile(GABase* obj,char* fn,bool OutputSolution){
+	if(!fn) return;
 	ofstream out(fn);
 	if(!out) return;
 	obj->OutputXML(out,OutputSolution);
@@ -232,7 +238,8 @@ void __stdcall GADestroy(GA* obj){
 	delete obj;
 }
 bool __stdcall GACreatePool(GA* obj,map<string,string>* objMap,int PoolSize){
-	return obj->Create(FactoryFunction,*objMap,PoolSize);
+	if(objMap) return obj->Create(GAFactoryFunction,*objMap,PoolSize);
+	else return false;
 }
 void __stdcall GADestroyPool(GA* obj){
 	obj->Destroy();
@@ -270,9 +277,9 @@ int __stdcall GAGetFitness(GA* obj,int Index){
 
 int __stdcall GetAvaliableRandomMapGenerators(char* out,int SizePerString,int MaxCount){
 	int i;
-	for(i=0;SolverTypes[i]!=NULL;i++){
+	for(i=0;RandomMapTypes[i]!=NULL;i++){
 		if(out && i<MaxCount){
-			strncpy(out,SolverTypes[i][0],SizePerString);
+			strncpy(out,RandomMapTypes[i][0],SizePerString);
 			out+=SizePerString;
 		}
 	}
@@ -281,12 +288,12 @@ int __stdcall GetAvaliableRandomMapGenerators(char* out,int SizePerString,int Ma
 
 int __stdcall GetAvaliableRandomMapOptions(const char* sType,char* out,int SizePerString,int MaxCount){
 	int i,j;
-	for(i=0;SolverTypes[i]!=NULL;i++){
-		if(!strcmp(sType,SolverTypes[i][0])){
+	for(i=0;RandomMapTypes[i]!=NULL;i++){
+		if(!strcmp(sType,RandomMapTypes[i][0])){
 			MaxCount*=2;
-			for(j=1;SolverTypes[i][j]!=NULL;j++){
+			for(j=1;RandomMapTypes[i][j]!=NULL;j++){
 				if(out && j-1<MaxCount){
-					strncpy(out,SolverTypes[i][j],SizePerString);
+					strncpy(out,RandomMapTypes[i][j],SizePerString);
 					out+=SizePerString;
 				}
 			}
@@ -313,7 +320,8 @@ int __stdcall GetAvaliableGAOptions(char* out,int SizePerString,int MaxCount){
 #ifndef SOLVER_LIB
 
 int main(){
-	string s;
+	////////random level test
+	/*string s;
 	//get seed
 	cout<<"Random seed? ";
 	cin>>s;
@@ -334,8 +342,8 @@ int main(){
 	}
 	//get type
 	cout<<"Avaliable random map generators:"<<endl;
-	for(m=0;SolverTypes[m]!=NULL;m++){
-		cout<<m<<"="<<SolverTypes[m][0]<<endl;
+	for(m=0;RandomMapTypes[m]!=NULL;m++){
+		cout<<m<<"="<<RandomMapTypes[m][0]<<endl;
 	}
 	cout<<"Type? [0-"<<(m-1)<<"] ";
 	cin>>i;
@@ -345,24 +353,64 @@ int main(){
 	}
 	m=i;
 	//
-	sz["Type"]=SolverTypes[m][0];
+	sz["Type"]=RandomMapTypes[m][0];
 	//
-	for(i=1;SolverTypes[m][i]!=NULL;i+=2){
-		cout<<SolverTypes[m][i]<<"? ["<<SolverTypes[m][i+1]<<"] ";
-		cin>>sz[SolverTypes[m][i]];
+	for(i=1;RandomMapTypes[m][i]!=NULL;i+=2){
+		cout<<RandomMapTypes[m][i]<<"? ["<<RandomMapTypes[m][i+1]<<"] ";
+		cin>>sz[RandomMapTypes[m][i]];
 	}
 	//
 	GA test;
-	if(!test.Create(FactoryFunction,sz,PoolSize)){
+	if(!test.Create(GAFactoryFunction,sz,PoolSize)){
 		cout<<"ERROR: Can't create object"<<endl;
 		return -1;
 	}
 	//
 	GARun(&test,GenerationCount,&sz,NULL,NULL);
-	//
+	//output test
 	ofstream f("out.xml");
 	test(0)->OutputXML(f,true);
+	//*/
+	////////solver test
+	MultilevelSolver<7> objSolver;
+	int i,j,w,h,m;
+	cout<<"Width Height? ";
+	cin>>w>>h;
+	objSolver.SetSize(w,h);
+	cout<<"Map Data:\n";
+	for(j=0;j<h;j++){
+		for(i=0;i<w;i++){
+			int c;
+			cin>>c;
+			objSolver(i,j)=c;
+		}
+	}
+	cout<<"Polyhedron Count? ";
+	cin>>m;
+	objSolver.SetPolyhedronCount(m);
+	for(i=0;i<m;i++){
+		int c1,c2,c3,c4,c5,c6;
+		cout<<"Polyhedron["<<i<<"] x y z sx sy sz? ";
+		cin>>c1>>c2>>c3>>c4>>c5>>c6;
+		objSolver.SetPolyhedron(i,c1,c2,c3,c4,c5,c6);
+	}
 	//
+	{
+		int c1,c2,c3,c4,c5;
+		cout<<"TargetIndex x y sx sy? ";
+		cin>>c1>>c2>>c3>>c4>>c5;
+		objSolver.TargetIndex=c1;
+		objSolver.TargetX=c2;
+		objSolver.TargetY=c3;
+		objSolver.TargetSizeX=c4;
+		objSolver.TargetSizeY=c5;
+	}
+	//output test
+	ofstream f("out.xml");
+	objSolver.OutputXML(f,true);
+	//over
+	cout<<"Done."<<endl;
+	//*/
 	return 0;
 }
 
