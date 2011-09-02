@@ -14,11 +14,13 @@ protected:
 	};
 	typeMyMemAllocItem *itms;
 	int itmsCount,itmsCurrent;
+	int m_nCount;
 public:
 	clsMyMemAlloc(int m=256){
 		if(m<=0) m=256;
 		itmsCount=1;
 		itmsCurrent=0;
+		m_nCount=0;
 		itms=(typeMyMemAllocItem*)malloc(sizeof(typeMyMemAllocItem));
 		itms[0].lp=itms[0].lpCur=(T*)malloc(m*sizeof(T));
 		itms[0].nMax=itms[0].nRemaining=m;
@@ -33,6 +35,7 @@ public:
 		itms[0].nRemaining=itms[0].nMax;
 		itmsCount=1;
 		itmsCurrent=0;
+		m_nCount=0;
 	}
 	void Erase(){
 		int i;
@@ -41,6 +44,7 @@ public:
 			itms[i].nRemaining=itms[i].nMax;
 		}
 		itmsCurrent=0;
+		m_nCount=0;
 	}
 	~clsMyMemAlloc(){
 		int i;
@@ -50,6 +54,7 @@ public:
 		free(itms);
 	}
 	T* Alloc(){
+		m_nCount++;
 		if(itms[itmsCurrent].nRemaining||(++itmsCurrent)<itmsCount){
 			itms[itmsCurrent].nRemaining--;
 			return itms[itmsCurrent].lpCur++;
@@ -62,6 +67,9 @@ public:
 			itms[itmsCurrent].nRemaining=m-1;
 			return itms[itmsCurrent].lpCur++;
 		}
+	}
+	inline int ItemCount() const{
+		return m_nCount;
 	}
 };
 

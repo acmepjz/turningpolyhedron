@@ -8,7 +8,7 @@
 #include <map>
 #include "SimpleSolverGA.h"
 #include "ColorZoneSolverGA.h"
-#include "MultilevelSolver.h"
+#include "MultilevelSolverGA.h"
 #include "GABase.h"
 #include "GA.h"
 using namespace std;
@@ -42,10 +42,23 @@ static const char *ColorZoneSolverGATypes[]={
 	"AllowEmpty","0",
 	NULL
 };
+static const char *MultilevelSolverGATypes[]={
+	"MultilevelSolverGA",
+	"Width","8",
+	"Height","8",
+	"PolyhedronCount","2",
+	"InitialDensity","0.7",
+	"MutationMaxCount","256",
+	"MutationDecay","0.5",
+	"FailedMutationDecay","0.8",
+	"FailedMutationExtra","0",
+	NULL
+};
 
 static const char **RandomMapTypes[]={
 	SimpleSolverGATypes,
 	ColorZoneSolverGATypes,
+	MultilevelSolverGATypes,
 	NULL
 };
 
@@ -102,6 +115,27 @@ static GABase* GAFactoryFunction(map<string,string>& obj){
 			&&sz.SizeY<sz.Width&&sz.SizeY<sz.Height
 			&&sz.SizeZ<sz.Width&&sz.SizeZ<sz.Height){
 			return new ColorZoneSolverGA(sz);
+		}else{
+			return NULL;
+		}
+	}else if(Type=="MultilevelSolverGA"){
+		MultilevelSolverGA<7>::MapSize sz;
+		sz.Width=atoi(obj["Width"].c_str());
+		sz.Height=atoi(obj["Height"].c_str());
+		sz.PolyhedronCount=atoi(obj["PolyhedronCount"].c_str());
+		//
+		sz.InitialDensity=atof(obj["InitialDensity"].c_str());
+		if(sz.InitialDensity<0.0) sz.InitialDensity=0.0;
+		else if(sz.InitialDensity>1.0) sz.InitialDensity=1.0;
+		//
+		sz.MutationMaxCount=atoi(obj["MutationMaxCount"].c_str());
+		sz.MutationDecay=atof(obj["MutationDecay"].c_str());
+		sz.FailedMutationDecay=atof(obj["FailedMutationDecay"].c_str());
+		sz.FailedMutationExtra=atoi(obj["FailedMutationExtra"].c_str());
+		//
+		if(sz.Width>0&&sz.Height>0&&sz.PolyhedronCount>1
+			&&sz.PolyhedronCount<=7){
+			return new MultilevelSolverGA<7>(sz);
 		}else{
 			return NULL;
 		}
@@ -264,7 +298,11 @@ bool __stdcall GARun(GA* obj,int GenerationCount,map<string,string>* objMap,GACa
 		if(it!=objMap->end()) t.MutationProbability=atof(it->second.c_str());
 	}
 	//
+#ifdef SOLVER_LIB
 	return obj->Run(GenerationCount,t,NULL,Callback,UserData);
+#else
+	return obj->Run(GenerationCount,t,&cout,Callback,UserData);
+#endif
 }
 GABase* __stdcall GAGetPoolItem(GA* obj,int Index){
 	return (*obj)(Index);
@@ -321,7 +359,7 @@ int __stdcall GetAvaliableGAOptions(char* out,int SizePerString,int MaxCount){
 
 int main(){
 	////////random level test
-	/*string s;
+	string s;
 	//get seed
 	cout<<"Random seed? ";
 	cin>>s;
@@ -371,7 +409,7 @@ int main(){
 	ofstream f("out.xml");
 	test(0)->OutputXML(f,true);
 	//*/
-	////////solver test
+	/*////////solver test
 	MultilevelSolver<7> objSolver;
 	int i,j,w,h,m;
 	cout<<"Width Height? ";

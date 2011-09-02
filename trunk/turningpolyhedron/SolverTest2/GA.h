@@ -75,11 +75,12 @@ public:
 		Node=NULL;
 	}
 	bool Run(int GenerationCount,const Settings& t,std::ostream* out,GACallbackFunc Callback,void* UserData){
-		int i,j;
+		int i,j,m,n=0;
 		int Cancel=0;
 		for(i=0;i<m_nPoolSize;i++){
 			Pool[i]->CreateRandom();
 		}
+		m=m_nPoolSize*GenerationCount;
 		for(int times=0;times<GenerationCount;times++){
 			int pool_a=0;
 			if(out) (*out)<<"Running generation "<<(times+1)<<"...\r";
@@ -87,11 +88,22 @@ public:
 				Callback(UserData,times,GenerationCount,&Cancel);
 				if(Cancel) break;
 			}
+			//*/
 			for(i=0;i<m_nPoolSize;i++){
 				Node[i].Index=i;
 				Node[i].Fitness=Pool[i]->CalcFitness()+int(genrand_real2()*t.RandomFitness);
 				if(Node[i].Fitness>0) pool_a++;
+				/*//debug
+				if(out) (*out)<<"Running generation "<<(times+1)<<", item "<<(i+1)<<"    \r";
+				//
+				if(Callback){
+					Callback(UserData,n++,m,&Cancel);
+					if(Cancel) break;
+				}
+				//*/
 			}
+			//if(Cancel) break;
+			//
 			qsort(Node,m_nPoolSize,sizeof(GANode),GANode_Compare);
 			//reproduce
 			{

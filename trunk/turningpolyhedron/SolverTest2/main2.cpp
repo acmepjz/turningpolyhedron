@@ -131,7 +131,7 @@ public:
 		return true;
 	}
 	bool Solve(std::ostream* out,int* step,int *NodesUsed){
-		return MultilevelSolver::Solve(out,step);
+		return MultilevelSolver::Solve(out,step,NULL,NULL,NodesUsed);
 	}
 	void OutputXML(std::ostream& out,bool OutputSolution){
 		return MultilevelSolver::OutputXML(out,OutputSolution);

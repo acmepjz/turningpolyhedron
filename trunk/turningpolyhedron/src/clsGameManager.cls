@@ -508,6 +508,10 @@ Friend Property Get LevelName() As String
 LevelName = m_tLevel.sName
 End Property
 
+Friend Property Get LevelSolutionIncluded() As Boolean
+LevelSolutionIncluded = Len(m_tLevel.sSolution) > 0
+End Property
+
 Friend Property Get LevelSolution() As String
 LevelSolution = m_tLevel.sSolution
 End Property

@@ -204,6 +204,7 @@ msgstr ""
 #.        objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 #.        .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #.    + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
+#.     .MsgBox objText.GetText("Error saving file."), vbExclamation, objText.GetText("Error")
 #.   .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
 #.    .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
 #.     .MsgBox objText.GetText("Error creating level solver."), vbExclamation, objText.GetText("Error")
@@ -218,6 +219,10 @@ msgstr ""
 
 #.    .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
 msgid "Error generating random level."
+msgstr ""
+
+#.     .MsgBox objText.GetText("Error saving file."), vbExclamation, objText.GetText("Error")
+msgid "Error saving file."
 msgstr ""
 
 #.    .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
@@ -540,6 +545,18 @@ msgstr ""
 msgid "Save as"
 msgstr ""
 
+#.   objText.GetText("Save current level to file.")
+#.   objText.GetText("Save current level to file.")
+#.   objText.GetText("Save current level to file.")
+msgid "Save current level to file."
+msgstr ""
+
+#.   .AddButton objText.GetText("Save level"), &H106&, _
+#.   .AddButton objText.GetText("Save level"), &H106&, _
+#.   .AddButton objText.GetText("Save level"), &H106&, _
+msgid "Save level"
+msgstr ""
+
 #.   .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
 msgid "Select a level and start the game."
 msgstr ""
@@ -594,6 +611,10 @@ msgstr ""
 msgid "The folder already exists. Please input a different name."
 msgstr ""
 
+#.    objText.GetText("There is a solution included in the level file, but it may be incorrect. Do you want to view the solution?"), _
+msgid "There is a solution included in the level file, but it may be incorrect. Do you want to view the solution?"
+msgstr ""
+
 #.  .AddButton objText.GetText("Try again"), &H100&, _
 msgid "Try again"
 msgstr ""
@@ -637,6 +658,14 @@ msgstr ""
 msgid "Video capture started, video size: "
 msgstr ""
 
+#.    .AddNewChildren FakeCtl_Button, -112, 8, -8, -24, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("View solution"), , "cmdViewSolution", 1, , 1, 1, , , _
+msgid "View solution"
+msgstr ""
+
+#.    objText.GetText("View the solution included in the level file.") + " (F12)"
+msgid "View the solution included in the level file."
+msgstr ""
+
 #.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
 msgid "Volumetric fog"
 msgstr ""
@@ -649,6 +678,7 @@ msgstr ""
 msgid "Warning: Random level generator is an experimental feature. Inappropriate input arguments may produce wrong result, make the program out of response or crash the program. Use at your own risk."
 msgstr ""
 
+#.   If .VBGetSaveFileName(s, , , , objText.GetText("XML level file") + "|*.xml", , s1, , "xml") Then
 #.    If .VBGetOpenFileName(s, , , , , objText.GetText("XML level file") + "|*.xml;*.xml.lzma", , App.Path + "\data\") Then
 msgid "XML level file"
 msgstr ""
