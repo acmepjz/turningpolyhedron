@@ -43,4 +43,14 @@ Public Declare Function GAGetFitness Lib "SolverTest2.dll" (ByVal obj As Long, B
 Public Declare Function GetAvaliableRandomMapGenerators Lib "SolverTest2.dll" (ByRef lpOut As Any, ByVal SizePerString As Long, ByVal MaxCount As Long) As Long
 Public Declare Function GetAvaliableRandomMapOptions Lib "SolverTest2.dll" (ByVal sType As String, ByRef lpOut As Any, ByVal SizePerString As Long, ByVal MaxCount As Long) As Long
 Public Declare Function GetAvaliableGAOptions Lib "SolverTest2.dll" (ByRef lpOut As Any, ByVal SizePerString As Long, ByVal MaxCount As Long) As Long
+Public Declare Function GetAvaliableSolvers Lib "SolverTest2.dll" (ByRef lpOut As Any, ByVal SizePerString As Long, ByVal MaxCount As Long) As Long
+
+'solver functions
+
+Public Declare Function SolverCreate Lib "SolverTest2.dll" (ByVal objMap As Long) As Long
+Public Declare Sub SolverDestroy Lib "SolverTest2.dll" (ByVal obj As Long)
+Public Declare Function SolverSetData Lib "SolverTest2.dll" (ByVal obj As Long, ByVal objMap As Long) As Byte
+Public Declare Function SolverSolve Lib "SolverTest2.dll" (ByVal obj As Long, ByRef s As Any, ByRef nLen As Long, ByRef nStep As Long, ByRef NodesUsed As Long) As Byte
+Public Declare Function SolverOutputToString Lib "SolverTest2.dll" (ByVal obj As Long, ByRef s As Any, ByVal nLen As Long, ByVal OutputSolution As Byte) As Long
+Public Declare Sub SolverOutputToFile Lib "SolverTest2.dll" (ByVal obj As Long, ByVal s As String, ByVal OutputSolution As Byte)
 

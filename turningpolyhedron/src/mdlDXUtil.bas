@@ -391,7 +391,7 @@ Dim p As D3DRECT
 Dim obj As Direct3DDevice9
 Dim bNoDraw As Boolean
 '///
-bNoDraw = nShadowColor = 0 And nColor = 0
+bNoDraw = (nShadowColor = 0 And nColor = 0) Or LenB(lpStr) < 2
 If Not bNoDraw Then
  If bSingle Then tFont.objSprite.Begin D3DXSPRITE_ALPHABLEND
  '///
@@ -412,7 +412,7 @@ If Not bNoDraw Then
   p.x1 = nShadowOffsetX
   p.y1 = nShadowOffsetY
   p.x2 = nWidth + nShadowOffsetX
-  p.Y2 = nHeight + nShadowOffsetY
+  p.y2 = nHeight + nShadowOffsetY
   obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nShadowLODBias)
   tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nShadowColor
   If bFlush Then tFont.objSprite.Flush
@@ -421,12 +421,12 @@ If Not bNoDraw Then
   p.x1 = 0
   p.y1 = 0
   p.x2 = nWidth
-  p.Y2 = nHeight
+  p.y2 = nHeight
   obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nTextLODBias)
   If wFormat And DT_CALCRECT Then
    tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat, nColor
    nWidthReturn = p.x2 * nZoom
-   nHeightReturn = p.Y2 * nZoom
+   nHeightReturn = p.y2 * nZoom
   End If
   FakeDXGDIDrawText = tFont.objFont.DrawTextW(tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nColor) * nZoom
   If bFlush Then tFont.objSprite.Flush
@@ -439,10 +439,10 @@ Else
   p.x1 = 0
   p.y1 = 0
   p.x2 = nWidth / nZoom
-  p.Y2 = nHeight / nZoom
+  p.y2 = nHeight / nZoom
   FakeDXGDIDrawText = tFont.objFont.DrawTextW(Nothing, ByVal StrPtr(lpStr), -1, p, wFormat, 0) * nZoom 'Nothing??? it works :D
   nWidthReturn = p.x2 * nZoom
-  nHeightReturn = p.Y2 * nZoom
+  nHeightReturn = p.y2 * nZoom
  End If
 End If
 End Function

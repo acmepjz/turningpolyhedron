@@ -4,37 +4,30 @@
 #include <string.h>
 #include "clsMyMemAlloc.h"
 
-template <class T>
-struct typeSimpleHashAVLTreeNode{
-	typeSimpleHashAVLTreeNode *lpLSon,*lpRSon;
-	int nBalanceFactor;
-	T tData;
-};
-
 template <class T,unsigned int N>
-class clsSimpleHashAVLTree{
+class basic_clsSimpleHashAVLTree{
 protected:
-	clsMyMemAlloc<typeSimpleHashAVLTreeNode<T> > alloc;
-	typeSimpleHashAVLTreeNode<T>** HashTable;
-private:
-	static inline void pRotateL(typeSimpleHashAVLTreeNode<T>*& lp){
-		typeSimpleHashAVLTreeNode<T> *lpLSon=lp;
+	clsMyMemAlloc<T> alloc;
+	T** HashTable;
+protected:
+	static inline void pRotateL(T*& lp){
+		T *lpLSon=lp;
 		lp=lpLSon->lpRSon;
 		lpLSon->lpRSon=lp->lpLSon;
 		lp->lpLSon=lpLSon;
 		lp->nBalanceFactor=0;
 		lpLSon->nBalanceFactor=0;
 	}
-	static inline void pRotateR(typeSimpleHashAVLTreeNode<T>*& lp){
-		typeSimpleHashAVLTreeNode<T> *lpRSon=lp;
+	static inline void pRotateR(T*& lp){
+		T *lpRSon=lp;
 		lp=lpRSon->lpLSon;
 		lpRSon->lpLSon=lp->lpRSon;
 		lp->lpRSon=lpRSon;
 		lp->nBalanceFactor=0;
 		lpRSon->nBalanceFactor=0;
 	}
-	static inline void pRotateLR(typeSimpleHashAVLTreeNode<T>*& lp){
-		typeSimpleHashAVLTreeNode<T> *lpRSon=lp,*lpLSon=lp->lpLSon;
+	static inline void pRotateLR(T*& lp){
+		T *lpRSon=lp,*lpLSon=lp->lpLSon;
 		lp=lpLSon->lpRSon;
 		lpLSon->lpRSon=lp->lpLSon;
 		lp->lpLSon=lpLSon;
@@ -45,8 +38,8 @@ private:
 		lpRSon->nBalanceFactor=i<0?1:0;
 		lp->nBalanceFactor=0;
 	}
-	static inline void pRotateRL(typeSimpleHashAVLTreeNode<T>*& lp){
-		typeSimpleHashAVLTreeNode<T> *lpLSon=lp,*lpRSon=lp->lpRSon;
+	static inline void pRotateRL(T*& lp){
+		T *lpLSon=lp,*lpRSon=lp->lpRSon;
 		lp=lpRSon->lpLSon;
 		lpRSon->lpLSon=lp->lpRSon;
 		lp->lpRSon=lpRSon;
@@ -57,42 +50,7 @@ private:
 		lpLSon->nBalanceFactor=i>0?-1:0;
 		lp->nBalanceFactor=0;
 	}
-public:
-	clsSimpleHashAVLTree(int m=256):alloc(m){
-		HashTable=(typeSimpleHashAVLTreeNode<T>**)malloc(sizeof(void*)<<N);
-		memset(HashTable,0,sizeof(void*)<<N);
-	}
-	void Destroy(){
-		alloc.Destroy();
-		memset(HashTable,0,sizeof(void*)<<N);
-	}
-	void Erase(){
-		alloc.Erase();
-		memset(HashTable,0,sizeof(void*)<<N);
-	}
-	~clsSimpleHashAVLTree(){
-		free(HashTable);
-	}
-	T* Alloc(const T& objSrc,int* lpbExist=NULL){
-		unsigned int h=((unsigned int)objSrc.HashValue())&((1UL<<N)-1);
-		typeSimpleHashAVLTreeNode<T> *p,*pr=NULL,*st[32];
-		T *ret;
-		int stIndex=0,d=0;
-		//========
-		for(p=HashTable[h];p!=NULL;){
-			if(!(d=objSrc.Compare(p->tData))){
-				if(lpbExist) *lpbExist=1;
-				return &p->tData;
-			}
-			st[stIndex++]=pr=p;
-			p=d<0?p->lpLSon:p->lpRSon;
-		}
-		//========not found, add item
-		p=alloc.Alloc();
-		p->lpLSon=p->lpRSon=NULL;
-		p->nBalanceFactor=0;
-		p->tData=objSrc;
-		ret=&(p->tData);
+	inline void pAddItem(T* p,T* pr,unsigned int h,int d,T **st,int stIndex){
 		if(pr){
 			if(d<0) pr->lpLSon=p;
 			else pr->lpRSon=p;
@@ -121,15 +79,28 @@ public:
 		}else{
 			HashTable[h]=p;
 		}
-		//========
-		if(lpbExist) *lpbExist=0;
-		return ret;
+	}
+public:
+	basic_clsSimpleHashAVLTree(int m=256):alloc(m){
+		HashTable=(T**)malloc(sizeof(void*)<<N);
+		memset(HashTable,0,sizeof(void*)<<N);
+	}
+	void Destroy(){
+		alloc.Destroy();
+		memset(HashTable,0,sizeof(void*)<<N);
+	}
+	void Erase(){
+		alloc.Erase();
+		memset(HashTable,0,sizeof(void*)<<N);
+	}
+	~basic_clsSimpleHashAVLTree(){
+		free(HashTable);
 	}
 	template <class func_Iterator>
 	void ForEachNodeDo(func_Iterator func){
 		const unsigned int m=1UL<<N;
 		unsigned int i;
-		typeSimpleHashAVLTreeNode<T> *p,*st[32];
+		T *p,*st[32];
 		int stIndex;
 		char st2[32];
 		for(i=0;i<m;i++){
@@ -153,6 +124,102 @@ public:
 				}
 			}
 		}
+	}
+};
+
+template <class T>
+struct typeSimpleHashAVLTreeNode{
+	typeSimpleHashAVLTreeNode *lpLSon,*lpRSon;
+	int nBalanceFactor;
+	T tData;
+};
+
+template <class T,unsigned int N>
+class clsSimpleHashAVLTree:
+	public basic_clsSimpleHashAVLTree<typeSimpleHashAVLTreeNode<T>,N>
+{
+public:
+	clsSimpleHashAVLTree(int m=256):basic_clsSimpleHashAVLTree(m){
+	}
+	T* Alloc(const T& objSrc,int* lpbExist=NULL){
+		unsigned int h=((unsigned int)objSrc.HashValue())&((1UL<<N)-1);
+		int stIndex=0,d=0;
+		typeSimpleHashAVLTreeNode<T> *p,*pr=NULL,*st[32];
+		T *ret;
+		//========
+		for(p=HashTable[h];p!=NULL;){
+			if(!(d=objSrc.Compare(p->tData))){
+				if(lpbExist) *lpbExist=1;
+				return &p->tData;
+			}
+			st[stIndex++]=pr=p;
+			p=d<0?p->lpLSon:p->lpRSon;
+		}
+		//========not found, add item
+		p=alloc.Alloc();
+		p->lpLSon=p->lpRSon=NULL;
+		p->nBalanceFactor=0;
+		p->tData=objSrc;
+		ret=&(p->tData);
+		pAddItem(p,pr,h,d,st,stIndex);
+		//========
+		if(lpbExist) *lpbExist=0;
+		return ret;
+	}
+};
+
+template <class T>
+struct typeSimpleHashAVLTreeWithQueueNode{
+	typeSimpleHashAVLTreeWithQueueNode *lpLSon,*lpRSon,*lpQueueNext;
+	int nBalanceFactor;
+	T tData;
+};
+
+template <class T,unsigned int N>
+class clsSimpleHashAVLTreeWithQueue:
+	public basic_clsSimpleHashAVLTree<typeSimpleHashAVLTreeWithQueueNode<T>,N>
+{
+protected:
+	typeSimpleHashAVLTreeWithQueueNode<T> *m_lpHead,*m_lpTail;
+public:
+	clsSimpleHashAVLTreeWithQueue(int m=256):basic_clsSimpleHashAVLTree(m){
+		m_lpHead=NULL;
+		m_lpTail=NULL;
+	}
+	T* Alloc(const T& objSrc,int* lpbExist=NULL){
+		unsigned int h=((unsigned int)objSrc.HashValue())&((1UL<<N)-1);
+		int stIndex=0,d=0;
+		typeSimpleHashAVLTreeWithQueueNode<T> *p,*pr=NULL,*st[32];
+		T *ret;
+		//========
+		for(p=HashTable[h];p!=NULL;){
+			if(!(d=objSrc.Compare(p->tData))){
+				if(lpbExist) *lpbExist=1;
+				return &p->tData;
+			}
+			st[stIndex++]=pr=p;
+			p=d<0?p->lpLSon:p->lpRSon;
+		}
+		//========not found, add item
+		p=alloc.Alloc();
+		p->lpLSon=p->lpRSon=NULL;
+		p->nBalanceFactor=0;
+		p->tData=objSrc;
+		p->lpQueueNext=NULL;
+		if(m_lpTail!=NULL) m_lpTail->lpQueueNext=p;
+		m_lpTail=p;
+		if(m_lpHead==NULL) m_lpHead=p;
+		ret=&(p->tData);
+		pAddItem(p,pr,h,d,st,stIndex);
+		//========
+		if(lpbExist) *lpbExist=0;
+		return ret;
+	}
+	T* Pop(){
+		if(m_lpHead==NULL) return NULL;
+		T *ret=&m_lpHead->tData;
+		m_lpHead=m_lpHead->lpQueueNext;
+		return ret;
 	}
 };
 
