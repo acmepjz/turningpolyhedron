@@ -125,6 +125,9 @@ public:
 			}
 		}
 	}
+	inline int ItemCount() const{
+		return alloc.ItemCount();
+	}
 };
 
 template <class T>

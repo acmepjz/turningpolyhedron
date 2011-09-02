@@ -15,6 +15,8 @@ Option Explicit
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
+Private Declare Function MakeSureDirectoryPathExists Lib "imagehlp.dll" (ByVal DirPath As String) As Long
+
 Implements IFakeDXUIEvent
 Implements IFakeDXAppEvent
 Implements IRenderableObject
@@ -82,9 +84,11 @@ Private Type typeString
  s(127) As Byte
 End Type
 
+Private m_bRandomMapFile() As Byte
+
 '////////solver (experimental)
 
-Private m_idxFormSolver As Long, m_idxSolverType As Long
+Private m_idxFormSolver As Long, m_idxSolverType As Long, m_idxSolverDefault As Long
 
 Friend Sub LoadLevelList(ByVal fn As String)
 Dim obj As New clsTreeStorageNode
@@ -377,7 +381,7 @@ With FakeDXUIControls(1)
  End With
  '///solver
  With .AddNewChildren(FakeCtl_Form, 0, 0, 400, 200, _
- FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_TitleBar Or FFS_Sizable, , False, , _
+ FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , _
  objText.GetText("Solve level"))
   m_idxFormSolver = .Index
   Set .EventObject = Me
@@ -401,6 +405,15 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Label, 8, 40, -8, -40, FLS_IconExclamation Or FLS_WordWrap, , , , _
   objText.GetText("Warning: Automatic level solver is an experimental feature. Not all levels can be solved using level solver. Inappropriate solver types may produce wrong result, make the program out of response or crash the program. Use at your own risk."), _
   , , , , 1, 1
+  '///default solution?
+  With .AddNewChildren(FakeCtl_None, 0, -96, 0, -24, , , False, , , , , , 1, 1, 1)
+   m_idxSolverDefault = .Index
+   .AddNewChildren FakeCtl_Label, 8, 0, -120, 0, FLS_IconInformation Or FLS_WordWrap, , , , _
+   objText.GetText("There is a solution included in the level file, but it may be incorrect. Do you want to view the solution?"), _
+   , , , , 1, 1
+   .AddNewChildren FakeCtl_Button, -112, 8, -8, -24, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("View solution"), , "cmdViewSolution", 1, , 1, 1, , , _
+   objText.GetText("View the solution included in the level file.") + " (F12)"
+  End With
   '///some buttons
   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK4", 1, 1, 1, 1
   .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel4", 1, 1, 1, 1
@@ -446,8 +459,16 @@ If m_nLevelIdxCount = 0 Then RefreshLevelList
 End Sub
 
 Friend Sub ShowSolver()
+Dim b As Boolean
+'///
 Create
+'///
+b = objGameMgr.LevelSolutionIncluded
+FakeDXUIControls(m_idxSolverDefault).Visible = b
+'///
 With FakeDXUIControls(m_idxFormSolver)
+ If b Then .SetBottomEx .TopEx.a + 264, 0 _
+ Else .SetBottomEx .TopEx.a + 200, 0
  .MoveToCenter
  .Show 1
 End With
@@ -486,6 +507,8 @@ With New clsFakeDXUIMsgBox
  .AddButton objText.GetText("Restart level"), &H100&, _
  objText.GetText("Restart current level.")
  If m_nLevelType = 2 Then
+  .AddButton objText.GetText("Save level"), &H106&, _
+  objText.GetText("Save current level to file.")
   .AddButton objText.GetText("Next level"), &H103&, _
   objText.GetText("Play next level.")
  End If
@@ -513,6 +536,10 @@ With New clsFakeDXUIMsgBox
  End If
  .AddButton objText.GetText("Try again"), &H100&, _
  objText.GetText("Restart current level.")
+ If m_nLevelType = 2 Then
+  .AddButton objText.GetText("Save level"), &H106&, _
+  objText.GetText("Save current level to file.")
+ End If
  .AddButton objText.GetText("Other levels"), &H102&, _
  objText.GetText("Back to level selection screen and select another level to play.")
  .AddButton objText.GetText("Back to main menu"), &H101&, _
@@ -531,6 +558,10 @@ With New clsFakeDXUIMsgBox
  If (m_nLevelType = 1 And m_nCurrentLevelIndex < m_nLevelCountInLevelCollection) Or m_nLevelType = 2 Then
   .AddButton objText.GetText("Next level"), &H103&, _
   objText.GetText("Play next level.")
+ End If
+ If m_nLevelType = 2 Then
+  .AddButton objText.GetText("Save level"), &H106&, _
+  objText.GetText("Save current level to file.")
  End If
  .AddButton objText.GetText("Other levels"), &H102&, _
  objText.GetText("Back to level selection screen and select another level to play.")
@@ -578,8 +609,50 @@ Case &H104&
  UndoLastMove
 Case &H105&
  ShowSolver
+Case &H106&
+ SaveCurrentLevel
 Case &H200&
  frmSettings.Show
+End Select
+End Sub
+
+Friend Sub SaveCurrentLevel()
+Dim s As String, s1 As String
+Dim b As Boolean
+'///
+Select Case m_nLevelType
+Case 0
+ 'TODO:
+ Exit Sub
+Case 1
+ 'TODO:
+ Exit Sub
+Case 2
+ '///
+ s1 = FakeDXAppMyGamesPath + "levels\"
+ MakeSureDirectoryPathExists s1
+ '///
+ With New clsFakeCommonDialog
+  If .VBGetSaveFileName(s, , , , objText.GetText("XML level file") + "|*.xml", , s1, , "xml") Then
+   b = True
+  End If
+ End With
+ '///
+ If b Then
+  On Error Resume Next
+  Err.Clear
+  Open s For Output As #1
+  Close
+  Open s For Binary As #1
+  Put #1, 1, m_bRandomMapFile
+  Close
+  On Error GoTo 0
+  If Err.Number Then
+   With New clsFakeDXUIMsgBox
+    .MsgBox objText.GetText("Error saving file."), vbExclamation, objText.GetText("Error")
+   End With
+  End If
+ End If
 End Select
 End Sub
 
@@ -995,6 +1068,9 @@ StdMapDestroy objMap
 '///
 If Not bCancel Then
  If b Then
+  '///save file
+  m_bRandomMapFile = LeftB(s, m)
+  '///
   With New clsXMLSerializer
    b = .ReadNode(StrPtr(s), m, obj)
   End With
@@ -1087,6 +1163,8 @@ Case FakeCtl_Event_Click
   '///
  Case "cmdCancel4"
   FakeDXUIControls(m_idxFormSolver).Hide
+ Case "cmdViewSolution"
+  InputMoves
  Case "cmdRefresh"
   RefreshLevelList
  Case "cmdOpen"

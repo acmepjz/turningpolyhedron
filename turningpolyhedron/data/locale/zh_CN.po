@@ -213,6 +213,7 @@ msgstr "编码器"
 #. objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 #. .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #. + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
+#. .MsgBox objText.GetText("Error saving file."), vbExclamation, objText.GetText("Error")
 #. .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
 #. .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
 #. .MsgBox objText.GetText("Error creating level solver."), vbExclamation, objText.GetText("Error")
@@ -228,6 +229,10 @@ msgstr "创建求解器时出现错误。"
 #. .MsgBox objText.GetText("Error generating random level."), vbExclamation, objText.GetText("Error")
 msgid "Error generating random level."
 msgstr "生成随机关卡时出现错误。"
+
+#. .MsgBox objText.GetText("Error saving file."), vbExclamation, objText.GetText("Error")
+msgid "Error saving file."
+msgstr "保存文件时出现错误。"
 
 #. .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
 #. .MsgBox Replace(objText.GetText("Error when loading level %d in level collection file:"), "%d", i) _
@@ -549,6 +554,18 @@ msgstr "保存"
 msgid "Save as"
 msgstr "另存为"
 
+#. objText.GetText("Save current level to file.")
+#. objText.GetText("Save current level to file.")
+#. objText.GetText("Save current level to file.")
+msgid "Save current level to file."
+msgstr "保存当前关卡到文件中。"
+
+#. .AddButton objText.GetText("Save level"), &H106&, _
+#. .AddButton objText.GetText("Save level"), &H106&, _
+#. .AddButton objText.GetText("Save level"), &H106&, _
+msgid "Save level"
+msgstr "保存关卡"
+
 #. .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
 msgid "Select a level and start the game."
 msgstr "选择一个关卡并开始游戏。"
@@ -603,6 +620,10 @@ msgstr "文件已经存在。要覆盖它吗？"
 msgid "The folder already exists. Please input a different name."
 msgstr "文件夹已经存在。请输入一个不同的名称。"
 
+#. objText.GetText("There is a solution included in the level file, but it may be incorrect. Do you want to view the solution?"), _
+msgid "There is a solution included in the level file, but it may be incorrect. Do you want to view the solution?"
+msgstr "关卡文件中包含一个解答，但是该解答可能不正确。要查看这个解答吗？"
+
 #. .AddButton objText.GetText("Try again"), &H100&, _
 msgid "Try again"
 msgstr "再试一次"
@@ -646,6 +667,14 @@ msgstr "视频捕捉暂停"
 msgid "Video capture started, video size: "
 msgstr "视频捕捉已开始, 视频大小: "
 
+#. .AddNewChildren FakeCtl_Button, -112, 8, -8, -24, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("View solution"), , "cmdViewSolution", 1, , 1, 1, , , _
+msgid "View solution"
+msgstr "查看解答"
+
+#. objText.GetText("View the solution included in the level file.") + " (F12)"
+msgid "View the solution included in the level file."
+msgstr "查看包含在关卡文件中的解答。"
+
 #. objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
 msgid "Volumetric fog"
 msgstr "体积雾"
@@ -658,6 +687,7 @@ msgstr "警告：关卡自动求解器只是一个试验性的功能。不是所
 msgid "Warning: Random level generator is an experimental feature. Inappropriate input arguments may produce wrong result, make the program out of response or crash the program. Use at your own risk."
 msgstr "警告：随机关卡生成器只是一个试验性的功能。不合适的输入参数可能会导致产生错误的结果，使程序停止响应甚至使程序崩溃。使用时请自行承担上述风险。"
 
+#. If .VBGetSaveFileName(s, , , , objText.GetText("XML level file") + "|*.xml", , s1, , "xml") Then
 #. If .VBGetOpenFileName(s, , , , , objText.GetText("XML level file") + "|*.xml;*.xml.lzma", , App.Path + "\data\") Then
 msgid "XML level file"
 msgstr "XML关卡文件"

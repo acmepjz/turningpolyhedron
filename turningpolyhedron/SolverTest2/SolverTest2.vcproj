@@ -348,6 +348,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MultilevelSolverGA.h"
+				>
+			</File>
+			<File
 				RelativePath=".\resource.h"
 				>
 			</File>

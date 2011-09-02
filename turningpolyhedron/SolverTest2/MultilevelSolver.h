@@ -83,7 +83,7 @@ public:
 			m_tPolyhedron[Index].TotalSize=sx+sy+sz;
 		}
 	}
-	bool Solve(std::ostream* out,int* step){
+	bool Solve(std::ostream* out,int* step,char* MovedArea,char* SolutionMovedArea,int *NodesUsed){
 		if(m_nPolyhedronCount<=0||m_nPolyhedronCount>N_Max) return false;
 		if(m_nWidth<=0||m_nHeight<=0) return false;
 		if(TargetIndex<0||TargetIndex>=m_nPolyhedronCount) return false;
@@ -244,6 +244,7 @@ _skip2:
 		}
 		//over
 		if(!ret && out) (*out)<<"No solution.";
+		if(NodesUsed) *NodesUsed=objTree.ItemCount();
 		return ret;
 	}
 	void OutputXML(std::ostream& out,bool OutputSolution){
@@ -260,7 +261,7 @@ _skip2:
 		}
 		if(OutputSolution){
 			out<<"\t<solution><![CDATA[";
-			Solve(&out,NULL);
+			Solve(&out,NULL,NULL,NULL,NULL);
 			out<<"]]></solution>\n";
 		}
 		//
