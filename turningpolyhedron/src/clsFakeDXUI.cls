@@ -16,7 +16,7 @@ Option Explicit
 'You can change this parameter, but currently following controls are not affected: ListView,Tab,ToolTipText,IME
 'TODO:customizable
 
-Private Const m_nFontZoom As Single = 0.5
+Private m_nFontZoom As Single
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
@@ -85,6 +85,14 @@ Attribute m_objTab.VB_VarHelpID = -1
 '////////event object
 
 Private m_objEvent As IFakeDXUIEvent
+
+Friend Property Get FontZoom() As Single
+FontZoom = m_nFontZoom
+End Property
+
+Friend Property Let FontZoom(ByVal f As Single)
+m_nFontZoom = f
+End Property
 
 'RRGGBB
 Friend Property Get BackColor() As Long
@@ -850,6 +858,7 @@ m_nComboBoxDropdownWidth = 0
 m_nComboBoxDropdownHeight = 0
 m_nBackColor = -1
 m_nForeColor = 0
+m_nFontZoom = 0.5
 Set m_objTextBox = Nothing
 Set m_objListView = Nothing
 Set m_objTab = Nothing
@@ -1288,7 +1297,8 @@ Case 2 'label
  FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCaption, nLeft + j, nTop, nRight - nLeft - j, nBottom - nTop, m_nFontZoom, _
  (DT_CENTER And ((m_nStyle And &H300&) = &H100&)) Or _
  (DT_RIGHT And ((m_nStyle And &H300&) = &H200&)) Or _
- (DT_WORDBREAK And ((m_nStyle And 1&) <> 0)), i Or m_nForeColor, , , , , , , True
+ (DT_WORDBREAK And ((m_nStyle And 1&) <> 0)), i Or m_nForeColor, , _
+ (i Or m_nBackColor) And ((m_nStyle And 2&) <> 0), , , , , True
 Case 3 'frame
  i = 255 * nOpacity
  i = ((i And &H7F&) * &H1000000) Or ((i > &H7F&) And &H80000000)
@@ -1968,6 +1978,7 @@ End Sub
 Private Sub Class_Initialize()
 m_nType = -1
 m_nBackColor = -1
+m_nFontZoom = 0.5
 m_bEnabled = True
 m_bVisible = True
 m_nComboBoxPrimaryColumn = 1

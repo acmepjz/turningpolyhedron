@@ -429,6 +429,7 @@ End Sub
 'has some code copied from SetupEffect
 Friend Sub DrawInstanceEx(ByRef tInst As typeMeshInstanceCollection, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
 Dim i As Long, ii As Long, j As Long, k As Long
+Dim m As Long
 Dim idx As Long
 Dim nEffectIndex As Long
 Dim objMesh As D3DXMesh
@@ -514,6 +515,7 @@ For i = 1 To tInst.nInstCount
   '///draw
   j = tInst.tInstance(idx).nMeshIndex
   Set objMesh = objMeshMgr.Mesh(j)
+  m = objMesh.GetNumFaces
   Select Case tInst.tInstance(idx).nType
   Case 1 To 15
    '///TEST hardware instancing
@@ -524,14 +526,18 @@ For i = 1 To tInst.nInstCount
    '///
    d3dd9.SetVertexDeclaration tInst.tInstance(idx).objDeclaration
    d3dd9.SetIndices objMesh.GetIndexBuffer
-   d3dd9.DrawIndexedPrimitive D3DPT_TRIANGLELIST, 0, 0, objMesh.GetNumVertices, 0, objMesh.GetNumFaces
+   d3dd9.DrawIndexedPrimitive D3DPT_TRIANGLELIST, 0, 0, objMesh.GetNumVertices, 0, m
    '///
    d3dd9.SetStreamSourceFreq 0, 1
    d3dd9.SetStreamSource 0, Nothing, 0, 0
    d3dd9.SetStreamSourceFreq 1, 1
    d3dd9.SetStreamSource 1, Nothing, 0, 0
+   'record triangle count
+   FakeDXAppTriangleCount = FakeDXAppTriangleCount + m * tInst.tInstance(idx).nCount
   Case Else
    objMesh.DrawSubset 0
+   'record triangle count
+   FakeDXAppTriangleCount = FakeDXAppTriangleCount + m
   End Select
  End If
 Next i

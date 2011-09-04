@@ -28,9 +28,33 @@ With FakeDXUIControls(1)
   m_idxForm = .Index
   Set .EventObject = Me
   '///some buttons
-  .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
-  .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
-  .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+  .AddNewChildren FakeCtl_Button, 8, -32, 100, -8, , , , , _
+  objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , _
+  objText.GetText("Exit the game and return to desktop.")
+  .AddNewChildren FakeCtl_Button, 108, -32, 200, -8, , , , , _
+  objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , _
+  objText.GetText("Select a level and start the game.")
+  .AddNewChildren FakeCtl_Button, 208, -32, 300, -8, , , , , _
+  objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , _
+  objText.GetText("Change the game settings.")
+  .AddNewChildren FakeCtl_Button, 308, -32, 400, -8, , , , , _
+  objText.GetText("About"), , "cmdAbout", , 1, , 1, , , _
+  objText.GetText("Show information about the game.")
+  '///ugly title
+  With .AddNewChildren(FakeCtl_Label, 32, 32, -8, 96, FLS_Shadow, , , , _
+  objText.GetText("Turning Polyhedron"), _
+  , , , , 1)
+   .FontZoom = 1
+   .BackColor = 0
+   .ForeColor = &HFFFFFF
+  End With
+  With .AddNewChildren(FakeCtl_Label, 32, 64, -8, 96, FLS_Shadow, , , , _
+  objText.GetText("A puzzle game of rolling block mazes and its enhancements"), _
+  , , , , 1)
+   .FontZoom = 0.75
+   .BackColor = 0
+   .ForeColor = &HFFFFFF
+  End With
  End With
 End With
 End Sub
@@ -89,6 +113,8 @@ Case FakeCtl_Event_Click
   objGame.ShowLevelFileSelection
  Case "cmdOptions"
   frmSettings.Show
+ Case "cmdAbout"
+  frmAbout.Show
  End Select
 End Select
 End Function
@@ -109,6 +135,8 @@ Case RenderPass_Main
  '///draw cube with effects
  objTest.DrawSubset 0
  objRenderTest.EndEffect
+ 'record triangle count
+ FakeDXAppTriangleCount = FakeDXAppTriangleCount + objTest.GetNumFaces
  '////////draw landscape test (new and buggy) without advanced shading effects
  d3dd9.SetTexture 0, objLandTexture
  objLand.Render objRender, objCamera
@@ -119,9 +147,6 @@ Case RenderPass_Main
 Case RenderPass_FogVolume
  'TODO:
 Case RenderPass_Overlay
-' If Not IsSceneBegin Then d3dd9.BeginScene
-' FakeDXGDIDrawText FakeDXUIDefaultFont, objText.GetText("Turning Polyhedron"), _
-' 0, 16, d3dpp.BackBufferWidth, 32, , DT_CENTER Or DT_SINGLELINE Or DT_NOCLIP, , , , , , , , True
-' If Not IsSceneBegin Then d3dd9.EndScene
+ 'doesn't need to draw here
 End Select
 End Sub

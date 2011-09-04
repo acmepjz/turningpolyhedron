@@ -40,6 +40,7 @@ Private Const m_fSwitchTimer As Single = 500
 
 '////////controls
 
+Private m_idxMenu As Long
 Private m_idxForm As Long, m_idxLvFile As Long
 Private m_idxForm2 As Long, m_idxLevels As Long
 
@@ -265,6 +266,16 @@ Dim i As Long, m As Long
 If m_idxForm Then Exit Sub
 '///
 With FakeDXUIControls(1)
+ '///some button
+ With .AddNewChildren(FakeCtl_None, 0, 0, 0, 0, , , False, , , , , , , 1, 1)
+  m_idxMenu = .Index
+  Set .EventObject = Me
+  '///
+  .AddNewChildren FakeCtl_Button, 8, -32, 72, -8, , , , , _
+  objText.GetText("Menu"), , "cmdMenu", , 1, , 1, , , _
+  objText.GetText("Pause the game and display in-game menu.") + " (Esc)"
+  '///
+ End With
  '///level selection screen
  With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
  FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_TitleBar Or FFS_Sizable, _
@@ -490,6 +501,9 @@ Friend Sub ShowGame()
 Create
 HideLevelFileSelection
 FakeDXAppChangeRootObject &H7&, Me, Me, Me
+'///
+FakeDXUIControls(m_idxMenu).Show
+'///
 objGameMgr.FollowCurrentPolyhedron = True
 objCamera.RealLinearDamping = 1
 End Sub
@@ -500,15 +514,15 @@ Dim i As Long
 With New clsFakeDXUIMsgBox
  .AddButton objText.GetText("Back to game"), vbCancel, _
  objText.GetText("Continue playing the game.")
- If m_nMoves > 0 Then
+ If m_nMoves > 0 And m_nRecordPos = 0 Then
   .AddButton objText.GetText("Undo"), &H104&, _
-  objText.GetText("Undo last move.")
+  objText.GetText("Undo last move.") + " (U)"
  End If
  .AddButton objText.GetText("Restart level"), &H100&, _
- objText.GetText("Restart current level.")
+ objText.GetText("Restart current level.") + " (R)"
  If m_nLevelType = 2 Then
   .AddButton objText.GetText("Save level"), &H106&, _
-  objText.GetText("Save current level to file.")
+  objText.GetText("Save current level to file.") + " (Ctrl+S)"
   .AddButton objText.GetText("Next level"), &H103&, _
   objText.GetText("Play next level.")
  End If
@@ -519,7 +533,7 @@ With New clsFakeDXUIMsgBox
  .AddButton objText.GetText("Options"), &H200&, _
  objText.GetText("Change the game settings.")
  .AddButton objText.GetText("Back to main menu"), &H101&, _
- objText.GetText("Abort the game and back to the main menu.")
+ objText.GetText("Abort the game and back to the main menu.") + " (Q)"
  i = .MsgBox(objText.GetText("Game paused"), _
  &H2800007F, , &H100&, 160)
 End With
@@ -528,22 +542,25 @@ End Sub
 
 Friend Sub DisplayGameOverMenu()
 Dim i As Long
+'///
+m_sRecord = vbNullString
+m_nRecordPos = 0
 '///stupid MsgBox
 With New clsFakeDXUIMsgBox
  If m_nMoves > 0 Then
   .AddButton objText.GetText("Undo"), &H104&, _
-  objText.GetText("Undo last move.")
+  objText.GetText("Undo last move.") + " (U)"
  End If
  .AddButton objText.GetText("Try again"), &H100&, _
- objText.GetText("Restart current level.")
+ objText.GetText("Restart current level.") + " (R)"
  If m_nLevelType = 2 Then
   .AddButton objText.GetText("Save level"), &H106&, _
-  objText.GetText("Save current level to file.")
+  objText.GetText("Save current level to file.") + " (Ctrl+S)"
  End If
  .AddButton objText.GetText("Other levels"), &H102&, _
  objText.GetText("Back to level selection screen and select another level to play.")
  .AddButton objText.GetText("Back to main menu"), &H101&, _
- objText.GetText("Abort the game and back to the main menu.")
+ objText.GetText("Abort the game and back to the main menu.") + " (Q)"
  i = .MsgBox(objText.GetText("Game over. Watch your step next time!"), _
  vbInformation Or &H2800000F, _
  objText.GetText("Oops"), &H100&, 160)
@@ -553,6 +570,9 @@ End Sub
 
 Friend Sub DisplayGameFinishedMenu()
 Dim i As Long
+'///
+m_sRecord = vbNullString
+m_nRecordPos = 0
 '///stupid MsgBox
 With New clsFakeDXUIMsgBox
  If (m_nLevelType = 1 And m_nCurrentLevelIndex < m_nLevelCountInLevelCollection) Or m_nLevelType = 2 Then
@@ -561,14 +581,14 @@ With New clsFakeDXUIMsgBox
  End If
  If m_nLevelType = 2 Then
   .AddButton objText.GetText("Save level"), &H106&, _
-  objText.GetText("Save current level to file.")
+  objText.GetText("Save current level to file.") + " (Ctrl+S)"
  End If
  .AddButton objText.GetText("Other levels"), &H102&, _
  objText.GetText("Back to level selection screen and select another level to play.")
  .AddButton objText.GetText("Restart level"), &H100&, _
- objText.GetText("Restart current level.")
+ objText.GetText("Restart current level.") + " (R)"
  .AddButton objText.GetText("Back to main menu"), &H101&, _
- objText.GetText("Abort the game and back to the main menu.")
+ objText.GetText("Abort the game and back to the main menu.") + " (Q)"
  i = .MsgBox(objText.GetText("Congratulations! You have finished this level."), _
  vbInformation Or &H2800000F, , &H100&, 160)
 End With
@@ -720,11 +740,14 @@ Case FakeDXAppEvent_KeyDown
  Case vbKeyR
   RestartCurrentLevel
   Exit Function
- Case vbKeyQ '??
+ Case vbKeyQ
   BackToMainMenu
   Exit Function
  Case vbKeyU
   If m_nRecordPos = 0 Then UndoLastMove
+  Exit Function
+ Case vbKeyS
+  If nParam2 = vbCtrlMask Then SaveCurrentLevel
   Exit Function
  Case vbKeyEscape
   PauseGame
@@ -1120,6 +1143,8 @@ Dim t() As typeString
 Select Case nType
 Case FakeCtl_Event_Click
  Select Case obj.Name
+ Case "cmdMenu"
+  PauseGame
  Case "cmdOK"
   bDblClickLevelFile = True
  Case "cmdCancel"
@@ -1332,6 +1357,7 @@ End Sub
 
 Friend Sub Hide()
 HideLevelFileSelection
+If m_idxMenu Then FakeDXUIControls(m_idxMenu).Hide
 '///
 FakeDXAppRemoveDataLevel 1
 End Sub
@@ -1368,12 +1394,12 @@ Case RenderPass_FogVolume
  'TODO:
 Case RenderPass_Overlay
  If Not IsSceneBegin Then d3dd9.BeginScene
- FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCurrentLevelName, 0, 16, d3dpp.BackBufferWidth - 16, 32, 0.75, DT_RIGHT Or DT_SINGLELINE Or DT_NOCLIP, , , &HFF000000, , , , , True
+ FakeDXGDIDrawText FakeDXUIDefaultFont, m_sCurrentLevelName, 16, 16, d3dpp.BackBufferWidth - 16, 32, 0.75, DT_SINGLELINE Or DT_NOCLIP, , , &HFF000000, , , , , True
  m = objGameMgr.CheckPointCount
  FakeDXGDIDrawText FakeDXUIDefaultFont, _
  objText.GetText("Moves: ") + CStr(m_nMoves) + vbCrLf + _
  objText.GetText("Checkpoints: ") + CStr(m - objGameMgr.CheckPointRemaining) + "/" + CStr(m), _
- d3dpp.BackBufferWidth - 128, 48, 128, 32, 0.5, DT_NOCLIP, , , &HFF000000, , , , , True
+ 16, 48, 128, 32, 0.5, DT_NOCLIP, , , &HFF000000, , , , , True
  If Not IsSceneBegin Then d3dd9.EndScene
 End Select
 End Sub

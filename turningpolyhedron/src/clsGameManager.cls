@@ -817,6 +817,14 @@ For idx = 1 To m_tLevel.nPolyhedronCount
    Else
     m_tPolyInst(idx).fAnimValue(0) = f
    End If
+  Case &H10 'teleport (show)
+   'TODO:
+   f = m_tPolyInst(idx).fAnimValue(0) + dt
+   If f > m_fAnimTime Then
+    StartPolyhedronAnimationByStack idx
+   Else
+    m_tPolyInst(idx).fAnimValue(0) = f
+   End If
   End Select
   '///
   #If UndoPolyhedronAnimation Then
@@ -1141,6 +1149,11 @@ For idx = 1 To m_tLevel.nPolyhedronCount
      m_tPolyInst(idx).matWorld.m43 = m_tPolyInst(idx).matWorld.m43 - f
      'f = f / (1 + 0.01 * f)
      m_tPolyInst(idx).vCenter.z = m_tPolyInst(idx).vCenter.z - f
+    Case &H10 'teleport (show)
+     f = m_tPolyInst(idx).fAnimValue(0)
+     f = 1 - f / m_fAnimTime
+     f = 1 / (1.05 - f * f) - 1
+     m_tPolyInst(idx).matWorld.m43 = m_tPolyInst(idx).matWorld.m43 + f
     End Select
    Case Else
     Debug.Assert False
@@ -1148,7 +1161,6 @@ For idx = 1 To m_tLevel.nPolyhedronCount
   End If
   i = m_tPolyInst(idx).nInstIndex
   Do While i > 0
-   'TODO:multiple objects
    m_tLevelInst.tInstance(i).Visible = True
    m_tLevelInst.tInstance(i).matWorld = m_tPolyInst(idx).matWorld
    i = m_tLevelInst.tInstance(i).nNextInstIndex
@@ -1157,7 +1169,6 @@ For idx = 1 To m_tLevel.nPolyhedronCount
   'invisible
   i = m_tPolyInst(idx).nInstIndex
   Do While i > 0
-   'TODO:multiple objects
    m_tLevelInst.tInstance(i).Visible = False
    m_tLevelInst.tInstance(i).matWorld = m_tPolyInst(idx).matWorld
    i = m_tLevelInst.tInstance(i).nNextInstIndex
@@ -3709,6 +3720,8 @@ Case 3 'teleport
       m_objPoly(t.nPolyhedronIndex).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(t.nPolyhedronIndex), False '???
       m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnEnter
       m_objPoly(t.nPolyhedronIndex).SendEvent EventTypeOnHitTest
+      'ugly animation TODO:
+      StartPolyhedronAnimationByType t.nPolyhedronIndex, &H10
      Else
       Debug.Assert False
      End If
@@ -3733,6 +3746,8 @@ Case 3 'teleport
     m_objPoly(k).CheckPolyhedronStateAndResponse m_tLevel.tPolyhedron(t.nPolyhedronIndex), False '???
     m_objPoly(k).SendEvent EventTypeOnEnter
     m_objPoly(k).SendEvent EventTypeOnHitTest
+    'ugly animation TODO:
+    StartPolyhedronAnimationByType k, &H10
    Else
     Debug.Assert False
     Exit Sub
