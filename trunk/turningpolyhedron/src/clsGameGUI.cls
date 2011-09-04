@@ -1381,6 +1381,8 @@ Case RenderPass_Main
  '---
  If Not IsSceneBegin Then d3dd9.BeginScene
  objRenderTest.EndEffect
+ '///TEST ONLY
+ objRenderTest.DrawSkydome objSkyTexture
  '///draw level
  objGameMgr.DrawLevel
  '////////draw landscape test (new and buggy) without advanced shading effects

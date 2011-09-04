@@ -25,6 +25,14 @@ MagFilter=LINEAR;
 AddressU=CLAMP;
 AddressV=CLAMP;
 };
+sampler sampWrapU=sampler_state{
+Texture=<tex>;
+MipFilter=NONE;
+MinFilter=LINEAR;
+MagFilter=LINEAR;
+AddressU=WRAP;
+AddressV=CLAMP;
+};
 sampler sampM=sampler_state{
 Texture=<tex>;
 MipFilter=LINEAR;
@@ -572,4 +580,15 @@ pass{PixelShader=compile ps_2_0 ps_linear_with_fog(false);}
 
 technique fx_linear_with_volume_fog{
 pass{PixelShader=compile ps_2_0 ps_linear_with_fog(true);}
+}
+
+float4 ps_skydome(float2 t:TEXCOORD0):COLOR0{
+	float3 v=normalize(_fParam[0].xyz+t.x*_fParam[1].xyz+t.y*_fParam[2].xyz);
+	t.x=atan2(v.y,v.x)/6.28318531;
+	t.y=1.0-asin(v.z)/1.57079633;
+	return tex2D(sampWrapU,t);
+}
+
+technique fx_skydome{
+pass{PixelShader=compile ps_2_0 ps_skydome();}
 }

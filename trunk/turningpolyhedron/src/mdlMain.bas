@@ -137,6 +137,8 @@ Public objLand As New clsRenderLandscape, objLandTexture As Direct3DTexture9
 
 Public objTexture As Direct3DTexture9, objNormalTexture As Direct3DTexture9
 
+Public objSkyTexture As Direct3DTexture9 'TEST ONLY
+
 Public objFontSprite As D3DXSprite
 Public objFont As D3DXFont
 
@@ -774,6 +776,8 @@ objLand.CreateFromFile App.Path + "\heightmap_test.png", , , 0.25, , , -25
 'objLand.CreateFromFile App.Path + "\heightmap_test.png", 3, 5, 0.05, , , -15, App.Path + "\fogmap_test.png", 3, 0.05, 2
 'objLand.FogEnabled = True
 D3DXCreateTextureFromFileExW d3dd9, App.Path + "\test0.png", D3DX_DEFAULT, D3DX_DEFAULT, 1, 0, D3DFMT_FROM_FILE, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, t, ByVal 0, objLandTexture
+'////////TEST ONLY
+D3DXCreateTextureFromFileExW d3dd9, App.Path + "\data\gfx\sky7.jpg", D3DX_DEFAULT, D3DX_DEFAULT, 1, 0, D3DFMT_FROM_FILE, D3DPOOL_MANAGED, D3DX_DEFAULT, D3DX_DEFAULT, 0, t, ByVal 0, objSkyTexture
 '////////set caption
 frm.Caption = objText.GetText("Turning Polyhedron")
 '////////show first game UI

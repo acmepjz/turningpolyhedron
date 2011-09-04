@@ -1,3 +1,7 @@
 control1.png:
 
 Icons are ripped from Wine (www.winehq.org), license under GNU LGPL.
+
+sky7.jpg:
+
+Download and modified from Philo's Sky Collection (http://www.philohome.com/skycollec/skycollec.htm), (Public Domain ?)

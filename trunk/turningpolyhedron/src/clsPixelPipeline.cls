@@ -493,6 +493,36 @@ Case RenderPass_Main
 End Select
 End Sub
 
+'TEST ONLY
+Friend Sub DrawSkydome(ByVal objTexture As Direct3DTexture9)
+Dim mat As D3DMATRIX
+Dim f As Single
+d3dd9.GetTransform D3DTS_VIEW, mat
+'///
+f = Tan(m_fovy / 2)
+mat.m12 = mat.m12 * -f
+mat.m22 = mat.m22 * -f
+mat.m32 = mat.m32 * -f
+mat.m13 = mat.m13 - mat.m12
+mat.m23 = mat.m23 - mat.m22
+mat.m33 = mat.m33 - mat.m32
+'///
+f = f * m_fAspect
+mat.m11 = mat.m11 * f
+mat.m21 = mat.m21 * f
+mat.m31 = mat.m31 * f
+mat.m13 = mat.m13 - mat.m11
+mat.m23 = mat.m23 - mat.m21
+mat.m33 = mat.m33 - mat.m31
+'///
+d3dd9.SetRenderState D3DRS_ZENABLE, 0
+objTextMgr.DrawTextureEx objTexture, "fx_skydome", 0, 0, 0, 0, _
+Vec4(mat.m13, mat.m23, mat.m33), _
+Vec4(mat.m11 * 2, mat.m21 * 2, mat.m31 * 2), _
+Vec4(mat.m12 * 2, mat.m22 * 2, mat.m32 * 2), Vec4
+d3dd9.SetRenderState D3DRS_ZENABLE, 1
+End Sub
+
 Friend Sub PerformPostProcess()
 Dim nOldState As Long
 Dim i As Long, j As Long
