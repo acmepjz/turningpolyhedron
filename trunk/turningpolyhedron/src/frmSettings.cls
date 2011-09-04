@@ -36,6 +36,7 @@ Private Enum enumSettingsDialogControls
  IDC_VolumetricFog
  IDC_DepthOfField
  IDC_RadialBlur
+ IDC_ShowFPS
 End Enum
 
 'config file name
@@ -77,6 +78,7 @@ With obj.GetSubNodeObjectByName("GraphicsConfig", True)
  If b Then d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_ONE _
  Else d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE
  '///
+ m_bShowFPS = CBool(.GetSubNodeValueAsStringByName("ShowFPS", True))
  m_bMaxFPSEnabled = CBool(.GetSubNodeValueAsStringByName("MaxFPSEnabled", True))
  m_nMaxFPS = Val(.GetSubNodeValueAsStringByName("MaxFPS", 30))
  If m_bMaxFPSEnabled And m_nMaxFPS > 0 Then objTiming.MinPeriod = 1000 / m_nMaxFPS _
@@ -104,6 +106,7 @@ With obj.GetSubNodeObjectByName("GraphicsConfig", True)
  .AddSubNode , , "RefreshRate", CStr(m_nRefreshRate)
  .AddSubNode , , "Fullscreen", CStr(d3dpp.Windowed = 0)
  .AddSubNode , , "VSync", CStr(d3dpp.PresentationInterval <> D3DPRESENT_INTERVAL_IMMEDIATE)
+ .AddSubNode , , "ShowFPS", CStr(m_bShowFPS)
  .AddSubNode , , "MaxFPSEnabled", CStr(m_bMaxFPSEnabled)
  .AddSubNode , , "MaxFPS", CStr(m_nMaxFPS)
  .AddSubNode , , "Antialiasing", CStr(d3dpp.MultiSampleType)
@@ -200,6 +203,12 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
     m_idx(IDC_VSync) = .Index
    End With
    y = y + HeightStep
+   'show FPS?
+   With .AddNewChildren(FakeCtl_Button, 10, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , _
+   objText.GetText("Show statistics"), , , , , , , , , objText.GetText("Show statistics about graphics, for example FPS, etc.") + " (F11)")
+    m_idx(IDC_ShowFPS) = .Index
+   End With
+   y = y + HeightStep
    'max FPS?
    With .AddNewChildren(FakeCtl_Button, 10, y, Left - 2, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , _
    objText.GetText("Max FPS"), , , , , , , , , objText.GetText("Enables the restriction of max FPS."))
@@ -291,8 +300,8 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
    '///new:video capture options
    If FakeDXAppVideoCaptureEnabled Then
     .AddNewChildren FakeCtl_Button, 10, y, -10, y + Height, FCS_CanGetFocus Or FCS_TabStop, , , , _
-    objText.GetText("Video capture options") + " (Ctrl+F9)", , "cmdVideoCapture", , , 1, , , , _
-    objText.GetText("Change the video capture options.")
+    objText.GetText("Video capture options"), , "cmdVideoCapture", , , 1, , , , _
+    objText.GetText("Change the video capture options.") + " (Ctrl+F9)"
    End If
    y = y + HeightStep
    '///over
@@ -353,6 +362,7 @@ With FakeDXUIControls(m_idx(IDC_Antialiasing)).ListViewObject
 End With
 'fullscreen, etc.
 FakeDXUIControls(m_idx(IDC_Fullscreen)).Value = (d3dpp.Windowed = 0) And 1&
+FakeDXUIControls(m_idx(IDC_ShowFPS)).Value = m_bShowFPS And 1&
 FakeDXUIControls(m_idx(IDC_MaxFPSEnabled)).Value = m_bMaxFPSEnabled And 1&
 FakeDXUIControls(m_idx(IDC_MaxFPS)).Text = CStr(m_nMaxFPS)
 FakeDXUIControls(m_idx(IDC_VSync)).Value = (d3dpp.PresentationInterval <> D3DPRESENT_INTERVAL_IMMEDIATE) And 1&
@@ -448,6 +458,7 @@ If w > 0 And h > 0 Then
  FakeDXAppChangeResolution w, h, nFull, r, nMultiSample, i
 End If
 '///other
+m_bShowFPS = FakeDXUIControls(m_idx(IDC_ShowFPS)).Value
 m_bMaxFPSEnabled = FakeDXUIControls(m_idx(IDC_MaxFPSEnabled)).Value
 m_nMaxFPS = Val(FakeDXUIControls(m_idx(IDC_MaxFPS)).Text)
 If m_bMaxFPSEnabled And m_nMaxFPS > 0 Then objTiming.MinPeriod = 1000 / m_nMaxFPS _

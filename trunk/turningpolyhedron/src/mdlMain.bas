@@ -3,6 +3,13 @@ Option Explicit
 
 #Const UseSubclassInIDE = False
 #Const VideoCaptureEnabled = True
+#Const SVN = True
+
+#If SVN Then
+Public Const FakeDXAppVersion As String = "SVN"
+#Else
+Public Const FakeDXAppVersion As String = "0.0.1 (SVN r???)"
+#End If
 
 'Private Declare Function GetStdHandle Lib "kernel32.dll" (ByVal nStdHandle As Long) As Long
 'Private Declare Function AllocConsole Lib "kernel32.dll" () As Long
@@ -30,18 +37,27 @@ Private Declare Function IsWindow Lib "user32.dll" (ByVal hwnd As Long) As Long
 
 Private Declare Function GetWindowLong Lib "user32.dll" Alias "GetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long) As Long
 Private Declare Function SetWindowLong Lib "user32.dll" Alias "SetWindowLongA" (ByVal hwnd As Long, ByVal nIndex As Long, ByVal dwNewLong As Long) As Long
+Private Declare Function CallWindowProc Lib "user32.dll" Alias "CallWindowProcA" (ByVal lpPrevWndFunc As Long, ByVal hwnd As Long, ByVal msg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
 Private Declare Function SetWindowPos Lib "user32.dll" (ByVal hwnd As Long, ByVal hWndInsertAfter As Long, ByVal x As Long, ByVal y As Long, ByVal cx As Long, ByVal cy As Long, ByVal wFlags As Long) As Long
 Private Const SWP_NOMOVE As Long = &H2
 Private Const SWP_NOZORDER As Long = &H4
 Private Const SWP_NOACTIVATE As Long = &H10
 Private Const GWL_STYLE As Long = -16
 Private Const GWL_EXSTYLE As Long = -20
+Private Const GWL_WNDPROC As Long = -4
 Private Declare Function AdjustWindowRectEx Lib "user32.dll" (ByRef lpRect As RECT, ByVal dwStyle As Long, ByVal bMenu As Long, ByVal dwExStyle As Long) As Long
 Private Type RECT
     Left As Long
     Top As Long
     Right As Long
     Bottom As Long
+End Type
+
+Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Type POINTAPI
+    x As Long
+    y As Long
 End Type
 
 Private Const WM_INPUTLANGCHANGE As Long = &H51
@@ -76,7 +92,7 @@ Public m_tDefVertexDecl() As D3DVERTEXELEMENT9
 
 Public objText As New clsGNUGetText
 
-Public m_nMaxFPS As Long, m_bMaxFPSEnabled As Boolean
+Public m_nMaxFPS As Long, m_bMaxFPSEnabled As Boolean, m_bShowFPS As Boolean
 Public objTiming As New clsTiming
 
 Public FakeDXAppMyGamesPath As String
@@ -86,6 +102,10 @@ Public FakeDXAppRequestUnload As Boolean, FakeDXAppCanUnload As Boolean
 Public FakeDXAppMainLoopCallback As IMainLoopCallback
 
 Public objLogger As New clsFakeDXUILogger
+
+'////////not-so-stable but DEP friendly subclass
+
+Private m_lpPrevWndProc As Long
 
 '////////receives unprocessed window event
 
@@ -122,6 +142,8 @@ Public objFont As D3DXFont
 
 Public objEffectMgr As New clsEffectManager
 
+Public FakeDXAppTriangleCount As Long
+
 '////////game UI objects
 
 Public objMainMenu As New clsMainMenu
@@ -146,6 +168,10 @@ Public m_bRecordingVideo As Boolean
 #Else
 Public Const FakeDXAppVideoCaptureEnabled As Boolean = False
 #End If
+
+'////////about
+
+Public frmAbout As New frmAbout
 
 Public Sub FakeDXAppShowVideoCaptureOptions()
 #If VideoCaptureEnabled Then
@@ -230,6 +256,9 @@ If GetActiveWindow = d3dpp.hDeviceWindow Then
   End If
  End If
  #End If
+ If GetAsyncKeyState(vbKeyF11) = &H8001 Then
+  m_bShowFPS = Not m_bShowFPS
+ End If
 End If
 End Sub
 
@@ -264,10 +293,11 @@ With d3dd9
   '///reset counter
   MyMini_IndexCount = 0
   MyMini_FogIndexCount = 0
+  FakeDXAppTriangleCount = 0
   '///
   If FakeDXAppRootObject Is Nothing Then
    '??? nothing to render
-   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000000, 1, 0
+   .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER Or D3DCLEAR_STENCIL, &HFF000000, 1, 0
    'show something ridiculous
    .BeginScene
    FakeDXGDIDrawText FakeDXUIDefaultFont, "Nothing to render", 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight, , _
@@ -315,7 +345,7 @@ With d3dd9
 '    D3DXMatrixMultiply mat2, mat1, mat
 '    .SetTransform D3DTS_WORLD, mat2
 '    objRenderTest.UpdateRenderState '???
-'    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, 0, 1, 0
+'    .Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER Or D3DCLEAR_STENCIL, 0, 1, 0
 '    .BeginScene
 '    objTest.DrawSubset 0
 '    .EndScene
@@ -327,11 +357,6 @@ With d3dd9
   End If
   '////////draw overlay
   .BeginScene
-  '///overlay text
-  s = "FPS:" + Format(objTiming.FPS, "0.0") + vbCrLf + _
-  "Landscape Triangles:" + CStr(MyMini_IndexCount) + vbCrLf + _
-  "Fog Triangles:" + CStr(MyMini_FogIndexCount)
-  FakeDXGDIDrawText FakeDXUIDefaultFont, s, 16, 16, 128, 64, 0.5, DT_NOCLIP, -1, , &HFF000000, , , , , True
   '///custom overlay (order?)
   If Not FakeDXAppRootObject Is Nothing Then
    FakeDXAppRootObject.Render RenderPass_Overlay, objRenderTest, objCamera, False, True
@@ -339,9 +364,18 @@ With d3dd9
   '///UI
   FakeDXUIRender
   '///logger
-  objLogger.Render 8, 64, d3dpp.BackBufferWidth - 8, d3dpp.BackBufferHeight - 64
+  objLogger.Render 8, 80, d3dpp.BackBufferWidth - 8, d3dpp.BackBufferHeight - 64
   '///
   .EndScene
+  '///overlay text
+  If m_bShowFPS Then
+'   s = "FPS:" + Format(objTiming.FPS, "0.0") + vbCrLf + _
+'   "Landscape Triangles:" + CStr(MyMini_IndexCount) + vbCrLf + _
+'   "Fog Triangles:" + CStr(MyMini_FogIndexCount)
+   s = objText.GetText("FPS: ") + Format(objTiming.FPS, "0.0") + vbCrLf + _
+   objText.GetText("Triangles: ") + CStr(FakeDXAppTriangleCount)
+   FakeDXGDIDrawText FakeDXUIDefaultFont, s, d3dpp.BackBufferWidth - 128, 16, 128, 64, 0.5, DT_NOCLIP, -1, , &HFF000000, , , , , True
+  End If
   '////////over
   .Present ByVal 0, ByVal 0, 0, ByVal 0
   '///
@@ -543,7 +577,43 @@ Next frm
 '///
 End Sub
 
-Public Sub FakeDXAppInit(ByVal frm As Form, ByVal objSubclass As cSubclass, ByVal objCallback As iSubclass)
+Public Sub FakeDXAppUnSubclass()
+If m_lpPrevWndProc Then
+ SetWindowLong d3dpp.hDeviceWindow, GWL_WNDPROC, m_lpPrevWndProc
+ m_lpPrevWndProc = 0
+End If
+End Sub
+
+Private Function FakeDXAppWndProc(ByVal hwnd As Long, ByVal uMsg As Long, ByVal wParam As Long, ByVal lParam As Long) As Long
+Dim i As Long
+Dim p As POINTAPI
+'///
+If m_lpPrevWndProc Then FakeDXAppWndProc = CallWindowProc(m_lpPrevWndProc, hwnd, uMsg, wParam, lParam)
+'///
+Select Case uMsg
+Case WM_IME_NOTIFY
+ FakeDXUI_IME.OnIMENotify wParam, lParam
+Case WM_IME_COMPOSITION, WM_IME_STARTCOMPOSITION, WM_IME_ENDCOMPOSITION
+ FakeDXUI_IME.OnIMEComposition wParam, lParam
+Case WM_INPUTLANGCHANGE
+ FakeDXUI_IME.OnInputLanguageChange
+Case WM_MOUSEWHEEL
+ i = (wParam And &HFFFF0000) \ &H10000
+' p.x = (lParam And &H7FFF&) Or (&HFFFF8000 And ((lParam And &H8000&) <> 0))
+' p.y = (lParam And &HFFFF0000) \ &H10000
+ GetCursorPos p
+ ScreenToClient hwnd, p
+ FakeDXAppOnMouseWheel (wParam And 3&) Or (vbMiddleButton And ((wParam And &H10&) <> 0)), _
+ ((wParam And &HC&) \ 4&) Or (vbAltMask And ((GetAsyncKeyState(vbKeyMenu) And &H8000&) <> 0)), p.x, p.y, i \ 120&
+End Select
+End Function
+
+Private Sub FakeDXAppOnMouseWheel(ByVal Button As MouseButtonConstants, ByVal Shift As ShiftConstants, ByVal x As Long, ByVal y As Long, ByVal nDelta As Long)
+If FakeDXUIOnMouseWheel(nDelta, Shift) Then Exit Sub
+If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_MouseWheel, nDelta, Shift, 0
+End Sub
+
+Public Sub FakeDXAppInit(ByVal frm As Form)
 On Error Resume Next
 Dim i As Long
 Dim s As String
@@ -591,7 +661,7 @@ FakeDXAppAdjustWindowPos
 '///get device caps
 d3d9.GetDeviceCaps 0, D3DDEVTYPE_HAL, d3dc9
 If d3dc9.DevCaps And D3DDEVCAPS_HWTRANSFORMANDLIGHT Then i = D3DCREATE_HARDWARE_VERTEXPROCESSING _
-Else i = D3DCREATE_SOFTWARE_VERTEXPROCESSING
+Else i = D3DCREATE_SOFTWARE_VERTEXPROCESSING '<-- error when drawing landscape
 'TODO:shader version, etc.
 '///create device
 Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, frm.hwnd, i, d3dpp)
@@ -643,15 +713,10 @@ If True Then
 #Else
 If App.LogMode = 1 Then
 #End If
- With objSubclass
-  .AddMsg WM_IME_NOTIFY, MSG_AFTER
-  .AddMsg WM_IME_COMPOSITION, MSG_AFTER
-  .AddMsg WM_IME_STARTCOMPOSITION, MSG_AFTER
-  .AddMsg WM_IME_ENDCOMPOSITION, MSG_AFTER
-  .AddMsg WM_INPUTLANGCHANGE, MSG_AFTER
-  .AddMsg WM_MOUSEWHEEL, MSG_AFTER
-  .Subclass frm.hwnd, objCallback
- End With
+ If m_lpPrevWndProc = 0 Then
+  m_lpPrevWndProc = GetWindowLong(frm.hwnd, GWL_WNDPROC)
+  SetWindowLong frm.hwnd, GWL_WNDPROC, AddressOf FakeDXAppWndProc
+ End If
 End If
 '///load data
 With New clsXMLSerializer

@@ -92,6 +92,8 @@ f(12) = nLeft: f(13) = nBottom: f(15) = 1: f(16) = f(4): f(17) = (nSrcBottom + 0
 f(18) = nRight: f(19) = nBottom: f(21) = 1: f(22) = f(10): f(23) = f(17)
 d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_TEX1
 d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, f(0), 24&
+'record triangle count
+FakeDXAppTriangleCount = FakeDXAppTriangleCount + 2&
 End Sub
 
 Public Sub FakeDXGDIStretchBltColored(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, ByVal nSize As Single, ByVal nColor As Long)
@@ -103,6 +105,8 @@ f(14) = nLeft: f(15) = nBottom: f(17) = 1: f(18) = f(4): f(19) = f(5): f(20) = (
 f(21) = nRight: f(22) = nBottom: f(24) = 1: f(25) = f(4): f(26) = f(12): f(27) = f(20)
 d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_DIFFUSE Or D3DFVF_TEX1
 d3dd9.DrawPrimitiveUP D3DPT_TRIANGLESTRIP, 2&, f(0), 28&
+'record triangle count
+FakeDXAppTriangleCount = FakeDXAppTriangleCount + 2&
 End Sub
 
 Public Sub FakeDXGDIFillRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nColor As Long)
@@ -130,6 +134,8 @@ d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, i(0)
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, i(1)
 d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, i(2)
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, i(3)
+'record triangle count
+FakeDXAppTriangleCount = FakeDXAppTriangleCount + 2&
 End Sub
 
 Public Sub FakeDXGDIGradientFillRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nColor1 As Long, ByVal nColor2 As Long, ByVal bVertical As Boolean)
@@ -166,6 +172,8 @@ d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, i(0)
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, i(1)
 d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, i(2)
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, i(3)
+'record triangle count
+FakeDXAppTriangleCount = FakeDXAppTriangleCount + 2&
 End Sub
 
 Public Sub FakeDXGDIFrameRect(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nColor As Long)
@@ -194,6 +202,8 @@ d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, i(0)
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, i(1)
 d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, i(2)
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAARG2, i(3)
+'record triangle count
+FakeDXAppTriangleCount = FakeDXAppTriangleCount + 4& '???
 End Sub
 
 Public Sub FakeDXGDIStretchBltBlended(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, ByVal nSize As Single, ByVal nSrcLeft2 As Single, ByVal nSrcTop2 As Single, ByVal nFactor As Long, ByVal nColor As Long)
@@ -234,6 +244,8 @@ d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
 d3dd9.SetTextureStageState 1, D3DTSS_COLOROP, D3DTOP_DISABLE
 d3dd9.SetTextureStageState 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE
 d3dd9.SetTexture 1, Nothing
+'record triangle count
+FakeDXAppTriangleCount = FakeDXAppTriangleCount + 2&
 End Sub
 
 Public Sub FakeDXGDIStretchBltEx(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, ByVal nLeftMargin As Single, ByVal nTopMargin As Single, ByVal nRightMargin As Single, ByVal nBottomMargin As Single, ByVal nSize As Single)
@@ -272,7 +284,10 @@ For j = 0 To 2 Step jj
  Next i
 Next j
 d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_TEX1
-d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, 16, k \ 3&, idx(0), D3DFMT_INDEX16, f(0), 24&
+k = k \ 3&
+d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, 16, k, idx(0), D3DFMT_INDEX16, f(0), 24&
+'record triangle count
+FakeDXAppTriangleCount = FakeDXAppTriangleCount + k
 End Sub
 
 Public Sub FakeDXGDIStretchBltExColored(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, ByVal nLeftMargin As Single, ByVal nTopMargin As Single, ByVal nRightMargin As Single, ByVal nBottomMargin As Single, ByVal nSize As Single, ByVal nColor As Long)
@@ -312,7 +327,10 @@ For j = 0 To 2 Step jj
  Next i
 Next j
 d3dd9.SetFVF D3DFVF_XYZRHW Or D3DFVF_DIFFUSE Or D3DFVF_TEX1
-d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, 16, k \ 3&, idx(0), D3DFMT_INDEX16, f(0), 28&
+k = k \ 3&
+d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, 16, k, idx(0), D3DFMT_INDEX16, f(0), 28&
+'record triangle count
+FakeDXAppTriangleCount = FakeDXAppTriangleCount + k
 End Sub
 
 Public Sub FakeDXGDIStretchBltExBlended(ByVal nLeft As Single, ByVal nTop As Single, ByVal nRight As Single, ByVal nBottom As Single, ByVal nSrcLeft As Single, ByVal nSrcTop As Single, ByVal nSrcRight As Single, ByVal nSrcBottom As Single, ByVal nLeftMargin As Single, ByVal nTopMargin As Single, ByVal nRightMargin As Single, ByVal nBottomMargin As Single, ByVal nSize As Single, ByVal nSrcLeft2 As Single, ByVal nSrcTop2 As Single, ByVal nFactor As Long, ByVal nColor As Long)
@@ -376,12 +394,15 @@ d3dd9.SetTextureStageState 2, D3DTSS_ALPHAARG1, D3DTA_CURRENT
 d3dd9.SetTextureStageState 2, D3DTSS_ALPHAARG2, D3DTA_CONSTANT
 d3dd9.SetTextureStageState 2, D3DTSS_CONSTANT, nColor
 d3dd9.SetTexture 1, d3dd9.GetTexture(0)
-d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, 16, k \ 3&, idx(0), D3DFMT_INDEX16, f(0), 32&
+k = k \ 3&
+d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, 16, k, idx(0), D3DFMT_INDEX16, f(0), 32&
 d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
 d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
 d3dd9.SetTextureStageState 1, D3DTSS_COLOROP, D3DTOP_DISABLE
 d3dd9.SetTextureStageState 1, D3DTSS_ALPHAOP, D3DTOP_DISABLE
 d3dd9.SetTexture 1, Nothing
+'record triangle count
+FakeDXAppTriangleCount = FakeDXAppTriangleCount + k
 End Sub
 
 Public Function FakeDXGDIDrawText(ByRef tFont As typeFakeDXGDILogFont, ByVal lpStr As String, ByVal nLeft As Single, ByVal nTop As Single, Optional ByVal nWidth As Long, Optional ByVal nHeight As Long, Optional ByVal nZoom As Single = 1, Optional ByVal wFormat As D3DXDRAWTEXTFORMAT, _
@@ -389,9 +410,12 @@ Optional ByVal nColor As Long = -1, Optional ByVal nTextLODBias As Single = -0.5
 Dim mat As D3DMATRIX
 Dim p As D3DRECT
 Dim obj As Direct3DDevice9
+Dim m As Long, lp As Long
 Dim bNoDraw As Boolean
 '///
-bNoDraw = (nShadowColor = 0 And nColor = 0) Or LenB(lpStr) < 2
+m = Len(lpStr)
+lp = StrPtr(lpStr)
+bNoDraw = (nShadowColor = 0 And nColor = 0) Or m < 1
 If Not bNoDraw Then
  If bSingle Then tFont.objSprite.Begin D3DXSPRITE_ALPHABLEND
  '///
@@ -414,8 +438,10 @@ If Not bNoDraw Then
   p.x2 = nWidth + nShadowOffsetX
   p.y2 = nHeight + nShadowOffsetY
   obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nShadowLODBias)
-  tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nShadowColor
+  tFont.objFont.DrawTextW tFont.objSprite, ByVal lp, m, p, wFormat And Not DT_CALCRECT, nShadowColor
   If bFlush Then tFont.objSprite.Flush
+  'record triangle count
+  FakeDXAppTriangleCount = FakeDXAppTriangleCount + m * 2&
  End If
  If nColor Then
   p.x1 = 0
@@ -424,12 +450,14 @@ If Not bNoDraw Then
   p.y2 = nHeight
   obj.SetSamplerState 0, D3DSAMP_MIPMAPLODBIAS, SingleToLong(nTextLODBias)
   If wFormat And DT_CALCRECT Then
-   tFont.objFont.DrawTextW tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat, nColor
+   tFont.objFont.DrawTextW tFont.objSprite, ByVal lp, m, p, wFormat, nColor
    nWidthReturn = p.x2 * nZoom
    nHeightReturn = p.y2 * nZoom
   End If
-  FakeDXGDIDrawText = tFont.objFont.DrawTextW(tFont.objSprite, ByVal StrPtr(lpStr), -1, p, wFormat And Not DT_CALCRECT, nColor) * nZoom
+  FakeDXGDIDrawText = tFont.objFont.DrawTextW(tFont.objSprite, ByVal lp, m, p, wFormat And Not DT_CALCRECT, nColor) * nZoom
   If bFlush Then tFont.objSprite.Flush
+  'record triangle count
+  FakeDXAppTriangleCount = FakeDXAppTriangleCount + m * 2&
  End If
  '///
  If bSingle Then tFont.objSprite.End
@@ -440,7 +468,7 @@ Else
   p.y1 = 0
   p.x2 = nWidth / nZoom
   p.y2 = nHeight / nZoom
-  FakeDXGDIDrawText = tFont.objFont.DrawTextW(Nothing, ByVal StrPtr(lpStr), -1, p, wFormat, 0) * nZoom 'Nothing??? it works :D
+  FakeDXGDIDrawText = tFont.objFont.DrawTextW(Nothing, ByVal lp, m, p, wFormat, 0) * nZoom 'Nothing??? it works :D
   nWidthReturn = p.x2 * nZoom
   nHeightReturn = p.y2 * nZoom
  End If

@@ -4,7 +4,7 @@ Option Explicit
 Public Const FakeDXUISliderSize As Long = 12
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
-Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hWnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
     x As Long
     y As Long
@@ -174,6 +174,7 @@ Public Enum enumFakeDXUIControlStyle
  FLS_Center = &H100&
  FLS_Right = &H200&
  FLS_WordWrap = 1
+ FLS_Shadow = 2
  '///button
  FBS_CheckBox = 1
  FBS_CheckBoxTristate = 2
@@ -300,7 +301,7 @@ With FakeDXUIControls(1)
  .SetRightEx nRight, 0
  .SetBottomEx nBottom, 0
 End With
-FakeDXUI_IME.Create frmMain.hwnd '?
+FakeDXUI_IME.Create frmMain.hWnd '?
 '///
 ReDim FakeDXUIModalStack(1 To 64)
 FakeDXUIModalStackCount = 0
@@ -472,7 +473,7 @@ FakeDXUIPopup_ToolTipText_Caption = s
 '///
 If x < 0 Or y < 0 Then
  GetCursorPos p
- ScreenToClient frmMain.hwnd, p
+ ScreenToClient frmMain.hWnd, p
  x = p.x
  y = p.y
 End If
@@ -1272,6 +1273,7 @@ End Sub
 Public Sub FakeDXUIToNextFocus()
 Dim idx As Long, idxOld As Long
 Dim i As Long, j As Long, k As Long, m As Long
+Dim t As Long
 i = FakeDXUIFocus
 If i = 0 Then i = FakeDXUIActiveWindow
 If i > 0 And i <= FakeDXUIControlCount Then
@@ -1314,6 +1316,9 @@ If i > 0 And i <= FakeDXUIControlCount Then
     End If
    Loop
   End If
+  'err???
+  t = t + 1
+  If t > 4096& Then Exit Do
  Loop Until i <= 0 Or i = idxOld
  If i < 0 Then
   If FakeDXUIFocus <> idx Then
@@ -1328,6 +1333,7 @@ End Sub
 Public Sub FakeDXUIToPrevFocus()
 Dim idx As Long, idxOld As Long
 Dim i As Long, j As Long, k As Long
+Dim t As Long
 i = FakeDXUIFocus
 If i = 0 Then i = FakeDXUIActiveWindow
 If i > 0 And i <= FakeDXUIControlCount Then
@@ -1365,6 +1371,9 @@ If i > 0 And i <= FakeDXUIControlCount Then
   End If
   'parent
   If i = 0 Then i = j
+  'err???
+  t = t + 1
+  If t > 4096& Then Exit Do
  Loop Until i <= 0 Or i = idxOld
  If i < 0 Then
   If FakeDXUIFocus <> idx Then

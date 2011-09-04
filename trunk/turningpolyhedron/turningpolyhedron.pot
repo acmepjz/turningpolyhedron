@@ -2,17 +2,23 @@ msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 
+#.   objText.GetText("A puzzle game of rolling block mazes and its enhancements"), _
+msgid "A puzzle game of rolling block mazes and its enhancements"
+msgstr ""
+
 #.   s = objText.GetText("Abort")
 msgid "Abort"
 msgstr ""
 
-#.  objText.GetText("Abort the game and back to the main menu.")
-#.  objText.GetText("Abort the game and back to the main menu.")
-#.  objText.GetText("Abort the game and back to the main menu.")
+#.  objText.GetText("Abort the game and back to the main menu.") + " (Q)"
+#.  objText.GetText("Abort the game and back to the main menu.") + " (Q)"
+#.  objText.GetText("Abort the game and back to the main menu.") + " (Q)"
 msgid "Abort the game and back to the main menu."
 msgstr ""
 
+#.   objText.GetText("About"), , "cmdAbout", , 1, , 1, , , _
 #.  With .AddNewChildren(FakeCtl_Button, -72, 8, -8, 32, FCS_CanGetFocus Or FCS_TabStop, False, , , objText.GetText("About"), , "cmdAbout", 1, , 1)
+#.  objText.GetText("About"))
 msgid "About"
 msgstr ""
 
@@ -40,7 +46,6 @@ msgstr ""
 msgid "Approximate algorithm"
 msgstr ""
 
-#. ' '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 #.  '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 msgid "Are you sure?"
 msgstr ""
@@ -81,6 +86,10 @@ msgstr ""
 msgid "Can't create encoder list"
 msgstr ""
 
+#.    .MsgBox objText.GetText("Can't load license file. Please see <http://www.gnu.org/licenses/>."), vbExclamation, objText.GetText("Error")
+msgid "Can't load license file. Please see <http://www.gnu.org/licenses/>."
+msgstr ""
+
 #.  objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1, , , objText.GetText("Discard changes and close dialog.")
 #.   s = objText.GetText("Cancel")
 #.   .AddNewChildren FakeCtl_Button, -64, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
@@ -98,7 +107,7 @@ msgid "Change the antialiasing settings."
 msgstr ""
 
 #.    .AddTab objText.GetText("Game"), , , , , objText.GetText("Change the game settings.")
-#.   .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#.   objText.GetText("Change the game settings.")
 #.  objText.GetText("Change the game settings.")
 msgid "Change the game settings."
 msgstr ""
@@ -111,7 +120,7 @@ msgstr ""
 msgid "Change the screen resolution."
 msgstr ""
 
-#.     objText.GetText("Change the video capture options.")
+#.     objText.GetText("Change the video capture options.") + " (Ctrl+F9)"
 msgid "Change the video capture options."
 msgstr ""
 
@@ -139,6 +148,10 @@ msgstr ""
 
 #.  objText.GetText("Continue playing the game.")
 msgid "Continue playing the game."
+msgstr ""
+
+#.   Replace(App.LegalCopyright, "Copyright", objText.GetText("Copyright")) + vbCrLf + vbCrLf + _
+msgid "Copyright"
 msgstr ""
 
 #.    .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("Depth of field")
@@ -210,6 +223,7 @@ msgstr ""
 #.     .MsgBox objText.GetText("Error creating level solver."), vbExclamation, objText.GetText("Error")
 #.     + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 #.   .MsgBox objText.GetText("Can't create encoder list"), vbCritical, objText.GetText("Error")
+#.    .MsgBox objText.GetText("Can't load license file. Please see <http://www.gnu.org/licenses/>."), vbExclamation, objText.GetText("Error")
 msgid "Error"
 msgstr ""
 
@@ -234,21 +248,24 @@ msgstr ""
 msgid "Error when loading level file:"
 msgstr ""
 
-#.   .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+#.   objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , _
 msgid "Exit"
 msgstr ""
 
-#. ' '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 #.  '  If .MsgBox(objText.GetText("Are you sure?"), vbYesNo Or vbQuestion, objText.GetText("Exit game")) = vbYes Then Unload Me
 msgid "Exit game"
 msgstr ""
 
-#.   .AddNewChildren FakeCtl_Button, 8, -32, 80, -8, , , , , objText.GetText("Exit"), , "cmdExit", , 1, , 1, , , objText.GetText("Exit the game and return to desktop.")
+#.   objText.GetText("Exit the game and return to desktop.")
 msgid "Exit the game and return to desktop."
 msgstr ""
 
 #.    .AddColumn objText.GetText("Extension"), , , efcfSizable Or efcfSortable Or (efcfHidden And m_nType = 3), 128
 msgid "Extension"
+msgstr ""
+
+#.    s = objText.GetText("FPS: ") + Format(objTiming.FPS, "0.0") + vbCrLf + _
+msgid "FPS: "
 msgstr ""
 
 #.     .MsgBox objText.GetText("Failed to begin video capture"), vbCritical, objText.GetText("Error")
@@ -372,6 +389,10 @@ msgstr ""
 msgid "Level number"
 msgstr ""
 
+#.  objText.GetText("License"))
+msgid "License"
+msgstr ""
+
 #.      .AddItem objText.GetText("Low")
 msgid "Low"
 msgstr ""
@@ -387,6 +408,10 @@ msgstr ""
 
 #.      .AddItem objText.GetText("Medium")
 msgid "Medium"
+msgstr ""
+
+#.   objText.GetText("Menu"), , "cmdMenu", , 1, , 1, , , _
+msgid "Menu"
 msgstr ""
 
 #.     FakeDXUIShowToolTipText m_nIndex, objText.GetText("Minimize"), x, y
@@ -441,6 +466,8 @@ msgstr ""
 #.   .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK3", 1, 1, 1, 1
 #.   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK4", 1, 1, 1, 1
+#.   objText.GetText("OK"), _
+#.   objText.GetText("OK"), _
 msgid "OK"
 msgstr ""
 
@@ -463,7 +490,7 @@ msgid "Open other file"
 msgstr ""
 
 #. 400, 400, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Options"))
-#.   .AddNewChildren FakeCtl_Button, 208, -32, 280, -8, , , , , objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , objText.GetText("Change the game settings.")
+#.   objText.GetText("Options"), , "cmdOptions", , 1, , 1, , , _
 #.  .AddButton objText.GetText("Options"), &H200&, _
 msgid "Options"
 msgstr ""
@@ -472,6 +499,10 @@ msgstr ""
 #.  .AddButton objText.GetText("Other levels"), &H102&, _
 #.  .AddButton objText.GetText("Other levels"), &H102&, _
 msgid "Other levels"
+msgstr ""
+
+#.   objText.GetText("Pause the game and display in-game menu.") + " (Esc)"
+msgid "Pause the game and display in-game menu."
 msgstr ""
 
 #.   objText.GetText("Play next level.")
@@ -517,9 +548,9 @@ msgstr ""
 msgid "Resolution"
 msgstr ""
 
-#.  objText.GetText("Restart current level.")
-#.  objText.GetText("Restart current level.")
-#.  objText.GetText("Restart current level.")
+#.  objText.GetText("Restart current level.") + " (R)"
+#.  objText.GetText("Restart current level.") + " (R)"
+#.  objText.GetText("Restart current level.") + " (R)"
 msgid "Restart current level."
 msgstr ""
 
@@ -545,9 +576,9 @@ msgstr ""
 msgid "Save as"
 msgstr ""
 
-#.   objText.GetText("Save current level to file.")
-#.   objText.GetText("Save current level to file.")
-#.   objText.GetText("Save current level to file.")
+#.   objText.GetText("Save current level to file.") + " (Ctrl+S)"
+#.   objText.GetText("Save current level to file.") + " (Ctrl+S)"
+#.   objText.GetText("Save current level to file.") + " (Ctrl+S)"
 msgid "Save current level to file."
 msgstr ""
 
@@ -557,7 +588,7 @@ msgstr ""
 msgid "Save level"
 msgstr ""
 
-#.   .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
+#.   objText.GetText("Select a level and start the game.")
 msgid "Select a level and start the game."
 msgstr ""
 
@@ -577,6 +608,18 @@ msgstr ""
 msgid "Shadow"
 msgstr ""
 
+#.   objText.GetText("Show information about the game.")
+msgid "Show information about the game."
+msgstr ""
+
+#.    objText.GetText("Show statistics"), , , , , , , , , objText.GetText("Show statistics about graphics, for example FPS, etc.") + " (F11)")
+msgid "Show statistics"
+msgstr ""
+
+#.    objText.GetText("Show statistics"), , , , , , , , , objText.GetText("Show statistics about graphics, for example FPS, etc.") + " (F11)")
+msgid "Show statistics about graphics, for example FPS, etc."
+msgstr ""
+
 #.  objText.GetText("Solve current level using automatic solvers.")
 msgid "Solve current level using automatic solvers."
 msgstr ""
@@ -587,7 +630,7 @@ msgstr ""
 msgid "Solve level"
 msgstr ""
 
-#.   .AddNewChildren FakeCtl_Button, 108, -32, 180, -8, , , , , objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , objText.GetText("Select a level and start the game.")
+#.   objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , _
 msgid "Start game"
 msgstr ""
 
@@ -615,13 +658,26 @@ msgstr ""
 msgid "There is a solution included in the level file, but it may be incorrect. Do you want to view the solution?"
 msgstr ""
 
+#.   objText.GetText("This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.") + vbCrLf + vbCrLf + _
+msgid "This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details."
+msgstr ""
+
+#.   objText.GetText("This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.") + vbCrLf + vbCrLf + _
+msgid "This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version."
+msgstr ""
+
+#.    objText.GetText("Triangles: ") + CStr(FakeDXAppTriangleCount)
+msgid "Triangles: "
+msgstr ""
+
 #.  .AddButton objText.GetText("Try again"), &H100&, _
 msgid "Try again"
 msgstr ""
 
 #.     frmMain.Caption = objText.GetText("Turning Polyhedron")
 #. frm.Caption = objText.GetText("Turning Polyhedron")
-#. ' FakeDXGDIDrawText FakeDXUIDefaultFont, objText.GetText("Turning Polyhedron"), _
+#.   objText.GetText("Turning Polyhedron"), _
+#.   objText.GetText("Turning Polyhedron") + "   " + objText.GetText("version") + " " + FakeDXAppVersion + vbCrLf + vbCrLf + _
 msgid "Turning Polyhedron"
 msgstr ""
 
@@ -636,8 +692,8 @@ msgstr ""
 msgid "Undo"
 msgstr ""
 
-#.   objText.GetText("Undo last move.")
-#.   objText.GetText("Undo last move.")
+#.   objText.GetText("Undo last move.") + " (U)"
+#.   objText.GetText("Undo last move.") + " (U)"
 msgid "Undo last move."
 msgstr ""
 
@@ -645,7 +701,7 @@ msgstr ""
 msgid "Vertical synchronization"
 msgstr ""
 
-#.     objText.GetText("Video capture options") + " (Ctrl+F9)", , "cmdVideoCapture", , , 1, , , , _
+#.     objText.GetText("Video capture options"), , "cmdVideoCapture", , , 1, , , , _
 #. 600, 256, FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , objText.GetText("Video capture options"))
 msgid "Video capture options"
 msgstr ""
@@ -658,12 +714,21 @@ msgstr ""
 msgid "Video capture started, video size: "
 msgstr ""
 
+#.   objText.GetText("View full license"), _
+msgid "View full license"
+msgstr ""
+
 #.    .AddNewChildren FakeCtl_Button, -112, 8, -8, -24, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("View solution"), , "cmdViewSolution", 1, , 1, 1, , , _
 msgid "View solution"
 msgstr ""
 
 #.    objText.GetText("View the solution included in the level file.") + " (F12)"
 msgid "View the solution included in the level file."
+msgstr ""
+
+#.   objText.GetText("Visit project homepage"), _
+#.   objText.GetText("Visit project homepage") + " (" + ProjectHomepage + ")"
+msgid "Visit project homepage"
 msgstr ""
 
 #.    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
@@ -685,5 +750,13 @@ msgstr ""
 
 #.   s = objText.GetText("Yes")
 msgid "Yes"
+msgstr ""
+
+#.   objText.GetText("You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>."), _
+msgid "You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>."
+msgstr ""
+
+#.   objText.GetText("Turning Polyhedron") + "   " + objText.GetText("version") + " " + FakeDXAppVersion + vbCrLf + vbCrLf + _
+msgid "version"
 msgstr ""
 

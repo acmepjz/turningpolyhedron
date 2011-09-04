@@ -62,6 +62,8 @@ Dim tAt As D3DVECTOR
 Dim tUp As D3DVECTOR
 Dim fovy As Single, Aspect As Single, zn As Single, zf As Single
 '///
+Dim i As Long, j As Long, m As Long
+'///
 If m_hStub = 0 Then Exit Sub
 MyMini_VertexCount = 0
 MyMini_IndexCount = 0
@@ -86,15 +88,38 @@ MiniStub_Draw m_hStub, m_fResolution, tEye.x, tEye.z, -tEye.y, tAt.x - tEye.x, t
 '///
 'TODO:
 If MyMini_IndexCount > 0 Then
- MyMini_IndexCount = MyMini_IndexCount \ 3
+ m = MyMini_IndexCount
+ MyMini_IndexCount = MyMini_IndexCount \ 3&
  d3dd9.SetVertexDeclaration d3dd9.CreateVertexDeclaration(m_tDefVertexDecl(0)) '??? slow!!!
 ' d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
 ' d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
 ' d3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_WIREFRAME
+ '///draw something
+ On Error Resume Next
  d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, MyMini_VertexCount, MyMini_IndexCount, MyMini_Indices(0), D3DFMT_INDEX32, MyMini_Vertices(0), 64&
+' If Err.Number Then
+'  'something goes wrong ...
+'  Debug.Print "Something goes wrong ..."
+'  If MyMini_VertexCount < &H10000 Then
+'   For i = 0 To m \ 2 - 1
+'    j = MyMini_Indices(i + i + 1)
+'    j = ((j And &H7FFF&) * &H10000) Or (((j And &H8000&) <> 0) And &H80000000)
+'    MyMini_Indices(i) = (MyMini_Indices(i + i) And &HFFFF&) Or j
+'   Next i
+'   If m And 1& Then MyMini_Indices(m \ 2) = MyMini_Indices(m - 1)
+'   '///try again
+'   d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, MyMini_VertexCount, MyMini_IndexCount, MyMini_Indices(0), D3DFMT_INDEX16, MyMini_Vertices(0), 64&
+'  Else
+'   'err
+'   Debug.Print "Draw landscape failed!!!"
+'  End If
+' End If
+ On Error GoTo 0
 ' d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
 ' d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE
 ' d3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_SOLID
+ '///record triangle count
+ FakeDXAppTriangleCount = FakeDXAppTriangleCount + MyMini_IndexCount
 End If
 ''completely unusable
 'If MyMini_FogIndexCount > 0 Then

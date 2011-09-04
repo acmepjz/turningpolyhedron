@@ -383,7 +383,7 @@ Case RenderPass_ShadowMap
   d3dd9.SetRenderTarget 0, objShadowMap.GetSurfaceLevel(0)
   d3dd9.SetDepthStencilSurface objShadowStencil
   '///
-  d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, -1, 1, 0
+  d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER Or D3DCLEAR_STENCIL, -1, 1, 0
   '///
   d3dd9.GetTransform D3DTS_WORLD, mat
   D3DXMatrixMultiply mat, mat, m_tLightViewProj
@@ -415,7 +415,7 @@ Case RenderPass_Main
   End If
   #End If
  End If
- d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER, &HFF000010, 1, 0 '??? TODO:backcolor,etc.
+ d3dd9.Clear 0, ByVal 0, D3DCLEAR_TARGET Or D3DCLEAR_ZBUFFER Or D3DCLEAR_STENCIL, &HFF000010, 1, 0 '??? TODO:backcolor,etc.
  '///
  If SetupEffect Then
   If m_bShadowEnabled And Not objShadowMap Is Nothing Then Set obj = objShadowMap

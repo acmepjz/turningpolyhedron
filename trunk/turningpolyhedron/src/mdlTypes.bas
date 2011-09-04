@@ -612,6 +612,8 @@ Public Type typePolyhedronInstance
  '---&H9 &HB &HD &HF = rolling
  '---&H8 &HA &HC &HE = falling
  '-1=falling (standard)
+ '///stupid animation
+ '&H10=teleport (show)
  '///
  matWorld As D3DMATRIX
  vCenter As D3DVECTOR
