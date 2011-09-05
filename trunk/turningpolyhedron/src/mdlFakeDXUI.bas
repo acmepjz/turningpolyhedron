@@ -4,7 +4,7 @@ Option Explicit
 Public Const FakeDXUISliderSize As Long = 12
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
-Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hWnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
     x As Long
     y As Long
@@ -223,9 +223,9 @@ Public Enum enumFakeDXUIMessage
  FakeCtl_Msg_DblClick 'param1=ctlindex
  FakeCtl_Msg_Change 'param1=ctlindex
  FakeCtl_Msg_ScrollChange 'param1=ctlindex
- FakeCtl_Msg_GetFocus 'param1=ctlindex
+ FakeCtl_Msg_GetFocus 'param1=ctlindex param2=old ctlindex (optional)
  FakeCtl_Msg_LostFocus 'param1=ctlindex
- FakeCtl_Msg_SetFocus 'param1=ctlindex
+ FakeCtl_Msg_SetFocus 'param1=ctlindex param2=old ctlindex (optional)
  '///
  FakeCtl_Msg_Special = &HFFFF0000
  FakeCtl_Msg_AbortProcess 'abort process, discard all following messages
@@ -301,7 +301,7 @@ With FakeDXUIControls(1)
  .SetRightEx nRight, 0
  .SetBottomEx nBottom, 0
 End With
-FakeDXUI_IME.Create frmMain.hWnd '?
+FakeDXUI_IME.Create frmMain.hwnd '?
 '///
 ReDim FakeDXUIModalStack(1 To 64)
 FakeDXUIModalStackCount = 0
@@ -398,13 +398,52 @@ End Sub
 Public Sub FakeDXUIDoEvents()
 On Error Resume Next
 Dim t As typeFakeDXUIMessage
+Dim idx As Long
+Dim idxGetFocus_Last As Long, idxGetFocus_Index As Long
+Dim idxSetFocus_Last As Long, idxSetFocus_Index As Long
 ''///
 'Static b As Boolean
 'If b Then Exit Sub
 'b = True
 ''///
 If FakeDXUIControlCount > 0 Then
+ '///fix some bug
+ idx = FakeDXUIMessageQueueHead
+ idxGetFocus_Last = -1
+ idxSetFocus_Last = -1
+ '///
  Do While FakeDXUIMessageQueueHead < FakeDXUIMessageQueueTail
+  '///fix some bug
+  Do While idx < FakeDXUIMessageQueueTail
+   '///
+   Select Case FakeDXUIMessageQueue(idx).iMsg
+   Case FakeCtl_Msg_GetFocus
+    If idxGetFocus_Last > 0 Then
+     FakeDXUIMessageQueue(idxGetFocus_Last).iMsg = 0
+     If idxGetFocus_Index > 0 And idxGetFocus_Index = FakeDXUIMessageQueue(idx).nParam1 Then
+      FakeDXUIMessageQueue(idx).iMsg = 0
+      idxGetFocus_Index = 0
+     End If
+    Else
+     idxGetFocus_Index = FakeDXUIMessageQueue(idx).nParam2
+    End If
+    idxGetFocus_Last = idx
+   Case FakeCtl_Msg_SetFocus
+    If idxSetFocus_Last > 0 Then
+     FakeDXUIMessageQueue(idxSetFocus_Last).iMsg = 0
+     If idxSetFocus_Index > 0 And idxSetFocus_Index = FakeDXUIMessageQueue(idx).nParam1 Then
+      FakeDXUIMessageQueue(idx).iMsg = 0
+      idxSetFocus_Index = 0
+     End If
+    Else
+     idxSetFocus_Index = FakeDXUIMessageQueue(idx).nParam2
+    End If
+    idxSetFocus_Last = idx
+   End Select
+   '///
+   idx = idx + 1
+  Loop
+  '///
   t = FakeDXUIMessageQueue(FakeDXUIMessageQueueHead)
   FakeDXUIMessageQueueHead = FakeDXUIMessageQueueHead + 1 'skip current message first!!!
   '///
@@ -415,7 +454,7 @@ If FakeDXUIControlCount > 0 Then
    Exit Sub
   End Select
   '///
-  FakeDXUIDispatchMessage t 'then dispatch it, prevents dispatch the same message infinitely
+  If t.iMsg Then FakeDXUIDispatchMessage t 'then dispatch it, prevents dispatch the same message infinitely
   '///
  Loop
  FakeDXUIMessageQueueHead = 0
@@ -473,7 +512,7 @@ FakeDXUIPopup_ToolTipText_Caption = s
 '///
 If x < 0 Or y < 0 Then
  GetCursorPos p
- ScreenToClient frmMain.hWnd, p
+ ScreenToClient frmMain.hwnd, p
  x = p.x
  y = p.y
 End If
