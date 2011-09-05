@@ -56,7 +56,7 @@ Friend Property Let LandscapeResolution(ByVal f As Single)
 m_fResolution = f
 End Property
 
-Friend Sub Render(ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera)
+Friend Sub Render()
 Dim tEye As D3DVECTOR
 Dim tAt As D3DVECTOR
 Dim tUp As D3DVECTOR
@@ -81,7 +81,7 @@ MyMini_Offset.x = m_fDim * (1 - m_nSize) / 2 + m_tCenter.x
 MyMini_Offset.y = m_fDim * (1 - m_nSize) / 2 - m_tCenter.z
 MyMini_Offset.z = m_tCenter.y
 '///
-objRender.GetProjection_PerspectiveFovLH fovy, Aspect, zn, zf
+objRenderTest.GetProjection_PerspectiveFovLH fovy, Aspect, zn, zf
 objCamera.GetRealCamera tEye, tAt, tUp
 '///
 MiniStub_Draw m_hStub, m_fResolution, tEye.x, tEye.z, -tEye.y, tAt.x - tEye.x, tAt.z - tEye.z, tEye.y - tAt.y, tUp.x, tUp.z, -tUp.y, fovy * 57.29578!, Aspect, zn, zf
