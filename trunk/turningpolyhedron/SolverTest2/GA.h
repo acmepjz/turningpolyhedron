@@ -84,7 +84,7 @@ public:
 		for(int times=0;times<GenerationCount;times++){
 			int pool_a=0;
 			if(out) (*out)<<"Running generation "<<(times+1)<<"...\r";
-			if(Callback){
+			/*if(Callback){
 				Callback(UserData,times,GenerationCount,&Cancel);
 				if(Cancel) break;
 			}
@@ -95,14 +95,14 @@ public:
 				if(Node[i].Fitness>0) pool_a++;
 				/*//debug
 				if(out) (*out)<<"Running generation "<<(times+1)<<", item "<<(i+1)<<"    \r";
-				//
+				//*/
 				if(Callback){
 					Callback(UserData,n++,m,&Cancel);
 					if(Cancel) break;
 				}
 				//*/
 			}
-			//if(Cancel) break;
+			if(Cancel) break;
 			//
 			qsort(Node,m_nPoolSize,sizeof(GANode),GANode_Compare);
 			//reproduce
@@ -144,12 +144,14 @@ public:
 				}
 			}
 		}
-		for(i=0;i<m_nPoolSize;i++){
-			Node[i].Index=i;
-			Node[i].Fitness=Pool[i]->CalcFitness();
+		if(!Cancel){
+			for(i=0;i<m_nPoolSize;i++){
+				Node[i].Index=i;
+				Node[i].Fitness=Pool[i]->CalcFitness();
+			}
+			qsort(Node,m_nPoolSize,sizeof(GANode),GANode_Compare);
+			if(out) (*out)<<"\nDone.\n";
 		}
-		qsort(Node,m_nPoolSize,sizeof(GANode),GANode_Compare);
-		if(out) (*out)<<"\nDone.\n";
 		return !Cancel;
 	}
 	GABase* operator()(int Index){

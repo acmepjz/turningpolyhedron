@@ -79,6 +79,12 @@ public:
 		LastFitness=n;
 		return n;
 	}
+	char* GetMovedArea(){
+		return m_bMovedArea;
+	}
+	char* GetSolutionMovedArea(){
+		return m_bSolutionMovedArea;
+	}
 	void CopyFrom(const GABase* src){
 		const SimpleSolverGA& obj=*(reinterpret_cast<const SimpleSolverGA*>(src));
 		memcpy(m_bMapData,obj.m_bMapData,1<<(m_nWidthShift+m_nHeightShift));

@@ -11,6 +11,10 @@ msgstr ""
 "X-Poedit-Language: Chinese\n"
 "X-Poedit-Country: CHINA\n"
 
+#. objText.GetText(", ETA: ") + Format(f, "hh:mm:ss")
+msgid ", ETA: "
+msgstr ", 预计时间剩余: "
+
 #. objText.GetText("A puzzle game of rolling block mazes and its enhancements"), _
 msgid "A puzzle game of rolling block mazes and its enhancements"
 msgstr "关于滚动方块迷宫及其变种的益智游戏"
@@ -539,7 +543,7 @@ msgstr "质量"
 msgid "Radial blur"
 msgstr "径向模糊"
 
-#. .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
+#. .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
 #. objText.GetText("Random level"))
 #. m_sLevelName = objText.GetText("Random level")
 msgid "Random level"
