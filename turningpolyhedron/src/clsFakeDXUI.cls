@@ -2048,8 +2048,8 @@ Friend Sub SetFocus()
 If m_nStyle And &H1000000 Then
  If FakeDXUIFocus <> m_nIndex Then
   If FakeDXUIFocus > 0 And FakeDXUIFocus <= FakeDXUIControlCount Then FakeDXUIPostMessage FakeCtl_Msg_LostFocus, FakeDXUIFocus
+  FakeDXUIPostMessage FakeCtl_Msg_GetFocus, m_nIndex, FakeDXUIFocus
   FakeDXUIFocus = m_nIndex
-  FakeDXUIPostMessage FakeCtl_Msg_GetFocus, m_nIndex
  End If
  If FakeDXUIActiveWindow > 0 And FakeDXUIActiveWindow <= FakeDXUIControlCount Then
   FakeDXUIControls(FakeDXUIActiveWindow).Focus = m_nIndex

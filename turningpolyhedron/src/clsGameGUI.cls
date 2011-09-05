@@ -300,7 +300,7 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, 8, 8, 72, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Refresh"), , "cmdRefresh"
   .AddNewChildren FakeCtl_Button, -328, 8, -208, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Open other file"), , "cmdOpen", 1, , 1
   '///TEST ONLY
-  .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
+  .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
  End With
  '///form 2
  With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
