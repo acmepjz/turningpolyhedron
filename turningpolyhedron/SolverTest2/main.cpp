@@ -54,11 +54,23 @@ static const char *MultilevelSolverGATypes[]={
 	"FailedMutationExtra","0",
 	NULL
 };
+static const char *SimpleTwoLevelGATypes[]={
+	"SimpleTwoLevelGA",
+	"Width","8",
+	"Height","8",
+	"InitialDensity","0.7",
+	"MutationMaxCount","256",
+	"MutationDecay","0.5",
+	"FailedMutationDecay","0.8",
+	"FailedMutationExtra","0",
+	NULL
+};
 
 static const char **RandomMapTypes[]={
 	SimpleSolverGATypes,
 	ColorZoneSolverGATypes,
 	MultilevelSolverGATypes,
+	SimpleTwoLevelGATypes,
 	NULL
 };
 
@@ -136,6 +148,25 @@ static GABase* GAFactoryFunction(map<string,string>& obj){
 		if(sz.Width>0&&sz.Height>0&&sz.PolyhedronCount>1
 			&&sz.PolyhedronCount<=7){
 			return new MultilevelSolverGA<7>(sz);
+		}else{
+			return NULL;
+		}
+	}else if(Type=="SimpleTwoLevelGA"){
+		SimpleTwoLevelGA::MapSize sz;
+		sz.Width=atoi(obj["Width"].c_str());
+		sz.Height=atoi(obj["Height"].c_str());
+		//
+		sz.InitialDensity=atof(obj["InitialDensity"].c_str());
+		if(sz.InitialDensity<0.0) sz.InitialDensity=0.0;
+		else if(sz.InitialDensity>1.0) sz.InitialDensity=1.0;
+		//
+		sz.MutationMaxCount=atoi(obj["MutationMaxCount"].c_str());
+		sz.MutationDecay=atof(obj["MutationDecay"].c_str());
+		sz.FailedMutationDecay=atof(obj["FailedMutationDecay"].c_str());
+		sz.FailedMutationExtra=atoi(obj["FailedMutationExtra"].c_str());
+		//
+		if(sz.Width>0&&sz.Height>0){
+			return new SimpleTwoLevelGA(sz);
 		}else{
 			return NULL;
 		}

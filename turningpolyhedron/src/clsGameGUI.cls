@@ -85,6 +85,8 @@ Private Type typeString
  s(127) As Byte
 End Type
 
+Private m_nLastProgress As Long, m_nNextProgress As Long, m_fAverageSpeed As Single
+
 Private m_bRandomMapFile() As Byte
 
 '////////solver (experimental)
@@ -1009,12 +1011,22 @@ End If
 End Sub
 
 Private Function IRandomMap_Callback(ByVal nCurrentGeneration As Long, ByVal nGenerationCount As Long) As Long
+Dim f As Single, i As Long
 If Not m_objRandomMapProgress Is Nothing Then
- If objTiming.GetMs > 50 Then
-  m_objRandomMapProgress.SetProgress nCurrentGeneration, nGenerationCount
+ i = nCurrentGeneration - m_nLastProgress
+ If i >= m_nNextProgress Then
+  f = objTiming.GetMs
+  If f < 1! Then f = 1!
+  m_nNextProgress = i / f * 200!
+  m_fAverageSpeed = m_fAverageSpeed * 0.875! + f / i * 0.125!
+  f = (nGenerationCount - nCurrentGeneration) * m_fAverageSpeed / 8.64E+07!
+  m_nLastProgress = nCurrentGeneration
+  '///
+  m_objRandomMapProgress.SetProgress nCurrentGeneration, nGenerationCount, Format(nCurrentGeneration / nGenerationCount, "0.0%") + _
+  objText.GetText(", ETA: ") + Format(f, "hh:mm:ss")
   FakeDXAppMainLoop , True
+  If m_objRandomMapProgress.Cancel Then IRandomMap_Callback = 1
  End If
- If m_objRandomMapProgress.Cancel Then IRandomMap_Callback = 1
 End If
 End Function
 
@@ -1072,6 +1084,9 @@ objGA = GACreate
 If GACreatePool(objGA, objMap, nPoolSize) Then
  '///
  Set m_objRandomMapProgress = New clsProgressDialog
+ m_nLastProgress = 0
+ m_nNextProgress = 32
+ m_fAverageSpeed = 0!
  m_objRandomMapProgress.CreateAndShow objText.GetText("Generating...")
  '///
  If GARun(objGA, nGenerations, objMap, lpCallback, lpUserData) Then
