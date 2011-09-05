@@ -3,12 +3,12 @@ Option Explicit
 
 #Const UseSubclassInIDE = False
 #Const VideoCaptureEnabled = True
-#Const SVN = True
+#Const SVN = False
 
 #If SVN Then
 Public Const FakeDXAppVersion As String = "SVN"
 #Else
-Public Const FakeDXAppVersion As String = "0.0.1 (SVN r???)"
+Public Const FakeDXAppVersion As String = "0.0.1-1 (SVN r214)"
 #End If
 
 'Private Declare Function GetStdHandle Lib "kernel32.dll" (ByVal nStdHandle As Long) As Long
@@ -311,9 +311,9 @@ With d3dd9
    '///
    objRenderTest.SetDepthOfFieldParams objCamera.RealDistance, 0.01, 0.1, 40
    '///shadow map
-   FakeDXAppRootObject.Render RenderPass_ShadowMap, objRenderTest, objCamera, False, False
+   FakeDXAppRootObject.Render RenderPass_ShadowMap, False, False
    '///
-   FakeDXAppRootObject.Render RenderPass_Main, objRenderTest, objCamera, False, False
+   FakeDXAppRootObject.Render RenderPass_Main, False, False
 '   objRenderTest.BeginRenderToPostProcessTarget
 '   If bTestOnly Then
 '    objGameMgr.UpdateLevelRuntimeData objTiming.GetDelta
@@ -341,7 +341,7 @@ With d3dd9
 '   End If
 '   objRenderTest.EndRenderToPostProcessTarget
    '////////volumetric fog test
-   FakeDXAppRootObject.Render RenderPass_FogVolume, objRenderTest, objCamera, False, False
+   FakeDXAppRootObject.Render RenderPass_FogVolume, False, False
 '   If objRenderTest.BeginRender(RenderPass_FogVolume) Then
 '    D3DXMatrixScaling mat1, 5, 5, 5
 '    D3DXMatrixMultiply mat2, mat1, mat
@@ -361,7 +361,7 @@ With d3dd9
   .BeginScene
   '///custom overlay (order?)
   If Not FakeDXAppRootObject Is Nothing Then
-   FakeDXAppRootObject.Render RenderPass_Overlay, objRenderTest, objCamera, False, True
+   FakeDXAppRootObject.Render RenderPass_Overlay, False, True
   End If
   '///UI
   FakeDXUIRender
@@ -620,6 +620,8 @@ On Error Resume Next
 Dim i As Long
 Dim s As String
 Dim obj As clsTreeStorageNode
+'///
+Randomize Timer
 '///init logger
 objLogger.CreateNew , , , DT_NOCLIP
 '///
@@ -700,7 +702,7 @@ objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
 objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
 'objRenderTest.SetLightType D3DLIGHT_POINT
 'objCamera.SetCamrea Vec3(6, 2, 3), Vec3, Vec3(, , 1), True
-objCamera.SetCamrea Vec3(0, 9.6, -6), Vec3, Vec3(, , 1), True
+objCamera.SetCamrea Vec3(-3, 9, 6), Vec3, Vec3(, , 1), True
 objCamera.AnimationEnabled = True
 objCamera.LinearDamping = 0.5
 objCamera.DampingOfDamping = 0.9

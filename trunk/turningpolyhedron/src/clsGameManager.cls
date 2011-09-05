@@ -2629,6 +2629,10 @@ Friend Property Get TileTypeID(ByVal nIndex As Long) As String
 TileTypeID = m_tTileType(nIndex).sID
 End Property
 
+Friend Property Get TileTypeApprIndex(ByVal nIndex As Long) As Long
+TileTypeApprIndex = m_tTileType(nIndex).nApprIndex
+End Property
+
 Friend Function FindTileType(ByRef sID As String) As Long
 Dim i As Long
 For i = 1 To m_nTileTypeCount

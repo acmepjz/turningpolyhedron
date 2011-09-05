@@ -1083,6 +1083,7 @@ MTInitFromString sRandomSeed
 objGA = GACreate
 If GACreatePool(objGA, objMap, nPoolSize) Then
  '///
+ objMainMenu.ShowAnimation = False
  Set m_objRandomMapProgress = New clsProgressDialog
  m_nLastProgress = 0
  m_nNextProgress = 32
@@ -1095,6 +1096,7 @@ If GACreatePool(objGA, objMap, nPoolSize) Then
   b = True
  End If
  '///
+ objMainMenu.ShowAnimation = True
  bCancel = m_objRandomMapProgress.Cancel
  m_objRandomMapProgress.HideAndDestroy
  Set m_objRandomMapProgress = Nothing
@@ -1381,7 +1383,7 @@ Private Sub IRenderableObject_Hide()
 Hide
 End Sub
 
-Private Sub IRenderableObject_Render(ByVal nType As enumRenderPassType, ByVal objRender As clsRenderPipeline, ByVal objCamera As clsCamera, ByVal IsEffectBegin As Boolean, ByVal IsSceneBegin As Boolean)
+Private Sub IRenderableObject_Render(ByVal nType As enumRenderPassType, ByVal IsEffectBegin As Boolean, ByVal IsSceneBegin As Boolean)
 Dim m As Long
 '///
 Select Case nType
@@ -1389,7 +1391,7 @@ Case RenderPass_Main
  If Not IsEffectBegin Then
   objRenderTest.SetTexture objTexture
   objRenderTest.SetNormalTexture objNormalTexture
-  If Not objRender.BeginRender(nType, False) Then Exit Sub
+  If Not objRenderTest.BeginRender(nType, False) Then Exit Sub
  End If
  '---???
  If FakeDXUIModalStackCount = 0 Then objGameMgr.UpdateLevelRuntimeData objTiming.GetDelta
@@ -1402,11 +1404,11 @@ Case RenderPass_Main
  objGameMgr.DrawLevel
  '////////draw landscape test (new and buggy) without advanced shading effects
  d3dd9.SetTexture 0, objLandTexture
- objLand.Render objRender, objCamera
+ objLand.Render
  '////////
  '///
  If Not IsSceneBegin Then d3dd9.EndScene
- If Not IsEffectBegin Then objRender.EndRender
+ If Not IsEffectBegin Then objRenderTest.EndRender
 Case RenderPass_FogVolume
  'TODO:
 Case RenderPass_Overlay
