@@ -1280,6 +1280,8 @@ module D3DX9_Mesh{
 	[entry("D3DXCreateBuffer")] void D3DXCreateBuffer(DWORD NumBytes, D3DXBuffer** ppBuffer);
 	[entry("D3DXLoadMeshFromXInMemory")] void D3DXLoadMeshFromXInMemory(void* Memory, DWORD SizeOfMemory, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
 	[entry("D3DXLoadMeshFromXResource")] void D3DXLoadMeshFromXResource(HMODULE Module, void* lpstrName, void* lpstrType, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
+	[entry("D3DXLoadMeshFromXA")] void D3DXLoadMeshFromXA(BSTR pFilename, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
+	[entry("D3DXSaveMeshToXA")] void D3DXSaveMeshToXA(BSTR pFilename, D3DXMesh* pMesh, DWORD* pAdjacency, struct D3DXMATERIAL* pMaterials, D3DXBuffer* pEffectInstances, DWORD NumMaterials, DWORD Format);
 	[entry("D3DXLoadMeshFromXW")] void D3DXLoadMeshFromXW(LPCWSTR pFilename, DWORD Options, Direct3DDevice9* pD3DDevice, D3DXBuffer** ppAdjacency, D3DXBuffer** ppMaterials, D3DXBuffer** ppEffectInstances, DWORD* pNumMaterials, D3DXMesh** ppMesh);
 	[entry("D3DXSaveMeshToXW")] void D3DXSaveMeshToXW(LPCWSTR pFilename, D3DXMesh* pMesh, DWORD* pAdjacency, struct D3DXMATERIAL* pMaterials, D3DXBuffer* pEffectInstances, DWORD NumMaterials, DWORD Format);
 	[entry("D3DXCreatePMeshFromStream"),helpstring("IStream *pStream")]
@@ -1318,13 +1320,13 @@ module D3DX9_Mesh{
 	[entry("D3DXOptimizeVertices")] void D3DXOptimizeVertices(void* pbIndices, UINT cFaces, UINT cVertices, int b32BitIndices, DWORD* pVertexRemap);
 	[entry("D3DXCreatePRTBuffer")] void D3DXCreatePRTBuffer(UINT NumSamples, UINT NumCoeffs, UINT NumChannels, D3DXPRTBuffer** ppBuffer);
 	[entry("D3DXCreatePRTBufferTex")] void D3DXCreatePRTBufferTex(UINT Width, UINT Height, UINT NumCoeffs, UINT NumChannels, D3DXPRTBuffer** ppBuffer);
-	//[entry("D3DXLoadPRTBufferFromFileA")] void D3DXLoadPRTBufferFromFileA(LPCSTR pFilename, D3DXPRTBuffer** ppBuffer);
+	[entry("D3DXLoadPRTBufferFromFileA")] void D3DXLoadPRTBufferFromFileA(BSTR pFilename, D3DXPRTBuffer** ppBuffer);
 	[entry("D3DXLoadPRTBufferFromFileW")] void D3DXLoadPRTBufferFromFileW(BSTR pFileName, D3DXPRTBuffer** ppBuffer);
-	//[entry("D3DXSavePRTBufferToFileA")] void D3DXSavePRTBufferToFileA(LPCSTR pFileName, D3DXPRTBuffer* pBuffer);
+	[entry("D3DXSavePRTBufferToFileA")] void D3DXSavePRTBufferToFileA(BSTR pFileName, D3DXPRTBuffer* pBuffer);
 	[entry("D3DXSavePRTBufferToFileW")] void D3DXSavePRTBufferToFileW(BSTR pFileName, D3DXPRTBuffer* pBuffer);
-	//[entry("D3DXLoadPRTCompBufferFromFileA")] void D3DXLoadPRTCompBufferFromFileA(LPCSTR pFilename, D3DXPRTCompBuffer** ppBuffer);
+	[entry("D3DXLoadPRTCompBufferFromFileA")] void D3DXLoadPRTCompBufferFromFileA(BSTR pFilename, D3DXPRTCompBuffer** ppBuffer);
 	[entry("D3DXLoadPRTCompBufferFromFileW")] void D3DXLoadPRTCompBufferFromFileW(BSTR pFileName, D3DXPRTCompBuffer** ppBuffer);
-	//[entry("D3DXSavePRTCompBufferToFileA")] void D3DXSavePRTCompBufferToFileA(LPCSTR pFileName, D3DXPRTCompBuffer* pBuffer);
+	[entry("D3DXSavePRTCompBufferToFileA")] void D3DXSavePRTCompBufferToFileA(BSTR pFileName, D3DXPRTCompBuffer* pBuffer);
 	[entry("D3DXSavePRTCompBufferToFileW")] void D3DXSavePRTCompBufferToFileW(BSTR pFileName, D3DXPRTCompBuffer* pBuffer);
 	[entry("D3DXCreatePRTCompBuffer")] void D3DXCreatePRTCompBuffer(enum D3DXSHCOMPRESSQUALITYTYPE Quality, UINT NumClusters, UINT NumPCA, D3DXPRTBuffer* pBufferIn, D3DXPRTCompBuffer** ppBufferOut);
 	[entry("D3DXCreateTextureGutterHelper")] void D3DXCreateTextureGutterHelper(UINT Width, UINT Height, D3DXMesh* pMesh, FLOAT GutterSize, D3DXTextureGutterHelper** ppBuffer);
@@ -2081,6 +2083,12 @@ module D3DX9_Shader{
 	[entry("D3DXCreateTextureShader")] int D3DXCreateTextureShader(DWORD* pFunction, D3DXTextureShader** ppTextureShader);
 	[entry("D3DXGatherFragments")] int D3DXGatherFragments(LPCSTR pSrcData, UINT SrcDataLen, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
 	[entry("D3DXCreateFragmentLinker")] int D3DXCreateFragmentLinker(Direct3DDevice9* pDevice, UINT ShaderCacheSize, D3DXFragmentLinker** ppFragmentLinker);
+	[entry("D3DXAssembleShaderFromFileA")] int D3DXAssembleShaderFromFileA(BSTR pSrcFile, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
+	[entry("D3DXAssembleShaderFromResourceA")] int D3DXAssembleShaderFromResourceA(HMODULE hSrcModule, void* lpstrSrcResource, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
+	[entry("D3DXCompileShaderFromFileA")] int D3DXCompileShaderFromFileA(BSTR pSrcFile, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, LPCSTR pFunctionName, LPCSTR pProfile, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs, D3DXConstantTable** ppConstantTable);
+	[entry("D3DXCompileShaderFromResourceA")] int D3DXCompileShaderFromResourceA(HMODULE hSrcModule, void* lpstrSrcResource, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, LPCSTR pFunctionName, LPCSTR pProfile, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs, D3DXConstantTable** ppConstantTable);
+	[entry("D3DXGatherFragmentsFromFileA")] int D3DXGatherFragmentsFromFileA(BSTR pSrcFile, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
+	[entry("D3DXGatherFragmentsFromResourceA")] int D3DXGatherFragmentsFromResourceA(HMODULE hSrcModule, void* lpstrSrcResource, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
 	[entry("D3DXAssembleShaderFromFileW")] int D3DXAssembleShaderFromFileW(BSTR pSrcFile, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
 	[entry("D3DXAssembleShaderFromResourceW")] int D3DXAssembleShaderFromResourceW(HMODULE hSrcModule, void* lpwstrSrcResource, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs);
 	[entry("D3DXCompileShaderFromFileW")] int D3DXCompileShaderFromFileW(BSTR pSrcFile, struct D3DXMACRO* pDefines, ID3DXInclude* pInclude, LPCSTR pFunctionName, LPCSTR pProfile, DWORD Flags, D3DXBuffer** ppShader, D3DXBuffer** ppErrorMsgs, D3DXConstantTable** ppConstantTable);
@@ -2289,6 +2297,14 @@ module D3DX9_Effect{
 	[entry("D3DXCreateEffectCompiler"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
 	int D3DXCreateEffectCompiler(void* lpstrSrcData, UINT SrcDataLen, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTCOMPILER* ppCompiler, D3DXBuffer** ppParseErrors);
 	[entry("D3DXDisassembleEffect")] int D3DXDisassembleEffect(LPD3DXEFFECT pEffect, int bEnableColorCode, D3DXBuffer** ppDisassembly);
+	[entry("D3DXCreateEffectFromFileA"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffectFromFileA(Direct3DDevice9* pDevice, BSTR pSrcFile, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTPOOL pPool, LPD3DXEFFECT* ppEffect, D3DXBuffer** ppCompilationErrors);
+	[entry("D3DXCreateEffectFromResourceA"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffectFromResourceA(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* lpstrSrcResource, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTPOOL pPool, LPD3DXEFFECT* ppEffect, D3DXBuffer** ppCompilationErrors);
+	[entry("D3DXCreateEffectCompilerFromFileA"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffectCompilerFromFileA(BSTR pSrcFile, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTCOMPILER* ppCompiler, D3DXBuffer** ppParseErrors);
+	[entry("D3DXCreateEffectCompilerFromResourceA"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
+	int D3DXCreateEffectCompilerFromResourceA(HMODULE hSrcModule, void* lpstrSrcResource, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTCOMPILER* ppCompiler, D3DXBuffer** ppParseErrors);
 	[entry("D3DXCreateEffectFromFileW"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
 	int D3DXCreateEffectFromFileW(Direct3DDevice9* pDevice, BSTR pSrcFile, void* pDefines, void* pInclude, DWORD Flags, LPD3DXEFFECTPOOL pPool, LPD3DXEFFECT* ppEffect, D3DXBuffer** ppCompilationErrors);
 	[entry("D3DXCreateEffectFromResourceW"),helpstring("pDefines As D3DXMACRO, pInclude As ID3DXInclude")]
@@ -2362,6 +2378,27 @@ module D3DX9_Tex{
 	[entry("D3DXFillCubeTextureTX")] int D3DXFillCubeTextureTX(Direct3DCubeTexture9* pCubeTexture, D3DXTEXTURESHADER* pTextureShader);
 	[entry("D3DXFillVolumeTextureTX")] int D3DXFillVolumeTextureTX(Direct3DVolumeTexture9* pVolumeTexture, D3DXTEXTURESHADER* pTextureShader);
 	[entry("D3DXComputeNormalMap")] int D3DXComputeNormalMap(Direct3DTexture9* pTexture, Direct3DTexture9* pSrcTexture, void* pSrcPalette, DWORD Flags, DWORD Channel, FLOAT Amplitude);
+	[entry("D3DXGetImageInfoFromFileA")] int D3DXGetImageInfoFromFileA(BSTR pSrcFile, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXGetImageInfoFromResourceA")] int D3DXGetImageInfoFromResourceA(HMODULE hSrcModule, void* pSrcResource, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXLoadSurfaceFromFileA")] int D3DXLoadSurfaceFromFileA(Direct3DSurface9* pDestSurface, void* pDestPalette, void* pDestRect, BSTR pSrcFile, void* pSrcRect, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXLoadSurfaceFromResourceA")] int D3DXLoadSurfaceFromResourceA(Direct3DSurface9* pDestSurface, void* pDestPalette, void* pDestRect, HMODULE hSrcModule, void* pSrcResource, void* pSrcRect, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXSaveSurfaceToFileA")] int D3DXSaveSurfaceToFileA(BSTR pDestFile, enum D3DXIMAGE_FILEFORMAT DestFormat, Direct3DSurface9* pSrcSurface, void* pSrcPalette, void* pSrcRect);
+	[entry("D3DXLoadVolumeFromFileA")] int D3DXLoadVolumeFromFileA(Direct3DVolume9* pDestVolume, void* pDestPalette, struct D3DBOX* pDestBox, BSTR pSrcFile, struct D3DBOX* pSrcBox, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXLoadVolumeFromResourceA")] int D3DXLoadVolumeFromResourceA(Direct3DVolume9* pDestVolume, void* pDestPalette, struct D3DBOX* pDestBox, HMODULE hSrcModule, void* pSrcResource, struct D3DBOX* pSrcBox, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
+	[entry("D3DXSaveVolumeToFileA")] int D3DXSaveVolumeToFileA(BSTR pDestFile, enum D3DXIMAGE_FILEFORMAT DestFormat, Direct3DVolume9* pSrcVolume, void* pSrcPalette, struct D3DBOX* pSrcBox);
+	[entry("D3DXCreateTextureFromFileA")] int D3DXCreateTextureFromFileA(Direct3DDevice9* pDevice, BSTR pSrcFile, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromFileA")] int D3DXCreateCubeTextureFromFileA(Direct3DDevice9* pDevice, BSTR pSrcFile, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromFileA")] int D3DXCreateVolumeTextureFromFileA(Direct3DDevice9* pDevice, BSTR pSrcFile, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXCreateTextureFromResourceA")] int D3DXCreateTextureFromResourceA(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromResourceA")] int D3DXCreateCubeTextureFromResourceA(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromResourceA")] int D3DXCreateVolumeTextureFromResourceA(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXCreateTextureFromFileExA")] int D3DXCreateTextureFromFileExA(Direct3DDevice9* pDevice, BSTR pSrcFile, UINT Width, UINT Height, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromFileExA")] int D3DXCreateCubeTextureFromFileExA(Direct3DDevice9* pDevice, BSTR pSrcFile, UINT Size, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromFileExA")] int D3DXCreateVolumeTextureFromFileExA(Direct3DDevice9* pDevice, BSTR pSrcFile, UINT Width, UINT Height, UINT Depth, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXCreateTextureFromResourceExA")] int D3DXCreateTextureFromResourceExA(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, UINT Width, UINT Height, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DTexture9** ppTexture);
+	[entry("D3DXCreateCubeTextureFromResourceExA")] int D3DXCreateCubeTextureFromResourceExA(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, UINT Size, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DCubeTexture9** ppCubeTexture);
+	[entry("D3DXCreateVolumeTextureFromResourceExA")] int D3DXCreateVolumeTextureFromResourceExA(Direct3DDevice9* pDevice, HMODULE hSrcModule, void* pSrcResource, UINT Width, UINT Height, UINT Depth, UINT MipLevels, DWORD Usage, enum D3DFORMAT Format, enum D3DPOOL Pool, DWORD Filter, DWORD MipFilter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo, void* pPalette, Direct3DVolumeTexture9** ppVolumeTexture);
+	[entry("D3DXSaveTextureToFileA")] int D3DXSaveTextureToFileA(BSTR pDestFile, enum D3DXIMAGE_FILEFORMAT DestFormat, Direct3DBaseTexture9* pSrcTexture, void* pSrcPalette);
 	[entry("D3DXGetImageInfoFromFileW")] int D3DXGetImageInfoFromFileW(BSTR pSrcFile, struct D3DXIMAGE_INFO* pSrcInfo);
 	[entry("D3DXGetImageInfoFromResourceW")] int D3DXGetImageInfoFromResourceW(HMODULE hSrcModule, void* pSrcResource, struct D3DXIMAGE_INFO* pSrcInfo);
 	[entry("D3DXLoadSurfaceFromFileW")] int D3DXLoadSurfaceFromFileW(Direct3DSurface9* pDestSurface, void* pDestPalette, void* pDestRect, BSTR pSrcFile, void* pSrcRect, DWORD Filter, int ColorKey, struct D3DXIMAGE_INFO* pSrcInfo);
@@ -2404,6 +2441,7 @@ module D3DX9_Shape{
 	[entry("D3DXCreateSphere")] int D3DXCreateSphere(Direct3DDevice9* pDevice, FLOAT Radius, UINT Slices, UINT Stacks, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency);
 	[entry("D3DXCreateTorus")] int D3DXCreateTorus(Direct3DDevice9* pDevice, FLOAT InnerRadius, FLOAT OuterRadius, UINT Sides, UINT Rings, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency);
 	[entry("D3DXCreateTeapot")] int D3DXCreateTeapot(Direct3DDevice9* pDevice, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency);
+	[entry("D3DXCreateTextA")] int D3DXCreateTextA(Direct3DDevice9* pDevice, int hDC, BSTR pText, FLOAT Deviation, FLOAT Extrusion, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency, struct GLYPHMETRICSFLOAT* pGlyphMetrics);
 	[entry("D3DXCreateTextW")] int D3DXCreateTextW(Direct3DDevice9* pDevice, int hDC, BSTR pText, FLOAT Deviation, FLOAT Extrusion, D3DXMesh** ppMesh, D3DXBuffer** ppAdjacency, struct GLYPHMETRICSFLOAT* pGlyphMetrics);
 };
 //d3dx9anim.bi
@@ -2729,6 +2767,8 @@ module D3DX9_Anim{
 	[entry("D3DXCreateKeyframedAnimationSet")] int D3DXCreateKeyframedAnimationSet(void* lpstrName, DOUBLE TicksPerSecond, D3DXPLAYBACK_TYPE Playback, UINT NumAnimations, UINT NumCallbackKeys, D3DXKEY_CALLBACK* pCallbackKeys, LPD3DXKEYFRAMEDANIMATIONSET* ppAnimationSet);
 	[entry("D3DXCreateCompressedAnimationSet")] int D3DXCreateCompressedAnimationSet(void* lpstrName, DOUBLE TicksPerSecond, D3DXPLAYBACK_TYPE Playback, D3DXBuffer* pCompressedData, UINT NumCallbackKeys, D3DXKEY_CALLBACK* pCallbackKeys, LPD3DXCOMPRESSEDANIMATIONSET* ppAnimationSet);
 	[entry("D3DXCreateAnimationController")] int D3DXCreateAnimationController(UINT MaxNumMatrices, UINT MaxNumAnimationSets, UINT MaxNumTracks, UINT MaxNumEvents, LPD3DXANIMATIONCONTROLLER* ppAnimController);
+	[entry("D3DXLoadMeshHierarchyFromXA")] int D3DXLoadMeshHierarchyFromXA(BSTR Filename, DWORD MeshOptions, Direct3DDevice9* pD3DDevice, LPD3DXALLOCATEHIERARCHY pAlloc, LPD3DXLOADUSERDATA pUserDataLoader, LPD3DXFRAME* ppFrameHierarchy, LPD3DXANIMATIONCONTROLLER* ppAnimController);
+	[entry("D3DXSaveMeshHierarchyToFileA")] int D3DXSaveMeshHierarchyToFileA(BSTR Filename, DWORD XFormat, D3DXFRAME* pFrameRoot, LPD3DXANIMATIONCONTROLLER pAnimController, LPD3DXSAVEUSERDATA pUserDataSaver);
 	[entry("D3DXLoadMeshHierarchyFromXW")] int D3DXLoadMeshHierarchyFromXW(BSTR Filename, DWORD MeshOptions, Direct3DDevice9* pD3DDevice, LPD3DXALLOCATEHIERARCHY pAlloc, LPD3DXLOADUSERDATA pUserDataLoader, LPD3DXFRAME* ppFrameHierarchy, LPD3DXANIMATIONCONTROLLER* ppAnimController);
 	[entry("D3DXSaveMeshHierarchyToFileW")] int D3DXSaveMeshHierarchyToFileW(BSTR Filename, DWORD XFormat, D3DXFRAME* pFrameRoot, LPD3DXANIMATIONCONTROLLER pAnimController, LPD3DXSAVEUSERDATA pUserDataSaver);
 };
