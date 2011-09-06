@@ -11,14 +11,34 @@ End Type
 Public Function CreateEffect(ByVal s As String, ByRef d3dxe As D3DXEffect, Optional ByRef sError As String, Optional ByVal bFromFile As Boolean) As Boolean
 Dim ret As Long
 Dim s2 As String
+Dim b() As Byte, m As Long
 Dim buf As D3DXBuffer
 If bFromFile Then
- ret = D3DXCreateEffectFromFileW(d3dd9, s, ByVal 0, ByVal 0, 0, Nothing, d3dxe, buf)
+ On Error Resume Next
+ Err.Clear
+ m = GetAttr(s)
+ If Err.Number = 0 And (m And vbDirectory) = 0 Then
+  Open s For Binary Access Read As #1
+  m = LOF(1)
+  If m > 0 Then
+   ReDim b(m - 1)
+   Get #1, 1, b
+  End If
+  Close
+ Else
+  m = -1
+ End If
+ If m > 0 Then
+  s = b
+ Else
+  s = StrConv("#error Can't load file " + s + vbCrLf, vbFromUnicode)
+ End If
+ On Error GoTo 0
 Else
  s = StrConv(s, vbFromUnicode)
- 'create effect
- ret = D3DXCreateEffect(d3dd9, ByVal StrPtr(s), LenB(s), ByVal 0, ByVal 0, 0, Nothing, d3dxe, buf)
 End If
+'create effect
+ret = D3DXCreateEffect(d3dd9, ByVal StrPtr(s), LenB(s), ByVal 0, ByVal 0, 0, Nothing, d3dxe, buf)
 If ret < 0 Then
  s2 = objText.GetText("Can't create D3DXEffect!! Error number: ") + "&H" + Hex(ret)
  If Not buf Is Nothing Then

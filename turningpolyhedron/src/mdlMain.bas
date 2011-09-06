@@ -3,7 +3,7 @@ Option Explicit
 
 #Const UseSubclassInIDE = False
 #Const VideoCaptureEnabled = True
-#Const SVN = False
+#Const SVN = True
 
 #If SVN Then
 Public Const FakeDXAppVersion As String = "SVN"
