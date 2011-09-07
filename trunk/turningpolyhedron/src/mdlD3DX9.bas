@@ -212,6 +212,38 @@ With D3DXVec3Subtract
 End With
 End Function
 
+Public Function D3DXVec3Add3(pV1 As D3DVECTOR, pV2 As D3DVECTOR, pV3 As D3DVECTOR) As D3DVECTOR
+With D3DXVec3Add3
+ .x = pV1.x + pV2.x + pV3.x
+ .y = pV1.y + pV2.y + pV3.y
+ .z = pV1.z + pV2.z + pV3.z
+End With
+End Function
+
+Public Function D3DXVec3Subtract3(pV1 As D3DVECTOR, pV2 As D3DVECTOR, pV3 As D3DVECTOR) As D3DVECTOR
+With D3DXVec3Subtract3
+ .x = pV1.x - pV2.x - pV3.x
+ .y = pV1.y - pV2.y - pV3.y
+ .z = pV1.z - pV2.z - pV3.z
+End With
+End Function
+
+Public Function D3DXVec3AddSubtract(pV1 As D3DVECTOR, pV2 As D3DVECTOR, pV3 As D3DVECTOR) As D3DVECTOR
+With D3DXVec3AddSubtract
+ .x = pV1.x + pV2.x - pV3.x
+ .y = pV1.y + pV2.y - pV3.y
+ .z = pV1.z + pV2.z - pV3.z
+End With
+End Function
+
+Public Function D3DXVec3AddScale(pV1 As D3DVECTOR, pV2 As D3DVECTOR, ByVal s As Single) As D3DVECTOR
+With D3DXVec3AddScale
+ .x = pV1.x + pV2.x * s
+ .y = pV1.y + pV2.y * s
+ .z = pV1.z + pV2.z * s
+End With
+End Function
+
 Public Function D3DXVec3Minimize(pV1 As D3DVECTOR, pV2 As D3DVECTOR) As D3DVECTOR
 With D3DXVec3Minimize
  If pV1.x < pV2.x Then .x = pV1.x Else .x = pV2.x
@@ -305,6 +337,15 @@ With D3DXVec4AddSubtract
 End With
 End Function
 
+Public Function D3DXVec4AddScale(pV1 As D3DXVECTOR4, pV2 As D3DXVECTOR4, ByVal s As Single) As D3DXVECTOR4
+With D3DXVec4AddScale
+ .x = pV1.x + pV2.x * s
+ .y = pV1.y + pV2.y * s
+ .z = pV1.z + pV2.z * s
+ .w = pV1.w + pV2.w * s
+End With
+End Function
+
 Public Function D3DXVec4Minimize(pV1 As D3DXVECTOR4, pV2 As D3DXVECTOR4) As D3DXVECTOR4
 With D3DXVec4Minimize
  If pV1.x < pV2.x Then .x = pV1.x Else .x = pV2.x
@@ -329,15 +370,6 @@ With D3DXVec4Scale
  .y = pV.y * s
  .z = pV.z * s
  .w = pV.w * s
-End With
-End Function
-
-Public Function D3DXVec4AddScale(pV1 As D3DXVECTOR4, pV2 As D3DXVECTOR4, ByVal s As Single) As D3DXVECTOR4
-With D3DXVec4AddScale
- .x = pV1.x + pV2.x * s
- .y = pV1.y + pV2.y * s
- .z = pV1.z + pV2.z * s
- .w = pV1.w + pV2.w * s
 End With
 End Function
 
@@ -385,22 +417,22 @@ End Function
 '//--------------------------
 
 Public Function D3DXPlaneDot(pP As D3DPLANE, pV As D3DXVECTOR4) As Single
-D3DXPlaneDot = pP.a * pV.x + pP.b * pV.y + pP.c * pV.z + pP.d * pV.w
+D3DXPlaneDot = pP.a * pV.x + pP.b * pV.y + pP.C * pV.z + pP.d * pV.w
 End Function
 
 Public Function D3DXPlaneDotCoord(pP As D3DPLANE, pV As D3DXVECTOR4) As Single
-D3DXPlaneDotCoord = pP.a * pV.x + pP.b * pV.y + pP.c * pV.z + pP.d
+D3DXPlaneDotCoord = pP.a * pV.x + pP.b * pV.y + pP.C * pV.z + pP.d
 End Function
 
 Public Function D3DXPlaneDotNormal(pP As D3DPLANE, pV As D3DXVECTOR4) As Single
-D3DXPlaneDotNormal = pP.a * pV.x + pP.b * pV.y + pP.c * pV.z
+D3DXPlaneDotNormal = pP.a * pV.x + pP.b * pV.y + pP.C * pV.z
 End Function
 
 Public Function D3DXPlaneScale(pP As D3DPLANE, ByVal s As Single) As D3DPLANE
 With D3DXPlaneScale
  .a = pP.a * s
  .b = pP.b * s
- .c = pP.c * s
+ .C = pP.C * s
  .d = pP.d * s
 End With
 End Function
