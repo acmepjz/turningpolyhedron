@@ -3,12 +3,12 @@ Option Explicit
 
 #Const UseSubclassInIDE = False
 #Const VideoCaptureEnabled = True
-#Const SVN = True
+#Const SVN = False
 
 #If SVN Then
 Public Const FakeDXAppVersion As String = "SVN"
 #Else
-Public Const FakeDXAppVersion As String = "0.0.1-1 (SVN r214)"
+Public Const FakeDXAppVersion As String = "0.0.1-2 (SVN r217)"
 #End If
 
 'Private Declare Function GetStdHandle Lib "kernel32.dll" (ByVal nStdHandle As Long) As Long
@@ -174,6 +174,61 @@ Public Const FakeDXAppVideoCaptureEnabled As Boolean = False
 '////////about
 
 Public frmAbout As New frmAbout
+
+'////////some dirty code
+
+Private Declare Function GetModuleHandle Lib "kernel32.dll" Alias "GetModuleHandleA" (ByVal lpModuleName As String) As Long
+Private Declare Function GetProcAddress Lib "kernel32.dll" (ByVal hModule As Long, ByVal lpProcName As String) As Long
+Private Declare Function VirtualProtect Lib "kernel32.dll" (ByRef lpAddress As Any, ByVal dwSize As Long, ByVal flNewProtect As Long, ByRef lpflOldProtect As Long) As Long
+Private Declare Function VirtualQuery Lib "kernel32.dll" (ByRef lpAddress As Any, ByRef lpBuffer As MEMORY_BASIC_INFORMATION, ByVal dwLength As Long) As Long
+Private Type MEMORY_BASIC_INFORMATION
+    BaseAddress As Long
+    AllocationBase As Long
+    AllocationProtect As Long
+    RegionSize As Long
+    State As Long
+    Protect As Long
+    lType As Long
+End Type
+
+Private Const PAGE_EXECUTE_READ As Long = &H20
+Private Const PAGE_EXECUTE_READWRITE As Long = &H40
+
+Public Sub DirtyCode()
+Dim tMBI As MEMORY_BASIC_INFORMATION, i As Long
+Dim ThePointer As Long
+Static bHooked As Boolean
+If Not bHooked Then
+ If App.LogMode = 1 Then
+  ThePointer = GetProcAddress(GetModuleHandle("msvbvm60.dll"), "__vbaFailedFriend")
+  '///
+  VirtualQuery ByVal ThePointer, tMBI, Len(tMBI)
+  VirtualProtect ByVal tMBI.BaseAddress, tMBI.RegionSize, PAGE_EXECUTE_READWRITE, i
+  CopyMemory ByVal ThePointer, &HC3&, 1&
+  VirtualProtect ByVal tMBI.BaseAddress, tMBI.RegionSize, PAGE_EXECUTE_READ, i
+  '///
+  bHooked = True
+ End If
+End If
+End Sub
+
+'Public Sub DirtyCode2()
+'Dim tMBI As MEMORY_BASIC_INFORMATION, i As Long
+'Dim ThePointer As Long
+'Static bHooked As Boolean
+'If Not bHooked Then
+' If App.LogMode = 1 Then
+'  ThePointer = GetProcAddress(GetModuleHandle("user32.dll"), "MessageBoxIndirectA")
+'  '///
+'  VirtualQuery ByVal ThePointer, tMBI, Len(tMBI)
+'  VirtualProtect ByVal tMBI.BaseAddress, tMBI.RegionSize, PAGE_EXECUTE_READWRITE, i
+'  CopyMemory ByVal ThePointer, &H90CC&, 2&
+'  VirtualProtect ByVal tMBI.BaseAddress, tMBI.RegionSize, PAGE_EXECUTE_READ, i
+'  '///
+'  bHooked = True
+' End If
+'End If
+'End Sub
 
 Public Sub FakeDXAppShowVideoCaptureOptions()
 #If VideoCaptureEnabled Then
@@ -621,6 +676,9 @@ Dim i As Long
 Dim s As String
 Dim obj As clsTreeStorageNode
 '///
+DirtyCode
+'If Dir(App.Path + "\hook.txt") <> "" Then DirtyCode2
+'///
 Randomize Timer
 '///init logger
 objLogger.CreateNew , , , DT_NOCLIP
@@ -664,8 +722,16 @@ End With
 FakeDXAppAdjustWindowPos
 '///get device caps
 d3d9.GetDeviceCaps 0, D3DDEVTYPE_HAL, d3dc9
-If d3dc9.DevCaps And D3DDEVCAPS_HWTRANSFORMANDLIGHT Then i = D3DCREATE_HARDWARE_VERTEXPROCESSING _
-Else i = D3DCREATE_SOFTWARE_VERTEXPROCESSING '<-- error when drawing landscape
+i = 0
+If d3dc9.DevCaps And D3DDEVCAPS_HWTRANSFORMANDLIGHT Then
+ If (d3dc9.VertexShaderVersion And &HFFFF&) >= &H200& Then
+  i = D3DCREATE_HARDWARE_VERTEXPROCESSING
+ End If
+End If
+If i = 0 Then
+ i = D3DCREATE_SOFTWARE_VERTEXPROCESSING '<-- error when drawing landscape
+ d3dc9.VertexShaderVersion = 0
+End If
 'TODO:shader version, etc.
 '///create device
 Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, frm.hwnd, i, d3dpp)
