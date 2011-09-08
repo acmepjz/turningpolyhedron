@@ -428,6 +428,8 @@ End Sub
 
 'has some code copied from SetupEffect
 Friend Sub DrawInstanceEx(ByRef tInst As typeMeshInstanceCollection, Optional ByVal bSetupLight As Boolean, Optional ByVal bUseExistingTransform As Boolean)
+On Error Resume Next
+'///
 Dim i As Long, ii As Long, j As Long, k As Long
 Dim m As Long
 Dim idx As Long
@@ -1522,8 +1524,30 @@ Case "standard"
   sParam = sParam + vbTab + "return float4(lightResult.xyz,1.0f);" + vbCrLf + "}" + vbCrLf + vbCrLf
  End If
  '////////////////////////////////generate effect
- sParam = sParam + "technique test{" + vbCrLf + vbTab + "pass{" + vbCrLf + vbTab + vbTab + "VertexShader=compile vs_3_0 vs_func();" + _
- vbCrLf + vbTab + vbTab + "PixelShader=compile ps_3_0 ps_func();" + vbCrLf
+ '///ugly workaround. TODO:
+ i = d3dc9.VertexShaderVersion And &HFFFF&
+ If i >= &H300& Then
+  s1 = "vs_3_0"
+ ElseIf i >= &H200& Then
+  s1 = "vs_2_0"
+ Else
+  s1 = "vs_3_sw" 'ERR
+ End If
+ '///
+ i = d3dc9.PixelShaderVersion And &HFFFF&
+ If i >= &H300& Then
+  s2 = "ps_3_0"
+ ElseIf i >= &H200& Then
+  s2 = "ps_2_0" 'ERR
+ Else
+  'ERR!!!
+  MsgBox "Video card unsupported", vbCritical
+  Debug.Assert False
+  Exit Function
+ End If
+ '///
+ sParam = sParam + "technique test{" + vbCrLf + vbTab + "pass{" + vbCrLf + vbTab + vbTab + "VertexShader=compile " + s1 + " vs_func();" + _
+ vbCrLf + vbTab + vbTab + "PixelShader=compile " + s2 + " ps_func();" + vbCrLf
  If t.sEffectStates <> vbNullString Then _
  sParam = sParam + vbTab + vbTab + t.sEffectStates + vbCrLf
  sParam = sParam + vbTab + "}" + vbCrLf + "}" + vbCrLf

@@ -475,6 +475,8 @@ Case RenderPass_Main
   If Not objRenderTest.BeginRender(nType) Then Exit Sub
  End If
  If Not IsSceneBegin Then d3dd9.BeginScene
+ '///
+ On Error Resume Next
  '///TEST ONLY
  objRenderTest.DrawSkydome objSkyTexture
  '///draw cube with effects

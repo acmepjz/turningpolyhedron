@@ -1,0 +1,15 @@
+TurningPolyhedron.vbp
+src\*.bas
+src\*.cls
+src\*.frm
+src\*.frx
+SolverTest2\*.h
+SolverTest2\*.cpp
+SolverTest2\*.h
+SolverTest2\*.c
+SolverTest2\*.rc
+SolverTest2\*.def
+SolverTest2\*.vcproj
+SolverTest2\*.sln
+tlb\*.tlb
+tlb\src\*.idl
