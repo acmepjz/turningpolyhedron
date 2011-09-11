@@ -437,7 +437,11 @@ Dim nEffectIndex As Long
 Dim objMesh As D3DXMesh
 Dim obj As D3DXEffect, objNew As D3DXEffect
 Dim mat As D3DMATRIX, matBackup As D3DMATRIX
+Dim t(0) As D3DMATERIAL9, f(3) As Single
+Dim s As String
 Dim b As Boolean
+'///
+Dim objStateBlock As Direct3DStateBlock9
 '///
 If m_nEffectCount <= 0 Or tInst.nInstCount <= 0 Or m_nLastIndex > 0 Then Exit Sub
 '///
@@ -457,6 +461,7 @@ If tInst.bInstDirty Then
 End If
 '///
 d3dd9.GetTransform D3DTS_WORLD, matBackup
+Set objStateBlock = d3dd9.CreateStateBlock(D3DSBT_ALL)
 '///
 For i = 1 To tInst.nInstCount
  idx = tInst.nInstOrder(i)
@@ -465,7 +470,7 @@ For i = 1 To tInst.nInstCount
  If nEffectIndex <> j Then
   nEffectIndex = j
   Set objNew = m_tEffect(j).objEffect
-  b = Not obj Is objNew
+  b = i = 1 Or Not obj Is objNew
   If b Then 'change effect
    If Not obj Is Nothing Then
     obj.EndPass
@@ -474,9 +479,136 @@ For i = 1 To tInst.nInstCount
    Set obj = objNew
   End If
   If obj Is Nothing Then
-   'TODO:no HLSL
-   Debug.Assert False
-   Exit For
+   '///no HLSL
+   d3dd9.SetRenderState D3DRS_LIGHTING, 1
+   d3dd9.SetRenderState D3DRS_SPECULARENABLE, 1
+   d3dd9.LightEnable 0, 1
+   '///
+   Erase t
+   '///base color
+   ii = m_tEffect(nEffectIndex).tArguments(IDA_BaseColor).nType
+   If ii = 1 Then
+    d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+    d3dd9.SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_CONSTANT
+    d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
+    '///
+    Erase f
+    s = m_tEffect(nEffectIndex).tArguments(IDA_BaseColor).sData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory f(0), ByVal StrPtr(s), j
+    '///
+    k = ((CLng(f(0) * 255!) And &HFF&) * &H10000) Or ((CLng(f(1) * 255!) And &HFF&) * &H100&) Or (CLng(f(2) * 255!) And &HFF&)
+    j = CLng(f(3) * 255!) And &HFF&
+    k = k Or ((j And &H7F&) * &H1000000) Or (((j And &H80&) <> 0) And &H80000000)
+    '///
+    d3dd9.SetTextureStageState 0, D3DTSS_CONSTANT, k
+   ElseIf ii = 2 Then
+    d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+    d3dd9.SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_CONSTANT
+    d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
+    '///
+    Erase f
+    s = m_tEffect(nEffectIndex).tArguments(IDA_BaseColor).sOptionalData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory f(0), ByVal StrPtr(s), j
+    '///
+    k = ((CLng(f(0) * 255!) And &HFF&) * &H10000) Or ((CLng(f(1) * 255!) And &HFF&) * &H100&) Or (CLng(f(2) * 255!) And &HFF&)
+    j = CLng(f(3) * 255!) And &HFF&
+    k = k Or ((j And &H7F&) * &H1000000) Or (((j And &H80&) <> 0) And &H80000000)
+    '///
+    d3dd9.SetTextureStageState 0, D3DTSS_CONSTANT, k
+   ElseIf ii >= &H1000000 And ii < &H2000000 Then
+    d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+    d3dd9.SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_TEXTURE
+    d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
+    d3dd9.SetTexture 0, m_tEffect(nEffectIndex).objTextures((ii And &HF0000) \ &H10000)
+   End If
+   '///ambient
+   j = m_tEffect(nEffectIndex).tArguments(IDA_Ambient).nType
+   If j = 1 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_Ambient).sData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory t(0).Ambient, ByVal StrPtr(s), j
+   ElseIf j = 2 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_Ambient).sOptionalData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory t(0).Ambient, ByVal StrPtr(s), j
+   End If
+   '///diffuse
+   j = m_tEffect(nEffectIndex).tArguments(IDA_Diffuse).nType
+   If j = 1 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_Diffuse).sData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory t(0).Diffuse, ByVal StrPtr(s), j
+   ElseIf j = 2 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_Diffuse).sOptionalData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory t(0).Diffuse, ByVal StrPtr(s), j
+   ElseIf j >= &H1000000 And j < &H2000000 Then
+    If Not (ii >= &H1000000 And ii < &H2000000) Then
+     d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_MODULATE
+     d3dd9.SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_TEXTURE
+     d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
+     d3dd9.SetTexture 0, m_tEffect(nEffectIndex).objTextures((j And &HF0000) \ &H10000)
+    End If
+    t(0).Diffuse.r = 1
+    t(0).Diffuse.g = 1
+    t(0).Diffuse.b = 1
+    t(0).Diffuse.a = 1
+   End If
+   '///specular
+   j = m_tEffect(nEffectIndex).tArguments(IDA_Specular).nType
+   If j = 1 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_Specular).sData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory t(0).Specular, ByVal StrPtr(s), j
+   ElseIf j = 2 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_Specular).sOptionalData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory t(0).Specular, ByVal StrPtr(s), j
+   End If
+   '///hardness
+   j = m_tEffect(nEffectIndex).tArguments(IDA_SpecularHardness).nType
+   If j = 1 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_SpecularHardness).sData
+    j = LenB(s)
+    If j > 4 Then j = 4
+    If j > 0 Then CopyMemory t(0).Power, ByVal StrPtr(s), j
+   ElseIf j = 2 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_SpecularHardness).sOptionalData
+    j = LenB(s)
+    If j > 4 Then j = 4
+    If j > 0 Then CopyMemory t(0).Power, ByVal StrPtr(s), j
+   End If
+   '///emissive
+   j = m_tEffect(nEffectIndex).tArguments(IDA_Emissive).nType
+   If j = 1 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_Emissive).sData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory t(0).Emissive, ByVal StrPtr(s), j
+   ElseIf j = 2 Then
+    s = m_tEffect(nEffectIndex).tArguments(IDA_Emissive).sOptionalData
+    j = LenB(s)
+    If j > 16 Then j = 16
+    If j > 0 Then CopyMemory t(0).Emissive, ByVal StrPtr(s), j
+   End If
+   '///SetupParam
+   d3dd9.SetMaterial t(0)
+   '///
+   If b Then
+    If bSetupLight Then
+     objRenderTest.SetupLight obj
+    End If
+   End If
   Else
    '///SetupParam
    ii = m_tEffect(nEffectIndex).nParamUsed
@@ -512,8 +644,10 @@ For i = 1 To tInst.nInstCount
   Else
    d3dd9.SetTransform D3DTS_WORLD, tInst.tInstance(idx).matWorld
   End If
-  objRenderTest.SetupTransform obj
-  obj.CommitChanges
+  If Not obj Is Nothing Then
+   objRenderTest.SetupTransform obj
+   obj.CommitChanges
+  End If
   '///draw
   j = tInst.tInstance(idx).nMeshIndex
   Set objMesh = objMeshMgr.Mesh(j)
@@ -548,7 +682,8 @@ If Not obj Is Nothing Then
  obj.EndPass
  obj.End
 End If
-d3dd9.SetTransform D3DTS_WORLD, matBackup
+'///
+objStateBlock.Apply
 End Sub
 
 #If HasInternalInstance Then
@@ -1050,7 +1185,7 @@ t.tArguments(nIndex) = ret
 pParseArgumentFromString = True
 End Function
 
-Friend Function pGenerateArgumentCode(ByRef t As typeFakeDXEffect, ByVal nIndex As Long, ByVal nDesiredSize As Long, Optional ByVal sAdditional As String = vbNullString) As String
+Friend Function pGenerateArgumentCode(ByRef t As typeFakeDXEffect, ByVal nIndex As Long, ByVal nDesiredSize As Long, Optional ByVal sAdditional As String = vbNullString, Optional ByVal IsHLSL As Boolean = True) As String
 Dim nType As Long
 Dim i As Long, j As Long, jj As Long
 Dim nLast As Long
@@ -1095,6 +1230,14 @@ With t.tArguments(nIndex)
    + Mid("xyzw", (.nParamOffset And 3&) + 1, m) + Replace(Space(nDesiredSize - m), " ", ",0") + ")"
   End If
  ElseIf nType >= &H10000 And nType < &H200000 Then
+  '///
+  If Not IsHLSL Then
+   'TODO:vertex color support
+   Debug.Assert False
+   pGenerateArgumentCode = "1"
+   Exit Function
+  End If
+  '///
   If (nType And &HFFFF&) = 0 Then
    d(0) = 1
    d(1) = 2
@@ -1173,6 +1316,14 @@ With t.tArguments(nIndex)
   End If
   '///
  ElseIf nType >= &H1000000 And nType < &H2000000 Then
+  '///
+  If Not IsHLSL Then
+   'TODO:texture support
+   Debug.Assert False
+   pGenerateArgumentCode = "1"
+   Exit Function
+  End If
+  '///
   'texture
   pGenerateArgumentCode = "tex2D(samp" + CStr((nType And &HF00000) \ &H100000) + ",cin.t" + CStr((nType And &HF0000) \ &H10000) + "."
   j = nType And &HFF&
@@ -1214,14 +1365,16 @@ Dim bFogEnabled As Boolean 'currently unsupported
 Dim bShadowMap As Boolean 'currently unsupported
 Dim nHWInstancingMode As Long
 '///
+If Not FakeDXAppShaderEnabled Then
+ Debug.Assert False
+ Exit Function
+End If
+'///
 t.sShaderSourceCode = vbNullString
 t.nParamUsed = 0
 '///
 Select Case t.sShaderProgram
-Case vbNullString
- 'TODO:no HLSL shader
 Case "standard"
- '////////////////////////////////generate declarations
  '///assign parameters space
  For i = 0 To 63
   With t.tArguments(i)
@@ -1276,6 +1429,7 @@ Case "standard"
  sParam = sParam + "// parameters used:" + CStr(mm) + vbCrLf
  If mm > 0 Then sParam = sParam + "float4 _fParam[" + CStr(mm) + "];" + vbCrLf
  sParam = sParam + vbCrLf
+ '////////////////////////////////generate declarations
  '///assign input space
  For i = 0 To 63
   With t.tArguments(i)
@@ -1557,6 +1711,7 @@ Case "standard"
  '///
 Case Else
  'TODO:unsupported
+ Debug.Assert False
 End Select
 End Function
 
@@ -1747,12 +1902,11 @@ End If
 If j = 1 Then
  Set t.objEffect = m_tEffect(i).objEffect
  t.nReferenceIndex = i
-ElseIf t.sShaderProgram <> vbNullString Then
+ElseIf t.sShaderProgram <> vbNullString And FakeDXAppShaderEnabled Then
  If Not pGenerateHLSLCodeFromFakeDXEffect(t, True) Then
   Debug.Assert False
   Exit Function
  End If
- 'Debug.Print t.sShaderSourceCode
  If Not CreateEffect(t.sShaderSourceCode, t.objEffect) Then
   Debug.Assert False
   Exit Function
@@ -1863,7 +2017,7 @@ Dim i As Long, j As Long, k As Long
 If nIndex > 0 And nIndex <= m_nEffectCount Then
  Set obj = m_tEffect(nIndex).objEffect
  If obj Is Nothing Then
-  'TODO:no HLSL
+  'TODO:no HLSL (please copy code from DrawInstanceEx)
  Else
   '///
   If bSetupParameters Then

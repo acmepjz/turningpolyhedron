@@ -27,8 +27,8 @@ Private Const m_nFormat1 As Long = D3DFMT_A8R8G8B8
 
 Private objEffect As D3DXEffect
 
-Private m_tLightDir As D3DXVECTOR4, m_tLightPos As D3DXVECTOR4, m_tViewPos As D3DXVECTOR4
-Private m_nLightType As Long
+Private m_tLight As D3DLIGHT9
+Private m_tViewPos As D3DXVECTOR4
 
 #If UseMultiSample Then
 Private objFloatTarget As Direct3DSurface9
@@ -164,6 +164,7 @@ End Property
 
 Friend Sub Create(Optional ByVal bPostProcessEnabled As VbTriState = vbUseDefault)
 '///
+If Not FakeDXAppShaderEnabled Then Exit Sub
 'test
 CreateEffect CStr(App.Path) + "\data\shader\pstest.txt", objEffect, , True
 '///???
@@ -202,6 +203,7 @@ Erase objPostProcessTarget
 Set objFloatTarget = Nothing
 #End If
 '///new
+If Not FakeDXAppShaderEnabled Then Exit Sub
 If d3dd9 Is Nothing Then Exit Sub
 '///
 '/!\ we need 30M video memory if 1024x768, 80M if 1920x1080 :-3
@@ -235,49 +237,72 @@ End Sub
 
 Friend Sub SetLightDirection(d As D3DXVECTOR4, Optional ByVal bNormalize As Boolean)
 If bNormalize Then
- D3DXVec4Normalize m_tLightDir, d
+ D3DXVec3Normalize m_tLight.Direction, Vec3(-d.x, -d.y, -d.z)
 Else
- m_tLightDir = d
+ m_tLight.Direction = Vec3(-d.x, -d.y, -d.z)
 End If
-objEffect.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), m_tLightDir
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), Vec4(-m_tLight.Direction.x, -m_tLight.Direction.y, -m_tLight.Direction.z)
+Else
+ On Error Resume Next
+ d3dd9.SetLight 0, m_tLight
+End If
 End Sub
 
 Friend Sub SetLightDirectionByVal(ByVal x As Single, ByVal y As Single, ByVal z As Single, Optional ByVal bNormalize As Boolean)
-m_tLightDir.x = x
-m_tLightDir.y = y
-m_tLightDir.z = z
-m_tLightDir.w = 0
-If bNormalize Then D3DXVec4Normalize m_tLightDir, m_tLightDir
-objEffect.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), m_tLightDir
+m_tLight.Direction.x = -x
+m_tLight.Direction.y = -y
+m_tLight.Direction.z = -z
+If bNormalize Then D3DXVec3Normalize m_tLight.Direction, m_tLight.Direction
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), Vec4(-m_tLight.Direction.x, -m_tLight.Direction.y, -m_tLight.Direction.z)
+Else
+ On Error Resume Next
+ d3dd9.SetLight 0, m_tLight
+End If
 End Sub
 
 Friend Sub SetLightPosition(d As D3DXVECTOR4)
-objEffect.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), d
-m_tLightPos = d
+m_tLight.Position = Vec3(d.x, d.y, d.z)
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), Vec4(m_tLight.Position.x, m_tLight.Position.y, m_tLight.Position.z)
+Else
+ On Error Resume Next
+ d3dd9.SetLight 0, m_tLight
+End If
 End Sub
 
 Friend Sub SetViewPosition(d As D3DXVECTOR4)
-objEffect.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), d
+If FakeDXAppShaderEnabled Then objEffect.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), d
 m_tViewPos = d
 End Sub
 
 Friend Sub SetLightType(ByVal n As D3DLIGHTTYPE)
-If n = D3DLIGHT_POINT Then
- m_nLightType = 1
+m_tLight.Type = n
+If FakeDXAppShaderEnabled Then
+ objEffect.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_tLight.Type
 Else
- m_nLightType = 0
+ On Error Resume Next
+ d3dd9.SetLight 0, m_tLight
 End If
-objEffect.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_nLightType
 End Sub
 
 Friend Sub SetTexture(ByVal obj As Direct3DBaseTexture9)
 On Error Resume Next
-objEffect.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), obj
+If FakeDXAppShaderEnabled Then
+ objEffect.SetTexture StrPtr(StrConv("tex0", vbFromUnicode)), obj
+Else
+ d3dd9.SetTexture 0, obj
+End If
 End Sub
 
 Friend Sub SetNormalTexture(ByVal obj As Direct3DBaseTexture9)
 On Error Resume Next
-objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
+If FakeDXAppShaderEnabled Then
+ objEffect.SetTexture StrPtr(StrConv("texNormal", vbFromUnicode)), obj
+Else
+ 'TODO:
+End If
 End Sub
 
 Friend Sub OnLostDevice()
@@ -291,7 +316,7 @@ Set objShadowMap = Nothing
 Set objShadowStencil = Nothing
 Erase objPostProcessTarget
 '///
-objEffect.OnLostDevice
+If FakeDXAppShaderEnabled Then objEffect.OnLostDevice
 End Sub
 
 Friend Sub OnResetDevice()
@@ -300,12 +325,15 @@ If m_nShadowMapSize > 0 Then
  d3dd9.CreateDepthStencilSurface m_nShadowMapSize, m_nShadowMapSize, D3DFMT_D24S8, 0, 0, 1, objShadowStencil, ByVal 0
 End If
 '///
-objEffect.OnResetDevice
-CreatePostProcessTarget
+If FakeDXAppShaderEnabled Then
+ objEffect.OnResetDevice
+ CreatePostProcessTarget
+End If
 'TODO:etc.
 End Sub
 
 Friend Sub CreateShadowMap(ByVal nSize As Long)
+If Not FakeDXAppShaderEnabled Then Exit Sub
 D3DXCreateTexture d3dd9, nSize, nSize, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R32F, 0, objShadowMap
 d3dd9.CreateDepthStencilSurface nSize, nSize, D3DFMT_D24S8, 0, 0, 1, objShadowStencil, ByVal 0
 m_nShadowMapSize = nSize
@@ -315,10 +343,10 @@ Friend Sub SetShadowState(ByVal bEnabled As Boolean, Optional ByVal FOVOrViewSiz
 Dim mat As D3DMATRIX
 m_bShadowEnabled = bEnabled
 If bEnabled Then
- D3DXMatrixLookAtLH m_tLightViewProj, Vec3(m_tLightPos.x, m_tLightPos.y, m_tLightPos.z), _
- Vec3(m_tLightPos.x - m_tLightDir.x, m_tLightPos.y - m_tLightDir.y, m_tLightPos.z - m_tLightDir.z), _
+ D3DXMatrixLookAtLH m_tLightViewProj, Vec3(m_tLight.Position.x, m_tLight.Position.y, m_tLight.Position.z), _
+ Vec3(m_tLight.Position.x + m_tLight.Direction.x, m_tLight.Position.y + m_tLight.Direction.y, m_tLight.Position.z + m_tLight.Direction.z), _
  Vec3(0, 1, 0) '??
- If m_nLightType = 1 Then 'point
+ If m_tLight.Type = D3DLIGHT_POINT Then 'point
   D3DXMatrixPerspectiveFovLH mat, FOVOrViewSize, 1, zn, zf
  Else 'directional
   D3DXMatrixOrthoLH mat, FOVOrViewSize, FOVOrViewSize, zn, zf
@@ -329,37 +357,57 @@ End Sub
 
 Friend Sub UpdateRenderState()
 On Error Resume Next
-'///
-SetupTransform objEffect
-'///
-objEffect.CommitChanges
+If FakeDXAppShaderEnabled Then
+ SetupTransform objEffect
+ objEffect.CommitChanges
+End If
 End Sub
 
 Friend Sub SetupLight(ByVal obj1 As D3DXEffect)
 On Error Resume Next
-obj1.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), m_tLightDir
-obj1.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), m_tLightPos
-obj1.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), m_tViewPos
-obj1.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_nLightType
+If FakeDXAppShaderEnabled And Not obj1 Is Nothing Then
+ obj1.SetVector StrPtr(StrConv("lightDir", vbFromUnicode)), Vec4(-m_tLight.Direction.x, -m_tLight.Direction.y, -m_tLight.Direction.z)
+ obj1.SetVector StrPtr(StrConv("lightPos", vbFromUnicode)), Vec4(m_tLight.Position.x, m_tLight.Position.y, m_tLight.Position.z)
+ obj1.SetVector StrPtr(StrConv("viewPos", vbFromUnicode)), m_tViewPos
+ obj1.SetInt StrPtr(StrConv("lightType", vbFromUnicode)), m_tLight.Type
+Else
+ m_tLight.Ambient.r = 1
+ m_tLight.Ambient.g = 1
+ m_tLight.Ambient.b = 1
+ m_tLight.Ambient.a = 1
+ m_tLight.Diffuse.r = 1
+ m_tLight.Diffuse.g = 1
+ m_tLight.Diffuse.b = 1
+ m_tLight.Diffuse.a = 1
+ m_tLight.Specular.r = 1
+ m_tLight.Specular.g = 1
+ m_tLight.Specular.b = 1
+ m_tLight.Specular.a = 1
+ d3dd9.SetLight 0, m_tLight
+End If
 End Sub
 
 Friend Sub SetupTransform(ByVal obj1 As D3DXEffect)
 On Error Resume Next
 Dim mat1 As D3DMATRIX, mat2 As D3DMATRIX, mat3 As D3DMATRIX, mat As D3DMATRIX
-d3dd9.GetTransform D3DTS_WORLD, mat1
-obj1.SetMatrix StrPtr(StrConv("matWorld", vbFromUnicode)), mat1
-d3dd9.GetTransform D3DTS_VIEW, mat2
-d3dd9.GetTransform D3DTS_PROJECTION, mat3
-D3DXMatrixMultiply mat, mat1, mat2
-D3DXMatrixMultiply mat, mat, mat3
-D3DXMatrixInverse mat2, 0, mat1 '[out] pDeterminant
-obj1.SetMatrixTranspose StrPtr(StrConv("matWorldInv", vbFromUnicode)), mat2
-obj1.SetMatrix StrPtr(StrConv("matTransform", vbFromUnicode)), mat
+If FakeDXAppShaderEnabled And Not obj1 Is Nothing Then
+ d3dd9.GetTransform D3DTS_WORLD, mat1
+ obj1.SetMatrix StrPtr(StrConv("matWorld", vbFromUnicode)), mat1
+ d3dd9.GetTransform D3DTS_VIEW, mat2
+ d3dd9.GetTransform D3DTS_PROJECTION, mat3
+ D3DXMatrixMultiply mat, mat1, mat2
+ D3DXMatrixMultiply mat, mat, mat3
+ D3DXMatrixInverse mat2, 0, mat1 '[out] pDeterminant
+ obj1.SetMatrixTranspose StrPtr(StrConv("matWorldInv", vbFromUnicode)), mat2
+ obj1.SetMatrix StrPtr(StrConv("matTransform", vbFromUnicode)), mat
+End If
 End Sub
 
 Friend Sub SetupZData(ByVal obj1 As D3DXEffect)
 On Error Resume Next
-obj1.SetVector StrPtr(StrConv("zData", vbFromUnicode)), m_vZData
+If FakeDXAppShaderEnabled And Not obj1 Is Nothing Then
+ obj1.SetVector StrPtr(StrConv("zData", vbFromUnicode)), m_vZData
+End If
 End Sub
 
 'test only
@@ -369,6 +417,8 @@ Dim obj As Direct3DTexture9
 Dim mat As D3DMATRIX
 Dim s As String
 '///
+If objEffect Is Nothing Or Not FakeDXAppShaderEnabled Then SetupEffect = False
+'///
 If m_nLastType Then
  Debug.Assert False
  Exit Function
@@ -376,7 +426,7 @@ End If
 '///
 Select Case nType
 Case RenderPass_ShadowMap
- If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Then Exit Function
+ If Not m_bShadowEnabled Or objShadowMap Is Nothing Or objShadowStencil Is Nothing Or objEffect Is Nothing Or Not FakeDXAppShaderEnabled Then Exit Function
  If SetupEffect Then
   Set objOldTarget = d3dd9.GetRenderTarget(0)
   Set objOldStencil = d3dd9.GetDepthStencilSurface
@@ -392,7 +442,7 @@ Case RenderPass_ShadowMap
   s = "test_shadow"
  End If
 Case RenderPass_FogVolume
- If Not (m_bPostProcessEnabled And m_bFog And m_bVolumeFog) Then Exit Function
+ If Not (m_bPostProcessEnabled And m_bFog And m_bVolumeFog) Or objEffect Is Nothing Or Not FakeDXAppShaderEnabled Then Exit Function
  If SetupEffect Then
   Set objOldTarget_1 = d3dd9.GetRenderTarget(0)
   d3dd9.SetRenderTarget 0, objPostProcessTarget(IDR_VolumetricFogTarget).GetSurfaceLevel(0)
@@ -401,7 +451,7 @@ Case RenderPass_FogVolume
   s = "test_volumefog"
  End If
 Case RenderPass_Main
- If m_bPostProcessEnabled Then
+ If m_bPostProcessEnabled And FakeDXAppShaderEnabled Then
   '///this code is not compatible with FSAA
   Set objOldTarget = d3dd9.GetRenderTarget(0)
   #If UseMultiSample Then
@@ -476,7 +526,7 @@ Case RenderPass_FogVolume
  d3dd9.SetRenderTarget 0, objOldTarget_1
  Set objOldTarget_1 = Nothing
 Case RenderPass_Main
- If m_bPostProcessEnabled Then
+ If m_bPostProcessEnabled And FakeDXAppShaderEnabled Then
   '///this code is not compatible with FSAA
   d3dd9.SetRenderTarget 0, objOldTarget
   Set objOldTarget = Nothing
@@ -645,7 +695,9 @@ End Property
 
 Friend Property Let AmbientColor(ByRef v As D3DXVECTOR4)
 m_fParam(0) = v
-objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End If
 End Property
 
 Friend Property Get SpecularHardness() As Single
@@ -654,7 +706,9 @@ End Property
 
 Friend Property Let SpecularHardness(ByVal f As Single)
 m_fParam(1).x = f
-objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End If
 End Property
 
 Friend Property Get ParallaxOffset() As Single
@@ -663,7 +717,9 @@ End Property
 
 Friend Property Let ParallaxOffset(ByVal f As Single)
 m_fParam(1).y = f
-objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End If
 End Property
 
 Friend Property Get ParallaxScale() As Single
@@ -672,7 +728,9 @@ End Property
 
 Friend Property Let ParallaxScale(ByVal f As Single)
 m_fParam(1).z = f
-objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End If
 End Property
 
 Friend Property Get OrenNayarParamA() As Single
@@ -681,7 +739,9 @@ End Property
 
 Friend Property Let OrenNayarParamA(ByVal f As Single)
 m_fParam(3).z = f
-objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End If
 End Property
 
 Friend Property Get OrenNayarParamB() As Single
@@ -690,14 +750,18 @@ End Property
 
 Friend Property Let OrenNayarParamB(ByVal f As Single)
 m_fParam(3).w = f
-objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End If
 End Property
 
 Friend Property Let OrenNayarRoughness(ByVal f As Single)
 f = f * f
 m_fParam(3).z = 1 - 0.5 * f / (f + 0.33)
 m_fParam(3).w = 0.45 * f / (f + 0.09)
-objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End If
 End Property
 
 Friend Sub SetFloatParams(ByRef tAmbientColor As D3DXVECTOR4, ByVal fSpecularHardness As Single, ByVal fParallaxOffset As Single, ByVal fParallaxScale As Single)
@@ -705,7 +769,9 @@ m_fParam(0) = tAmbientColor
 m_fParam(1).x = fSpecularHardness
 m_fParam(1).y = fParallaxOffset
 m_fParam(1).z = fParallaxScale
-objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+If FakeDXAppShaderEnabled Then
+ objEffect.SetVectorArray StrPtr(StrConv("_fParam", vbFromUnicode)), m_fParam(0), 4&
+End If
 End Sub
 
 Private Sub Class_Terminate()
@@ -729,13 +795,15 @@ m_zf = zf
 D3DXMatrixPerspectiveFovLH mat, m_fovy, Aspect, zn, zf
 d3dd9.SetTransform D3DTS_PROJECTION, mat
 '///
-m_vDistCorrection.y = Tan(fovy / 2) * 2 * zf
-m_vDistCorrection.x = m_vDistCorrection.y * Aspect
-m_vDistCorrection.z = zf
-'///
-m_vZData.x = zf / zn
-m_vZData.y = 1 - m_vZData.x
-objEffect.SetVector StrPtr(StrConv("zData", vbFromUnicode)), m_vZData
+If FakeDXAppShaderEnabled Then
+ m_vDistCorrection.y = Tan(fovy / 2) * 2 * zf
+ m_vDistCorrection.x = m_vDistCorrection.y * Aspect
+ m_vDistCorrection.z = zf
+ '///
+ m_vZData.x = zf / zn
+ m_vZData.y = 1 - m_vZData.x
+ objEffect.SetVector StrPtr(StrConv("zData", vbFromUnicode)), m_vZData
+End If
 End Sub
 
 Friend Sub GetProjection_PerspectiveFovLH(ByRef fovy As Single, ByRef Aspect As Single, ByRef zn As Single, ByRef zf As Single)
