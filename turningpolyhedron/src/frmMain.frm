@@ -31,7 +31,7 @@ Attribute VB_Exposed = False
 Option Explicit
 
 Private Declare Function GetCursorPos Lib "user32.dll" (ByRef lpPoint As POINTAPI) As Long
-Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hWnd As Long, ByRef lpPoint As POINTAPI) As Long
+Private Declare Function ScreenToClient Lib "user32.dll" (ByVal hwnd As Long, ByRef lpPoint As POINTAPI) As Long
 Private Type POINTAPI
     x As Long
     y As Long
@@ -40,14 +40,14 @@ End Type
 Private Sub Form_Click()
 Dim p As POINTAPI
 GetCursorPos p
-ScreenToClient Me.hWnd, p
+ScreenToClient Me.hwnd, p
 If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_Click, p.x, p.y, 1
 End Sub
 
 Private Sub Form_DblClick()
 Dim p As POINTAPI
 GetCursorPos p
-ScreenToClient Me.hWnd, p
+ScreenToClient Me.hwnd, p
 If FakeDXUIOnMouseEvent(1, 0, p.x, p.y, 4) Then Exit Sub
 If Not FakeDXAppEvent Is Nothing Then FakeDXAppEvent.OnEvent FakeDXAppEvent_DblClick, p.x, p.y, 1
 End Sub

@@ -13,6 +13,12 @@ Dim ret As Long
 Dim s2 As String
 Dim b() As Byte, m As Long
 Dim buf As D3DXBuffer
+'///
+If Not FakeDXAppShaderEnabled Then
+ Debug.Assert False
+ Exit Function
+End If
+'///
 If bFromFile Then
  On Error Resume Next
  Err.Clear

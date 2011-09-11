@@ -1399,7 +1399,7 @@ Case RenderPass_Main
  If Not IsSceneBegin Then d3dd9.BeginScene
  objRenderTest.EndEffect
  '///
- On Error Resume Next
+ On Local Error Resume Next
  '///TEST ONLY
  objRenderTest.DrawSkydome objSkyTexture
  '///draw level

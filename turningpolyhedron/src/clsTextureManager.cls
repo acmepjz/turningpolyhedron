@@ -173,11 +173,11 @@ Friend Sub OnLostDevice()
 Set objOldTarget = Nothing
 Set objOldStencil = Nothing
 '///
-objEffect.OnLostDevice
+If FakeDXAppShaderEnabled Then objEffect.OnLostDevice
 End Sub
 
 Friend Sub OnResetDevice()
-objEffect.OnResetDevice
+If FakeDXAppShaderEnabled Then objEffect.OnResetDevice
 End Sub
 
 Friend Property Get Effect() As D3DXEffect
@@ -187,9 +187,11 @@ End Property
 Friend Sub Create()
 '///
 'test:perlin noise
-CreateEffect CStr(App.Path) + "\data\shader\test.txt", objEffect, , True
-'///
-D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\data\gfx\noise.bmp", texNoise
+If FakeDXAppShaderEnabled Then
+ CreateEffect CStr(App.Path) + "\data\shader\test.txt", objEffect, , True
+ '///
+ D3DXCreateTextureFromFileW d3dd9, CStr(App.Path) + "\data\gfx\noise.bmp", texNoise
+End If
 End Sub
 
 'Friend Sub BeginRender()
@@ -218,6 +220,9 @@ End Sub
 Friend Sub BeginRenderToTexture(ByVal obj As Direct3DTexture9, ByVal sTechniqueName As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4)
 '///dirty code
 Dim fParam(1 To 4) As D3DXVECTOR4
+'///
+If Not FakeDXAppShaderEnabled Then Exit Sub
+'///
 fParam(1) = fParam1
 fParam(2) = fParam2
 fParam(3) = fParam3
@@ -241,6 +246,9 @@ End Sub
 'End Sub
 
 Friend Sub EndRenderToTexture()
+'///
+If Not FakeDXAppShaderEnabled Then Exit Sub
+'///
 objEffect.EndPass
 objEffect.End
 d3dd9.SetRenderTarget 0, objOldTarget
@@ -250,14 +258,17 @@ Set objOldStencil = Nothing
 End Sub
 
 Friend Sub ProcessTexture(ByVal objSrc As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean = True)
+If Not FakeDXAppShaderEnabled Then Exit Sub
 ProcessTwoTextureEx objSrc, Nothing, objDest, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4, fPixelSizeScale, bErase
 End Sub
 
 Friend Sub ProcessTwoTexture(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean = True)
+If Not FakeDXAppShaderEnabled Then Exit Sub
 ProcessTwoTextureEx objSrc, objSrc2, objDest, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4, fPixelSizeScale, bErase
 End Sub
 
 Friend Sub ProcessTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objDest As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean = True)
+If Not FakeDXAppShaderEnabled Then Exit Sub
 ProcessTwoTextureEx objSrc, Nothing, objDest, sEffect, iParam1, iParam2, iParam3, iParam4, fParam1, fParam2, fParam3, fParam4, fPixelSizeScale, bErase
 End Sub
 
@@ -265,6 +276,8 @@ Friend Sub ProcessTwoTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 A
 Dim t As D3DSURFACE_DESC
 Dim v As D3DXVECTOR4
 Dim p(23) As Single
+'///
+If Not FakeDXAppShaderEnabled Then Exit Sub
 '///
 If Not objSrc Is Nothing Then
  objSrc.GetLevelDesc 0, t
@@ -316,14 +329,17 @@ Set objOldStencil = Nothing
 End Sub
 
 Friend Sub DrawTexture(ByVal objSrc As Direct3DTexture9, ByVal sEffect As String, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean)
+If Not FakeDXAppShaderEnabled Then Exit Sub
 DrawTwoTextureEx objSrc, Nothing, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4, fPixelSizeScale, bErase
 End Sub
 
 Friend Sub DrawTwoTexture(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As Direct3DTexture9, ByVal sEffect As String, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean)
+If Not FakeDXAppShaderEnabled Then Exit Sub
 DrawTwoTextureEx objSrc, objSrc2, sEffect, 0, 0, 0, 0, Vec4, Vec4, Vec4, Vec4, fPixelSizeScale, bErase
 End Sub
 
 Friend Sub DrawTextureEx(ByVal objSrc As Direct3DTexture9, ByVal sEffect As String, ByVal iParam1 As Long, ByVal iParam2 As Long, ByVal iParam3 As Long, ByVal iParam4 As Long, ByRef fParam1 As D3DXVECTOR4, ByRef fParam2 As D3DXVECTOR4, ByRef fParam3 As D3DXVECTOR4, ByRef fParam4 As D3DXVECTOR4, Optional ByVal fPixelSizeScale As Single = 1, Optional ByVal bErase As Boolean)
+If Not FakeDXAppShaderEnabled Then Exit Sub
 DrawTwoTextureEx objSrc, Nothing, sEffect, iParam1, iParam2, iParam3, iParam4, fParam1, fParam2, fParam3, fParam4, fPixelSizeScale, bErase
 End Sub
 
@@ -331,6 +347,8 @@ Friend Sub DrawTwoTextureEx(ByVal objSrc As Direct3DTexture9, ByVal objSrc2 As D
 Dim t As D3DSURFACE_DESC
 Dim v As D3DXVECTOR4
 Dim p(23) As Single
+'///
+If Not FakeDXAppShaderEnabled Then Exit Sub
 '///
 If Not objSrc Is Nothing Then
  objSrc.GetLevelDesc 0, t

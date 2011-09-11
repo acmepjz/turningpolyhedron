@@ -3,7 +3,7 @@ Option Explicit
 
 #Const UseSubclassInIDE = False
 #Const VideoCaptureEnabled = True
-#Const SVN = False
+#Const SVN = True
 
 #If SVN Then
 Public Const FakeDXAppVersion As String = "SVN"
@@ -145,6 +145,10 @@ Public objFont As D3DXFont
 Public objEffectMgr As New clsEffectManager
 
 Public FakeDXAppTriangleCount As Long
+
+'////////
+
+Public FakeDXAppShaderAvaliable As Boolean, FakeDXAppShaderEnabled As Boolean, FakeDXAppShaderEnabled_New As Boolean
 
 '////////game UI objects
 
@@ -320,6 +324,8 @@ End If
 End Sub
 
 Public Sub FakeDXAppRender()
+On Local Error Resume Next
+'///
 Dim i As Long
 Dim mat As D3DMATRIX, mat1 As D3DMATRIX, mat2 As D3DMATRIX
 Dim r(3) As Long
@@ -335,13 +341,11 @@ With d3dd9
  If i = D3DERR_DEVICENOTRESET Then
   Sleep 20
   '///it works!
-  On Error Resume Next
   FakeDXAppOnLostDevice
   Err.Clear
   .Reset d3dpp
   i = Err.Number
   If i = 0 Then FakeDXAppOnInitalize True
-  On Error GoTo 0
   '///
  End If
  If i = 0 Then
@@ -472,6 +476,7 @@ If bReset Then
  '///
 End If
 If bInit Then Exit Sub
+If Not FakeDXAppShaderEnabled Then Exit Sub
 '///modified: generate texture and copy to managed memory pool (slow?)
 'D3DXCreateTexture d3dd9, nSize, nSize, 0, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objTexture
 'D3DXCreateTexture d3dd9, nSize, nSize, 1, D3DUSAGE_RENDERTARGET Or D3DUSAGE_AUTOGENMIPMAP, D3DFMT_A8R8G8B8, 0, objNormalTexture
@@ -729,10 +734,19 @@ If d3dc9.DevCaps And D3DDEVCAPS_HWTRANSFORMANDLIGHT Then
  End If
 End If
 If i = 0 Then
- i = D3DCREATE_SOFTWARE_VERTEXPROCESSING '<-- error when drawing landscape
+ i = D3DCREATE_SOFTWARE_VERTEXPROCESSING '<-- ??? something goes wrong
  d3dc9.VertexShaderVersion = 0
 End If
-'TODO:shader version, etc.
+'shader version, etc.
+FakeDXAppShaderAvaliable = (d3dc9.VertexShaderVersion And &HFFFF&) >= &H300& And (d3dc9.PixelShaderVersion And &HFFFF&) >= &H300&
+If FakeDXAppShaderEnabled And Not FakeDXAppShaderAvaliable Then
+ MsgBox objText.GetText("Your video card or video card driver is unsupported.") _
+ + vbCrLf + objText.GetText("Advanced graphical effects will be disabled."), vbExclamation, _
+ objText.GetText("Error")
+ FakeDXAppShaderEnabled = False
+ FakeDXAppShaderEnabled_New = False
+ frmSettings.SaveFile
+End If
 '///create device
 Set d3dd9 = d3d9.CreateDevice(0, D3DDEVTYPE_HAL, frm.hwnd, i, d3dpp)
 If d3dd9 Is Nothing Then
@@ -763,7 +777,7 @@ Set objTest = pLoadMeshTest
 '///
 FakeDXAppCreateUI
 '///
-objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True 'new
+objRenderTest.SetLightDirectionByVal 0, 4, 2.5, True
 objRenderTest.SetLightPosition Vec4(0, 8, 5, 0)
 objRenderTest.SetLightType D3DLIGHT_DIRECTIONAL
 'objRenderTest.SetLightType D3DLIGHT_POINT
@@ -930,167 +944,6 @@ End Function
 
 Public Sub FakeDXAppCreateUI()
 FakeDXUICreate 0, 0, d3dpp.BackBufferWidth, d3dpp.BackBufferHeight
-'///
-'#If 0 Then
-'Dim i As Long
-'With FakeDXUIControls(1)
-' '///
-' With .AddNewChildren(FakeCtl_Form, 40, 80, 560, 440, &HFF20FF, , False, , "Form1234°¡°¢")
-'  .Show
-'  With .AddNewChildren(FakeCtl_None, 0, 0, 800, 600)
-'  '///
-'  .AddNewChildren FakeCtl_Button, 0, 0, 78, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
-'  .AddNewChildren FakeCtl_Button, 0, 16, 78, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
-'  .AddNewChildren FakeCtl_Button, 0, 32, 78, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
-'  '///scrollbar test
-'  With .AddNewChildren(FakeCtl_ScrollBar, 240, 8, 400, 24, FCS_CanGetFocus Or FCS_TabStop Or FSS_Slider, , , , , , "Slider1")
-'   .Max = 100
-'   .LargeChange = 10
-'  End With
-'  With .AddNewChildren(FakeCtl_ScrollBar, 408, 8, 424, 80, FCS_CanGetFocus Or FCS_TabStop Or FSS_Slider)
-'   .Orientation = 1
-'   .Max = 10
-'   .LargeChange = 0
-'  End With
-'  With .AddNewChildren(FakeCtl_ProgressBar, 240, 32, 400, 48, , , , , , , "Progress1")
-'   .Max = 100
-'  End With
-'  '////////tab order debug
-'  .AddNewChildren FakeCtl_TextBox, 4, 52, 128, 76, &H3020000, , , , , "Single line text box blah blah blah °¡°¡°¡ blah blah"
-'  .AddNewChildren(FakeCtl_TextBox, 132, 52, 196, 76, &H3030004, , , , , "528").SmallChange = 1
-'  .AddNewChildren(FakeCtl_TextBox, 200, 52, 296, 76, &H3030000, , , , , "528").SmallChange = 0.0625
-'  With .AddNewChildren(FakeCtl_Frame, 120, 144, 240, 256, FCS_CanGetFocus, , , , "Form1234°¡°¢")
-'   .ForeColor = &HFF0000
-'   .ScrollBars = vbBoth
-'   .Min = -50
-'   .Max = 50
-'   .LargeChange = 10
-'   .Min(1) = -50
-'   .Max(1) = 50
-'   .LargeChange(1) = 10
-'   .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
-'   .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
-'   .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
-'  End With
-'  .AddNewChildren FakeCtl_Button, 82, 0, 160, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
-'  .AddNewChildren FakeCtl_Button, 82, 16, 160, 32, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
-'  .AddNewChildren FakeCtl_Button, 82, 32, 160, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
-'  With .AddNewChildren(FakeCtl_None, 240, 144, 360, 256, FCS_CanGetFocus Or FCS_AutoScroll, , , , "Form5678°¡°¢")
-'   With .AddNewChildren(FakeCtl_None, 0, 0, 320, 240)
-'    .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
-'    .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
-'    .AddNewChildren FakeCtl_Button, 0, 32, 64, 48, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
-'   End With
-'  End With
-'  With .AddNewChildren(FakeCtl_PictureBox, 360, 144, 480, 256, FCS_CanGetFocus Or FCS_AutoScroll)
-'   With .AddNewChildren(FakeCtl_None, 0, 0, 320, 240)
-'    .AddNewChildren FakeCtl_Button, 0, 0, 64, 16, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, , , , "Enabled", , "Check1", , , , , 1
-'    .AddNewChildren FakeCtl_Button, 0, 16, 64, 32, FBS_CheckBoxTristate Or FCS_CanGetFocus Or FCS_TabStop, , , , "Check2", , "Check2"
-'    .AddNewChildren FakeCtl_Button, 200, 200, 320, 240, FCS_CanGetFocus Or FCS_TabStop, , , , "Danger!!!", , "cmdDanger"
-'   End With
-'  End With
-'  '////////tabstrip test
-'  With .AddNewChildren(FakeCtl_TabStrip, 8, 260, -8, -8, &H3003000, , , , , , , , , 1, 1)
-'   .ScrollBars = vbBoth
-'   .Max(0) = 2048
-'   .Max(1) = 2048
-'   With .TabObject
-'    .ShowCloseButtonOnTab = True
-'    For i = 1 To 10
-'     .AddTab "LKSCT TEST " + CStr(i) + " ONLY", , i And 1&, , True
-'    Next i
-'   End With
-'   For i = 1 To 10
-'    .AddNewChildren FakeCtl_Button, 0, 0, 128 * i, 64 * i, , , False, , "TEST" + CStr(i), , , , , , , , , "This is test " + CStr(i)
-'   Next i
-'  End With
-'  '////////
-'  With .AddNewChildren(FakeCtl_ComboBox, 4, 88, 256, 108, &H3000018, , , , , "Dropdown CheckListBox")
-'   .ComboBoxDropdownHeight = 16
-'   With .ListViewObject
-'     .FullRowSelect = True
-'     .ColumnHeader = True
-'     .GridLines = True
-'     .AddColumn "A", , efctCheck, , 16
-'     .AddColumn "B", , efctCheck3State, , 16
-'     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
-'     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 64
-'     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight, 80
-'     For i = 1 To 1000
-'      .AddItem "", , , Array(, CStr(i), CStr(i * i), CStr(i * i * i))
-'     Next i
-'   End With
-'  End With
-'  With .AddNewChildren(FakeCtl_ComboBox, 4, 112, 256, 132, &H3000000, , , , , "HEHE")
-'   With .ListViewObject
-'     .FullRowSelect = True
-'     .ColumnHeader = False
-'     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
-'     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 64
-'     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight
-'     For i = 1 To 1000
-'      .AddItem CStr(i), , , Array(CStr(i * i), CStr(i * i * i))
-'     Next i
-'   End With
-'  End With
-'  With .AddNewChildren(FakeCtl_ComboBox, 4, 136, 256, 156, &H3000001, , , , , "HEHE 2")
-'   With .ListViewObject
-'     .FullRowSelect = True
-'     .ColumnHeader = False
-'     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
-'     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 64
-'     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight
-'     For i = 1 To 1000
-'      .AddItem CStr(i), , , Array(CStr(i * i), CStr(i * i * i))
-'     Next i
-'   End With
-'  End With
-'  '///
-'  End With
-' End With
-' With .AddNewChildren(FakeCtl_Form, 160, 120, 600, 400, &HFF00FF, , False, , "É½Õ¯MDIForm1")
-'  .ScrollBars = vbBoth
-'  .Min = -50
-'  .Max = 50
-'  .LargeChange = 10
-'  .Min(1) = -50
-'  .Max(1) = 50
-'  .LargeChange(1) = 10
-'  '///
-'  .AddNewChildren FakeCtl_Label, 8, 8, 128, 32, , , , , , , "Label1"
-'  .Show 1
-'  With .AddNewChildren(FakeCtl_Form, 0, 0, 320, 240, _
-'  3& Or FFS_TitleBar Or FFS_CloseButton Or FFS_MaxButton Or FFS_MinButton, , False, , "Form2")
-'   With .AddNewChildren(FakeCtl_TextBox, 0, 0, 0, 0, &H3000000, , , , , _
-'   Replace(Space(100), " ", "Text2 blah blah blah °¡°¡°¡°¡°¡°¡°¢°¡°¡°¡°¡°¡°¡°¡°¡°¡°¡°¡°¡ blah blah blah" + vbCrLf), , , , 0.5, 1)
-'    .ScrollBars = vbVertical
-'    .MultiLine = True
-'   End With
-'   With .AddNewChildren(FakeCtl_ListView, 0, 0, 0, 0, &H3000000, , , , , , , 0.5, , 1, 1)
-'    With .ListViewObject
-'     .FullRowSelect = True
-'     .ColumnHeader = True
-'     .GridLines = True
-'     .AddColumn "he1", , , efcfSizable Or efcfSortable, 48
-'     .AddColumn "he2", , , efcfSizable Or efcfSortable Or efcfAlignCenter, 48
-'     .AddColumn "he3", , , efcfSizable Or efcfSortable Or efcfAlignRight, 48
-'     .AddColumn "A", , efctCheck, , 16
-'     .AddColumn "B", , efctCheck3State, , 16
-'     For i = 1 To 1000
-'      .AddItem CStr(i), , , Array(CStr(i * i), CStr(i * i * i))
-'     Next i
-'    End With
-'   End With
-'   .Show 1
-'  End With
-' End With
-' With .AddNewChildren(FakeCtl_Form, 200, 280, 360, 340, 2& Or FCS_TopMost, , False, , , , "frmTopmost")
-'  .AddNewChildren FakeCtl_Label, 0, 0, 160, 96, , , , , "This is a topmost form." + vbCrLf + "Label1" + vbCrLf + "xxx"
-'  .AddNewChildren FakeCtl_Button, 80, 28, 140, 48, FBS_Default Or FBS_Cancel Or FCS_CanGetFocus, , , , "Close", , "cmdClose"
-'  .Show 1
-' End With
-'End With
-'#End If
 End Sub
 
 Public Function FakeDXUtilReadVec4(ByVal s As String, ByRef t As D3DXVECTOR4) As Boolean
