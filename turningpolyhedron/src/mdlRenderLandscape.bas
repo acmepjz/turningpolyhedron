@@ -3,7 +3,7 @@ Option Explicit
 
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 
-Public MyMini_Vertices() As typeVertex
+Public MyMini_Vertices() As typeVertex_Smaller
 Public MyMini_VertexCount As Long, MyMini_VertexMax As Long
 
 Public MyMini_Indices() As Long

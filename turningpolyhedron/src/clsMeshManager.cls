@@ -162,7 +162,7 @@ Dim nSize As Long
 '///
 tt(0) = D3DVertexElementCreate(, 0, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_POSITION)
 tt(1) = D3DVertexElementCreate(, 12&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_NORMAL)
-If t.FVF And &H1F00& Then
+If (t.FVF And &H1F00&) <> 0 And FakeDXAppShaderEnabled Then
  tt(2) = D3DVertexElementCreate(, 24&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_BINORMAL)
  tt(3) = D3DVertexElementCreate(, 36&, D3DDECLTYPE_FLOAT3, , D3DDECLUSAGE_TANGENT)
  m = 4
@@ -895,7 +895,7 @@ Dim nOffset As Long, nOffset_0 As Long
 Dim tParam As typeMeshParamData
 Dim nIndex() As Integer
 '///
-nOffset_0 = 24& + (((t.FVF And &H1F00&) <> 0) And 24&)
+nOffset_0 = 24& + (((t.FVF And &H1F00&) <> 0 And FakeDXAppShaderEnabled) And 24&)
 '////////////////copy vertex buffer
 t.objMesh.LockVertexBuffer 0, lp
 '///position and normal

@@ -90,17 +90,18 @@ MiniStub_Draw m_hStub, m_fResolution, tEye.x, tEye.z, -tEye.y, tAt.x - tEye.x, t
 If MyMini_IndexCount > 0 Then
  m = MyMini_IndexCount
  MyMini_IndexCount = MyMini_IndexCount \ 3&
- d3dd9.SetVertexDeclaration d3dd9.CreateVertexDeclaration(m_tDefVertexDecl(0)) '??? slow!!!
+ 'd3dd9.SetVertexDeclaration d3dd9.CreateVertexDeclaration(m_tDefVertexDecl(0)) '??? slow!!!
+ d3dd9.SetFVF FVF_Of_typeVertex_Smaller
 ' d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
 ' d3dd9.SetTextureStageState 0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG2
 ' d3dd9.SetRenderState D3DRS_FILLMODE, D3DFILL_WIREFRAME
  '///draw something
  On Error Resume Next
  If MyMiniErr_NoIndexBuffer Then
-  d3dd9.DrawPrimitiveUP D3DPT_TRIANGLELIST, MyMini_IndexCount, MyMini_Vertices(0), 64&
+  d3dd9.DrawPrimitiveUP D3DPT_TRIANGLELIST, MyMini_IndexCount, MyMini_Vertices(0), 40&
  Else
   Err.Clear
-  d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, MyMini_VertexCount, MyMini_IndexCount, MyMini_Indices(0), D3DFMT_INDEX32, MyMini_Vertices(0), 64&
+  d3dd9.DrawIndexedPrimitiveUP D3DPT_TRIANGLELIST, 0, MyMini_VertexCount, MyMini_IndexCount, MyMini_Indices(0), D3DFMT_INDEX32, MyMini_Vertices(0), 40&
   If Err.Number Then MyMiniErr_NoIndexBuffer = True
  End If
  On Error GoTo 0

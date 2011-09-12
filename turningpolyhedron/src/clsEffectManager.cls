@@ -524,6 +524,9 @@ For i = 1 To tInst.nInstCount
     d3dd9.SetTextureStageState 0, D3DTSS_COLORARG1, D3DTA_TEXTURE
     d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
     d3dd9.SetTexture 0, m_tEffect(nEffectIndex).objTextures((ii And &HF0000) \ &H10000)
+   Else
+    d3dd9.SetTextureStageState 0, D3DTSS_COLOROP, D3DTOP_SELECTARG2
+    d3dd9.SetTextureStageState 0, D3DTSS_COLORARG2, D3DTA_DIFFUSE
    End If
    '///ambient
    j = m_tEffect(nEffectIndex).tArguments(IDA_Ambient).nType

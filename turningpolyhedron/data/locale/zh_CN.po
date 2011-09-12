@@ -39,6 +39,10 @@ msgstr "关于"
 msgid "Accurate algorithm"
 msgstr "精确算法"
 
+#. + vbCrLf + objText.GetText("Advanced graphical effects will be disabled."), vbExclamation, _
+msgid "Advanced graphical effects will be disabled."
+msgstr "高级图形效果将不可用。"
+
 #. .AddNewChildren FakeCtl_Label, 10, y, 198, y + Height, , , , , objText.GetText("Antialiasing")
 msgid "Antialiasing"
 msgstr "消除锯齿"
@@ -187,7 +191,7 @@ msgstr "设置程序是否以全屏模式运行。"
 msgid "Discard changes and close dialog."
 msgstr "放弃变更并且关闭对话框。"
 
-#. , , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
+#. FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
 msgid "Enables depth of field effect."
 msgstr "启用景深效果。"
 
@@ -224,6 +228,7 @@ msgid "Encoder"
 msgstr "编码器"
 
 #. .MsgBox objText.GetText("Failed to begin video capture"), vbCritical, objText.GetText("Error")
+#. objText.GetText("Error")
 #. MsgBox s2, vbExclamation, objText.GetText("Error")
 #. .MsgBox sPath + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #. .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
@@ -613,7 +618,7 @@ msgstr "选择关卡"
 msgid "Selet level in %s"
 msgstr "在 %s 中选择关卡"
 
-#. , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+#. FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
 msgid "Set the quality of HDR blur."
 msgstr "设置HDR模糊的质量。"
 
@@ -710,6 +715,14 @@ msgstr "撤消"
 msgid "Undo last move."
 msgstr "撤消上一步移动。"
 
+#. objText.GetText("Use shader (require restart)"), , , , , , , , , objText.GetText("Use shader support of video card to perform advanced grapical effects. You need to restart the game to apply changes."))
+msgid "Use shader (require restart)"
+msgstr "使用Shader (需要重新启动)"
+
+#. objText.GetText("Use shader (require restart)"), , , , , , , , , objText.GetText("Use shader support of video card to perform advanced grapical effects. You need to restart the game to apply changes."))
+msgid "Use shader support of video card to perform advanced grapical effects. You need to restart the game to apply changes."
+msgstr "使用显卡的Shader功能来实现高级图形效果。你需要重新启动游戏来应用此项变更。"
+
 #. objText.GetText("Vertical synchronization"), , , , , , , , , objText.GetText("Enables vertical synchronization."))
 msgid "Vertical synchronization"
 msgstr "垂直同步"
@@ -768,6 +781,10 @@ msgstr "是"
 #. objText.GetText("You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>."), _
 msgid "You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>."
 msgstr "您应已收到附随于本程序的GNU通用公共授权的副本；如果没有，请查阅<http://www.gnu.org/licenses/>。"
+
+#. MsgBox objText.GetText("Your video card or video card driver is unsupported.") _
+msgid "Your video card or video card driver is unsupported."
+msgstr "你的显卡或者显卡驱动不支持某些功能。"
 
 #. objText.GetText("Turning Polyhedron") + "   " + objText.GetText("version") + " " + FakeDXAppVersion + vbCrLf + vbCrLf + _
 msgid "version"

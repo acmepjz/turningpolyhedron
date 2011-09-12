@@ -30,6 +30,10 @@ msgstr ""
 msgid "Accurate algorithm"
 msgstr ""
 
+#.  + vbCrLf + objText.GetText("Advanced graphical effects will be disabled."), vbExclamation, _
+msgid "Advanced graphical effects will be disabled."
+msgstr ""
+
 #.    .AddNewChildren FakeCtl_Label, 10, y, 198, y + Height, , , , , objText.GetText("Antialiasing")
 msgid "Antialiasing"
 msgstr ""
@@ -178,7 +182,7 @@ msgstr ""
 msgid "Discard changes and close dialog."
 msgstr ""
 
-#.    , , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
+#.    FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
 msgid "Enables depth of field effect."
 msgstr ""
 
@@ -215,6 +219,7 @@ msgid "Encoder"
 msgstr ""
 
 #.     .MsgBox objText.GetText("Failed to begin video capture"), vbCritical, objText.GetText("Error")
+#.  objText.GetText("Error")
 #.  MsgBox s2, vbExclamation, objText.GetText("Error")
 #.      .MsgBox sPath + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #.    .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
@@ -604,7 +609,7 @@ msgstr ""
 msgid "Selet level in %s"
 msgstr ""
 
-#.    , , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+#.    FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
 msgid "Set the quality of HDR blur."
 msgstr ""
 
@@ -701,6 +706,14 @@ msgstr ""
 msgid "Undo last move."
 msgstr ""
 
+#.    objText.GetText("Use shader (require restart)"), , , , , , , , , objText.GetText("Use shader support of video card to perform advanced grapical effects. You need to restart the game to apply changes."))
+msgid "Use shader (require restart)"
+msgstr ""
+
+#.    objText.GetText("Use shader (require restart)"), , , , , , , , , objText.GetText("Use shader support of video card to perform advanced grapical effects. You need to restart the game to apply changes."))
+msgid "Use shader support of video card to perform advanced grapical effects. You need to restart the game to apply changes."
+msgstr ""
+
 #.    objText.GetText("Vertical synchronization"), , , , , , , , , objText.GetText("Enables vertical synchronization."))
 msgid "Vertical synchronization"
 msgstr ""
@@ -758,6 +771,10 @@ msgstr ""
 
 #.   objText.GetText("You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>."), _
 msgid "You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>."
+msgstr ""
+
+#.  MsgBox objText.GetText("Your video card or video card driver is unsupported.") _
+msgid "Your video card or video card driver is unsupported."
 msgstr ""
 
 #.   objText.GetText("Turning Polyhedron") + "   " + objText.GetText("version") + " " + FakeDXAppVersion + vbCrLf + vbCrLf + _
