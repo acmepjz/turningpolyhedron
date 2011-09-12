@@ -257,7 +257,7 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
    End With
    y = y + HeightStep
    'post process?
-   With .AddNewChildren(FakeCtl_Button, 10, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, FakeDXAppShaderAvaliable, , , _
+   With .AddNewChildren(FakeCtl_Button, 10, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, FakeDXAppShaderEnabled, , , _
    objText.GetText("Post process"), , , , , , , , , objText.GetText("Enables post process effects."))
     m_idx(IDC_PostProcess) = .Index
    End With
@@ -265,7 +265,7 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
    'HDR blur quality
    .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("HDR quality")
    With .AddNewChildren(FakeCtl_ComboBox, Left, y, Right, y + Height, FCS_CanGetFocus Or FCS_TabStop, _
-   FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+   FakeDXAppShaderEnabled, , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
     m_idx(IDC_HDRBlurQuality) = .Index
     With .ListViewObject
      .FullRowSelect = True
@@ -277,13 +277,13 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
    End With
    y = y + HeightStep
    'fog?
-   With .AddNewChildren(FakeCtl_Button, 20, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, FakeDXAppShaderAvaliable, , , _
+   With .AddNewChildren(FakeCtl_Button, 20, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, FakeDXAppShaderEnabled, , , _
    objText.GetText("Fog"), , , , , , , , , objText.GetText("Enables fog effect."))
     m_idx(IDC_Fog) = .Index
    End With
    y = y + HeightStep
    'volumetric fog?
-   With .AddNewChildren(FakeCtl_Button, 30, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, FakeDXAppShaderAvaliable, , , _
+   With .AddNewChildren(FakeCtl_Button, 30, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, FakeDXAppShaderEnabled, , , _
    objText.GetText("Volumetric fog"), , , , , , , , , objText.GetText("Enables volumetric fog effect."))
     m_idx(IDC_VolumetricFog) = .Index
    End With
@@ -291,7 +291,7 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
    'DOF?
    .AddNewChildren FakeCtl_Label, 20, y, 198, y + Height, , , , , objText.GetText("Depth of field")
    With .AddNewChildren(FakeCtl_ComboBox, Left, y, Right, y + Height, FCS_CanGetFocus Or FCS_TabStop, _
-   FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
+   FakeDXAppShaderEnabled, , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
     m_idx(IDC_DepthOfField) = .Index
     With .ListViewObject
      .FullRowSelect = True
@@ -303,7 +303,7 @@ With FakeDXUIControls(1).AddNewChildren(FakeCtl_Form, 0, 0, _
    End With
    y = y + HeightStep
    'radial blur?
-   With .AddNewChildren(FakeCtl_Button, 20, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, FakeDXAppShaderAvaliable, , , _
+   With .AddNewChildren(FakeCtl_Button, 20, y, 198, y + Height, FBS_CheckBox Or FCS_CanGetFocus Or FCS_TabStop, FakeDXAppShaderEnabled, , , _
    objText.GetText("Radial blur"), , , , , , , , , objText.GetText("Enables radial blur effect."))
     m_idx(IDC_RadialBlur) = .Index
    End With

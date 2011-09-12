@@ -90,6 +90,10 @@ Private m_fovy As Single, m_fAspect As Single, m_zn As Single, m_zf As Single
 Private m_vZData As D3DXVECTOR4, m_vDistCorrection As D3DXVECTOR4
 Private m_vDepthOfField As D3DXVECTOR4
 
+'////////
+
+Private m_fSkydome() As Single, m_nSkydomeSize As Long
+
 Friend Property Get DepthOfFieldType(Optional ByVal bForceRefresh As Boolean) As Long
 DepthOfFieldType = m_nDOFType
 End Property
@@ -545,32 +549,132 @@ End Sub
 
 'TEST ONLY
 Friend Sub DrawSkydome(ByVal objTexture As Direct3DTexture9)
-Dim mat As D3DMATRIX
-Dim f As Single
-d3dd9.GetTransform D3DTS_VIEW, mat
+Dim mat As D3DMATRIX, mat2 As D3DMATRIX
+Dim v As D3DVECTOR
+Dim i As Long, j As Long, lp As Long
+Const m1 As Long = 16, m2 As Long = 16
 '///
-f = Tan(m_fovy / 2)
-mat.m12 = mat.m12 * -f
-mat.m22 = mat.m22 * -f
-mat.m32 = mat.m32 * -f
-mat.m13 = mat.m13 - mat.m12
-mat.m23 = mat.m23 - mat.m22
-mat.m33 = mat.m33 - mat.m32
-'///
-f = f * m_fAspect
-mat.m11 = mat.m11 * f
-mat.m21 = mat.m21 * f
-mat.m31 = mat.m31 * f
-mat.m13 = mat.m13 - mat.m11
-mat.m23 = mat.m23 - mat.m21
-mat.m33 = mat.m33 - mat.m31
-'///
-d3dd9.SetRenderState D3DRS_ZENABLE, 0
-objTextMgr.DrawTextureEx objTexture, "fx_skydome", 0, 0, 0, 0, _
-Vec4(mat.m13, mat.m23, mat.m33), _
-Vec4(mat.m11 * 2, mat.m21 * 2, mat.m31 * 2), _
-Vec4(mat.m12 * 2, mat.m22 * 2, mat.m32 * 2), Vec4
-d3dd9.SetRenderState D3DRS_ZENABLE, 1
+If FakeDXAppShaderEnabled Then
+ d3dd9.GetTransform D3DTS_VIEW, mat
+ '///
+ mat.m44 = Tan(m_fovy / 2)
+ mat.m12 = mat.m12 * -mat.m44
+ mat.m22 = mat.m22 * -mat.m44
+ mat.m32 = mat.m32 * -mat.m44
+ mat.m13 = mat.m13 - mat.m12
+ mat.m23 = mat.m23 - mat.m22
+ mat.m33 = mat.m33 - mat.m32
+ '///
+ mat.m44 = mat.m44 * m_fAspect
+ mat.m11 = mat.m11 * mat.m44
+ mat.m21 = mat.m21 * mat.m44
+ mat.m31 = mat.m31 * mat.m44
+ mat.m13 = mat.m13 - mat.m11
+ mat.m23 = mat.m23 - mat.m21
+ mat.m33 = mat.m33 - mat.m31
+ '///
+ d3dd9.SetRenderState D3DRS_ZENABLE, 0
+ objTextMgr.DrawTextureEx objTexture, "fx_skydome", 0, 0, 0, 0, _
+ Vec4(mat.m13, mat.m23, mat.m33), _
+ Vec4(mat.m11 * 2, mat.m21 * 2, mat.m31 * 2), _
+ Vec4(mat.m12 * 2, mat.m22 * 2, mat.m32 * 2), Vec4
+ d3dd9.SetRenderState D3DRS_ZENABLE, 1
+Else
+ If m_nSkydomeSize = 0 Then
+  m_nSkydomeSize = m1 * (2 * m2 - 1)
+  ReDim m_fSkydome(m1 * m2 * 30 - 1)
+  '///
+  mat.m21 = Cos(1.570796! / m2)
+  mat.m22 = Sin(1.570796! / m2)
+  mat.m44 = 1 / m2
+  For i = 0 To m1 - 1
+   mat.m41 = i / m1
+   mat.m42 = (i + 1) / m1
+   '///
+   m_fSkydome(lp + 2) = 1: m_fSkydome(lp + 3) = mat.m41
+   '///
+   mat.m13 = 6.283185! * mat.m42
+   m_fSkydome(lp + 5) = mat.m22 * Cos(mat.m13)
+   m_fSkydome(lp + 6) = mat.m22 * Sin(mat.m13)
+   m_fSkydome(lp + 7) = mat.m21: m_fSkydome(lp + 8) = mat.m42: m_fSkydome(lp + 9) = mat.m44
+   '///
+   mat.m13 = 6.283185! * mat.m41
+   m_fSkydome(lp + 10) = mat.m22 * Cos(mat.m13)
+   m_fSkydome(lp + 11) = mat.m22 * Sin(mat.m13)
+   m_fSkydome(lp + 12) = mat.m21: m_fSkydome(lp + 13) = mat.m41: m_fSkydome(lp + 14) = mat.m44
+   '///
+   lp = lp + 15
+  Next i
+  '///
+  For j = 1 To m2 - 1
+   mat.m43 = j / m2
+   mat.m44 = (j + 1) / m2
+   mat.m11 = Cos(1.570796! * mat.m43)
+   mat.m12 = Sin(1.570796! * mat.m43)
+   mat.m21 = Cos(1.570796! * mat.m44)
+   mat.m22 = Sin(1.570796! * mat.m44)
+   For i = 0 To m1 - 1
+    mat.m41 = i / m1
+    mat.m42 = (i + 1) / m1
+    '///
+    mat.m13 = 6.283185! * mat.m41
+    m_fSkydome(lp) = mat.m12 * Cos(mat.m13)
+    m_fSkydome(lp + 1) = mat.m12 * Sin(mat.m13)
+    m_fSkydome(lp + 2) = mat.m11: m_fSkydome(lp + 3) = mat.m41: m_fSkydome(lp + 4) = mat.m43
+    m_fSkydome(lp + 10) = mat.m22 * Cos(mat.m13)
+    m_fSkydome(lp + 11) = mat.m22 * Sin(mat.m13)
+    m_fSkydome(lp + 12) = mat.m21: m_fSkydome(lp + 13) = mat.m41: m_fSkydome(lp + 14) = mat.m44
+    '///
+    mat.m13 = 6.283185! * mat.m42
+    m_fSkydome(lp + 5) = mat.m22 * Cos(mat.m13)
+    m_fSkydome(lp + 6) = mat.m22 * Sin(mat.m13)
+    m_fSkydome(lp + 7) = mat.m21: m_fSkydome(lp + 8) = mat.m42: m_fSkydome(lp + 9) = mat.m44
+    m_fSkydome(lp + 15) = mat.m12 * Cos(mat.m13)
+    m_fSkydome(lp + 16) = mat.m12 * Sin(mat.m13)
+    m_fSkydome(lp + 17) = mat.m11: m_fSkydome(lp + 18) = mat.m42: m_fSkydome(lp + 19) = mat.m43
+    '///
+    m_fSkydome(lp + 20) = m_fSkydome(lp + 5)
+    m_fSkydome(lp + 21) = m_fSkydome(lp + 6)
+    m_fSkydome(lp + 22) = m_fSkydome(lp + 7)
+    m_fSkydome(lp + 23) = m_fSkydome(lp + 8)
+    m_fSkydome(lp + 24) = m_fSkydome(lp + 9)
+    m_fSkydome(lp + 25) = m_fSkydome(lp)
+    m_fSkydome(lp + 26) = m_fSkydome(lp + 1)
+    m_fSkydome(lp + 27) = m_fSkydome(lp + 2)
+    m_fSkydome(lp + 28) = m_fSkydome(lp + 3)
+    m_fSkydome(lp + 29) = m_fSkydome(lp + 4)
+    '///
+    lp = lp + 30
+   Next i
+  Next j
+  '///
+ End If
+ '///
+ d3dd9.GetTransform D3DTS_WORLD, mat
+ d3dd9.SetTransform D3DTS_WORLD, D3DXMatrixIdentity
+ d3dd9.GetTransform D3DTS_VIEW, mat2
+ v.x = mat2.m41
+ v.y = mat2.m42
+ v.z = mat2.m43
+ mat2.m41 = 0
+ mat2.m42 = 0
+ mat2.m43 = 0
+ d3dd9.SetTransform D3DTS_VIEW, mat2
+ '///
+ d3dd9.SetRenderState D3DRS_ZENABLE, 0
+ d3dd9.SetFVF D3DFVF_XYZ Or D3DFVF_TEX1
+ d3dd9.SetTexture 0, objTexture
+ d3dd9.DrawPrimitiveUP D3DPT_TRIANGLELIST, m_nSkydomeSize, m_fSkydome(0), 20&
+ d3dd9.SetRenderState D3DRS_ZENABLE, 1
+ '///
+ d3dd9.SetTransform D3DTS_WORLD, mat
+ mat2.m41 = v.x
+ mat2.m42 = v.y
+ mat2.m43 = v.z
+ d3dd9.SetTransform D3DTS_VIEW, mat2
+ '///
+ FakeDXAppTriangleCount = FakeDXAppTriangleCount + m_nSkydomeSize
+End If
 End Sub
 
 Friend Sub PerformPostProcess()

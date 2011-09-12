@@ -26,6 +26,7 @@ Private Const CSIDL_PERSONAL As Long = &H5
 Private Const CSIDL_DESKTOP As Long = &H0
 Private Const CSIDL_DESKTOPDIRECTORY As Long = &H10
 
+Private Declare Sub DebugBreak Lib "kernel32.dll" ()
 Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
 Private Declare Sub Sleep Lib "kernel32.dll" (ByVal dwMilliseconds As Long)
 
@@ -73,7 +74,8 @@ Public d3dd9 As Direct3DDevice9
 Public d3dpp As D3DPRESENT_PARAMETERS, m_nRefreshRate As Long
 Public d3dc9 As D3DCAPS9
 
-Public Type typeVertex
+'something goes wrong with software vertex processing
+Public Type typeVertex '64 bytes
  p As D3DVECTOR
  n As D3DVECTOR
  b As D3DVECTOR
@@ -83,10 +85,20 @@ Public Type typeVertex
  t As D3DXVECTOR2
 End Type
 
+Public Type typeVertex_Smaller '40 bytes
+ p As D3DVECTOR
+ n As D3DVECTOR
+ clr1 As Long 'diffuse
+ clr2 As Long 'specular
+ t As D3DXVECTOR2
+End Type
+Public Const FVF_Of_typeVertex_Smaller As Long = D3DFVF_XYZ Or D3DFVF_NORMAL Or D3DFVF_DIFFUSE Or D3DFVF_SPECULAR Or D3DFVF_TEX1
+
 Public Type typeVertex_XYZ_Diffuse
  p As D3DVECTOR
  clr1 As Long
 End Type
+Public Const FVF_Of_typeVertex_XYZ_Diffuse As Long = D3DFVF_XYZ Or D3DFVF_DIFFUSE
 
 Public m_tDefVertexDecl() As D3DVERTEXELEMENT9
 
@@ -681,6 +693,7 @@ Dim i As Long
 Dim s As String
 Dim obj As clsTreeStorageNode
 '///
+'DebugBreak
 DirtyCode
 'If Dir(App.Path + "\hook.txt") <> "" Then DirtyCode2
 '///
@@ -918,13 +931,19 @@ End Function
 Private Function pLoadMeshTest() As D3DXMesh
 Dim obj As D3DXMesh
 Dim objAdjacency As D3DXBuffer
-Dim i As Long, j As Long, lp As Long
+Dim i As Long, m As Long, lp As Long
 Dim tDesc As D3DVERTEXBUFFER_DESC
 '////////
 'bug in x file loader: you must write "1.000" instead of "1" or it'll buggy :-3
 D3DXLoadMeshFromXW CStr(App.Path) + "\media\cube1_2.x", D3DXMESH_MANAGED, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
 'D3DXLoadMeshFromXW CStr(App.Path) + "\media\test.x", 0, d3dd9, objAdjacency, Nothing, Nothing, 0, obj
-Set obj = obj.CloneMesh(D3DXMESH_MANAGED, m_tDefVertexDecl(0), d3dd9)
+If FakeDXAppShaderEnabled Then
+ Set obj = obj.CloneMesh(D3DXMESH_MANAGED, m_tDefVertexDecl(0), d3dd9)
+ m = 64
+Else
+ Set obj = obj.CloneMeshFVF(D3DXMESH_MANAGED, FVF_Of_typeVertex_Smaller, d3dd9)
+ m = 40
+End If
 '///recalculate normal
 D3DXComputeTangentFrame obj, D3DXTANGENT_CALCULATE_NORMALS
 '//poly20-can smooth, monkey can't :-3 cube1-1 can't either ---why?
@@ -933,7 +952,7 @@ D3DXComputeTangentFrame obj, D3DXTANGENT_CALCULATE_NORMALS
 '///set color
 obj.LockVertexBuffer 0, lp
 obj.GetVertexBuffer.GetDesc tDesc
-For i = 48 To tDesc.Size - 1 Step 64
+For i = m - 16 To tDesc.Size - 1 Step m
  CopyMemory ByVal lp + i, &HFFFFFFFF, 4& 'ambient
  CopyMemory ByVal lp + i + 4, &HFFFFFFCC, 4& 'specular
 Next i
