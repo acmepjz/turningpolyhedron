@@ -753,8 +753,8 @@ End If
 'shader version, etc.
 FakeDXAppShaderAvaliable = (d3dc9.VertexShaderVersion And &HFFFF&) >= &H300& And (d3dc9.PixelShaderVersion And &HFFFF&) >= &H300&
 If FakeDXAppShaderEnabled And Not FakeDXAppShaderAvaliable Then
- MsgBox objText.GetText("Your video card or video card driver is unsupported.") _
- + vbCrLf + objText.GetText("Advanced graphical effects will be disabled."), vbExclamation, _
+ MsgBox objText.GetText("Some features are unsupported by your video card or video card driver.") _
+ + vbCrLf + objText.GetText("Advanced graphical effects will be unavailable."), vbExclamation, _
  objText.GetText("Error")
  FakeDXAppShaderEnabled = False
  FakeDXAppShaderEnabled_New = False

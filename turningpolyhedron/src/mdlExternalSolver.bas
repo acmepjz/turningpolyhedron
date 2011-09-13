@@ -54,3 +54,6 @@ Public Declare Function SolverSolve Lib "SolverTest2.dll" (ByVal obj As Long, By
 Public Declare Function SolverOutputToString Lib "SolverTest2.dll" (ByVal obj As Long, ByRef s As Any, ByVal nLen As Long, ByVal OutputSolution As Byte) As Long
 Public Declare Sub SolverOutputToFile Lib "SolverTest2.dll" (ByVal obj As Long, ByVal s As String, ByVal OutputSolution As Byte)
 
+'////////
+
+Public FakeDXAppSolverNotFound As Boolean

@@ -30,8 +30,8 @@ msgstr ""
 msgid "Accurate algorithm"
 msgstr ""
 
-#.  + vbCrLf + objText.GetText("Advanced graphical effects will be disabled."), vbExclamation, _
-msgid "Advanced graphical effects will be disabled."
+#.  + vbCrLf + objText.GetText("Advanced graphical effects will be unavailable."), vbExclamation, _
+msgid "Advanced graphical effects will be unavailable."
 msgstr ""
 
 #.    .AddNewChildren FakeCtl_Label, 10, y, 198, y + Height, , , , , objText.GetText("Antialiasing")
@@ -94,6 +94,10 @@ msgstr ""
 msgid "Can't create encoder list"
 msgstr ""
 
+#.   .MsgBox objText.GetText("Can't load level solver due to missing solver module or C runtime library.") _
+msgid "Can't load level solver due to missing solver module or C runtime library."
+msgstr ""
+
 #.    .MsgBox objText.GetText("Can't load license file. Please see <http://www.gnu.org/licenses/>."), vbExclamation, objText.GetText("Error")
 msgid "Can't load license file. Please see <http://www.gnu.org/licenses/>."
 msgstr ""
@@ -102,10 +106,10 @@ msgstr ""
 #.   s = objText.GetText("Cancel")
 #.   .AddNewChildren FakeCtl_Button, -64, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
 #.  .AddNewChildren FakeCtl_Button, -64, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1
-#.   .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
-#.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel3", 1, 1, 1, 1
 #.   .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel4", 1, 1, 1, 1
+#.   .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
+#.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
 #.  .AddNewChildren FakeCtl_Button, -72, -12, -8, 12, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 0.5, 1, 0.5
 msgid "Cancel"
 msgstr ""
@@ -182,7 +186,7 @@ msgstr ""
 msgid "Discard changes and close dialog."
 msgstr ""
 
-#.    FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
+#.    FakeDXAppShaderEnabled, , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
 msgid "Enables depth of field effect."
 msgstr ""
 
@@ -225,6 +229,7 @@ msgstr ""
 #.    .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #.        objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 #.        .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#.   objText.GetText("Level solver and random map generator will be unavailable."), vbExclamation, objText.GetText("Error")
 #.    + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 #.     .MsgBox objText.GetText("Error saving file."), vbExclamation, objText.GetText("Error")
 #.   .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
@@ -398,6 +403,10 @@ msgstr ""
 msgid "Level number"
 msgstr ""
 
+#.   objText.GetText("Level solver and random map generator will be unavailable."), vbExclamation, objText.GetText("Error")
+msgid "Level solver and random map generator will be unavailable."
+msgstr ""
+
 #.  objText.GetText("License"))
 msgid "License"
 msgstr ""
@@ -471,10 +480,10 @@ msgstr ""
 #.   s = objText.GetText("OK")
 #.   .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 #.   s = objText.GetText("OK")
-#.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
-#.   .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
 #.   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK3", 1, 1, 1, 1
 #.   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK4", 1, 1, 1, 1
+#.   .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
+#.   .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
 #.   objText.GetText("OK"), _
 #.   objText.GetText("OK"), _
 msgid "OK"
@@ -539,8 +548,8 @@ msgstr ""
 msgid "Radial blur"
 msgstr ""
 
-#.   .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
 #.  objText.GetText("Random level"))
+#.   .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, Not FakeDXAppSolverNotFound, , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
 #.    m_sLevelName = objText.GetText("Random level")
 msgid "Random level"
 msgstr ""
@@ -609,7 +618,7 @@ msgstr ""
 msgid "Selet level in %s"
 msgstr ""
 
-#.    FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+#.    FakeDXAppShaderEnabled, , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
 msgid "Set the quality of HDR blur."
 msgstr ""
 
@@ -637,6 +646,10 @@ msgstr ""
 #.  .AddButton objText.GetText("Solve level"), &H105&, _
 #.      .MsgBox objText.GetText("No solution."), vbInformation, objText.GetText("Solve level")
 msgid "Solve level"
+msgstr ""
+
+#.  MsgBox objText.GetText("Some features is unsupported by your video card or video card driver.") _
+msgid "Some features is unsupported by your video card or video card driver."
 msgstr ""
 
 #.   objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , _
@@ -690,9 +703,9 @@ msgstr ""
 msgid "Turning Polyhedron"
 msgstr ""
 
-#.     .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
 #.     .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Type")
 #.   .AddNewChildren FakeCtl_Label, 8, 8, 88, 32, , , , , objText.GetText("Type")
+#.     .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
 msgid "Type"
 msgstr ""
 
@@ -771,10 +784,6 @@ msgstr ""
 
 #.   objText.GetText("You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>."), _
 msgid "You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>."
-msgstr ""
-
-#.  MsgBox objText.GetText("Your video card or video card driver is unsupported.") _
-msgid "Your video card or video card driver is unsupported."
 msgstr ""
 
 #.   objText.GetText("Turning Polyhedron") + "   " + objText.GetText("version") + " " + FakeDXAppVersion + vbCrLf + vbCrLf + _

@@ -39,8 +39,8 @@ msgstr "关于"
 msgid "Accurate algorithm"
 msgstr "精确算法"
 
-#. + vbCrLf + objText.GetText("Advanced graphical effects will be disabled."), vbExclamation, _
-msgid "Advanced graphical effects will be disabled."
+#. + vbCrLf + objText.GetText("Advanced graphical effects will be unavailable."), vbExclamation, _
+msgid "Advanced graphical effects will be unavailable."
 msgstr "高级图形效果将不可用。"
 
 #. .AddNewChildren FakeCtl_Label, 10, y, 198, y + Height, , , , , objText.GetText("Antialiasing")
@@ -103,6 +103,10 @@ msgstr "初始化D3D9设备失败!!!"
 msgid "Can't create encoder list"
 msgstr "创建编码器列表失败"
 
+#. .MsgBox objText.GetText("Can't load level solver due to missing solver module or C runtime library.") _
+msgid "Can't load level solver due to missing solver module or C runtime library."
+msgstr "不能加载关卡求解器，因为找不到关卡求解模快或者丢失C运行库。"
+
 #. .MsgBox objText.GetText("Can't load license file. Please see <http://www.gnu.org/licenses/>."), vbExclamation, objText.GetText("Error")
 msgid "Can't load license file. Please see <http://www.gnu.org/licenses/>."
 msgstr "无法打开授权文件。请查阅<http://www.gnu.org/licenses/>。"
@@ -111,10 +115,10 @@ msgstr "无法打开授权文件。请查阅<http://www.gnu.org/licenses/>。"
 #. s = objText.GetText("Cancel")
 #. .AddNewChildren FakeCtl_Button, -64, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
 #. .AddNewChildren FakeCtl_Button, -64, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 1, 1, 1
-#. .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
-#. .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
 #. .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel3", 1, 1, 1, 1
 #. .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel4", 1, 1, 1, 1
+#. .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
+#. .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
 #. .AddNewChildren FakeCtl_Button, -72, -12, -8, 12, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, 0.5, 1, 0.5
 msgid "Cancel"
 msgstr "取消"
@@ -191,7 +195,7 @@ msgstr "设置程序是否以全屏模式运行。"
 msgid "Discard changes and close dialog."
 msgstr "放弃变更并且关闭对话框。"
 
-#. FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
+#. FakeDXAppShaderEnabled, , , , , , , , , , , , objText.GetText("Enables depth of field effect."))
 msgid "Enables depth of field effect."
 msgstr "启用景深效果。"
 
@@ -234,6 +238,7 @@ msgstr "编码器"
 #. .MsgBox s + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
 #. objText.GetText("The folder already exists. Please input a different name.")), vbExclamation, objText.GetText("Error")
 #. .MsgBox s1 + vbCrLf + pGetLastDllErrorMessage, vbExclamation, objText.GetText("Error")
+#. objText.GetText("Level solver and random map generator will be unavailable."), vbExclamation, objText.GetText("Error")
 #. + vbCrLf + m_sLevelFile, vbExclamation, objText.GetText("Error")
 #. .MsgBox objText.GetText("Error saving file."), vbExclamation, objText.GetText("Error")
 #. .MsgBox objText.GetText("Error when loading level file:") + vbCrLf + s, vbExclamation, objText.GetText("Error")
@@ -407,6 +412,10 @@ msgstr "关卡数量"
 msgid "Level number"
 msgstr "关卡编号"
 
+#. objText.GetText("Level solver and random map generator will be unavailable."), vbExclamation, objText.GetText("Error")
+msgid "Level solver and random map generator will be unavailable."
+msgstr "关卡求解器和随机关卡将不可用。"
+
 #. objText.GetText("License"))
 msgid "License"
 msgstr "授权"
@@ -480,10 +489,10 @@ msgstr "无解。"
 #. s = objText.GetText("OK")
 #. .AddNewChildren FakeCtl_Button, -64, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
 #. s = objText.GetText("OK")
-#. .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
-#. .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
 #. .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK3", 1, 1, 1, 1
 #. .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK4", 1, 1, 1, 1
+#. .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
+#. .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
 #. objText.GetText("OK"), _
 #. objText.GetText("OK"), _
 msgid "OK"
@@ -548,8 +557,8 @@ msgstr "质量"
 msgid "Radial blur"
 msgstr "径向模糊"
 
-#. .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
 #. objText.GetText("Random level"))
+#. .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, Not FakeDXAppSolverNotFound, , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
 #. m_sLevelName = objText.GetText("Random level")
 msgid "Random level"
 msgstr "随机关卡"
@@ -618,7 +627,7 @@ msgstr "选择关卡"
 msgid "Selet level in %s"
 msgstr "在 %s 中选择关卡"
 
-#. FakeDXAppShaderAvaliable, , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
+#. FakeDXAppShaderEnabled, , , , , , , , , , , , objText.GetText("Set the quality of HDR blur."))
 msgid "Set the quality of HDR blur."
 msgstr "设置HDR模糊的质量。"
 
@@ -647,6 +656,10 @@ msgstr "使用自动求解器来求解当前关卡。"
 #. .MsgBox objText.GetText("No solution."), vbInformation, objText.GetText("Solve level")
 msgid "Solve level"
 msgstr "求解关卡"
+
+#. MsgBox objText.GetText("Some features is unsupported by your video card or video card driver.") _
+msgid "Some features is unsupported by your video card or video card driver."
+msgstr "你的显卡或者显卡驱动不支持某些功能。"
 
 #. objText.GetText("Start game"), , "cmdStart", , 1, , 1, , , _
 msgid "Start game"
@@ -699,9 +712,9 @@ msgstr "再试一次"
 msgid "Turning Polyhedron"
 msgstr "摇立体"
 
-#. .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
 #. .AddNewChildren FakeCtl_Label, 8, y, 160, y + 24, , , , , objText.GetText("Type")
 #. .AddNewChildren FakeCtl_Label, 8, 8, 88, 32, , , , , objText.GetText("Type")
+#. .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
 msgid "Type"
 msgstr "类型"
 
@@ -782,13 +795,12 @@ msgstr "是"
 msgid "You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>."
 msgstr "您应已收到附随于本程序的GNU通用公共授权的副本；如果没有，请查阅<http://www.gnu.org/licenses/>。"
 
-#. MsgBox objText.GetText("Your video card or video card driver is unsupported.") _
-msgid "Your video card or video card driver is unsupported."
-msgstr "你的显卡或者显卡驱动不支持某些功能。"
-
 #. objText.GetText("Turning Polyhedron") + "   " + objText.GetText("version") + " " + FakeDXAppVersion + vbCrLf + vbCrLf + _
 msgid "version"
 msgstr "版本"
+
+#~ msgid "Your video card or video card driver is unsupported."
+#~ msgstr "你的显卡或者显卡驱动不支持某些功能。"
 
 #~ msgid "Exit the program."
 #~ msgstr "退出程序。"
