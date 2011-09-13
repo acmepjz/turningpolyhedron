@@ -261,6 +261,8 @@ DisplayLevelList
 End Sub
 
 Friend Sub Create()
+On Error Resume Next
+'///
 Dim y As Long
 Dim t() As typeString, s As String, s2 As String
 Dim i As Long, m As Long
@@ -278,53 +280,7 @@ With FakeDXUIControls(1)
   objText.GetText("Pause the game and display in-game menu.") + " (Esc)"
   '///
  End With
- '///level selection screen
- With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
- FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_TitleBar Or FFS_Sizable, _
- , False, , objText.GetText("Select level"))
-  m_idxForm = .Index
-  Set .EventObject = Me
-  '///list view
-  With .AddNewChildren(FakeCtl_ListView, 8, 40, -80, -8, FCS_TabStop Or FCS_CanGetFocus, , , , , , "lstFile", , , 1, 1)
-   m_idxLvFile = .Index
-   With .ListViewObject
-    .FullRowSelect = True
-    .ColumnHeader = True
-    .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 160
-    .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
-    .AddColumn objText.GetText("Level count"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
-    .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
-   End With
-  End With
-  '///some buttons
-  .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
-  .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
-  .AddNewChildren FakeCtl_Button, 8, 8, 72, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Refresh"), , "cmdRefresh"
-  .AddNewChildren FakeCtl_Button, -328, 8, -208, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Open other file"), , "cmdOpen", 1, , 1
-  '///TEST ONLY
-  .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
- End With
- '///form 2
- With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
- FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_TitleBar Or FFS_Sizable, _
- , False)
-  m_idxForm2 = .Index
-  Set .EventObject = Me
-  '///list view
-  With .AddNewChildren(FakeCtl_ListView, 8, 8, -80, -8, FCS_TabStop Or FCS_CanGetFocus, , , , , , "lstLevel", , , 1, 1)
-   m_idxLevels = .Index
-   With .ListViewObject
-    .FullRowSelect = True
-    .ColumnHeader = True
-    .AddColumn objText.GetText("Level number"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
-    .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 320
-   End With
-  End With
-  '///some buttons
-  .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
-  .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
- End With
- '///random level
+ '////////////////random level
  ReDim t(255)
  '///
  With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 440, _
@@ -348,7 +304,13 @@ With FakeDXUIControls(1)
      .FullRowSelect = True
      .AddColumn vbNullString
      '///
+     Err.Clear
      m = GetAvaliableRandomMapGenerators(t(0), 128, 256)
+     If Err.Number Then
+      FakeDXAppSolverNotFound = True
+      m = 0
+     End If
+     '///
      For i = 0 To m - 1
       s = StrConv(t(i).s, vbUnicode)
       s = Left(s, InStr(1, s, vbNullChar) - 1)
@@ -372,7 +334,12 @@ With FakeDXUIControls(1)
     y = y + 32
     '///GA options
     y = y + 8
+    Err.Clear
     m = GetAvaliableGAOptions(t(0), 128, 128)
+    If Err.Number Then
+     FakeDXAppSolverNotFound = True
+     m = 0
+    End If
     For i = 0 To m - 1
      s = StrConv(t(i + i).s, vbUnicode)
      s = Left(s, InStr(1, s, vbNullChar) - 1)
@@ -392,7 +359,7 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK3", 1, 1, 1, 1
   .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel3", 1, 1, 1, 1
  End With
- '///solver
+ '////////////////solver
  With .AddNewChildren(FakeCtl_Form, 0, 0, 400, 200, _
  FFS_CloseButton Or FFS_Moveable Or FFS_TitleBar, , False, , _
  objText.GetText("Solve level"))
@@ -406,7 +373,12 @@ With FakeDXUIControls(1)
     .FullRowSelect = True
     .AddColumn vbNullString
     '///
+    Err.Clear
     m = GetAvaliableSolvers(t(0), 128, 256)
+    If Err.Number Then
+     FakeDXAppSolverNotFound = True
+     m = 0
+    End If
     For i = 0 To m - 1
      s = StrConv(t(i).s, vbUnicode)
      s = Left(s, InStr(1, s, vbNullChar) - 1)
@@ -431,10 +403,64 @@ With FakeDXUIControls(1)
   .AddNewChildren FakeCtl_Button, -144, -32, -80, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK4", 1, 1, 1, 1
   .AddNewChildren FakeCtl_Button, -72, -32, -8, -8, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel4", 1, 1, 1, 1
  End With
+ '////////////////level selection screen
+ With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
+ FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_TitleBar Or FFS_Sizable, _
+ , False, , objText.GetText("Select level"))
+  m_idxForm = .Index
+  Set .EventObject = Me
+  '///list view
+  With .AddNewChildren(FakeCtl_ListView, 8, 40, -80, -8, FCS_TabStop Or FCS_CanGetFocus, , , , , , "lstFile", , , 1, 1)
+   m_idxLvFile = .Index
+   With .ListViewObject
+    .FullRowSelect = True
+    .ColumnHeader = True
+    .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 160
+    .AddColumn objText.GetText("Type"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
+    .AddColumn objText.GetText("Level count"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
+    .AddColumn objText.GetText("File name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 256
+   End With
+  End With
+  '///some buttons
+  .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK", 1, , 1
+  .AddNewChildren FakeCtl_Button, -72, 72, -8, 96, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel", 1, , 1
+  .AddNewChildren FakeCtl_Button, 8, 8, 72, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Refresh"), , "cmdRefresh"
+  .AddNewChildren FakeCtl_Button, -328, 8, -208, 32, FCS_TabStop Or FCS_CanGetFocus, , , , objText.GetText("Open other file"), , "cmdOpen", 1, , 1
+  '///TEST ONLY
+  .AddNewChildren FakeCtl_Button, -200, 8, -80, 32, FCS_TabStop Or FCS_CanGetFocus, Not FakeDXAppSolverNotFound, , , objText.GetText("Random level"), , "cmdRandom", 1, , 1
+ End With
+ '///form 2
+ With .AddNewChildren(FakeCtl_Form, 0, 0, 600, 400, _
+ FFS_CloseButton Or FFS_MaxButton Or FFS_Moveable Or FFS_TitleBar Or FFS_Sizable, _
+ , False)
+  m_idxForm2 = .Index
+  Set .EventObject = Me
+  '///list view
+  With .AddNewChildren(FakeCtl_ListView, 8, 8, -80, -8, FCS_TabStop Or FCS_CanGetFocus, , , , , , "lstLevel", , , 1, 1)
+   m_idxLevels = .Index
+   With .ListViewObject
+    .FullRowSelect = True
+    .ColumnHeader = True
+    .AddColumn objText.GetText("Level number"), , , efcfSizable Or efcfSortable Or efcfSortWithItemData, 96
+    .AddColumn objText.GetText("Name"), , efctStringCaseInsensitive, efcfSizable Or efcfSortable, 320
+   End With
+  End With
+  '///some buttons
+  .AddNewChildren FakeCtl_Button, -72, 8, -8, 32, FCS_TabStop Or FCS_CanGetFocus Or FBS_Default, , , , objText.GetText("OK"), , "cmdOK2", 1, , 1
+  .AddNewChildren FakeCtl_Button, -72, 40, -8, 64, FCS_TabStop Or FCS_CanGetFocus Or FBS_Cancel, , , , objText.GetText("Cancel"), , "cmdCancel2", 1, , 1
+ End With
 End With
 '///load level index and show item
 LoadLevelList FakeDXAppMyGamesPath + "level_list.xml"
 DisplayLevelList
+'///
+If FakeDXAppSolverNotFound Then
+ With New clsFakeDXUIMsgBox
+  .MsgBox objText.GetText("Can't load level solver due to missing solver module or C runtime library.") _
+  + vbCrLf + _
+  objText.GetText("Level solver and random map generator will be unavailable."), vbExclamation, objText.GetText("Error")
+ End With
+End If
 End Sub
 
 Friend Sub DisplayLevelList()
@@ -1044,6 +1070,8 @@ Dim obj As New clsTreeStorageNode
 Dim objCallback As IRandomMap
 Dim lpCallback As Long, lpUserData As Long
 '///
+If FakeDXAppSolverNotFound Then Exit Function
+'///
 Set objCallback = Me
 lpUserData = ObjPtr(objCallback)
 CopyMemory m, ByVal lpUserData, 4&
@@ -1131,6 +1159,9 @@ End Function
 
 Friend Sub ShowRandomLevelSelection()
 Create
+'///
+If FakeDXAppSolverNotFound Then Exit Sub
+'///
 NewRandomSeed
 '///
 With FakeDXUIControls(m_idxFormRnd)

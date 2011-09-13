@@ -133,6 +133,8 @@ Private m_nDataLevelCount As Long
 
 'TEST ONLY
 Friend Function GetSolver(ByVal sType As String) As Long
+On Error Resume Next
+'///
 Dim objMap As Long
 Dim objSolver As Long
 '///
@@ -149,6 +151,7 @@ Dim s As String
 Dim i As Long, j As Long, k As Long
 Dim ii As Long, jj As Long
 '///
+If FakeDXAppSolverNotFound Then Exit Function
 If m_bRuntimeDirty Then Exit Function '?
 '///get map data index
 If m_tLevel.nPolyhedronCount <= 0 Then Exit Function
@@ -199,7 +202,12 @@ Else
  Loop While False
 End If
 '///
+Err.Clear
 objMap = StdMapCreate
+If Err.Number Then
+ FakeDXAppSolverNotFound = True
+ Exit Function
+End If
 StdMapAdd objMap, "Type", sType
 StdMapAdd objMap, "Width", CStr(nWidth)
 StdMapAdd objMap, "Height", CStr(nHeight)
