@@ -53,7 +53,7 @@ Some videos:
 
 News: TurningSquare for Linux is coming! [http://code.google.com/p/turningpolyhedron/downloads/detail?name=TurningSquare1.7z&can=2&q= Download] version 0.1 (map edit feature is still missing)
 
-INSTALL: You need [http://www.freebasic.net/ FreeBasic] (probably >= 0.21.1) to compile the source code, and you need following libraries: libSDL, libSDL_image, libSDL_ttf, libSDL_gfx, libgtk, libfontconfig.
+INSTALL: You need [http://www.freebasic.net/ FreeBasic] (probably you should stick on 0.21.1, since 1.05 can't compile) to compile the source code, and you need following libraries: libSDL, libSDL_image, libSDL_ttf, libSDL_gfx, libgtk, libfontconfig.
 
 # Special Thanks
 
