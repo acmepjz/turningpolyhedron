@@ -27,12 +27,9 @@
 
 #include <SDL.h>
 
-#define USE_SDL_RWOPS
-
 u8string externalStoragePath;
 
 char* u8fgets(char* buf, int count, u8file* file){
-#ifdef USE_SDL_RWOPS
 	for(int i=0;i<count-1;i++){
 		if(u8fread(buf+i,1,1,file)==0){
 			buf[i]=0;
@@ -46,30 +43,18 @@ char* u8fgets(char* buf, int count, u8file* file){
 
 	buf[count-1]=0;
 	return buf;
-#else
-	return fgets(buf,count,(FILE*)file);
-#endif
 }
 
 const char* u8fgets2(u8string& s,u8file* file){
 	s.clear();
 
 	if(file){
-#ifdef USE_SDL_RWOPS
 		char c;
 		for(int i=0;;i++){
 			if(u8fread(&c,1,1,file)==0) return (i>0)?s.c_str():NULL;
 			s.push_back(c);
 			if(c=='\n') return s.c_str();
 		}
-#else
-		char buf[512];
-		for(int i=0;;i++){
-			if(fgets(buf,sizeof(buf),(FILE*)file)==NULL) return (i>0)?s.c_str():NULL;
-			s.append(buf);
-			if(!s.empty() && s[s.size()-1]=='\n') return s.c_str();
-		}
-#endif
 	}
 
 	return NULL;
@@ -80,62 +65,37 @@ size_t u8fputs2(const u8string& s,u8file* file){
 }
 
 u8file *u8fopen(const char* filename,const char* mode){
-#ifdef USE_SDL_RWOPS
-	return (u8file*)SDL_RWFromFile(filename,mode);
-#else
-#ifdef __WIN32__
-	u16string filenameW=toUTF16(filename);
-	u16string modeW=toUTF16(mode);
-	return (u8file*)_wfopen((const wchar_t*)filenameW.c_str(),(const wchar_t*)modeW.c_str());
-#else
-	return (u8file*)fopen(filename,mode);
-#endif
-#endif
+	return SDL_RWFromFile(filename,mode);
 }
 
 int u8fseek(u8file* file,long offset,int whence){
-#ifdef USE_SDL_RWOPS
-	if(file) return SDL_RWseek((SDL_RWops*)file,offset,whence)==-1?-1:0;
+	if(file) return SDL_RWseek(file,offset,whence)==-1?-1:0;
 	return -1;
-#else
-	return fseek((FILE*)file,offset,whence);
-#endif
+}
+
+long u8fseek2(u8file* file, long offset, int whence){
+	if (file) return (long)SDL_RWseek(file, offset, whence);
+	return -1;
 }
 
 long u8ftell(u8file* file){
-#ifdef USE_SDL_RWOPS
-	if(file) return (long)SDL_RWtell((SDL_RWops*)file);
+	if(file) return (long)SDL_RWtell(file);
 	return -1;
-#else
-	return ftell((FILE*)file);
-#endif
 }
 
 size_t u8fread(void* ptr,size_t size,size_t nmemb,u8file* file){
-#ifdef USE_SDL_RWOPS
-	if(file) return SDL_RWread((SDL_RWops*)file,ptr,size,nmemb);
+	if(file) return SDL_RWread(file,ptr,size,nmemb);
 	return 0;
-#else
-	return fread(ptr,size,nmemb,(FILE*)file);
-#endif
 }
 
 size_t u8fwrite(const void* ptr,size_t size,size_t nmemb,u8file* file){
-#ifdef USE_SDL_RWOPS
-	if(file) return SDL_RWwrite((SDL_RWops*)file,ptr,size,nmemb);
+	if(file) return SDL_RWwrite(file,ptr,size,nmemb);
 	return 0;
-#else
-	return fwrite(ptr,size,nmemb,(FILE*)file);
-#endif
 }
 
 int u8fclose(u8file* file){
-#ifdef USE_SDL_RWOPS
-	if(file) return SDL_RWclose((SDL_RWops*)file);
+	if(file) return SDL_RWclose(file);
 	return 0;
-#else
-	return fclose((FILE*)file);
-#endif
 }
 
 std::vector<u8string> enumAllFiles(u8string path,const char* extension,bool containsPath){

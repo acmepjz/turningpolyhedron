@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <vector>
 
-struct u8file;
+typedef struct SDL_RWops u8file;
 
 u8file *u8fopen(const char* filename,const char* mode);
 int u8fseek(u8file* file,long offset,int whence);
+long u8fseek2(u8file* file, long offset, int whence);
 long u8ftell(u8file* file);
 size_t u8fread(void* ptr,size_t size,size_t nmemb,u8file* file);
 size_t u8fwrite(const void* ptr,size_t size,size_t nmemb,u8file* file);
