@@ -1,7 +1,7 @@
 #pragma once
 
-const char BOX_SIGNATURE[8] = { '\xD2', '\xA1', '\xB7', '\xBD', '\xBF', '\xE9', 'X', 'P' };
-const char BOX_LEV0[4] = { 'L', 'E', 'V', '\0' };
+const char BOX_SIGNATURE[] = "\xD2\xA1\xB7\xBD\xBF\xE9\x58\x50";
+const char BOX_LEV[] = "LEV";
 
 #include <vector>
 #include <string>

@@ -4,6 +4,10 @@
 #include <SDL_endian.h>
 #include <SDL_rwops.h>
 
+#define PUSH32LE(data,number) { \
+int tmp=(number); data.push_back(tmp); data.push_back(tmp>>8); data.push_back(tmp>>16); data.push_back(tmp>>24); \
+}
+
 static bool mycmp(const char* s1, const char* s2, int maxlen) {
 	for (int i = 0; i < maxlen; i++) {
 		if (s1[i] != s2[i]) return false;
@@ -95,18 +99,13 @@ bool clsTheFile::SaveFile(const char* fn, bool IsCompress) {
 
 	// generate actual data
 	std::vector<char> data;
-	int tmp = nodes.size();
-	data.push_back(tmp); data.push_back(tmp >> 8); data.push_back(tmp >> 16); data.push_back(tmp >> 24);
+	PUSH32LE(data, nodes.size());
 	for (int i = 0, m = nodes.size(); i < m; i++) {
 		data.insert(data.end(), nodes[i].name, nodes[i].name + 4);
-		tmp = nodes[i].nodes.size();
-		data.push_back(tmp); data.push_back(tmp >> 8); data.push_back(tmp >> 16); data.push_back(tmp >> 24);
+		PUSH32LE(data, nodes[i].nodes.size());
 		for (int j = 0, m2 = nodes[i].nodes.size(); j < m2; j++) {
-			tmp = nodes[i].nodes[j].size();
-			data.push_back(tmp); data.push_back(tmp >> 8); data.push_back(tmp >> 16); data.push_back(tmp >> 24);
-			if (tmp > 0) {
-				data.insert(data.end(), nodes[i].nodes[j].begin(), nodes[i].nodes[j].end());
-			}
+			PUSH32LE(data, nodes[i].nodes[j].size());
+			data.insert(data.end(), nodes[i].nodes[j].begin(), nodes[i].nodes[j].end());
 		}
 	}
 
