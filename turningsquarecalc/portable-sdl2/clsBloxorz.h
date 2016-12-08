@@ -5,6 +5,20 @@
 
 class clsTheFile;
 
+enum enumGameS {
+	GameS_Upright = 0,
+	GameS_Horizontal = 1,
+	GameS_Vertical = 2,
+	GameS_Single = 3,
+};
+
+enum enumGameFS {
+	GameFS_Up = 1,
+	GameFS_Down = 2,
+	GameFS_Left = 3,
+	GameFS_Right = 4,
+};
+
 struct typeBridge {
 	enum enumBridgeBehavior {
 		OFF = 0,
@@ -81,10 +95,14 @@ public:
 	void LoadLevel(int lv, clsTheFile& d);
 	// NOTE: lv is 1-based
 	void SaveLevel(int lv, clsTheFile& d);
-private:
+
+	int BloxorzCheckBlockSlip(const Array2D<unsigned char, 1, 1>& d, int x, int y, int GameS, int FS, int x2 = 0, int y2 = 0) const;
+	bool BloxorzCheckIsMovable(const Array2D<unsigned char, 1, 1>& d, int x, int y, int GameS, int FS, int* QIE = NULL) const;
+	enumBloxorzStateValid BloxorzCheckIsValidState(const Array2D<unsigned char, 1, 1>& d, int x, int y, int GameS, int x2 = 0, int y2 = 0) const;
+	int BloxorzCheckPressButton(Array2D<unsigned char, 1, 1>& d, int x, int y, int GameS, Array2D<int, 1, 1>* BridgeChangeArray = NULL, int BridgeOff = 0, int BridgeOn = 0) const;
+public:
 	std::vector<unsigned char> _xx_dat;
 	std::vector<int> _xx_dat2;
-public:
 	std::vector<typeSwitch> switches;
 private:
 	int datw, dath;
