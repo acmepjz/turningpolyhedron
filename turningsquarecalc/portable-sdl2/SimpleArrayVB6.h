@@ -18,6 +18,16 @@ inline int _ArrayBoundsCheckVB6_3D(int i1, int L1, int M1, int i2, int M2, int U
 }
 #endif
 
+template <typename T>
+inline int LBound(const T& obj, int d = 1) {
+	return obj.LBound(d);
+}
+
+template <typename T>
+inline int UBound(const T& obj, int d = 1) {
+	return obj.UBound(d);
+}
+
 template <typename T, int M>
 struct FixedArray0 {
 	T data[M];
@@ -45,6 +55,18 @@ struct FixedArray1D : public FixedArray0 < T, U1 - L1 + 1 > {
 	T& operator()(int i1) {
 		return data[_ArrayBoundsCheckVB6_1D(i1, L1, M1)];
 	}
+	int LBound(int d = 1) const {
+		switch (d) {
+		case 1: return L1;
+		default: return 0;
+		}
+	}
+	int UBound(int d = 1) const {
+		switch (d) {
+		case 1: return U1;
+		default: return -1;
+		}
+	}
 private:
 	enum {
 		M1 = U1 - L1 + 1,
@@ -58,6 +80,20 @@ struct FixedArray2D : public FixedArray0 < T, (U1 - L1 + 1) * (U2 - L2 + 1) > {
 	}
 	T& operator()(int i1, int i2) {
 		return data[_ArrayBoundsCheckVB6_2D(i1, L1, M1, i2, L2, M2)];
+	}
+	int LBound(int d = 1) const {
+		switch (d) {
+		case 1: return L1;
+		case 2: return L2;
+		default: return 0;
+		}
+	}
+	int UBound(int d = 1) const {
+		switch (d) {
+		case 1: return U1;
+		case 2: return U2;
+		default: return -1;
+		}
 	}
 private:
 	enum {
@@ -73,6 +109,22 @@ struct FixedArray3D : public FixedArray0 < T, (U1 - L1 + 1) * (U2 - L2 + 1) * (U
 	}
 	T& operator()(int i1, int i2, int i3) {
 		return data[_ArrayBoundsCheckVB6_3D(i1, L1, M1, i2, L2, M2, i3, L3, M3)];
+	}
+	int LBound(int d = 1) const {
+		switch (d) {
+		case 1: return L1;
+		case 2: return L2;
+		case 3: return L3;
+		default: return 0;
+		}
+	}
+	int UBound(int d = 1) const {
+		switch (d) {
+		case 1: return U1;
+		case 2: return U2;
+		case 3: return U3;
+		default: return -1;
+		}
 	}
 private:
 	enum {
@@ -123,6 +175,18 @@ struct Array1D : public Array0 < T > {
 			data.insert(data.end(), M - data.size(), T());
 		}
 	}
+	int LBound(int d = 1) const {
+		switch (d) {
+		case 1: return L1;
+		default: return 0;
+		}
+	}
+	int UBound(int d = 1) const {
+		switch (d) {
+		case 1: return L1 + data.size() - 1;
+		default: return -1;
+		}
+	}
 };
 
 template <typename T, int L1, int L2>
@@ -158,6 +222,20 @@ struct Array2D : public Array0 < T > {
 		} else if (M > M2) {
 			data.insert(data.end(), (M1*M) - data.size(), T());
 			M2 = M;
+		}
+	}
+	int LBound(int d = 1) const {
+		switch (d) {
+		case 1: return L1;
+		case 2: return L2;
+		default: return 0;
+		}
+	}
+	int UBound(int d = 1) const {
+		switch (d) {
+		case 1: return L1 + M1 - 1;
+		case 2: return L2 + M2 - 1;
+		default: return -1;
 		}
 	}
 private:
@@ -198,6 +276,22 @@ struct Array3D : public Array0 < T > {
 		} else if (M > M3) {
 			data.insert(data.end(), (M1*M2*M) - data.size(), T());
 			M3 = M;
+		}
+	}
+	int LBound(int d = 1) const {
+		switch (d) {
+		case 1: return L1;
+		case 2: return L2;
+		case 3: return L3;
+		default: return 0;
+		}
+	}
+	int UBound(int d = 1) const {
+		switch (d) {
+		case 1: return L1 + M1 - 1;
+		case 2: return L2 + M2 - 1;
+		case 2: return L3 + M3 - 1;
+		default: return -1;
 		}
 	}
 private:

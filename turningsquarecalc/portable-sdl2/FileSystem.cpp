@@ -1,5 +1,6 @@
 #include "FileSystem.h"
 #include <SDL_platform.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef __WIN32__
 #include <windows.h>
@@ -24,6 +25,8 @@
 #include <unistd.h>
 #include <dirent.h>
 #endif
+
+#define APP_NAME "TurningSquareSDL2"
 
 #include <SDL.h>
 
@@ -332,12 +335,12 @@ void initPaths(){
 		const int size=65536;
 		wchar_t *s=new wchar_t[size];
 		SHGetSpecialFolderPathW(NULL,s,CSIDL_PERSONAL,1);
-		externalStoragePath=toUTF8((const unsigned short*)s)+"/My Games/PuzzleBoy";
+		externalStoragePath = toUTF8((const unsigned short*)s) + "/My Games/" APP_NAME;
 		delete[] s;
 #else
 		const char *env=getenv("HOME");
 		if(env==NULL) externalStoragePath="local";
-		else externalStoragePath=u8string(env)+"/.PuzzleBoy";
+		else externalStoragePath=u8string(env)+"/." APP_NAME;
 #endif
 	}
 	if(externalStoragePath.empty()) return;
@@ -350,7 +353,7 @@ void initPaths(){
 	//try to detect data directory (which is the working directory)
 	for (int i = 0; i < 3; i++) {
 		//try to load a file
-		u8file *f = u8fopen("data/gfx/adhoc.bmp", "rb");
+		u8file *f = u8fopen("data/Default.box", "rb");
 		if (f) {
 			u8fclose(f);
 
@@ -360,13 +363,16 @@ void initPaths(){
 			getcwd(buf, sizeof(buf));
 			printf("[initPaths] The working directory is set to '%s'\n", buf);
 
-			break;
+			return;
 		}
 
 		//up one level if this file is not found
 		chdir("..");
 		printf("[initPaths] Warning: Can't find necessary data in the working directory, will try parent directory\n");
 	}
+
+	printf("[initPaths] Fatal Error: Can't find necessary data!\n");
+	exit(-1);
 #endif
 }
 
