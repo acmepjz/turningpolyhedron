@@ -3,6 +3,7 @@
 #include "SimpleArrayVB6.h"
 #include "clsBloxorz.h"
 #include "clsTheFile.h"
+#include "MyFormat.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -52,7 +53,8 @@ struct typeTheBitmap3 {
 };
 
 struct typeTheBitmap2 : public typeTheBitmap3 {
-	int ow, oh;
+	int ow; // unused?
+	int oh; // unused?
 	typeTheBitmap2() : typeTheBitmap3(), ow(0), oh(0) {}
 	typeTheBitmap2(int _index, int _x, int _y, int _w, int _h, int _dx, int _dy, int _ow, int _oh) :
 		typeTheBitmap3(_index, _x, _y, _w, _h, _dx, _dy), ow(_ow), oh(_oh)
@@ -162,15 +164,16 @@ void PaintPicture(SDL_Texture* objSrc, SDL_Texture* objDest, int nDestLeft = 0, 
 	SDL_RenderCopy(renderer, objSrc, &r1, &r2);
 }
 
+void WaitForNextFrame() {
+	SDL_Delay(30);
+}
+
 int DoEvents() {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
-		if (event.type == SDL_QUIT) {
-			GameStatus = -2;
-			return 0;
-		}
+		if (event.type == SDL_QUIT) GameStatus = -2;
 	}
-	return 1;
+	return (GameStatus > -2) ? 1 : 0;
 }
 
 inline bool _PtInRect(const _RECT& r, int x, int y) {
@@ -243,7 +246,7 @@ void DrawTextB(SDL_Texture* hdc, const std::string& s, TTF_Font* fnt, int _Left,
 			return;
 		}
 	} else {
-		objTemp = TTF_RenderUTF8_Blended_Wrapped(fnt, s.c_str(), fg, (Style & _DT_WORDBREAK) ? _Width : 65536);
+		objTemp = TTF_RenderUTF8_Blended_Wrapped(fnt, s.c_str(), fg, (Style & _DT_WORDBREAK) ? _Width : 1024);
 		if (objTemp == NULL) {
 			printf("Error: TTF_RenderUTF8_Blended_Wrapped failed!\n");
 			return;
@@ -294,7 +297,7 @@ SDL_Texture* _LoadPictureFromFile(const char* _FileName, const char*_MaskFile = 
 		Uint32* d2 = (Uint32*)bmMask->pixels;
 
 		for (int i = 0, m = bm->w*bm->h; i < m; i++) {
-			d1[i] = (d1[i] & 0xFFFFFF00) | ((d2[i] >> 8) & 0xFF);
+			d1[i] = (d1[i] & 0x00FFFFFF) | (d2[i] << 24);
 		}
 
 		SDL_UnlockSurface(bm);
@@ -332,7 +335,7 @@ inline void pTheBitmapConvert(const typeTheBitmap2& bm, typeTheBitmap3& ret, int
 	ret.ImgIndex = bm.ImgIndex;
 	ret.x = bm.x; ret.y = bm.y; ret.w = bm.w; ret.h = bm.h;
 	ret.dx = NewX - bm.dx;
-	ret.dy = NewY = bm.dy;
+	ret.dy = NewY - bm.dy;
 }
 
 struct typeInitBoxAnimation {
@@ -385,20 +388,20 @@ void pInitBitmap() {
 
 	// layer 0
 	{
-		typeTheBitmapArray ani = Anis(Ani_Layer0);
+		typeTheBitmapArray &ani = Anis(Ani_Layer0);
 		ani.resize(12);
 
-		pTheBitmapConvert(bmps(108), ani[1], 4, 8); // block
-		pTheBitmapConvert(bmps(119), ani[2], 4, 8); // soft
-		pTheBitmapConvert(bmps(120), ani[3], 4, 8); // heavy
-		pTheBitmapConvert(bmps(130), ani[4], 4, 10); // transport
-		pTheBitmapConvert(bmps(131), ani[5], 4, 8); // thin
+		pTheBitmapConvert(bmps(108), ani[clsBloxorz::GROUND], 4, 8); // block
+		pTheBitmapConvert(bmps(119), ani[clsBloxorz::SOFT_BUTTON], 4, 8); // soft
+		pTheBitmapConvert(bmps(120), ani[clsBloxorz::HARD_BUTTON], 4, 8); // heavy
+		pTheBitmapConvert(bmps(130), ani[clsBloxorz::TELEPORTER], 4, 10); // transport
+		pTheBitmapConvert(bmps(131), ani[clsBloxorz::THIN_GROUND], 4, 8); // thin
 
-		ani[7] = typeTheBitmap3(3, 44, 28, 44, 28, 0, 5); // bridge on
-		pTheBitmapConvert(bmps(121), ani[8], 5, 11); // end
-		ani[9] = typeTheBitmap3(3, 0, 0, 44, 28, 0, 5); // ice
-		ani[10] = typeTheBitmap3(3, 0, 28, 44, 28, 0, 5); // pyramid
-		ani[11] = ani[1]; // stone TODO:layer 1
+		ani[clsBloxorz::BRIDGE_ON] = typeTheBitmap3(3, 44, 28, 44, 28, 0, 5); // bridge on
+		pTheBitmapConvert(bmps(121), ani[clsBloxorz::GOAL], 5, 11); // end
+		ani[clsBloxorz::ICE] = typeTheBitmap3(3, 0, 0, 44, 28, 0, 5); // ice
+		ani[clsBloxorz::PYRAMID] = typeTheBitmap3(3, 0, 28, 44, 28, 0, 5); // pyramid
+		ani[clsBloxorz::WALL] = ani[clsBloxorz::GROUND]; // stone TODO:layer 1
 	}
 
 	// box animation
@@ -456,11 +459,11 @@ void pInitBitmap() {
 		{ 86, 9, 347, 80, 98, true },
 		{ -1 },
 	};
-	for (int i = 0; animations[i].Index > 0; i++) {
+	for (int i = 0; animations[i].Index >= 0; i++) {
 		pInitBoxAnimation(animations[i]);
 	}
 	{
-		typeTheBitmapArray ani = Anis(3);
+		typeTheBitmapArray &ani = Anis(3);
 		ani.resize(10);
 		for (int i = 1; i <= 7; i++) {
 			pTheBitmapConvert(bmps(i + 28), ani[i], 80, 98);
@@ -472,7 +475,7 @@ void pInitBitmap() {
 
 	// misc
 	{
-		typeTheBitmapArray ani = Anis(3);
+		typeTheBitmapArray &ani = Anis(Ani_Misc);
 		ani.resize(21);
 		ani[1] = typeTheBitmap3(3, 88, 0, 44, 28, 0, 5); // bridge off
 		ani[2] = typeTheBitmap3(3, 44, 0, 44, 28, 0, 5); // bridge on
@@ -480,6 +483,243 @@ void pInitBitmap() {
 		ani[4] = typeTheBitmap3(0, bmps(307).x + bmps(307).w / 2, bmps(307).y, bmps(307).w / 2, bmps(307).h, 0, bmps(307).h / 2); // "["
 		pTheBitmapConvert(bmps(504), ani[5], 80, 98); // blur box
 		ani[6] = typeTheBitmap3(3, 228, 0, 44, 52, 0, 34); // box
+	}
+}
+
+void pTheBitmapDraw2(SDL_Texture *hdc, int Index, int x, int y, int Alpha = 255) {
+	const typeTheBitmap2& d = bmps(Index);
+	if (d.ImgIndex >= 0) {
+		AlphaPaintPicture(bmImg[d.ImgIndex], hdc, x - d.dx, y - d.dy, d.w, d.h, d.x, d.y, Alpha);
+	}
+}
+
+void pTheBitmapDraw3(SDL_Texture *hdc, int Index, int Index2, int x, int y, int Alpha = 255) {
+	const typeTheBitmap3& d = Anis(Index)[Index2];
+	if (d.ImgIndex >= 0) {
+		AlphaPaintPicture(bmImg[d.ImgIndex], hdc, x - d.dx, y - d.dy, d.w, d.h, d.x, d.y, Alpha);
+	}
+}
+
+void pGameDrawBox(SDL_Texture* hdc, int Index, int Index2, int x, int y, int Alpha = 255) {
+	if (Index2 < (int)Anis(Index + 30).size()) {
+		const typeTheBitmap3& d = Anis(Index + 30)[Index2];
+		if (d.ImgIndex >= 0) {
+			AlphaPaintPicture(bmImg[d.ImgIndex], hdc, x - d.dx, y - d.dy, d.w, d.h, d.x, d.y, Alpha / 2);
+		}
+	}
+	if (Index2 < (int)Anis(Index).size()) {
+		const typeTheBitmap3& d = Anis(Index)[Index2];
+		if (d.ImgIndex >= 0) {
+			AlphaPaintPicture(bmImg[d.ImgIndex], hdc, x - d.dx, y - d.dy, d.w, d.h, d.x, d.y, Alpha);
+		}
+	}
+}
+
+void pGameDrawLayer0(SDL_Texture *hdc, const Array2D<unsigned char, 1, 1>& d, int StartX, int StartY) {
+	int i, j, x, y;
+	const int datw = UBound(d, 1);
+	const int dath = UBound(d, 2);
+	StartX += datw * 32;
+	StartY -= datw * 5;
+	for (i = datw; i >= 1; i--) {
+		StartX -= 32; StartY += 5;
+		x = StartX; y = StartY;
+		for (j = 1; j <= dath; j++) {
+			pTheBitmapDraw3(hdc, Ani_Layer0, d(i, j), x, y);
+			x += 10; y += 16;
+		}
+	}
+}
+
+const char URL1[] = "https://github.com/acmepjz/turningpolyhedron";
+const char URL2[] = "http://www.miniclip.com/games/bloxorz/en/";
+
+void Game_Instruction_Redraw() {
+	int i, j;
+	int x, y, x2, y2;
+
+	// back
+	PaintPicture(bmImg[4], bmG_Back);
+
+	// map 1
+	x = 572; y = 32;
+	for (j = 1; j <= 3; j++) {
+		x2 = x; y2 = y;
+		for (i = 6; i >= 1; i--) {
+			pTheBitmapDraw3(bmG_Back, Ani_Layer0,
+				(i == 5 && j == 2) ? clsBloxorz::GOAL : clsBloxorz::GROUND, x2, y2);
+			x2 -= 32; y2 += 5;
+		}
+		x += 10; y += 16;
+	}
+	pGameDrawBox(bmG_Back, 1, 1, 454, 68);
+
+	// map 2
+	x = 572; y = 128;
+	for (j = 1; j <= 3; j++) {
+		x2 = x; y2 = y;
+		for (i = 6; i >= 1; i--) {
+			pTheBitmapDraw3(bmG_Back, Ani_Layer0,
+				(i == 3 || i == 4) ? ((j == 2) ? clsBloxorz::BRIDGE_ON : clsBloxorz::EMPTY) :
+				(i == 1 && j == 1) ? clsBloxorz::SOFT_BUTTON :
+				(i == 6 && j == 1) ? clsBloxorz::HARD_BUTTON : clsBloxorz::GROUND, x2, y2);
+			x2 -= 32; y2 += 5;
+		}
+		x += 10; y += 16;
+	}
+
+	// map 3
+	x = 572; y = 224;
+	for (j = 1; j <= 3; j++) {
+		x2 = x; y2 = y;
+		for (i = 6; i >= 1; i--) {
+			pTheBitmapDraw3(bmG_Back, Ani_Layer0,
+				(i == 3 || i == 4) ? clsBloxorz::THIN_GROUND :
+				(i == 5 && j == 2) ? clsBloxorz::TELEPORTER : clsBloxorz::GROUND, x2, y2);
+			x2 -= 32; y2 += 5;
+		}
+		x += 10; y += 16;
+	}
+	pGameDrawBox(bmG_Back, 13, 1, 444, 244);
+	pGameDrawBox(bmG_Back, 13, 1, 432, 281);
+
+	// map 4
+	x = 572; y = 320;
+	for (j = 1; j <= 3; j++) {
+		x2 = x; y2 = y;
+		for (i = 6; i >= 1; i--) {
+			pTheBitmapDraw3(bmG_Back, Ani_Layer0,
+				(i == 4 && j == 3) ? clsBloxorz::PYRAMID :
+				((i < 3 && j < 3) || i > 4) ? clsBloxorz::GROUND :
+				clsBloxorz::ICE, x2, y2);
+			if ((i < 3 && j < 3) || (i == 6 && j == 2)) {
+				pTheBitmapDraw3(bmG_Back, Ani_Misc, 6, x2, y2);
+			}
+			x2 -= 32; y2 += 5;
+		}
+		x += 10; y += 16;
+	}
+	pTheBitmapDraw3(bmG_Back, 4, 7, 523, 345);
+
+	// text
+	std::string s;
+	s = _("Turning Square is a clone and enhancement to popular game Bloxorz. The aim of the game is to get the block to fall into the square hole at the end of each level. There are 33 levels in default level pack, and many levels in other level pack. You can make your own levels using level editor, or explore completely new levels using random level generator.") + "\n\n";
+	s += _("To move the block around the world, use the UP DOWN LEFT and RIGHT arrow keys. Be careful not to fall off the edges - the level will be restarted.") + "\n\n";
+	s += _("Bridges and switches are located in many levels. The switches are activated when they are pressed down by the block. You don't need to stay resting on the switch to keep bridges open. There are two types of switches: 'Heavy' X-shaped ones and 'Soft' round ones. Soft switches are activated when any part of your block presses it. Hard switches require much more pressure, so your block must be standing on its end to activate it. When activated, each switch may behave differently. Some will toggle the bridge state each time it is used. Some will only ever make certain bridges open, and activating it again will not make it close. Green or red colored squares will flash to indicate which bridges are being operated.") + "\n\n";
+	s += _("Orange tiles are more fragile than the rest of the land. If your block stands up vertically on an orange tile, the tile will give way and your block will fall.") + "\n\n";
+	s += _("The tile shaped like two brackets will teleports your block to different locations, splitting it into two smaller blocks at the same time. These can be controlled individually by pressing the SPACE BAR and will rejoin into a normal block when both are placed next to each other. Small blocks can still operate soft switches, but they're too small to activate heavy switches. Also small blocks can't go through the exit hole - only a complete block can finish the level.") + "\n\n";
+	s += _("There are some new tiles in Turning Square: pyramid, ice and wall. Your block is unstable when standing on the pyramid, so it will lie down immediately unless there is a wall next to your block. When the block is completely on the ice, it will slip until get off the ice or hit the wall. As an obstacle, your block can't pass through the wall, but it can recline on the wall and move around.");
+	s += _("(ANIMATION IS BROKEN)");
+
+	DrawTextB(bmG_Back, s, m_objFont[0],
+		8, 8, 400, 400, _DT_WORDBREAK, 0xFFFFFF);
+	s = str(MyFormat(_("%s version, author: %s")) << "VB6, FreeBasic (SDL), C++ (SDL2)" << "acme_pjz");
+	DrawTextB(bmG_Back, s, m_objFont[0],
+		8, 424, 320, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+	DrawTextB(bmG_Back, _("Source code:"), m_objFont[0],
+		8, 440, 256, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+	DrawTextB(bmG_Back, _("Original version:"), m_objFont[0],
+		8, 456, 256, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+	DrawTextB(bmG_Back, _("OK"), m_objFont[0],
+		568, 456, 64, 16, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
+
+	DrawTextB(bmG_Back, URL1, m_objFont[0],
+		104, 440, 240, 16, _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
+	DrawTextB(bmG_Back, URL2, m_objFont[0],
+		104, 456, 240, 16, _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
+}
+
+void Game_Instruction_Loop() {
+	bRenderTargetDirty = true;
+
+	_Cls(NULL);
+	Game_Paint();
+
+	// animation
+	for (int i = 51; i <= 255; i += 51) {
+		if (bRenderTargetDirty) {
+			Game_Instruction_Redraw();
+			bRenderTargetDirty = false;
+		}
+		_Cls(NULL);
+		AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
+		Game_Paint();
+		WaitForNextFrame();
+		DoEvents();
+		if (GameStatus < 0) return;
+	}
+
+	// buttons
+	_RECT buttons[] = {
+		{ 100, 440, 420, 456 }, // URL1
+		{ 100, 456, 420, 472 }, // URL2
+		{ 568, 456, 632, 472 }, // OK
+		{ -1 },
+	};
+
+	SDL_Event event;
+
+	// loop
+	for (;;) {
+		if (bRenderTargetDirty) {
+			Game_Instruction_Redraw();
+			bRenderTargetDirty = false;
+		}
+		_Cls(NULL);
+		PaintPicture(bmG_Back, NULL);
+
+		int buttonHighlight = -1;
+		int buttonClicked = -1;
+
+		// get message
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_KEYDOWN:
+				switch (event.key.keysym.sym) {
+				case SDLK_RETURN:
+				case SDLK_ESCAPE:
+				case SDLK_AC_BACK:
+					buttonClicked = 2;
+					break;
+				}
+				break;
+			}
+		}
+		if (GameStatus < 0) return;
+
+		int c, x, y;
+		c = _GetCursorPos(&x, &y) & SDL_BUTTON(1);
+		for (int i = 0; buttons[i].Left >= 0; i++) {
+			if (_PtInRect(buttons[i], x, y)) {
+				_FrameRect(NULL, buttons[i], 0x0080FF);
+				buttonHighlight = i;
+				break;
+			}
+		}
+		if (c && buttonHighlight >= 0 && buttonClicked < 0) buttonClicked = buttonHighlight;
+
+		Game_Paint();
+		WaitForNextFrame();
+
+		if (buttonClicked == 0) { // URL1
+		} else if (buttonClicked == 1) { // URL2
+		} else if (buttonClicked == 2) { // OK
+			break;
+		}
+	}
+
+	// animation
+	for (int i = 255; i >= 0; i -= 51) {
+		if (bRenderTargetDirty) {
+			Game_Instruction_Redraw();
+			bRenderTargetDirty = false;
+		}
+		_Cls(NULL);
+		AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
+		Game_Paint();
+		WaitForNextFrame();
+		DoEvents();
+		if (GameStatus < 0) return;
 	}
 }
 
@@ -535,7 +775,6 @@ static int MyEventFilter(void *userdata, SDL_Event *evt){
 	return 1;
 }
 
-
 int main(int argc, char** argv) {
 	initPaths();
 
@@ -560,7 +799,7 @@ int main(int argc, char** argv) {
 #define FONT_FILE_PREFIX "data/"
 #endif
 
-	m_objFont[0] = TTF_OpenFont(FONT_FILE_PREFIX "DroidSansFallback.ttf", 12);
+	m_objFont[0] = TTF_OpenFont(FONT_FILE_PREFIX "DroidSansFallback.ttf", 16);
 	m_objFont[1] = TTF_OpenFont(FONT_FILE_PREFIX "DroidSansFallback.ttf", 36);
 	m_objFont[2] = TTF_OpenFont(FONT_FILE_PREFIX "DroidSansFallback.ttf", 64);
 
@@ -631,22 +870,19 @@ int main(int argc, char** argv) {
 		}
 
 		Game_Paint();
+		WaitForNextFrame();
 
-		switch (nPressed) {
-		case 1:
-			break;
-		case 2:
-			break;
-		case 3:
-			break;
-		case 4:
+		if (nPressed == 1) { // start game
+		} else if (nPressed == 2) { // instructions
+			GameStatus = 0;
+			Game_Instruction_Loop();
+		} else if (nPressed == 3) { // editor
+		} else if (nPressed == 4) { // exit
 			GameStatus = -2;
 			break;
-		default:
+		} else {
 			nPressed = 0;
 		}
-
-		SDL_Delay(30);
 	}
 
 	for (int i = 0, m = sizeof(bmImg) / sizeof(bmImg[0]); i < m; i++) {
