@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <vector>
 
 #include <SDL.h>
@@ -33,7 +34,10 @@ int cmbMode_ListIndex;
 std::vector<std::string> cmbMode_List;
 
 int GameLayer0SX, GameLayer0SY;
-std::vector<clsBloxorz> Lev;
+
+clsTheFile objFile;
+Array1D<clsBloxorz, 1> Lev;
+std::string Me_Tag;
 
 struct _RECT {
 	int Left, Top, Right, Bottom;
@@ -165,7 +169,7 @@ void PaintPicture(SDL_Texture* objSrc, SDL_Texture* objDest, int nDestLeft = 0, 
 }
 
 void WaitForNextFrame() {
-	SDL_Delay(30);
+	SDL_Delay(15);
 }
 
 int DoEvents() {
@@ -522,12 +526,88 @@ void pGameDrawLayer0(SDL_Texture *hdc, const Array2D<unsigned char, 1, 1>& d, in
 	StartX += datw * 32;
 	StartY -= datw * 5;
 	for (i = datw; i >= 1; i--) {
-		StartX -= 32; StartY += 5;
-		x = StartX; y = StartY;
+		StartX -= 32; StartY += 5; x = StartX; y = StartY;
 		for (j = 1; j <= dath; j++) {
 			pTheBitmapDraw3(hdc, Ani_Layer0, d(i, j), x, y);
 			x += 10; y += 16;
 		}
+	}
+}
+
+void Game_DrawLayer1(SDL_Texture *hdc, bool DrawBox = true, bool DrawBoxShadow = false, int Index = 0, int Index2 = 0, int BoxDeltaY = 0, int BoxAlpha = 255, bool WithLayer0 = false, int BoxDeltaX = 0, bool NoZDepth = false) {
+	int i, j, x, y, x2, y2, dy, FS;
+	bool bx;
+
+	dy = BoxDeltaY;
+	if (NoZDepth) BoxDeltaY = 0;
+
+	// determine draw direction (???)
+	FS = (GameS == GameS_Vertical) ? 2 : 1;
+	bx = BoxDeltaY >= 0 && BoxDeltaY <= 32;
+
+	// draw box first?
+	if (DrawBox && (BoxDeltaY > 32 || GameX > GameW || GameY < 1)) {
+		x = GameLayer0SX + (GameX - 1) * 32 + (GameY - 1) * 10 + BoxDeltaX;
+		y = GameLayer0SY - (GameX - 1) * 5 + (GameY - 1) * 16 + dy;
+		if (DrawBoxShadow) pGameDrawBox(hdc, Index, Index2, x, y, BoxAlpha);
+		else pTheBitmapDraw3(hdc, Index, Index2, x, y, BoxAlpha);
+	}
+
+	// draw
+	switch (FS) {
+	case 1:
+		x = GameLayer0SX + GameW * 32;
+		y = GameLayer0SY - GameW * 5;
+		for (j = 1; j <= GameH; j++) {
+			x2 = x; y2 = y;
+			for (i = GameW; i >= 1; i--) {
+				x2 -= 32; y2 += 5;
+				if (WithLayer0) pTheBitmapDraw3(hdc, Ani_Layer0, GameD(i, j), x2, y2);
+				if (GameD(i, j) == clsBloxorz::WALL) pTheBitmapDraw3(hdc, Ani_Misc, 6, x2, y2);
+				// draw box?
+				if (DrawBox && bx && GameX == i && GameY == j) {
+					if (DrawBoxShadow) pGameDrawBox(hdc, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha);
+					else pTheBitmapDraw3(hdc, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha);
+				}
+				// draw box 2?
+				if (DrawBox && GameS == GameS_Single && GameX2 == i && GameY2 == j) {
+					if (DrawBoxShadow) pGameDrawBox(hdc, 13, 1, x2, y2, BoxAlpha);
+					else pTheBitmapDraw3(hdc, 13, 1, x2, y2, BoxAlpha);
+				}
+			}
+			x += 10; y += 16;
+		}
+		break;
+	case 2:
+		x = GameLayer0SX + GameW * 32;
+		y = GameLayer0SY - GameW * 5;
+		for (i = GameW; i >= 1; i--) {
+			x -= 32; y += 5; x2 = x; y2 = y;
+			for (j = 1; j <= GameH; j++) {
+				if (WithLayer0) pTheBitmapDraw3(hdc, Ani_Layer0, GameD(i, j), x2, y2);
+				if (GameD(i, j) == clsBloxorz::WALL) pTheBitmapDraw3(hdc, Ani_Misc, 6, x2, y2);
+				// draw box?
+				if (DrawBox && bx && GameX == i && GameY == j) {
+					if (DrawBoxShadow) pGameDrawBox(hdc, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha);
+					else pTheBitmapDraw3(hdc, Index, Index2, x2 + BoxDeltaX, y2 + dy, BoxAlpha);
+				}
+				// draw box 2?
+				if (DrawBox && GameS == GameS_Single && GameX2 == i && GameY2 == j) {
+					if (DrawBoxShadow) pGameDrawBox(hdc, 13, 1, x2, y2, BoxAlpha);
+					else pTheBitmapDraw3(hdc, 13, 1, x2, y2, BoxAlpha);
+				}
+				x2 += 10; y2 += 16;
+			}
+		}
+		break;
+	}
+
+	// draw box last?
+	if (DrawBox && (BoxDeltaY < 0 || GameX < 1 || GameY > GameH)) {
+		x = GameLayer0SX + (GameX - 1) * 32 + (GameY - 1) * 10 + BoxDeltaX;
+		y = GameLayer0SY - (GameX - 1) * 5 + (GameY - 1) * 16 + dy;
+		if (DrawBoxShadow) pGameDrawBox(hdc, Index, Index2, x, y, BoxAlpha);
+		else pTheBitmapDraw3(hdc, Index, Index2, x, y, BoxAlpha);
 	}
 }
 
@@ -675,10 +755,10 @@ void Game_Instruction_Loop() {
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 			case SDL_KEYDOWN:
-				switch (event.key.keysym.sym) {
-				case SDLK_RETURN:
-				case SDLK_ESCAPE:
-				case SDLK_AC_BACK:
+				switch (event.key.keysym.scancode) {
+				case SDL_SCANCODE_RETURN:
+				case SDL_SCANCODE_ESCAPE:
+				case SDL_SCANCODE_AC_BACK:
 					buttonClicked = 2;
 					break;
 				}
@@ -723,6 +803,869 @@ void Game_Instruction_Loop() {
 	}
 }
 
+void Game_LoadLevel(const char* fn) {
+	bool b = false;
+
+	if (objFile.LoadFile(fn, BOX_SIGNATURE, true)) {
+		typeFileNodeArray *k = objFile.FindNodeArray(BOX_LEV);
+		if (k) {
+			int m = k->nodes.size();
+			if (m > 0) {
+				Lev.ReDim(m);
+				for (int i = 1; i <= m; i++) {
+					Lev(i).LoadLevel(i, objFile);
+				}
+				b = true;
+			}
+		}
+	}
+
+	if (b) {
+		std::string s = fn;
+		std::string::size_type lpe = s.find_last_of("\\/");
+		if (lpe != std::string::npos) s = s.substr(lpe + 1);
+		Me_Tag = " (" + s + ")";
+	} else {
+		printf("[Game_LoadLevel]: Failed to load level file '%s'\n", fn);
+
+		Me_Tag.clear();
+		Lev.ReDim(1);
+		Lev(1).Create(15, 10);
+
+		std::vector<unsigned char> &d = Lev(1)._xx_dat;
+		for (int i = 0, m = d.size(); i < m; i++) {
+			d[i] = clsBloxorz::GROUND;
+		}
+	}
+
+	GameLev = 1;
+}
+
+void Game_InitBack() {
+	PaintPicture(bmImg[4], bmG_Back);
+
+	// draw text
+	if (GameIsRndMap) {
+		// TODO: random map caption
+	} else {
+		DrawTextB(bmG_Back, str(MyFormat(_("Level %d of %d")) << GameLev << Lev.UBound()) + Me_Tag, m_objFont[0],
+			8, 8, 480, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+	}
+	DrawTextB(bmG_Back, _("Moves"), m_objFont[0],
+		8, 24, 72, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+	DrawTextB(bmG_Back, _("Time used"), m_objFont[0],
+		8, 40, 72, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+	DrawTextB(bmG_Back, _("Retries"), m_objFont[0],
+		8, 56, 72, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+	DrawTextB(bmG_Back, _("Menu"), m_objFont[0],
+		600, 8, 32, 16, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
+}
+
+#define GAME_PAINT_ETC() { \
+	Game_Paint(); \
+	WaitForNextFrame(); \
+	DoEvents(); \
+	if (GameStatus < 0) return; }
+
+void Game_Loop() {
+	int i, j, k, m;
+	int w, h;
+	int x, y, x2, y2;
+	Array2D<unsigned char, 1, 1> d;
+	Array2D<int, 1, 1> dL;
+	Array2D<float, 1, 1> dSng;
+	bool bEnsureRedraw;
+	int nBridgeChangeCount;
+	int idx, idx2, nAnimationIndex;
+	int kx, ky, kt;
+	_POINTAPI p;
+	_RECT r;
+	bool IsMouseIn, IsMouseIn2, IsSlipping;
+	std::string s, sSolution;
+	int t;
+	int QIE, QIE_0;
+
+	while (GameStatus >= 0) {
+		switch (GameStatus) {
+		case 0: // load level
+			// init layer0 size
+			GameW = Lev(GameLev).Width();
+			GameH = Lev(GameLev).Height();
+			w = GameW * 32 + GameH * 10;
+			h = GameW * 5 + GameH * 16 + 16;
+			GameLayer0SX = (640 - w) / 2;
+			GameLayer0SY = (480 - h) / 2 + GameW * 5 + 8;
+
+			// init
+			GameLvRetry = -1;
+			GameLvStartTime = 0;
+			GameDemoPos = 0;
+			GameDemoBegin = false;
+
+			// level name animation
+			_Cls(bmG_Lv);
+			if (GameIsRndMap) {
+				DrawTextB(bmG_Lv, _("Random Level"), m_objFont[2],
+					0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+			} else {
+				DrawTextB(bmG_Lv, str(MyFormat(_("Level %d")) << GameLev), m_objFont[2],
+					0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+			}
+			for (i = 0; i <= 255; i += 17) {
+				_Cls(NULL);
+				AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
+				GAME_PAINT_ETC();
+			}
+			for (i = 0; i < 32; i++) {
+				_Cls(NULL);
+				PaintPicture(bmG_Lv, NULL);
+				GAME_PAINT_ETC();
+			}
+			for (i = 255; i >= 0; i -= 17) {
+				_Cls(NULL);
+				AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
+				GAME_PAINT_ETC();
+			}
+
+			// over
+			GameStatus = 1;
+			break;
+
+		case 1: // start level
+			// init level
+			GameD.ReDim(GameW, GameH);
+			memcpy(&(GameD.data[0]), &(Lev(GameLev)._xx_dat[0]), GameW*GameH);
+			GameX = Lev(GameLev).StartX;
+			GameY = Lev(GameLev).StartY;
+			GameX2 = GameY2 = 0;
+			GameS = GameFS = 0;
+			IsSlipping = false;
+
+			// init
+			nBridgeChangeCount = 0;
+			kt = 0;
+			if (!GameDemoBegin) GameLvRetry++;
+			GameLvStep = 0;
+			sSolution.clear();
+			GameDemoPos = GameDemoBegin ? 1 : 0;
+			GameDemoBegin = false;
+			QIE = QIE_0 = 0;
+
+			// init back
+			Game_InitBack();
+
+			// animate
+			dL.ReDim(GameW, GameH * 2);
+			for (j = 1; j <= GameH; j++) {
+				for (i = 1; i <= GameW; i++) {
+					dL(i, j) = rand() & 0xF;
+					dL(i, j + GameH) = -1;
+				}
+			}
+			for (i = 0; i <= 255; i += 51) {
+				_Cls(NULL);
+				AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
+				GAME_PAINT_ETC();
+			}
+			for (k = 0; k <= 36; k++) {
+				_Cls(NULL);
+				PaintPicture(bmG_Back, NULL);
+				x = GameLayer0SX + GameW * 32;
+				y = GameLayer0SY - GameW * 5;
+				for (i = GameW; i >= 1; i--) {
+					x -= 32; y += 5; x2 = x; y2 = y;
+					for (j = 1; j <= GameH; j++) {
+						if (dL(i, j) >= 0 && k >= dL(i, j)) {
+							dL(i, j) = -32;
+							dL(i, j + GameH) = 400;
+						}
+						if (dL(i, j + GameH) >= 0) {
+							pTheBitmapDraw3(NULL, Ani_Layer0, GameD(i, j), x2, y2 + dL(i, j + GameH), -dL(i, j));
+							if (GameD(i, j) == clsBloxorz::WALL) {
+								pTheBitmapDraw3(NULL, Ani_Misc, 6, x2, y2 + dL(i, j + GameH), -dL(i, j));
+							}
+							dL(i, j + GameH) = (dL(i, j + GameH) * 3) / 4;
+							dL(i, j) -= 16;
+							if (dL(i, j) < -255) dL(i, j) = -255;
+						}
+						x2 += 10; y2 += 16;
+					}
+				}
+				GAME_PAINT_ETC();
+			}
+
+			// init array
+			dL.ReDim(GameW, GameH);
+
+			// draw layer0
+			PaintPicture(bmG_Back, bmG_Lv);
+			pGameDrawLayer0(bmG_Lv, GameD, GameLayer0SX, GameLayer0SY);
+
+			// box falls
+			for (j = -600; j <= 0; j += 50) {
+				_Cls(NULL);
+				PaintPicture(bmG_Lv, NULL);
+				Game_DrawLayer1(NULL, true, false, Ani_Misc, 5, j);
+				GAME_PAINT_ETC();
+			}
+			for (i = 1; i < (int)Anis(29).size(); i++) {
+				_Cls(NULL);
+				PaintPicture(bmG_Lv, NULL);
+				Game_DrawLayer1(NULL, true, true, 29, i);
+				GAME_PAINT_ETC();
+			}
+
+			// init time
+			t = 0;
+			if (GameLvStartTime == 0) GameLvStartTime = SDL_GetTicks();
+
+			// end
+			GameStatus = 9;
+			break;
+
+		case 2: // block fall
+			switch (GameFS) {
+			case GameFS_Up: x2 = -2; y2 = -4; break;
+			case GameFS_Down: x2 = 2; y2 = 4; break;
+			case GameFS_Left: x2 = -5; y2 = 1; break;
+			case GameFS_Right: x2 = 5; y2 = -1; break;
+			default: // may be block 2 fall
+				x2 = y2 = 0; GameFS = GameFS_Up; break;
+			}
+
+			idx = 70 + 4 * GameS + GameFS;
+			idx2 = 1; w = 0; h = 1; x = 0;
+			for (i = 0; i <= 30; i++) {
+				w += h + y2;
+				h++;
+				x += x2;
+				idx2++; if (idx2 > 9) idx2 = 1;
+				_Cls(NULL);
+				PaintPicture(bmG_Back, NULL);
+				Game_DrawLayer1(NULL, true, false, idx, idx2, w, 255, true, x);
+				GAME_PAINT_ETC();
+			}
+
+			// fall animation
+			dL.ReDim(GameW, GameH * 2);
+			for (j = 1; j <= GameH; j++) {
+				for (i = 1; i <= GameW; i++) {
+					dL(i, j) = rand() % 15;
+				}
+			}
+			for (k = 0; k <= 30; k++) {
+				_Cls(NULL);
+				PaintPicture(bmG_Back, NULL);
+				x = GameLayer0SX + GameW * 32;
+				y = GameLayer0SY - GameW * 5;
+				for (i = GameW; i >= 1; i--) {
+					x -= 32; y += 5; x2 = x; y2 = y;
+					for (j = 1; j <= GameH; j++) {
+						if (dL(i, j) >= 0 && k >= dL(i, j)) dL(i, j) = -2;
+						if (dL(i, j + GameH) < 510) {
+							pTheBitmapDraw3(NULL, Ani_Layer0, GameD(i, j), x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) / 2);
+							if (GameD(i, j) == clsBloxorz::WALL) {
+								pTheBitmapDraw3(NULL, Ani_Misc, 6, x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) / 2);
+							}
+							if (dL(i, j) < 0) {
+								dL(i, j + GameH) -= dL(i, j);
+								dL(i, j) -= 2;
+							}
+						}
+						x2 += 10; y2 += 16;
+					}
+				}
+				GAME_PAINT_ETC();
+			}
+
+			// fade out
+			for (i = 255; i >= 0; i -= 51) {
+				_Cls(NULL);
+				AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
+				GAME_PAINT_ETC();
+			}
+
+			// end
+			GameStatus = 1; // restart
+			break;
+
+		case 3: // block fall 2
+			dL.ReDim(GameW, GameH * 2);
+			for (j = 1; j <= GameH; j++) {
+				for (i = 1; i <= GameW; i++) {
+					dL(i, j) = 20 + (rand() % 15);
+				}
+			}
+			dL(GameX, GameY) = -2;
+			w = h = 0;
+			for (k = 0; k <= 50; k++) {
+				_Cls(NULL);
+				PaintPicture(bmG_Back, NULL);
+				x = GameLayer0SX + GameW * 32;
+				y = GameLayer0SY - GameW * 5;
+				for (i = GameW; i >= 1; i--) {
+					x -= 32; y += 5; x2 = x; y2 = y;
+					for (j = 1; j <= GameH; j++) {
+						if (dL(i, j) >= 0 && k >= dL(i, j)) dL(i, j) = -2;
+						if (dL(i, j + GameH) < 510) {
+							pTheBitmapDraw3(NULL, Ani_Layer0, GameD(i, j), x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) / 2);
+							if (GameD(i, j) == clsBloxorz::WALL) {
+								pTheBitmapDraw3(NULL, Ani_Misc, 6, x2, y2 + dL(i, j + GameH), 255 - dL(i, j + GameH) / 2);
+							}
+							if (dL(i, j) < 0) {
+								dL(i, j + GameH) -= dL(i, j);
+								dL(i, j) -= 2;
+							}
+						}
+						if (w < 510 && i == GameX && j == GameY) {
+							w += h; h++;
+							pTheBitmapDraw3(NULL, 1, 1, x2, y2 + w);
+						}
+						x2 += 10; y2 += 16;
+					}
+				}
+				GAME_PAINT_ETC();
+			}
+
+			// fade out
+			for (i = 255; i >= 0; i -= 51) {
+				_Cls(NULL);
+				AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
+				GAME_PAINT_ETC();
+			}
+
+			// end
+			GameStatus = 1; // restart
+			break;
+
+		case 4: // win
+			// block animation
+			for (i = 1; i < (int)Anis(30).size(); i++) {
+				_Cls(NULL);
+				PaintPicture(bmG_Lv, NULL);
+				Game_DrawLayer1(NULL, true, false, 30, i);
+				GAME_PAINT_ETC();
+			}
+
+			// animation
+			dSng.ReDim(GameW, GameH * 3);
+			dL.ReDim(GameW, GameH);
+			w = GameLayer0SX + (GameX - 1) * 32 + (GameY - 1) * 10;
+			h = GameLayer0SY - (GameX - 1) * 5 + (GameY - 1) * 16;
+			x = GameLayer0SX + GameW * 32;
+			y = GameLayer0SY - GameW * 5;
+			for (i = GameW; i >= 1; i--) {
+				x -= 32; y += 5; x2 = x; y2 = y;
+				for (j = 1; j <= GameH; j++) {
+					dSng(i, j) = (float)x2;
+					dSng(i, j + GameH) = (float)y2;
+					dL(i, j) = rand() & 0x3;
+					dSng(i, j + GameH * 2) = 5.0f / (10.0f + dL(i, j)) /
+						(10.0f + SDL_sqrtf(float((x2 - w)*(x2 - w) + (y2 - h)*(y2 - h))));
+					x2 += 10; y2 += 16;
+				}
+			}
+			for (k = 0; k <= 51; k++) {
+				_Cls(NULL);
+				PaintPicture(bmG_Back, NULL);
+				for (i = GameW; i >= 1; i--) {
+					for (j = 1; j <= GameH; j++) {
+						kx = dL(i, j);
+						m = 255 - (5 + kx)*k;
+						if (m > 0) {
+							float tmpx = dSng(i, j);
+							float tmpy = dSng(i, j + GameH);
+							float tmp = dSng(i, j + GameH * 2)*k;
+							dSng(i, j) -= (tmpy - h)*tmp;
+							dSng(i, j + GameH) += (tmpx - w)*tmp;
+							tmpx = dSng(i, j);
+							tmpy = dSng(i, j + GameH);
+							if (tmpx > -1E+4f && tmpx < 1E+4f && tmpy > -1E+4f && tmpy < 1E+4f) {
+								x2 = (int)tmpx; y2 = (int)tmpy;
+								pTheBitmapDraw3(NULL, Ani_Layer0, GameD(i, j), x2, y2, m);
+								if (GameD(i, j) == clsBloxorz::WALL) {
+									pTheBitmapDraw3(NULL, Ani_Misc, 6, x2, y2, m);
+								}
+							}
+						}
+					}
+				}
+				GAME_PAINT_ETC();
+			}
+
+			// clear up
+			dSng.clear(); dL.clear();
+
+			// fade out
+			for (i = 255; i >= 0; i -= 51) {
+				_Cls(NULL);
+				AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
+				GAME_PAINT_ETC();
+			}
+
+			// end
+			if (GameDemoPos == 0) {
+				if (GameIsRndMap) {
+					// TODO: next random map
+				} else {
+					GameLev++;
+					if (GameLev > Lev.UBound()) GameLev = 1;
+				}
+				GameStatus = 0; // next level
+			} else { // just demo only
+				GameLvRetry--;
+				GameStatus = 1;
+			}
+			break;
+
+		case 9: case 10: case 11: case 12: case 13: // playing...
+			// calc index
+			idx = GameS * 4 + 1; idx2 = 1;
+			switch (GameStatus) {
+			case 9: // check state valid
+				switch (Lev(GameLev).BloxorzCheckIsValidState(GameD, GameX, GameY, GameS, GameX2, GameY2)) {
+				case BState_Fall:
+					GameStatus = 2;
+					
+					// block2 fall?
+					m = 0;
+					if (GameS == GameS_Single) {
+						if (GameX2 > 0 && GameY2 > 0 && GameX2 <= GameW && GameY2 <= GameH) {
+							switch (GameD(GameX2, GameY2)) {
+							case clsBloxorz::EMPTY:
+							case clsBloxorz::BRIDGE_OFF:
+								m = 1;
+								break;
+							}
+						} else {
+							m = 1;
+						}
+					}
+
+					if (m) {
+						std::swap(GameX, GameX2);
+						std::swap(GameY, GameY2);
+						GameFS = 0;
+					}
+					break;
+				case BState_Valid:
+					GameStatus = (GameD(GameX, GameY) == clsBloxorz::GOAL && GameS == GameS_Upright) ? 4 : 10;
+					break;
+				case BState_Thin:
+					GameStatus = 3;
+					break;
+				default: // unknown
+					printf("[Game_Loop] Error: BloxorzCheckIsValidState returns unknown result\n");
+					GameStatus = -1;
+					break;
+				}
+				bEnsureRedraw = true;
+				break;
+			case 10: // press key?
+				y = 0;
+				if (GameDemoPos > 0 && kt < 32) { // don't press space too frequently
+					if (GameDemoPos > (int)GameDemoS.size()) {
+						y = 99;
+					} else {
+						switch (GameDemoS[GameDemoPos - 1]) {
+						case 'U': case 'u':
+							y = 1; break;
+						case 'D': case 'd':
+							y = 2; break;
+						case 'L': case 'l':
+							y = 3; break;
+						case 'R': case 'r':
+							y = 4; break;
+						case 'S': case 's': case ' ': case '_':
+							y = 5; break;
+						case '\r': case '\n': case ',': case ';':
+							y = 99; break;
+						}
+						GameDemoPos++;
+					}
+					if (y == 99) GameDemoPos = y = 0; // end of demo
+				}
+				if (SDL_GetKeyboardFocus() == window || y > 0) {
+					const Uint8* _ks = SDL_GetKeyboardState(NULL);
+					if (_ks[SDL_SCANCODE_R]) { // restart
+						GameStatus = 1;
+					} else if (_ks[SDL_SCANCODE_PAGEUP] && GameLev < Lev.UBound()) {
+						GameIsRndMap = false;
+						GameLev++;
+						GameStatus = 0;
+					} else if (_ks[SDL_SCANCODE_PAGEDOWN] && GameLev > 1) {
+						GameIsRndMap = false;
+						GameLev--;
+						GameStatus = 0;
+					}
+					if (GameStatus <= 1) {
+						// fade out
+						for (i = 255; i >= 0; i -= 51) {
+							_Cls(NULL);
+							AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
+							GAME_PAINT_ETC();
+						}
+					} else if ((_ks[SDL_SCANCODE_SPACE] && GameDemoPos == 0) || y == 5) {
+						if (GameS == GameS_Single) {
+							// record step
+							sSolution.push_back('S');
+							// swap block
+							std::swap(GameX, GameX2);
+							std::swap(GameY, GameY2);
+							// animation
+							kx = GameLayer0SX + (GameX - 1) * 32 + (GameY - 1) * 10 + 21;
+							ky = GameLayer0SY - (GameX - 1) * 5 + (GameY - 1) * 16 - 10;
+							kt = 40;
+						}
+					} else {
+						if (_ks[SDL_SCANCODE_UP] && GameDemoPos == 0) y = 1;
+						else if (_ks[SDL_SCANCODE_DOWN] && GameDemoPos == 0) y = 2;
+						else if (_ks[SDL_SCANCODE_LEFT] && GameDemoPos == 0) y = 3;
+						else if (_ks[SDL_SCANCODE_RIGHT] && GameDemoPos == 0) y = 4;
+						if (y > 0 && Lev(GameLev).BloxorzCheckIsMovable(GameD, GameX, GameY, GameS, y, &QIE)) {
+							GameFS = y;
+							GameStatus = 11;
+							// init animation
+							nAnimationIndex = QIE_0 ? (QIE > 0 ? 1 : 1 /* 6? */) : 2;
+							// calc step
+							GameLvStep++;
+							// record step
+							switch (y) {
+							case 1: sSolution.push_back('U'); break;
+							case 2: sSolution.push_back('D'); break;
+							case 3: sSolution.push_back('L'); break;
+							case 4: sSolution.push_back('R'); break;
+							}
+						}
+					}
+				}
+				break;
+			case 11: // moving animation
+				// block???
+				idx = GameS * 4 + GameFS;
+				idx2 = (nAnimationIndex++);
+				i = Anis(idx).size();
+				if (QIE) i = 7; // :-/
+				if (nAnimationIndex >= i) GameStatus = 12;
+				bEnsureRedraw = true;
+				break;
+			case 13: // slipping animation
+				// block???
+				idx = GameS * 4 + GameFS;
+				idx2 = 1;
+				nAnimationIndex++;
+				if (nAnimationIndex >= 7) GameStatus = 12;
+
+				// calc delta
+				switch (GameFS) {
+				case GameFS_Up: x2 = -10; y2 = -16; break;
+				case GameFS_Down: x2 = 10; y2 = 16; break;
+				case GameFS_Left: x2 = -32; y2 = 5; break;
+				case GameFS_Right: x2 = 32; y2 = -5; break;
+				}
+				x2 = (x2*nAnimationIndex) >> 3;
+				y2 = (y2*nAnimationIndex) >> 3;
+				bEnsureRedraw = true;
+				break;
+			case 12: // check moved state
+				QIE_0 = QIE; // :-/
+				switch (QIE) {
+				case GameFS_Up: x2 = 20; y2 = 32; break;
+				case GameFS_Down: x2 = -10; y2 = -16; break;
+				case GameFS_Left: x2 = 64; y2 = -10; break;
+				case GameFS_Right: x2 = -32; y2 = 5; break;
+				default: x2 = y2 = 0; break;
+				}
+
+				// calc new pos
+				if (IsSlipping) {
+					switch (GameFS) {
+					case GameFS_Up: GameY--; break;
+					case GameFS_Down: GameY++; break;
+					case GameFS_Left: GameX--; break;
+					case GameFS_Right: GameX++; break;
+					}
+				} else {
+					switch (GameFS) {
+					case GameFS_Up:
+						GameY -= (GameS == GameS_Upright) ? 2 : 1;
+						GameS = (GameS == GameS_Upright) ? GameS_Vertical :
+							(GameS == GameS_Vertical) ? GameS_Upright : GameS;
+						break;
+					case GameFS_Down:
+						GameY += (GameS == GameS_Vertical) ? 2 : 1;
+						GameS = (GameS == GameS_Upright) ? GameS_Vertical :
+							(GameS == GameS_Vertical) ? GameS_Upright : GameS;
+						break;
+					case GameFS_Left:
+						GameX -= (GameS == GameS_Upright) ? 2 : 1;
+						GameS = (GameS == GameS_Upright) ? GameS_Horizontal :
+							(GameS == GameS_Horizontal) ? GameS_Upright : GameS;
+						break;
+					case GameFS_Right:
+						GameX += (GameS == GameS_Horizontal) ? 2 : 1;
+						GameS = (GameS == GameS_Upright) ? GameS_Horizontal :
+							(GameS == GameS_Horizontal) ? GameS_Upright : GameS;
+						break;
+					}
+				}
+
+				// update index
+				idx = GameS * 4 + 1;
+
+				// check
+				switch (Lev(GameLev).BloxorzCheckIsValidState(GameD, GameX, GameY, GameS, GameX2, GameY2)) {
+				case BState_Fall:
+					GameStatus = 2;
+					break;
+				case BState_Valid:
+					GameStatus = 9;
+
+					// press button
+					nBridgeChangeCount = Lev(GameLev).BloxorzCheckPressButton(GameD, GameX, GameY, GameS, &dL, 115, 215);
+					if (nBridgeChangeCount > 0) {
+						PaintPicture(bmG_Back, bmG_Lv);
+						pGameDrawLayer0(bmG_Lv, GameD, GameLayer0SX, GameLayer0SY);
+					}
+
+					// teleport?
+					if (GameS == GameS_Upright && GameD(GameX, GameY) == clsBloxorz::TELEPORTER) {
+						// animation
+						for (i = 255; i >= 0; i -= 51) {
+							PaintPicture(bmG_Lv, NULL);
+							Game_DrawLayer1(NULL, true, false, 1, 1, 0, i);
+							GAME_PAINT_ETC();
+						}
+
+						// get position
+						Lev(GameLev).GetTeleportPosition(GameX, GameY, GameX, GameY, GameX2, GameY2);
+
+						// add check code
+						if (GameX < 1 || GameX2 < 1 || GameY < 1 || GameY2 < 1
+							|| GameX > GameW || GameX2 > GameW || GameY > GameH || GameY2 > GameH) {
+							printf("[Game_Loop] Error: Teleport position out of map range\n");
+							GameStatus = -1;
+							return;
+						}
+
+						// new mode: check two box get together?
+						GameS = GameS_Single;
+						if (GameX == GameX2) {
+							if (GameY + 1 == GameY2) GameS = GameS_Vertical;
+							if (GameY == GameY2) GameS = GameS_Upright; // new mode
+							else if (GameY - 1 == GameY2) {
+								GameY = GameY2; GameS = GameS_Vertical;
+							}
+						} else if (GameY == GameY2) {
+							if (GameX + 1 == GameX2) GameS = GameS_Horizontal;
+							else if (GameX - 1 == GameX2) {
+								GameX = GameX2; GameS = GameS_Horizontal;
+							}
+						}
+
+						idx = 13; // update index (???)
+						GameFS = 0; // clear last move to prevent ice
+
+						// animation
+						kx = GameLayer0SX + (GameX - 1) * 32 + (GameY - 1) * 10 + 21;
+						ky = GameLayer0SY - (GameX - 1) * 5 + (GameY - 1) * 16 - 10;
+						kt = 24;
+
+						if (GameS == GameS_Horizontal) {
+							kx += 16; ky -= 2;
+						} else if (GameS == GameS_Vertical) {
+							kx += 5; ky += 8;
+						}
+
+						for (i = 0; i <= 15; i++) {
+							_Cls(NULL);
+							PaintPicture(bmG_Lv, NULL);
+							Game_DrawLayer1(NULL, true, true, GameS * 4 + 1, 1, 0, i * 17);
+							pTheBitmapDraw3(NULL, Ani_Misc, 3, kx - 40 + i, ky, i * 17);
+							pTheBitmapDraw3(NULL, Ani_Misc, 4, kx + 40 - i, ky, i * 17);
+							GAME_PAINT_ETC();
+						}
+					}
+
+					IsSlipping = false;
+					i = Lev(GameLev).BloxorzCheckBlockSlip(GameD, GameX, GameY, GameS, GameFS, GameX2, GameY2);
+					if (i > 0) { // ice
+						GameFS = i;
+						GameStatus = 13;
+						IsSlipping = true;
+						nAnimationIndex = 0;
+					} else if (GameS == GameS_Upright && GameD(GameX, GameY) == clsBloxorz::PYRAMID && GameFS > 0) { //pyramid
+						// check movable
+						if (Lev(GameLev).BloxorzCheckIsMovable(GameD, GameX, GameY, GameS, GameFS)) {
+							GameStatus = 11;
+							nAnimationIndex = 1;
+						}
+					} else {
+						// erase direction
+						GameFS = 0;
+						// two box get together?
+						if (GameS == GameS_Single) {
+							if (GameX == GameX2) {
+								if (GameY + 1 == GameY2) GameS = GameS_Vertical;
+								else if (GameY - 1 == GameY2) {
+									GameY = GameY2; GameS = GameS_Vertical;
+								} else if (GameY == GameY2) {
+									printf("[Game_Loop] Bug: two small boxes are get together!\n");
+									GameStatus = -1;
+								}
+							} else if (GameY == GameY2) {
+								if (GameX + 1 == GameX2) GameS = GameS_Horizontal;
+								else if (GameX - 1 == GameX2) {
+									GameX = GameX2; GameS = GameS_Horizontal;
+								}
+							}
+						}
+					}
+					// update index
+					idx = GameS * 4 + 1;
+					break;
+				case BState_Thin:
+					GameStatus = 3;
+					break;
+				default: // unknown
+					printf("[Game_Loop] Error: BloxorzCheckIsValidState returns unknown result\n");
+					GameStatus = -1;
+					break;
+				}
+				bEnsureRedraw = true;
+				break;
+			}
+
+			if (nBridgeChangeCount > 0 || kt > 0) bEnsureRedraw = true;
+
+			// TODO: check menu, etc.
+
+			// check time
+			i = SDL_GetTicks() - GameLvStartTime;
+			if (i >= t * 1000) {
+				t = i / 1000;
+				bEnsureRedraw = true;
+			}
+
+			// redraw?
+			if (bEnsureRedraw && GameStatus > 1) {
+				_Cls(NULL);
+				PaintPicture(bmG_Lv, NULL);
+
+				// draw text
+				DrawTextB(NULL, str(MyFormat("%d") << GameLvStep), m_objFont[0],
+					96, 24, 72, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+				DrawTextB(NULL, str(MyFormat("%02d:%02d:%02d") << (t / 3600) << ((t / 60) % 60) << (t % 60)), m_objFont[0],
+					96, 40, 72, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+				DrawTextB(NULL, str(MyFormat("%d") << GameLvRetry), m_objFont[0],
+					96, 56, 72, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+
+				// draw bridges status change
+				nBridgeChangeCount = 0;
+				for (j = 1; j <= GameH; j++) {
+					for (i = 1; i <= GameW; i++) {
+						m = dL(i, j);
+						if (m >= 100 && m <= 115) { // off
+							pTheBitmapDraw3(NULL, Ani_Misc, 1,
+								GameLayer0SX + (i - 1) * 32 + (j - 1) * 10,
+								GameLayer0SY + 0 - ((i - 1) * 5) + ((j - 1) * 16), (m - 100) * 17);
+							nBridgeChangeCount++;
+							dL(i, j) = m - 1;
+						} else if (m >= 200 && m <= 215) { // on
+							pTheBitmapDraw3(NULL, Ani_Misc, 2,
+								GameLayer0SX + (i - 1) * 32 + (j - 1) * 10,
+								GameLayer0SY + 0 - ((i - 1) * 5) + ((j - 1) * 16), (m - 200) * 17);
+							nBridgeChangeCount++;
+							dL(i, j) = m - 1;
+						} else {
+							dL(i, j) = 0;
+						}
+					}
+				}
+
+				// layer 1
+				if (IsSlipping) {
+					Game_DrawLayer1(NULL, true, true, idx, idx2, y2, 255, false, x2, true);
+				} else if (QIE_0 > 0 && GameFS == 0) { // :-/
+					Game_DrawLayer1(NULL, true, true, QIE_0, 8, y2, 255, false, x2, true);
+				} else if (QIE_0 > 0 && ((QIE_0 > 2) ^ (GameFS > 2))) { // :-/
+					switch (GameFS) {
+					case GameFS_Up:
+						Game_DrawLayer1(NULL, true, true, QIE_0, 8,
+							y2 - 2 * nAnimationIndex, 255, false,
+							x2 - (10 * nAnimationIndex) / 8, true);
+						break;
+					case GameFS_Down:
+						Game_DrawLayer1(NULL, true, true, QIE_0, 8,
+							y2 + 2 * nAnimationIndex, 255, false,
+							x2 + (10 * nAnimationIndex) / 8, true);
+						break;
+					case GameFS_Left:
+						Game_DrawLayer1(NULL, true, true, QIE_0, 8,
+							y2 + (5 * nAnimationIndex) / 8, 255, false,
+							x2 - 4 * nAnimationIndex, true);
+						break;
+					case GameFS_Right:
+						Game_DrawLayer1(NULL, true, true, QIE_0, 8,
+							y2 - (5 * nAnimationIndex) / 8, 255, false,
+							x2 + 4 * nAnimationIndex, true);
+						break;
+					}
+				} else {
+					Game_DrawLayer1(NULL, true, true, idx, idx2);
+				}
+
+				// draw []
+				if (kt <= 0) {
+				} else if (kt <= 16) {
+					pTheBitmapDraw3(NULL, Ani_Misc, 3, kx - 24, ky, 17 * (kt - 1));
+					pTheBitmapDraw3(NULL, Ani_Misc, 4, kx + 24, ky, 17 * (kt - 1));
+					kt--;
+				} else if (kt <= 24) {
+					pTheBitmapDraw3(NULL, Ani_Misc, 3, kx - 24, ky);
+					pTheBitmapDraw3(NULL, Ani_Misc, 4, kx + 24, ky);
+					kt--;
+				} else if (kt <= 40) {
+					pTheBitmapDraw3(NULL, Ani_Misc, 3, kx - kt, ky, 17 * (40 - kt));
+					pTheBitmapDraw3(NULL, Ani_Misc, 4, kx + kt, ky, 17 * (40 - kt));
+					kt--;
+				}
+
+				// TODO: draw menu, etc.
+				Game_Paint();
+				bEnsureRedraw = false;
+			}
+
+			WaitForNextFrame();
+			DoEvents();
+
+			// TODO: process menu event, etc.
+
+			break;
+
+		default:
+			printf("[Game_Loop] Bug: Unknown or unimplemented game status: %d\n", GameStatus);
+			GameStatus = 0;
+		}
+	}
+}
+
+void Game_Init() {
+	// load level
+	GameIsRndMap = false;
+	Game_LoadLevel("data/Default.box");
+
+	// init data
+	GameStatus = 0;
+	
+	// enter loop
+	Game_Loop();
+
+	// over
+	Lev.clear();
+	objFile = clsTheFile();
+}
+
 void OnAutoSave() {
 	//...
 }
@@ -753,7 +1696,7 @@ static int MyEventFilter(void *userdata, SDL_Event *evt){
 		break;
 	case SDL_KEYDOWN:
 		// check Alt+F4 or Ctrl+Q exit event (for all platforms)
-		if ((evt->key.keysym.sym == SDLK_F4 && (evt->key.keysym.mod & KMOD_ALT) != 0)
+		if ((evt->key.keysym.scancode == SDL_SCANCODE_F4 && (evt->key.keysym.mod & KMOD_ALT) != 0)
 			|| (evt->key.keysym.sym == SDLK_q && (evt->key.keysym.mod & KMOD_CTRL) != 0))
 		{
 			GameStatus = -2;
@@ -817,6 +1760,17 @@ int main(int argc, char** argv) {
 	cmbMode_List.push_back(_("Zigzag with button"));
 	cmbMode_ListIndex = 2;
 
+	GameMenuCaption(1) = _("Return to game");
+	GameMenuCaption(2) = _("Restart");
+	GameMenuCaption(3) = _("Pick a level");
+	GameMenuCaption(4) = _("Open level file");
+	GameMenuCaption(5) = _("Random level");
+	GameMenuCaption(6) = _("Input solution");
+	GameMenuCaption(7) = _("Auto solver");
+	GameMenuCaption(8) = _("Game instructions");
+	GameMenuCaption(9) = _("Main menu");
+	GameMenuCaption(10) = _("Exit game");
+
 	SDL_SetEventFilter(MyEventFilter, NULL);
 
 	// run main loop
@@ -873,6 +1827,7 @@ int main(int argc, char** argv) {
 		WaitForNextFrame();
 
 		if (nPressed == 1) { // start game
+			Game_Init();
 		} else if (nPressed == 2) { // instructions
 			GameStatus = 0;
 			Game_Instruction_Loop();

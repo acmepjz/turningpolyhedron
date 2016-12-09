@@ -100,6 +100,13 @@ public:
 	bool BloxorzCheckIsMovable(const Array2D<unsigned char, 1, 1>& d, int x, int y, int GameS, int FS, int* QIE = NULL) const;
 	enumBloxorzStateValid BloxorzCheckIsValidState(const Array2D<unsigned char, 1, 1>& d, int x, int y, int GameS, int x2 = 0, int y2 = 0) const;
 	int BloxorzCheckPressButton(Array2D<unsigned char, 1, 1>& d, int x, int y, int GameS, Array2D<int, 1, 1>* BridgeChangeArray = NULL, int BridgeOff = 0, int BridgeOn = 0) const;
+	inline void GetTeleportPosition(int x, int y, int& x1, int& y1, int& x2, int& y2) const {
+		int n = dat2(x, y);
+		x1 = n & 0xFF;
+		y1 = (n >> 8) & 0xFF;
+		x2 = (n >> 16) & 0xFF;
+		y2 = (n >> 24) & 0xFF;
+	}
 public:
 	std::vector<unsigned char> _xx_dat;
 	std::vector<int> _xx_dat2;
