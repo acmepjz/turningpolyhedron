@@ -20,7 +20,13 @@ TTF_Font* m_objFont[3] = {};
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 
-SDL_Texture *bmG_Back = NULL, *bmG_Lv = NULL, *bmImg[5] = {};
+// these two are render targets
+SDL_Texture *bmG_Back = NULL, *bmG_Lv = NULL;
+
+int m_nIdleTime = 0;
+bool bRenderTargetDirty = false;
+
+SDL_Texture *bmImg[5] = {};
 
 int cmbMode_ListIndex;
 std::vector<std::string> cmbMode_List;
@@ -184,6 +190,24 @@ void AlphaPaintPicture(SDL_Texture* objSrc, SDL_Texture* objDest, int nDestLeft 
 	SDL_SetTextureBlendMode(objSrc, SDL_BLENDMODE_BLEND);
 	SDL_SetTextureAlphaMod(objSrc, nAlpha);
 	SDL_RenderCopy(renderer, objSrc, &r1, &r2);
+}
+
+// return normalized position
+int _GetCursorPos(int *x, int *y) {
+	int x1, y1;
+	int w, h;
+	int ret = SDL_GetMouseState(&x1, &y1);
+	SDL_GetWindowSize(window, &w, &h);
+	if (w * 3 > h * 4) {
+		x1 = ((x1 - w / 2) * 480) / h + 320;
+		y1 = (y1 * 480) / h;
+	} else {
+		x1 = (x1 * 640) / w;
+		y1 = ((y1 - h / 2) * 640) / w + 240;
+	}
+	if (x) *x = x1;
+	if (y) *y = y1;
+	return ret;
 }
 
 inline void Game_Paint() {
@@ -459,6 +483,59 @@ void pInitBitmap() {
 	}
 }
 
+void OnAutoSave() {
+	//...
+}
+
+static int MyEventFilter(void *userdata, SDL_Event *evt){
+	switch (evt->type){
+	case SDL_QUIT:
+		GameStatus = -2;
+		break;
+	case SDL_APP_TERMINATING:
+	case SDL_APP_WILLENTERBACKGROUND:
+		OnAutoSave();
+		break;
+	case SDL_APP_LOWMEMORY:
+		printf("[main] Fatal Error: Program received SDL_APP_LOWMEMORY! Program will abort\n");
+		OnAutoSave();
+		exit(-1);
+		break;
+	case SDL_WINDOWEVENT:
+		switch (evt->window.event){
+		case SDL_WINDOWEVENT_EXPOSED:
+			m_nIdleTime = 0;
+			break;
+		case SDL_WINDOWEVENT_SIZE_CHANGED:
+			m_nIdleTime = 0;
+			break;
+		}
+		break;
+	case SDL_KEYDOWN:
+		// check Alt+F4 or Ctrl+Q exit event (for all platforms)
+		if ((evt->key.keysym.sym == SDLK_F4 && (evt->key.keysym.mod & KMOD_ALT) != 0)
+			|| (evt->key.keysym.sym == SDLK_q && (evt->key.keysym.mod & KMOD_CTRL) != 0))
+		{
+			GameStatus = -2;
+		}
+		break;
+	case SDL_RENDER_TARGETS_RESET:
+		bRenderTargetDirty = true;
+		m_nIdleTime = 0;
+		break;
+	case SDL_RENDER_DEVICE_RESET:
+		// FIXME: currently unsupported
+		OnAutoSave();
+		bRenderTargetDirty = true;
+		m_nIdleTime = 0;
+		// exit(-1);
+		break;
+	}
+
+	return 1;
+}
+
+
 int main(int argc, char** argv) {
 	initPaths();
 
@@ -469,7 +546,7 @@ int main(int argc, char** argv) {
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 
-	window = SDL_CreateWindow(_("Turning Square").c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+	window = SDL_CreateWindow(_("Turning Square").c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_RESIZABLE);
 	//window = SDL_CreateWindow(_("Turning Square").c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
 	SDL_RenderSetLogicalSize(renderer, 640, 480);
@@ -501,6 +578,8 @@ int main(int argc, char** argv) {
 	cmbMode_List.push_back(_("Zigzag with button"));
 	cmbMode_ListIndex = 2;
 
+	SDL_SetEventFilter(MyEventFilter, NULL);
+
 	// run main loop
 	int x, y;
 	int i;
@@ -510,7 +589,7 @@ int main(int argc, char** argv) {
 	while (GameStatus > -2) {
 		GameStatus = -1;
 
-		if (nPressed) {
+		if (nPressed || bRenderTargetDirty) {
 			PaintPicture(bmImg[4], bmG_Back);
 			DrawTextB(bmG_Back, _("Turning Square"), m_objFont[2],
 				0, 40, 640, 80, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
@@ -523,15 +602,14 @@ int main(int argc, char** argv) {
 				0, 320, 640, 60, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
 			DrawTextB(bmG_Back, _("Exit game"), m_objFont[1],
 				0, 380, 640, 60, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
+
+			bRenderTargetDirty = false;
 		}
 
 		// get messages
 		nPressed = 0;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
-			case SDL_QUIT:
-				GameStatus = -2;
-				break;
 			case SDL_MOUSEBUTTONDOWN:
 				if (event.button.button == SDL_BUTTON_LEFT) nPressed = 10;
 				break;
@@ -540,9 +618,10 @@ int main(int argc, char** argv) {
 		if (GameStatus <= -2) break;
 
 		// test only
+		_Cls(NULL);
 		PaintPicture(bmG_Back, NULL);
 
-		SDL_GetMouseState(&x, &y);
+		_GetCursorPos(&x, &y);
 
 		if (x >= 40 && x < 600 && y >= 200 && y < 440) {
 			i = (y - 140) / 60;
