@@ -1177,7 +1177,7 @@ Do
     'block2 fall?
     m = 0
     If GameS = 3 Then
-     If GameX2 > 0 And GameY2 > 0 And GameX2 <= GameW And GameY2 <= GameW Then
+     If GameX2 > 0 And GameY2 > 0 And GameX2 <= GameW And GameY2 <= GameH Then
       i = GameD( GameY2,GameX2)
       If i = 0 Or i = 6 Then m = 1
      Else
