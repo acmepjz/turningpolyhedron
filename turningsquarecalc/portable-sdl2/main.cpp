@@ -1324,11 +1324,11 @@ void Game_Loop() {
 					const Uint8* _ks = SDL_GetKeyboardState(NULL);
 					if (_ks[SDL_SCANCODE_R]) { // restart
 						GameStatus = 1;
-					} else if (_ks[SDL_SCANCODE_PAGEUP] && GameLev < Lev.UBound()) {
+					} else if (_ks[SDL_SCANCODE_PAGEDOWN] && GameLev < Lev.UBound()) {
 						GameIsRndMap = false;
 						GameLev++;
 						GameStatus = 0;
-					} else if (_ks[SDL_SCANCODE_PAGEDOWN] && GameLev > 1) {
+					} else if (_ks[SDL_SCANCODE_PAGEUP] && GameLev > 1) {
 						GameIsRndMap = false;
 						GameLev--;
 						GameStatus = 0;
