@@ -34,6 +34,12 @@ SDL_Texture *bmImg[5] = {};
 int cmbMode_ListIndex;
 std::vector<std::string> cmbMode_List;
 
+struct typeTextBox {
+	std::string Tag;
+};
+
+FixedArray1D<typeTextBox, 0, 5> txtGame;
+
 int GameLayer0SX, GameLayer0SY;
 
 clsTheFile objFile;
@@ -166,6 +172,7 @@ void PaintPicture(SDL_Texture* objSrc, SDL_Texture* objDest, int nDestLeft = 0, 
 	SDL_Rect r2 = { nDestLeft, nDestTop, nWidth, nHeight };
 	SDL_SetRenderTarget(renderer, objDest);
 	SDL_SetTextureBlendMode(objSrc, SDL_BLENDMODE_NONE);
+	SDL_SetTextureAlphaMod(objSrc, 255);
 	SDL_RenderCopy(renderer, objSrc, &r1, &r2);
 }
 
@@ -200,21 +207,27 @@ void AlphaPaintPicture(SDL_Texture* objSrc, SDL_Texture* objDest, int nDestLeft 
 	SDL_RenderCopy(renderer, objSrc, &r1, &r2);
 }
 
+void NormalizeCursorPos(int &x, int &y) {
+	int w, h;
+	SDL_GetWindowSize(window, &w, &h);
+	if (w * 3 > h * 4) {
+		x = ((x - w / 2) * 480) / h + 320;
+		y = (y * 480) / h;
+	} else {
+		x = (x * 640) / w;
+		y = ((y - h / 2) * 640) / w + 240;
+	}
+}
+
 // return normalized position
 int _GetCursorPos(int *x, int *y) {
 	int x1, y1;
-	int w, h;
 	int ret = SDL_GetMouseState(&x1, &y1);
-	SDL_GetWindowSize(window, &w, &h);
-	if (w * 3 > h * 4) {
-		x1 = ((x1 - w / 2) * 480) / h + 320;
-		y1 = (y1 * 480) / h;
-	} else {
-		x1 = (x1 * 640) / w;
-		y1 = ((y1 - h / 2) * 640) / w + 240;
+	if (x || y) {
+		NormalizeCursorPos(x1, y1);
+		if (x) *x = x1;
+		if (y) *y = y1;
 	}
-	if (x) *x = x1;
-	if (y) *y = y1;
 	return ret;
 }
 
@@ -731,7 +744,7 @@ void Game_Instruction_Loop() {
 	}
 
 	// buttons
-	_RECT buttons[] = {
+	const _RECT buttons[] = {
 		{ 100, 440, 420, 456 }, // URL1
 		{ 100, 456, 420, 472 }, // URL2
 		{ 568, 456, 632, 472 }, // OK
@@ -755,6 +768,16 @@ void Game_Instruction_Loop() {
 		// get message
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
+			case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					for (int i = 0; buttons[i].Left >= 0; i++) {
+						if (_PtInRect(buttons[i], event.button.x, event.button.y)) {
+							buttonClicked = i;
+							break;
+						}
+					}
+				}
+				break;
 			case SDL_KEYDOWN:
 				switch (event.key.keysym.scancode) {
 				case SDL_SCANCODE_RETURN:
@@ -768,8 +791,8 @@ void Game_Instruction_Loop() {
 		}
 		if (GameStatus < 0) return;
 
-		int c, x, y;
-		c = _GetCursorPos(&x, &y) & SDL_BUTTON(1);
+		int x, y;
+		_GetCursorPos(&x, &y);
 		for (int i = 0; buttons[i].Left >= 0; i++) {
 			if (_PtInRect(buttons[i], x, y)) {
 				_FrameRect(NULL, buttons[i], 0x0080FF);
@@ -777,13 +800,14 @@ void Game_Instruction_Loop() {
 				break;
 			}
 		}
-		if (c && buttonHighlight >= 0 && buttonClicked < 0) buttonClicked = buttonHighlight;
 
 		Game_Paint();
 		WaitForNextFrame();
 
 		if (buttonClicked == 0) { // URL1
+			// TODO: click URL1
 		} else if (buttonClicked == 1) { // URL2
+			// TODO: click URL2
 		} else if (buttonClicked == 2) { // OK
 			break;
 		}
@@ -802,6 +826,84 @@ void Game_Instruction_Loop() {
 		DoEvents();
 		if (GameStatus < 0) return;
 	}
+}
+
+int Game_Menu_Loop() {
+	_RECT r0, r;
+
+	const int w = 192;
+	const int h0 = 32;
+	const int h = GameMenuItemCount * h0 + 8;
+	r0.Left = 320 - w / 2; r0.Right = r0.Left + w;
+	r0.Top = 240 - h / 2; r0.Bottom = r0.Top + h;
+
+	r.Left = r0.Left + 4; r.Right = r0.Right - 4;
+	const int y = 240 - h / 2 + 4;
+
+	bRenderTargetDirty = true;
+	while (GameStatus >= 0) {
+		// get message
+		bool clicked = false;
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					clicked = true;
+				}
+				break;
+			case SDL_KEYDOWN:
+				switch (event.key.keysym.scancode) {
+				case SDL_SCANCODE_ESCAPE:
+				case SDL_SCANCODE_AC_BACK:
+					return 1;
+					break;
+				}
+				break;
+			}
+		}
+
+		if (bRenderTargetDirty) {
+			PaintPicture(bmG_Lv, bmG_Back);
+
+			// background
+			_FillRect(bmG_Back, r0, 0x000000);
+			_FrameRect(bmG_Back, r0, 0x0080FF);
+
+			// text
+			for (int j = 1; j <= GameMenuItemCount; j++) {
+				DrawTextB(bmG_Back, GameMenuCaption(j), m_objFont[0],
+					r0.Left, r0.Top + (j - 1) * h0 + 4, w, h0,
+					_DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+			}
+
+			bRenderTargetDirty = false;
+		}
+
+		// hit test
+		int px, py, j;
+		_GetCursorPos(&px, &py);
+		if (px >= r.Left && px < r.Right && py >= y && py < y + GameMenuItemCount * h0) {
+			j = 1 + (py - y) / h0;
+		} else {
+			j = 0;
+		}
+
+		// draw
+		_Cls(NULL);
+		PaintPicture(bmG_Back, NULL);
+		if (j > 0) {
+			r.Top = y + (j - 1) * h0;
+			r.Bottom = r.Top + h0;
+			_FrameRect(NULL, r, 0x0080FF);
+		}
+
+		Game_Paint();
+		WaitForNextFrame();
+
+		if (j > 0 && clicked) return j;
+	}
+	return 0;
 }
 
 void Game_LoadLevel(const char* fn) {
@@ -847,7 +949,14 @@ void Game_InitBack() {
 
 	// draw text
 	if (GameIsRndMap) {
-		// TODO: random map caption
+		DrawTextB(bmG_Back, str(MyFormat(_("Random level (%s)")) << txtGame(4).Tag), m_objFont[0],
+			8, 8, 480, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+		DrawTextB(bmG_Back, str(MyFormat(_("Seed: %s")) << txtGame(0).Tag), m_objFont[0],
+			272, 8, 480, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+		// button
+		AlphaPaintPicture(bmImg[3], bmG_Back, 480, 9, 16, 16, 96, 32);
+		DrawTextB(bmG_Back, _("Copy"), m_objFont[0],
+			496, 8, 48, 16, _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
 	} else {
 		DrawTextB(bmG_Back, str(MyFormat(_("Level %d of %d")) << GameLev << Lev.UBound()) + Me_Tag, m_objFont[0],
 			8, 8, 480, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
@@ -859,7 +968,7 @@ void Game_InitBack() {
 	DrawTextB(bmG_Back, _("Retries"), m_objFont[0],
 		8, 56, 72, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
 	DrawTextB(bmG_Back, _("Menu"), m_objFont[0],
-		600, 8, 32, 16, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
+		584, 8, 48, 16, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0x0080FF);
 }
 
 #define GAME_PAINT_ETC() { \
@@ -879,22 +988,28 @@ void Game_Loop() {
 	int nBridgeChangeCount;
 	int idx, idx2, nAnimationIndex;
 	int kx, ky, kt;
-	_POINTAPI p;
-	_RECT r;
-	bool IsMouseIn, IsMouseIn2, IsSlipping;
+	bool IsSlipping;
 	std::string s, sSolution;
 	int t;
 	int QIE, QIE_0;
+
+	// buttons
+	const _RECT buttons[2] = {
+			{ 582, 6, 634, 26 }, // menu
+			{ 474, 6, 538, 26 }, // copy
+	};
+
+	int buttonHighlight = -1, buttonClicked = -1;;
 
 	struct InternalFunctions {
 		static void RedrawLevelName() {
 			if (!bRenderTargetDirty) return;
 			_Cls(bmG_Lv);
 			if (GameIsRndMap) {
-				DrawTextB(bmG_Lv, _("Random Level"), m_objFont[2],
+				DrawTextB(bmG_Lv, _("Random Level"), m_objFont[1],
 					0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
 			} else {
-				DrawTextB(bmG_Lv, str(MyFormat(_("Level %d")) << GameLev), m_objFont[2],
+				DrawTextB(bmG_Lv, str(MyFormat(_("Level %d")) << GameLev), m_objFont[1],
 					0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
 			}
 			bRenderTargetDirty = false;
@@ -1336,9 +1451,9 @@ void Game_Loop() {
 					if (GameStatus <= 1) {
 						// fade out
 						for (i = 255; i >= 0; i -= 51) {
-							InternalFunctions::RedrawBack();
+							InternalFunctions::RedrawBackAndLayer0();
 							_Cls(NULL);
-							AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
+							AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
 							GAME_PAINT_ETC();
 						}
 					} else if ((_ks[SDL_SCANCODE_SPACE] && GameDemoPos == 0) || y == 5) {
@@ -1577,7 +1692,23 @@ void Game_Loop() {
 			if (bRenderTargetDirty) bEnsureRedraw = true;
 			if (nBridgeChangeCount > 0 || kt > 0) bEnsureRedraw = true;
 
-			// TODO: check menu, etc.
+			// check button highlight
+			buttonClicked = -1;
+			{
+				const int buttonCount = GameIsRndMap ? 2 : 1;
+				int newHighlight = -1;
+				_GetCursorPos(&x, &y);
+				for (int i = 0; i < buttonCount; i++) {
+					if (_PtInRect(buttons[i], x, y)) {
+						newHighlight = i;
+						break;
+					}
+				}
+				if (newHighlight != buttonHighlight) {
+					buttonHighlight = newHighlight;
+					bEnsureRedraw = true;
+				}
+			}
 
 			// check time
 			i = SDL_GetTicks() - GameLvStartTime;
@@ -1671,21 +1802,115 @@ void Game_Loop() {
 					kt--;
 				}
 
-				// TODO: draw menu, etc.
+				// draw button highlight
+				if (buttonHighlight >= 0) {
+					_FrameRect(NULL, buttons[buttonHighlight], 0x0080FF);
+				}
+
 				Game_Paint();
 				bEnsureRedraw = false;
 			}
 
 			WaitForNextFrame();
-			DoEvents();
 
-			// TODO: process menu event, etc.
+			// get message
+			{
+				SDL_Event event;
+				while (SDL_PollEvent(&event)) {
+					switch (event.type) {
+					case SDL_MOUSEBUTTONDOWN:
+						if (event.button.button == SDL_BUTTON_LEFT) {
+							const int buttonCount = GameIsRndMap ? 2 : 1;
+							for (int i = 0; i < buttonCount; i++) {
+								if (_PtInRect(buttons[i], event.button.x, event.button.y)) {
+									buttonClicked = i;
+									break;
+								}
+							}
+						}
+						break;
+					case SDL_KEYDOWN:
+						switch (event.key.keysym.scancode) {
+						case SDL_SCANCODE_ESCAPE:
+						case SDL_SCANCODE_AC_BACK:
+							buttonClicked = 0;
+							break;
+						}
+						if (GameIsRndMap && event.key.keysym.sym == SDLK_c && (event.key.keysym.mod & KMOD_CTRL) != 0) {
+							buttonClicked = 1;
+						}
+						break;
+					}
+				}
+				if (GameStatus < 0) return;
+			}
 
+			// copy seed?
+			if (GameIsRndMap && buttonClicked == 1) {
+				SDL_SetClipboardText(txtGame(0).Tag.c_str());
+			}
+
+			// menu
+			if (buttonClicked == 0) {
+				j = SDL_GetTicks();
+
+				InternalFunctions::RedrawBackAndLayer0();
+				i = Game_Menu_Loop();
+				bRenderTargetDirty = true;
+
+				switch (i) {
+				case 2: // restart
+					// fade out
+					for (i = 255; i >= 0; i -= 51) {
+						InternalFunctions::RedrawBackAndLayer0();
+						_Cls(NULL);
+						AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
+						GAME_PAINT_ETC();
+					}
+					// over
+					GameStatus = 1;
+					break;
+				case 8: // instruction
+					// fade out
+					for (i = 255; i >= 0; i -= 51) {
+						InternalFunctions::RedrawBackAndLayer0();
+						_Cls(NULL);
+						AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
+						GAME_PAINT_ETC();
+					}
+					// show instructions
+					Game_Instruction_Loop();
+					// fade in
+					bRenderTargetDirty = true;
+					for (i = 0; i <= 255; i += 51) {
+						InternalFunctions::RedrawBackAndLayer0();
+						_Cls(NULL);
+						AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
+						GAME_PAINT_ETC();
+					}
+					break;
+				case GameMenuItemCount - 1: // return to main menu
+					GameStatus = -1; return;
+					break;
+				case GameMenuItemCount: // exit game
+					GameStatus = -2; return;
+					break;
+				default: // return
+					break;
+				}
+
+				GameLvStartTime += SDL_GetTicks() - j;
+				bRenderTargetDirty = true;
+			}
+
+			// exit??
+			if (GameStatus < 0) return;
 			break;
 
 		default:
 			printf("[Game_Loop] Bug: Unknown or unimplemented game status: %d\n", GameStatus);
 			GameStatus = 0;
+			break;
 		}
 	}
 }
@@ -1860,7 +2085,7 @@ int main(int argc, char** argv) {
 			i = (y - 140) / 60;
 			if (nPressed) nPressed = i;
 			_RECT r = { 44, i * 60 + 144, 596, i * 60 + 196 };
-			_FrameRect(NULL, r, 0x80FF);
+			_FrameRect(NULL, r, 0x0080FF);
 		}
 
 		Game_Paint();
@@ -1872,6 +2097,7 @@ int main(int argc, char** argv) {
 			GameStatus = 0;
 			Game_Instruction_Loop();
 		} else if (nPressed == 3) { // editor
+			// TODO: editor
 		} else if (nPressed == 4) { // exit
 			GameStatus = -2;
 			break;
