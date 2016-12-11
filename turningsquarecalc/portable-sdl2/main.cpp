@@ -23,7 +23,8 @@ SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 
 // these two are render targets
-SDL_Texture *bmG_Back = NULL, *bmG_Lv = NULL;
+SDL_Texture *bmG_Back = NULL; // usually contain background, level name, etc.
+SDL_Texture *bmG_Lv = NULL; // usually contains background and layer 0
 
 int m_nIdleTime = 0;
 bool bRenderTargetDirty = false;
@@ -885,6 +886,33 @@ void Game_Loop() {
 	int t;
 	int QIE, QIE_0;
 
+	struct InternalFunctions {
+		static void RedrawLevelName() {
+			if (!bRenderTargetDirty) return;
+			_Cls(bmG_Lv);
+			if (GameIsRndMap) {
+				DrawTextB(bmG_Lv, _("Random Level"), m_objFont[2],
+					0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+			} else {
+				DrawTextB(bmG_Lv, str(MyFormat(_("Level %d")) << GameLev), m_objFont[2],
+					0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+			}
+			bRenderTargetDirty = false;
+		}
+		static void RedrawBack() {
+			if (bRenderTargetDirty) Game_InitBack();
+			bRenderTargetDirty = false;
+		}
+		static void RedrawBackAndLayer0(bool forceLayer0 = false) {
+			if (bRenderTargetDirty) Game_InitBack();
+			if (bRenderTargetDirty || forceLayer0) {
+				PaintPicture(bmG_Back, bmG_Lv);
+				pGameDrawLayer0(bmG_Lv, GameD, GameLayer0SX, GameLayer0SY);
+			}
+			bRenderTargetDirty = false;
+		}
+	};
+
 	while (GameStatus >= 0) {
 		switch (GameStatus) {
 		case 0: // load level
@@ -903,25 +931,21 @@ void Game_Loop() {
 			GameDemoBegin = false;
 
 			// level name animation
-			_Cls(bmG_Lv);
-			if (GameIsRndMap) {
-				DrawTextB(bmG_Lv, _("Random Level"), m_objFont[2],
-					0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
-			} else {
-				DrawTextB(bmG_Lv, str(MyFormat(_("Level %d")) << GameLev), m_objFont[2],
-					0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
-			}
+			bRenderTargetDirty = true;
 			for (i = 0; i <= 255; i += 17) {
+				InternalFunctions::RedrawLevelName();
 				_Cls(NULL);
 				AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
 				GAME_PAINT_ETC();
 			}
 			for (i = 0; i < 32; i++) {
+				InternalFunctions::RedrawLevelName();
 				_Cls(NULL);
 				PaintPicture(bmG_Lv, NULL);
 				GAME_PAINT_ETC();
 			}
 			for (i = 255; i >= 0; i -= 17) {
+				InternalFunctions::RedrawLevelName();
 				_Cls(NULL);
 				AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
 				GAME_PAINT_ETC();
@@ -952,7 +976,7 @@ void Game_Loop() {
 			QIE = QIE_0 = 0;
 
 			// init back
-			Game_InitBack();
+			bRenderTargetDirty = true;
 
 			// animate
 			dL.ReDim(GameW, GameH * 2);
@@ -963,11 +987,13 @@ void Game_Loop() {
 				}
 			}
 			for (i = 0; i <= 255; i += 51) {
+				InternalFunctions::RedrawBack();
 				_Cls(NULL);
 				AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
 				GAME_PAINT_ETC();
 			}
 			for (k = 0; k <= 36; k++) {
+				InternalFunctions::RedrawBack();
 				_Cls(NULL);
 				PaintPicture(bmG_Back, NULL);
 				x = GameLayer0SX + GameW * 32;
@@ -998,17 +1024,18 @@ void Game_Loop() {
 			dL.ReDim(GameW, GameH);
 
 			// draw layer0
-			PaintPicture(bmG_Back, bmG_Lv);
-			pGameDrawLayer0(bmG_Lv, GameD, GameLayer0SX, GameLayer0SY);
+			InternalFunctions::RedrawBackAndLayer0(true);
 
 			// box falls
 			for (j = -600; j <= 0; j += 50) {
+				InternalFunctions::RedrawBackAndLayer0();
 				_Cls(NULL);
 				PaintPicture(bmG_Lv, NULL);
 				Game_DrawLayer1(NULL, true, false, Ani_Misc, 5, j);
 				GAME_PAINT_ETC();
 			}
 			for (i = 1; i < (int)Anis(29).size(); i++) {
+				InternalFunctions::RedrawBackAndLayer0();
 				_Cls(NULL);
 				PaintPicture(bmG_Lv, NULL);
 				Game_DrawLayer1(NULL, true, true, 29, i);
@@ -1040,6 +1067,7 @@ void Game_Loop() {
 				h++;
 				x += x2;
 				idx2++; if (idx2 > 9) idx2 = 1;
+				InternalFunctions::RedrawBack();
 				_Cls(NULL);
 				PaintPicture(bmG_Back, NULL);
 				Game_DrawLayer1(NULL, true, false, idx, idx2, w, 255, true, x);
@@ -1054,6 +1082,7 @@ void Game_Loop() {
 				}
 			}
 			for (k = 0; k <= 30; k++) {
+				InternalFunctions::RedrawBack();
 				_Cls(NULL);
 				PaintPicture(bmG_Back, NULL);
 				x = GameLayer0SX + GameW * 32;
@@ -1080,6 +1109,7 @@ void Game_Loop() {
 
 			// fade out
 			for (i = 255; i >= 0; i -= 51) {
+				InternalFunctions::RedrawBack();
 				_Cls(NULL);
 				AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
 				GAME_PAINT_ETC();
@@ -1099,6 +1129,7 @@ void Game_Loop() {
 			dL(GameX, GameY) = -2;
 			w = h = 0;
 			for (k = 0; k <= 50; k++) {
+				InternalFunctions::RedrawBack();
 				_Cls(NULL);
 				PaintPicture(bmG_Back, NULL);
 				x = GameLayer0SX + GameW * 32;
@@ -1129,6 +1160,7 @@ void Game_Loop() {
 
 			// fade out
 			for (i = 255; i >= 0; i -= 51) {
+				InternalFunctions::RedrawBack();
 				_Cls(NULL);
 				AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
 				GAME_PAINT_ETC();
@@ -1141,6 +1173,7 @@ void Game_Loop() {
 		case 4: // win
 			// block animation
 			for (i = 1; i < (int)Anis(30).size(); i++) {
+				InternalFunctions::RedrawBackAndLayer0();
 				_Cls(NULL);
 				PaintPicture(bmG_Lv, NULL);
 				Game_DrawLayer1(NULL, true, false, 30, i);
@@ -1166,6 +1199,7 @@ void Game_Loop() {
 				}
 			}
 			for (k = 0; k <= 51; k++) {
+				InternalFunctions::RedrawBack();
 				_Cls(NULL);
 				PaintPicture(bmG_Back, NULL);
 				for (i = GameW; i >= 1; i--) {
@@ -1198,6 +1232,7 @@ void Game_Loop() {
 
 			// fade out
 			for (i = 255; i >= 0; i -= 51) {
+				InternalFunctions::RedrawBack();
 				_Cls(NULL);
 				AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
 				GAME_PAINT_ETC();
@@ -1301,6 +1336,7 @@ void Game_Loop() {
 					if (GameStatus <= 1) {
 						// fade out
 						for (i = 255; i >= 0; i -= 51) {
+							InternalFunctions::RedrawBack();
 							_Cls(NULL);
 							AlphaPaintPicture(bmG_Back, NULL, 0, 0, 640, 480, 0, 0, i);
 							GAME_PAINT_ETC();
@@ -1432,6 +1468,7 @@ void Game_Loop() {
 					if (GameS == GameS_Upright && GameD(GameX, GameY) == clsBloxorz::TELEPORTER) {
 						// animation
 						for (i = 255; i >= 0; i -= 51) {
+							InternalFunctions::RedrawBackAndLayer0();
 							PaintPicture(bmG_Lv, NULL);
 							Game_DrawLayer1(NULL, true, false, 1, 1, 0, i);
 							GAME_PAINT_ETC();
@@ -1478,6 +1515,7 @@ void Game_Loop() {
 						}
 
 						for (i = 0; i <= 15; i++) {
+							InternalFunctions::RedrawBackAndLayer0();
 							_Cls(NULL);
 							PaintPicture(bmG_Lv, NULL);
 							Game_DrawLayer1(NULL, true, true, GameS * 4 + 1, 1, 0, i * 17);
@@ -1536,6 +1574,7 @@ void Game_Loop() {
 				break;
 			}
 
+			if (bRenderTargetDirty) bEnsureRedraw = true;
 			if (nBridgeChangeCount > 0 || kt > 0) bEnsureRedraw = true;
 
 			// TODO: check menu, etc.
@@ -1549,6 +1588,7 @@ void Game_Loop() {
 
 			// redraw?
 			if (bEnsureRedraw && GameStatus > 1) {
+				InternalFunctions::RedrawBackAndLayer0();
 				_Cls(NULL);
 				PaintPicture(bmG_Lv, NULL);
 
