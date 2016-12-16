@@ -20,17 +20,17 @@ public:
 	static void Game_Instruction_Loop();
 	static int Game_Menu_Loop();
 private:
+	void Game_SelectLevel();
+	void Game_SelectLevelFile();
 	void Game_InitBack();
 	void RedrawLevelName();
 	void RedrawBack();
 	void RedrawBackAndLayer0(bool forceLayer0 = false);
 private:
-	FixedArray1D<typeTextBox, 0, 5> txtGame;
-
 	int GameLayer0SX, GameLayer0SY;
 
 	Array1D<clsBloxorz, 1> Lev;
-	std::string Me_Tag;
+	std::string LevFileName, Me_Tag;
 
 	Array2D<unsigned char, 1, 1> GameD;
 
@@ -61,4 +61,5 @@ private:
 	bool GameDemoBegin;
 
 	bool GameIsRndMap;
+	std::string RndMapSeed;
 };

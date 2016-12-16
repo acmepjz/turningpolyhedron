@@ -2,6 +2,8 @@
 #include "clsTheFile.h"
 #include "main.h"
 #include "MyFormat.h"
+#include "SimpleMenu.h"
+#include "FileSystem.h"
 #include <SDL.h>
 
 #define GAME_PAINT_ETC() { \
@@ -42,14 +44,18 @@ void clsBloxorzGame::Game_LoadLevel(const char* fn) {
 		}
 	}
 
+	GameIsRndMap = false;
+
 	if (b) {
 		std::string s = fn;
 		std::string::size_type lpe = s.find_last_of("\\/");
 		if (lpe != std::string::npos) s = s.substr(lpe + 1);
+		LevFileName = fn;
 		Me_Tag = " (" + s + ")";
 	} else {
 		printf("[Game_LoadLevel]: Failed to load level file '%s'\n", fn);
 
+		LevFileName.clear();
 		Me_Tag.clear();
 		Lev.ReDim(1);
 		Lev(1).Create(15, 10);
@@ -68,9 +74,14 @@ void clsBloxorzGame::Game_InitBack() {
 
 	// draw text
 	if (GameIsRndMap) {
-		DrawTextB(bmG_Back, str(MyFormat(_("Random level (%s)")) << txtGame(4).Tag), m_objFont[0],
-			8, 8, 480, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
-		DrawTextB(bmG_Back, str(MyFormat(_("Seed: %s")) << txtGame(0).Tag), m_objFont[0],
+		if (Lev.UBound() > 1) {
+			DrawTextB(bmG_Back, str(MyFormat(_("Random level %d of %d")) << GameLev << Lev.UBound()) + Me_Tag, m_objFont[0],
+				8, 8, 480, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+		} else {
+			DrawTextB(bmG_Back, _("Random level") + Me_Tag, m_objFont[0],
+				8, 8, 480, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+		}
+		DrawTextB(bmG_Back, str(MyFormat(_("Seed: %s")) << RndMapSeed), m_objFont[0],
 			272, 8, 480, 16, _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
 		// button
 		AlphaPaintPicture(bmImg[3], bmG_Back, 480, 9, 16, 16, 96, 32);
@@ -93,13 +104,18 @@ void clsBloxorzGame::Game_InitBack() {
 void clsBloxorzGame::RedrawLevelName() {
 	if (!bRenderTargetDirty) return;
 	_Cls(bmG_Lv);
+	std::string s;
 	if (GameIsRndMap) {
-		DrawTextB(bmG_Lv, _("Random Level"), m_objFont[1],
-			0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+		if (Lev.UBound() > 1) {
+			s = str(MyFormat(_("Random Level %d")) << GameLev);
+		} else {
+			s = _("Random Level");
+		}
 	} else {
-		DrawTextB(bmG_Lv, str(MyFormat(_("Level %d")) << GameLev), m_objFont[1],
-			0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+		s = str(MyFormat(_("Level %d")) << GameLev);
 	}
+	DrawTextB(bmG_Lv, s, m_objFont[1],
+		0, 0, 640, 480, _DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
 	bRenderTargetDirty = false;
 }
 
@@ -139,7 +155,7 @@ void clsBloxorzGame::Game_Loop() {
 			{ 474, 6, 538, 26 }, // copy
 	};
 
-	int buttonHighlight = -1, buttonClicked = -1;;
+	int buttonHighlight = -1, buttonClicked = -1;
 
 	while (GameStatus >= 0 && bRun) {
 		switch (GameStatus) {
@@ -470,11 +486,12 @@ void clsBloxorzGame::Game_Loop() {
 
 			// end
 			if (GameDemoPos == 0) {
-				if (GameIsRndMap) {
-					// TODO: next random map
-				} else {
-					GameLev++;
-					if (GameLev > Lev.UBound()) GameLev = 1;
+				GameLev++;
+				if (GameLev > Lev.UBound()) {
+					if (GameIsRndMap) {
+						// TODO: next random map
+					}
+					GameLev = 1;
 				}
 				GameStatus = 0; // next level
 			} else { // just demo only
@@ -555,11 +572,9 @@ void clsBloxorzGame::Game_Loop() {
 					if (_ks[SDL_SCANCODE_R]) { // restart
 						GameStatus = 1;
 					} else if (_ks[SDL_SCANCODE_PAGEDOWN] && GameLev < Lev.UBound()) {
-						GameIsRndMap = false;
 						GameLev++;
 						GameStatus = 0;
 					} else if (_ks[SDL_SCANCODE_PAGEUP] && GameLev > 1) {
-						GameIsRndMap = false;
 						GameLev--;
 						GameStatus = 0;
 					}
@@ -961,7 +976,7 @@ void clsBloxorzGame::Game_Loop() {
 
 			// copy seed?
 			if (GameIsRndMap && buttonClicked == 1) {
-				SDL_SetClipboardText(txtGame(0).Tag.c_str());
+				SDL_SetClipboardText(RndMapSeed.c_str());
 			}
 
 			// menu
@@ -983,6 +998,12 @@ void clsBloxorzGame::Game_Loop() {
 					}
 					// over
 					GameStatus = 1;
+					break;
+				case 3: // select level
+					Game_SelectLevel();
+					break;
+				case 4: // selct level file
+					Game_SelectLevelFile();
 					break;
 				case 8: // instruction
 					// fade out
@@ -1029,6 +1050,94 @@ void clsBloxorzGame::Game_Loop() {
 	}
 }
 
+void clsBloxorzGame::Game_SelectLevel() {
+	SimpleMenu menu;
+
+	const int m = Lev.UBound();
+	for (int i = 1; i <= m; i++) {
+		menu.item.push_back(str(MyFormat("%d (%dx%d)") << i << Lev(i).Width() << Lev(i).Height()));
+	}
+
+	menu.listIndex = GameLev - 1;
+
+	menu.title = _("Select Level");
+	menu.closeButton = menu.cancelButton = -1;
+	menu.itemWidth = 128;
+
+	int ret = menu.MenuLoop() + 1;
+
+	if (ret > 0 && ret <= m && ret != GameLev) {
+		bRenderTargetDirty = true;
+
+		// fade out
+		for (int i = 255; i >= 0; i -= 51) {
+			RedrawBackAndLayer0();
+			_Cls(NULL);
+			AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
+			GAME_PAINT_ETC();
+		}
+
+		// over
+		GameLev = ret;
+		GameStatus = 0;
+	}
+}
+
+void clsBloxorzGame::Game_SelectLevelFile() {
+	SimpleMenu menu;
+
+	std::vector<std::string> files;
+
+	// enum internal files
+	{
+		std::string fn = "data/";
+		std::vector<std::string> f = enumAllFiles(fn, "box");
+		for (int i = 0, m = f.size(); i < m; i++) {
+			menu.item.push_back(f[i]);
+			files.push_back(fn + f[i]);
+		}
+	}
+
+	// enum external files
+	{
+		std::string fn = externalStoragePath + "/levels/";
+		std::vector<std::string> f = enumAllFiles(fn, "box");
+		for (int i = 0, m = f.size(); i < m; i++) {
+			menu.item.push_back(_("User level: ") + f[i]);
+			files.push_back(fn + f[i]);
+		}
+	}
+
+	// check current file
+	for (int i = 0, m = files.size(); i < m; i++) {
+		if (files[i] == LevFileName) {
+			menu.listIndex = i;
+			break;
+		}
+	}
+
+	menu.title = _("Select Level File");
+	menu.closeButton = menu.cancelButton = -1;
+
+	int ret = menu.MenuLoop();
+
+	if (ret >= 0) {
+		Game_LoadLevel(files[ret].c_str());
+
+		bRenderTargetDirty = true;
+
+		// fade out
+		for (int i = 255; i >= 0; i -= 51) {
+			RedrawBackAndLayer0();
+			_Cls(NULL);
+			AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
+			GAME_PAINT_ETC();
+		}
+
+		// over
+		GameStatus = 0;
+	}
+}
 
 const char URL1[] = "https://github.com/acmepjz/turningpolyhedron";
 const char URL2[] = "http://www.miniclip.com/games/bloxorz/en/";
@@ -1234,101 +1343,26 @@ void clsBloxorzGame::Game_Instruction_Loop() {
 }
 
 int clsBloxorzGame::Game_Menu_Loop() {
-	_RECT r0, r;
+	SimpleMenu menu;
 
-	std::vector<std::string> GameMenuCaption;
+	menu.item.push_back(_("Return to game"));
+	menu.item.push_back(_("Restart"));
+	menu.item.push_back(_("Pick a level"));
+	menu.item.push_back(_("Open level file"));
+	menu.item.push_back(_("Random level"));
+	menu.item.push_back(_("Input solution"));
+	menu.item.push_back(_("Auto solver"));
+	menu.item.push_back(_("Game instructions"));
+	menu.item.push_back(_("Main menu"));
+	menu.item.push_back(_("Exit game"));
 
-	GameMenuCaption.push_back(_("Return to game"));
-	GameMenuCaption.push_back(_("Restart"));
-	GameMenuCaption.push_back(_("Pick a level"));
-	GameMenuCaption.push_back(_("Open level file"));
-	GameMenuCaption.push_back(_("Random level"));
-	GameMenuCaption.push_back(_("Input solution"));
-	GameMenuCaption.push_back(_("Auto solver"));
-	GameMenuCaption.push_back(_("Game instructions"));
-	GameMenuCaption.push_back(_("Main menu"));
-	GameMenuCaption.push_back(_("Exit game"));
-	
-	const int GameMenuItemCount = GameMenuCaption.size();
+	menu.cancelButton = 0;
 
-	const int w = 192;
-	const int h0 = 32;
-	const int h = GameMenuItemCount * h0 + 8;
-	r0.Left = 320 - w / 2; r0.Right = r0.Left + w;
-	r0.Top = 240 - h / 2; r0.Bottom = r0.Top + h;
-
-	r.Left = r0.Left + 4; r.Right = r0.Right - 4;
-	const int y = 240 - h / 2 + 4;
-
-	bRenderTargetDirty = true;
-	while (bRun) {
-		// get message
-		bool clicked = false;
-		SDL_Event event;
-		while (SDL_PollEvent(&event)) {
-			switch (event.type) {
-			case SDL_MOUSEBUTTONDOWN:
-				if (event.button.button == SDL_BUTTON_LEFT) {
-					clicked = true;
-				}
-				break;
-			case SDL_KEYDOWN:
-				switch (event.key.keysym.scancode) {
-				case SDL_SCANCODE_ESCAPE:
-				case SDL_SCANCODE_AC_BACK:
-					return 1;
-					break;
-				}
-				break;
-			}
-		}
-
-		if (bRenderTargetDirty) {
-			PaintPicture(bmG_Lv, bmG_Back);
-
-			// background
-			_FillRect(bmG_Back, r0, 0x000000);
-			_FrameRect(bmG_Back, r0, 0x0080FF);
-
-			// text
-			for (int j = 0; j < GameMenuItemCount; j++) {
-				DrawTextB(bmG_Back, GameMenuCaption[j], m_objFont[0],
-					r0.Left, r0.Top + j * h0 + 4, w, h0,
-					_DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
-			}
-
-			bRenderTargetDirty = false;
-		}
-
-		// hit test
-		int px, py, j;
-		_GetCursorPos(&px, &py);
-		if (px >= r.Left && px < r.Right && py >= y && py < y + GameMenuItemCount * h0) {
-			j = 1 + (py - y) / h0;
-		} else {
-			j = 0;
-		}
-
-		// draw
-		_Cls(NULL);
-		PaintPicture(bmG_Back, NULL);
-		if (j > 0) {
-			r.Top = y + (j - 1) * h0;
-			r.Bottom = r.Top + h0;
-			_FrameRect(NULL, r, 0x0080FF);
-		}
-
-		Game_Paint();
-		WaitForNextFrame();
-
-		if (j > 0 && clicked) return j;
-	}
-	return 0;
+	return menu.MenuLoop() + 1;
 }
 
 void clsBloxorzGame::Game_Init() {
 	// load level
-	GameIsRndMap = false;
 	Game_LoadLevel("data/Default.box");
 
 	// init data

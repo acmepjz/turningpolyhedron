@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <vector>
 
 #include <SDL.h>
@@ -344,7 +345,7 @@ void pInitBitmap() {
 		pTheBitmapConvert(bmps(121), ani[clsBloxorz::GOAL], 5, 11); // end
 		ani[clsBloxorz::ICE] = typeTheBitmap3(3, 0, 0, 44, 28, 0, 5); // ice
 		ani[clsBloxorz::PYRAMID] = typeTheBitmap3(3, 0, 28, 44, 28, 0, 5); // pyramid
-		ani[clsBloxorz::WALL] = ani[clsBloxorz::GROUND]; // stone TODO:layer 1
+		ani[clsBloxorz::WALL] = ani[clsBloxorz::GROUND]; // stone
 	}
 
 	// box animation
@@ -607,6 +608,8 @@ static int MyEventFilter(void *userdata, SDL_Event *evt){
 }
 
 int main(int argc, char** argv) {
+	srand(time(NULL));
+
 	initPaths();
 
 	objText.LoadFileWithAutoLocale("locale/*.mo");
@@ -616,8 +619,11 @@ int main(int argc, char** argv) {
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 
+#ifdef ANDROID
+	window = SDL_CreateWindow(_("Turning Square").c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP);
+#else
 	window = SDL_CreateWindow(_("Turning Square").c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_RESIZABLE);
-	//window = SDL_CreateWindow(_("Turning Square").c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP);
+#endif
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
 	SDL_RenderSetLogicalSize(renderer, 640, 480);
 
