@@ -22,6 +22,7 @@ public:
 private:
 	void Game_SelectLevel();
 	void Game_SelectLevelFile();
+	int Game_TextBox_Loop(const std::string& title, std::string& text, bool locked);
 	void Game_InitBack();
 	void RedrawLevelName();
 	void RedrawBack();

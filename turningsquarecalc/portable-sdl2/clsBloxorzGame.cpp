@@ -1009,6 +1009,23 @@ void clsBloxorzGame::Game_Loop() {
 				case 4: // selct level file
 					Game_SelectLevelFile();
 					break;
+				case 6: // input solution
+					s = sSolution;
+					if (Game_TextBox_Loop(_("Input Solution"), s, false)) {
+						// fade out
+						bRenderTargetDirty = true;
+						for (i = 255; i >= 0; i -= 51) {
+							RedrawBackAndLayer0();
+							_Cls(NULL);
+							AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
+							GAME_PAINT_ETC();
+						}
+						// over
+						GameStatus = 1;
+						GameDemoS = s;
+						GameDemoBegin = true;
+					}
+					break;
 				case 8: // instruction
 					// fade out
 					for (i = 255; i >= 0; i -= 51) {
@@ -1066,7 +1083,7 @@ void clsBloxorzGame::Game_SelectLevel() {
 
 	menu.title = _("Select Level");
 	menu.closeButton = menu.cancelButton = -1;
-	menu.itemWidth = 128;
+	menu.itemWidth = 120;
 
 	int ret = menu.MenuLoop() + 1;
 
@@ -1122,6 +1139,7 @@ void clsBloxorzGame::Game_SelectLevelFile() {
 
 	menu.title = _("Select Level File");
 	menu.closeButton = menu.cancelButton = -1;
+	menu.itemWidth = 300;
 
 	int ret = menu.MenuLoop();
 
@@ -1374,4 +1392,163 @@ void clsBloxorzGame::Game_Init() {
 
 	// enter loop
 	Game_Loop();
+}
+
+int clsBloxorzGame::Game_TextBox_Loop(const std::string& title, std::string& text, bool locked) {
+	_RECT r0; // the whole window with border
+	_RECT r1; // the text box area
+	_RECT buttons[4] = {}; // X, demo, copy, paste
+
+	std::string newText = text;
+
+	// window size without border
+	const int w = 600, h = 400;
+
+	r0.Left = 320 - 4 - w / 2; r0.Right = r0.Left + w + 8;
+	r0.Top = 240 - 4 - h / 2; r0.Bottom = r0.Top + h + 8;
+
+	// close button
+	buttons[0].Left = r0.Right - 36; buttons[0].Right = r0.Right - 4;
+	buttons[0].Top = r0.Top + 4; buttons[0].Bottom = r0.Top + 36;
+
+	r1.Left = 320 - w / 2; r1.Right = r1.Left + w;
+	r1.Top = r0.Top + 80; r1.Bottom = r0.Bottom - 4;
+
+	// demo
+	buttons[1].Left = r1.Right - 80; buttons[1].Right = r1.Right;
+	buttons[1].Top = r0.Top + 44; buttons[1].Bottom = r0.Top + 76;
+
+	// copy
+	buttons[2].Left = r1.Left; buttons[2].Right = r1.Left + 64;
+	buttons[2].Top = r0.Top + 44; buttons[2].Bottom = r0.Top + 76;
+
+	// paste
+	if (!locked) {
+		buttons[3].Left = r1.Left + 64; buttons[3].Right = r1.Left + 128;
+		buttons[3].Top = r0.Top + 44; buttons[3].Bottom = r0.Top + 76;
+	}
+
+	bRenderTargetDirty = true;
+	while (bRun) {
+		// get message
+		int buttonHighlight = -1, buttonClicked = -1;
+		bool clicked = false;
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			switch (event.type) {
+			case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					clicked = true;
+				}
+				break;
+			case SDL_KEYDOWN:
+				switch (event.key.keysym.scancode) {
+				case SDL_SCANCODE_ESCAPE:
+				case SDL_SCANCODE_AC_BACK:
+					return 0;
+					break;
+				}
+				if (event.key.keysym.mod & KMOD_CTRL) {
+					switch (event.key.keysym.sym) {
+					case SDLK_c:
+						buttonClicked = 2;
+						break;
+					case SDLK_v:
+						if (!locked) buttonClicked = 3;
+						break;
+					}
+				}
+				break;
+			}
+		}
+
+		if (bRenderTargetDirty) {
+			PaintPicture(bmG_Lv, bmG_Back);
+
+			// background
+			_FillRect(bmG_Back, r0, 0x000000);
+			_FrameRect(bmG_Back, r0, 0x0080FF);
+
+			// title
+			DrawTextB(bmG_Back, title, m_objFont[1],
+				r0.Left, r0.Top, r0.Right - r0.Left, 40,
+				_DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+
+			// close button
+			DrawTextB(bmG_Back, "\xE2\x9C\x95", m_objFont[1],
+				r0.Right - 36, r0.Top + 4, 32, 32,
+				_DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+
+			// demo
+			DrawTextB(bmG_Back, _("Demo"), m_objFont[0],
+				buttons[1].Left, buttons[1].Top, buttons[1].Right - buttons[1].Left, buttons[1].Bottom - buttons[1].Top,
+				_DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+
+			// copy
+			DrawTextB(bmG_Back, _("Copy"), m_objFont[0],
+				buttons[2].Left, buttons[2].Top, buttons[2].Right - buttons[2].Left, buttons[2].Bottom - buttons[2].Top,
+				_DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+
+			// paste
+			if (!locked) {
+				DrawTextB(bmG_Back, _("Paste"), m_objFont[0],
+					buttons[3].Left, buttons[3].Top, buttons[3].Right - buttons[3].Left, buttons[3].Bottom - buttons[3].Top,
+					_DT_CENTER | _DT_VCENTER | _DT_SINGLELINE, 0xFFFFFF);
+			}
+
+			// text
+			DrawTextB(bmG_Back, newText, m_objFont[0],
+				r1.Left, r1.Top, r1.Right - r1.Left, r1.Bottom - r1.Top,
+				_DT_WORDBREAK, 0xFFFFFF);
+
+			bRenderTargetDirty = false;
+		}
+
+		// hit test
+		int px, py;
+		_GetCursorPos(&px, &py);
+		for (int i = 0; i < 4; i++) {
+			if (_PtInRect(buttons[i], px, py)) {
+				buttonHighlight = i;
+				break;
+			}
+		}
+
+		// draw
+		_Cls(NULL);
+		PaintPicture(bmG_Back, NULL);
+		if (buttonHighlight >= 0 && buttonHighlight < 4) {
+			_FrameRect(NULL, buttons[buttonHighlight], 0x0080FF);
+		}
+
+		Game_Paint();
+		WaitForNextFrame();
+
+		if (clicked && buttonClicked == -1) buttonClicked = buttonHighlight;
+
+		switch (buttonClicked) {
+		case 0: // close
+			return 0;
+			break;
+		case 1: // demo
+			text = newText;
+			return 1;
+			break;
+		case 2: // copy
+			SDL_SetClipboardText(newText.c_str());
+			break;
+		case 3: // paste
+			if (!locked && SDL_HasClipboardText()) {
+				char* s = SDL_GetClipboardText();
+				if (s) {
+					newText = s;
+					SDL_free(s);
+					bRenderTargetDirty = true;
+				}
+			}
+			break;
+		}
+	}
+
+	return 0;
 }
