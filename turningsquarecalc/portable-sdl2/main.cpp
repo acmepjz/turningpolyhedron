@@ -220,10 +220,19 @@ void DrawTextB(SDL_Texture* hdc, const std::string& s, TTF_Font* fnt, int _Left,
 
 SDL_Texture* _LoadPictureFromFile(const char* _FileName, const char* _MaskFile) {
 	SDL_Surface *bm = IMG_Load(_FileName);
+	if (bm == NULL) {
+		printf("[LoadPictureFromFile] Fatal Error: Failed to load file '%s'\n", _FileName);
+		exit(-1);
+	}
+
 	SDL_Texture *ret = NULL;
 
 	if (_MaskFile) {
 		SDL_Surface *bmMask = IMG_Load(_MaskFile);
+		if (bmMask == NULL) {
+			printf("[LoadPictureFromFile] Fatal Error: Failed to load file '%s'\n", _MaskFile);
+			exit(-1);
+		}
 
 		assert(bm->w == bmMask->w && bm->h == bmMask->h);
 
@@ -617,18 +626,35 @@ int main(int argc, char** argv) {
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {
+		printf("Fatal Error: Can't init SDL!\n");
+		exit(-1);
+	}
 
 #ifdef ANDROID
 	window = SDL_CreateWindow(_("Turning Square").c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_FULLSCREEN_DESKTOP);
 #else
 	window = SDL_CreateWindow(_("Turning Square").c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_RESIZABLE);
 #endif
+	if (window == NULL) {
+		printf("Fatal Error: Can't create window!\n");
+		exit(-1);
+	}
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
+	if (renderer == NULL) {
+		printf("Fatal Error: Can't create renderer!\n");
+		exit(-1);
+	}
 	SDL_RenderSetLogicalSize(renderer, 640, 480);
 
-	TTF_Init();
-	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
+	if (TTF_Init() < 0) {
+		printf("Fatal Error: Can't init SDL_ttf!\n");
+		exit(-1);
+	}
+	if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0) {
+		printf("Fatal Error: Can't init SDL_image!\n");
+		exit(-1);
+	}
 
 #ifdef ANDROID
 #define FONT_FILE_PREFIX "/system/fonts/"
@@ -636,9 +662,15 @@ int main(int argc, char** argv) {
 #define FONT_FILE_PREFIX "data/"
 #endif
 
-	m_objFont[0] = TTF_OpenFont(FONT_FILE_PREFIX "DroidSansFallback.ttf", 16);
-	m_objFont[1] = TTF_OpenFont(FONT_FILE_PREFIX "DroidSansFallback.ttf", 36);
-	m_objFont[2] = TTF_OpenFont(FONT_FILE_PREFIX "DroidSansFallback.ttf", 64);
+	const int fontSize[] = { 16, 36, 64 };
+
+	for (int i = 0; i < sizeof(fontSize) / sizeof(fontSize[0]); i++) {
+		m_objFont[i] = TTF_OpenFont(FONT_FILE_PREFIX "DroidSansFallback.ttf", fontSize[i]);
+		if (m_objFont[i] == NULL) {
+			printf("Fatal Error: Can't load font file!\n");
+			exit(-1);
+		}
+	}
 
 	pInitBitmap();
 
@@ -658,7 +690,6 @@ int main(int argc, char** argv) {
 
 	// run main loop
 	int x, y;
-	int i;
 	int nPressed = 1;
 	SDL_Event event;
 
@@ -698,7 +729,7 @@ int main(int argc, char** argv) {
 		_GetCursorPos(&x, &y);
 
 		if (x >= 40 && x < 600 && y >= 200 && y < 440) {
-			i = (y - 140) / 60;
+			int i = (y - 140) / 60;
 			if (nPressed) nPressed = i;
 			_RECT r = { 44, i * 60 + 144, 596, i * 60 + 196 };
 			_FrameRect(NULL, r, 0x0080FF);

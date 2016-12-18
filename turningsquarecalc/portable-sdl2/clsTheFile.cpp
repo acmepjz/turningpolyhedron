@@ -1,6 +1,7 @@
 #include "clsTheFile.h"
 #include "FileSystem.h"
 #include "LZSS.h"
+#include <stdio.h>
 #include <SDL_endian.h>
 #include <SDL_rwops.h>
 
@@ -27,10 +28,16 @@ static void mycpy(char* dst, const char* src, int maxlen) {
 
 bool clsTheFile::LoadFile(const char* fn, const char* _signature, bool bSkipSignature) {
 	const char* fn1 = fn ? fn : (m_sFileName.empty() ? NULL : m_sFileName.c_str());
-	if (fn1 == NULL) return false;
+	if (fn1 == NULL) {
+		printf("[clsTheFile::LoadFile] Error: File name unspecified\n", fn1);
+		return false;
+	}
 
 	u8file *f = u8fopen(fn1, "rb");
-	if (f == NULL) return false;
+	if (f == NULL) {
+		printf("[clsTheFile::LoadFile] Error: Failed to load file '%s'\n", fn1);
+		return false;
+	}
 
 	std::vector<char> data; //used only when it is compressed
 	bool ret = false;
@@ -89,13 +96,19 @@ bool clsTheFile::LoadFile(const char* fn, const char* _signature, bool bSkipSign
 
 	u8fclose(f);
 
+	if (!ret) {
+		printf("[clsTheFile::LoadFile] Error: The file format of '%s' is incorrect\n", fn1);
+	}
 	if (ret && fn) m_sFileName = fn;
 	return ret;
 }
 
 bool clsTheFile::SaveFile(const char* fn, bool IsCompress) {
 	const char* fn1 = fn ? fn : (m_sFileName.empty() ? NULL : m_sFileName.c_str());
-	if (fn1 == NULL) return false;
+	if (fn1 == NULL) {
+		printf("[clsTheFile::SaveFile] Error: File name unspecified\n", fn1);
+		return false;
+	}
 
 	// generate actual data
 	std::vector<char> data;
@@ -113,7 +126,10 @@ bool clsTheFile::SaveFile(const char* fn, bool IsCompress) {
 
 	// save file
 	u8file *f = u8fopen(fn1, "wb");
-	if (f == NULL) return false;
+	if (f == NULL) {
+		printf("[clsTheFile::SaveFile] Error: Failed to save file '%s'\n", fn1);
+		return false;
+	}
 
 	u8fwrite(signature, 8, 1, f);
 	if (IsCompress) {
