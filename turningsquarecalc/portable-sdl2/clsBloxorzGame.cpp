@@ -50,7 +50,10 @@ void clsBloxorzGame::Game_LoadLevel(const char* fn) {
 		std::string s = fn;
 		std::string::size_type lpe = s.find_last_of("\\/");
 		if (lpe != std::string::npos) s = s.substr(lpe + 1);
+
 		LevFileName = fn;
+		SaveSetting("LastFile", fn);
+
 		Me_Tag = " (" + s + ")";
 	} else {
 		printf("[Game_LoadLevel]: Failed to load level file '%s'\n", fn);
@@ -202,6 +205,8 @@ void clsBloxorzGame::Game_Loop() {
 			break;
 
 		case 1: // start level
+			SaveSetting("LastLevel", str(MyFormat("%d") << GameLev).c_str());
+
 			// init level
 			GameD.ReDim(GameW, GameH);
 			memcpy(&(GameD.data[0]), &(Lev(GameLev)._xx_dat[0]), GameW*GameH);
@@ -1385,7 +1390,10 @@ int clsBloxorzGame::Game_Menu_Loop() {
 
 void clsBloxorzGame::Game_Init() {
 	// load level
-	Game_LoadLevel("data/Default.box");
+	Game_LoadLevel(GetSetting("LastFile", "data/Default.box").c_str());
+
+	int lv = strtol(GetSetting("LastLevel", "1").c_str(), NULL, 10);
+	if (lv > 0 && lv <= Lev.UBound()) GameLev = lv;
 
 	// init data
 	GameStatus = 0;

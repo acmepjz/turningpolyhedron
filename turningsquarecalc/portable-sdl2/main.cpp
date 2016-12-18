@@ -12,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 #include <vector>
+#include <map>
 
 #include <SDL.h>
 #include <SDL_ttf.h>
@@ -76,8 +77,7 @@ FixedArray1D<typeTheBitmapArray, 1, 100> Anis;
 
 bool bRun = true;
 
-clsBloxorz LevTemp; // extremely stupid!!!
-Array1D<int, 1> nFitness;
+std::map<std::string, std::string> objConfig;
 
 void _FillRect(SDL_Texture* hdc, const _RECT& rect, int color) {
 	SDL_Rect r;
@@ -568,8 +568,49 @@ void pGameDrawLayer1(SDL_Texture *hdc, const Array2D<unsigned char, 1, 1>& GameD
 	}
 }
 
+void OnAutoLoad() {
+	// load config
+	u8file *f = u8fopen((externalStoragePath + "/config.cfg").c_str(), "rb");
+	if (!f) return;
+
+	for (;;) {
+		std::string s;
+		if (u8fgets2(s, f) == NULL) break;
+
+		std::string::size_type lp = s.find_first_of("\r\n");
+		if (lp != std::string::npos) s = s.substr(0, lp);
+		lp = s.find_first_of('=');
+		if (lp != std::string::npos) {
+			objConfig[s.substr(0, lp)] = s.substr(lp + 1);
+		}
+	}
+
+	u8fclose(f);
+}
+
 void OnAutoSave() {
-	//...
+	// save config
+	u8file *f = u8fopen((externalStoragePath + "/config.cfg").c_str(), "wb");
+	if (!f) return;
+
+	for (std::map<std::string, std::string>::const_iterator it = objConfig.begin(); it != objConfig.end(); ++it) {
+		u8fputs2(it->first, f);
+		u8fputc('=', f);
+		u8fputs2(it->second, f);
+		u8fputc('\n', f);
+	}
+
+	u8fclose(f);
+}
+
+std::string GetSetting(const std::string& name, const std::string& default) {
+	std::map<std::string, std::string>::const_iterator it = objConfig.find(name);
+	if (it == objConfig.end()) return default;
+	else return it->second;
+}
+
+void SaveSetting(const std::string& name, const std::string& value) {
+	objConfig[name] = value;
 }
 
 static int MyEventFilter(void *userdata, SDL_Event *evt){
@@ -622,6 +663,8 @@ int main(int argc, char** argv) {
 	initPaths();
 
 	objText.LoadFileWithAutoLocale("locale/*.mo");
+
+	OnAutoLoad();
 
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
@@ -752,6 +795,8 @@ int main(int argc, char** argv) {
 			nPressed = 0;
 		}
 	}
+
+	OnAutoSave();
 
 	for (int i = 0, m = sizeof(bmImg) / sizeof(bmImg[0]); i < m; i++) {
 		SDL_DestroyTexture(bmImg[i]);
