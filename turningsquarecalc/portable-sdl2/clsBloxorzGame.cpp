@@ -149,6 +149,8 @@ void clsBloxorzGame::Game_Loop() {
 	int t;
 	int QIE, QIE_0;
 
+	bool isSpacePressed = false; // ad-hoc
+
 	// buttons
 	const _RECT buttons[2] = {
 			{ 582, 6, 634, 26 }, // menu
@@ -569,6 +571,7 @@ void clsBloxorzGame::Game_Loop() {
 				}
 				if (SDL_GetKeyboardFocus() == window || y > 0) {
 					const Uint8* _ks = SDL_GetKeyboardState(NULL);
+					if (!_ks[SDL_SCANCODE_SPACE]) isSpacePressed = false;
 					if (_ks[SDL_SCANCODE_R]) { // restart
 						GameStatus = 1;
 					} else if (_ks[SDL_SCANCODE_PAGEDOWN] && GameLev < Lev.UBound()) {
@@ -586,7 +589,8 @@ void clsBloxorzGame::Game_Loop() {
 							AlphaPaintPicture(bmG_Lv, NULL, 0, 0, 640, 480, 0, 0, i);
 							GAME_PAINT_ETC();
 						}
-					} else if ((_ks[SDL_SCANCODE_SPACE] && GameDemoPos == 0) || y == 5) {
+					} else if ((_ks[SDL_SCANCODE_SPACE] && !isSpacePressed && GameDemoPos == 0) || y == 5) {
+						isSpacePressed = true;
 						if (GameS == GameS_Single) {
 							// record step
 							sSolution.push_back('S');
