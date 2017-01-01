@@ -603,9 +603,9 @@ void OnAutoSave() {
 	u8fclose(f);
 }
 
-std::string GetSetting(const std::string& name, const std::string& default) {
+std::string GetSetting(const std::string& name, const std::string& _default) {
 	std::map<std::string, std::string>::const_iterator it = objConfig.find(name);
-	if (it == objConfig.end()) return default;
+	if (it == objConfig.end()) return _default;
 	else return it->second;
 }
 

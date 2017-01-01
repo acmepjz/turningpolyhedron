@@ -29,7 +29,7 @@ static void mycpy(char* dst, const char* src, int maxlen) {
 bool clsTheFile::LoadFile(const char* fn, const char* _signature, bool bSkipSignature) {
 	const char* fn1 = fn ? fn : (m_sFileName.empty() ? NULL : m_sFileName.c_str());
 	if (fn1 == NULL) {
-		printf("[clsTheFile::LoadFile] Error: File name unspecified\n", fn1);
+		printf("[clsTheFile::LoadFile] Error: File name unspecified\n");
 		return false;
 	}
 
@@ -106,7 +106,7 @@ bool clsTheFile::LoadFile(const char* fn, const char* _signature, bool bSkipSign
 bool clsTheFile::SaveFile(const char* fn, bool IsCompress) {
 	const char* fn1 = fn ? fn : (m_sFileName.empty() ? NULL : m_sFileName.c_str());
 	if (fn1 == NULL) {
-		printf("[clsTheFile::SaveFile] Error: File name unspecified\n", fn1);
+		printf("[clsTheFile::SaveFile] Error: File name unspecified\n");
 		return false;
 	}
 

@@ -82,5 +82,5 @@ void pGameDrawLayer0(SDL_Texture *hdc, const Array2D<unsigned char, 1, 1>& d, in
 void pGameDrawLayer1(SDL_Texture *hdc, const Array2D<unsigned char, 1, 1>& GameD, int GameX, int GameY, int GameX2, int GameY2, int GameLayer0SX, int GameLayer0SY, int GameS,
 	bool DrawBox = true, bool DrawBoxShadow = false, int Index = 0, int Index2 = 0, int BoxDeltaY = 0, int BoxAlpha = 255, bool WithLayer0 = false, int BoxDeltaX = 0, bool NoZDepth = false);
 
-std::string GetSetting(const std::string& name, const std::string& default);
+std::string GetSetting(const std::string& name, const std::string& _default);
 void SaveSetting(const std::string& name, const std::string& value);

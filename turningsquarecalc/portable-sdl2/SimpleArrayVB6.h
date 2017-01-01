@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -13,7 +14,7 @@ inline int _ArrayBoundsCheckVB6_1D(int i1, int L1, int M1) {
 inline int _ArrayBoundsCheckVB6_2D(int i1, int L1, int M1, int i2, int L2, int M2) {
 	return (i2 - L2) * M1 + (i1 - L1);
 }
-inline int _ArrayBoundsCheckVB6_3D(int i1, int L1, int M1, int i2, int M2, int U2, int i3, int L3, int M3) {
+inline int _ArrayBoundsCheckVB6_3D(int i1, int L1, int M1, int i2, int L2, int M2, int i3, int L3, int M3) {
 	return ((i3 - L3) * M2 + (i2 - L2)) * M1 + (i1 - L1);
 }
 #endif
