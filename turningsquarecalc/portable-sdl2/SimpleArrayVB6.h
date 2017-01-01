@@ -48,13 +48,18 @@ struct FixedArray0 {
 	}
 };
 
+#ifdef _MyBase
+#undef _MyBase
+#endif
+#define _MyBase FixedArray0 < T, U1 - L1 + 1 >
+
 template <typename T, int L1, int U1>
-struct FixedArray1D : public FixedArray0 < T, U1 - L1 + 1 > {
+struct FixedArray1D : public _MyBase {
 	const T& operator()(int i1) const {
-		return data[_ArrayBoundsCheckVB6_1D(i1, L1, M1)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_1D(i1, L1, M1)];
 	}
 	T& operator()(int i1) {
-		return data[_ArrayBoundsCheckVB6_1D(i1, L1, M1)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_1D(i1, L1, M1)];
 	}
 	int LBound(int d = 1) const {
 		switch (d) {
@@ -74,13 +79,18 @@ private:
 	};
 };
 
+#ifdef _MyBase
+#undef _MyBase
+#endif
+#define _MyBase FixedArray0 < T, (U1 - L1 + 1) * (U2 - L2 + 1) >
+
 template <typename T, int L1, int U1, int L2, int U2>
-struct FixedArray2D : public FixedArray0 < T, (U1 - L1 + 1) * (U2 - L2 + 1) > {
+struct FixedArray2D : public _MyBase {
 	const T& operator()(int i1, int i2) const {
-		return data[_ArrayBoundsCheckVB6_2D(i1, L1, M1, i2, L2, M2)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_2D(i1, L1, M1, i2, L2, M2)];
 	}
 	T& operator()(int i1, int i2) {
-		return data[_ArrayBoundsCheckVB6_2D(i1, L1, M1, i2, L2, M2)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_2D(i1, L1, M1, i2, L2, M2)];
 	}
 	int LBound(int d = 1) const {
 		switch (d) {
@@ -103,13 +113,18 @@ private:
 	};
 };
 
+#ifdef _MyBase
+#undef _MyBase
+#endif
+#define _MyBase FixedArray0 < T, (U1 - L1 + 1) * (U2 - L2 + 1) * (U3 - L3 + 1) >
+
 template <typename T, int L1, int U1, int L2, int U2, int L3, int U3>
-struct FixedArray3D : public FixedArray0 < T, (U1 - L1 + 1) * (U2 - L2 + 1) * (U3 - L3 + 1) > {
+struct FixedArray3D : public _MyBase {
 	const T& operator()(int i1, int i2, int i3) const {
-		return data[_ArrayBoundsCheckVB6_3D(i1, L1, M1, i2, L2, M2, i3, L3, M3)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_3D(i1, L1, M1, i2, L2, M2, i3, L3, M3)];
 	}
 	T& operator()(int i1, int i2, int i3) {
-		return data[_ArrayBoundsCheckVB6_3D(i1, L1, M1, i2, L2, M2, i3, L3, M3)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_3D(i1, L1, M1, i2, L2, M2, i3, L3, M3)];
 	}
 	int LBound(int d = 1) const {
 		switch (d) {
@@ -151,29 +166,34 @@ struct Array0 {
 	}
 };
 
+#ifdef _MyBase
+#undef _MyBase
+#endif
+#define _MyBase Array0 < T >
+
 template <typename T, int L1>
-struct Array1D : public Array0 < T > {
+struct Array1D : public _MyBase {
 	const T& operator()(int i1) const {
-		return data[_ArrayBoundsCheckVB6_1D(i1, L1, data.size())];
+		return _MyBase::data[_ArrayBoundsCheckVB6_1D(i1, L1, _MyBase::data.size())];
 	}
 	T& operator()(int i1) {
-		return data[_ArrayBoundsCheckVB6_1D(i1, L1, data.size())];
+		return _MyBase::data[_ArrayBoundsCheckVB6_1D(i1, L1, _MyBase::data.size())];
 	}
 	void ReDim(int U1) {
 		if (U1 >= L1) {
-			data.resize(U1 - L1 + 1);
+			_MyBase::data.resize(U1 - L1 + 1);
 		} else {
-			data.clear();
+			_MyBase::data.clear();
 		}
 	}
 	void ReDimPreserve(int U1) {
 		int M = U1 - L1 + 1;
 		if (M <= 0) {
-			data.clear();
-		} else if (M < (int)data.size()) {
-			data.erase(data.begin() + M, data.end());
-		} else if (M > (int)data.size()) {
-			data.insert(data.end(), M - data.size(), T());
+			_MyBase::data.clear();
+		} else if (M < (int)_MyBase::data.size()) {
+			_MyBase::data.erase(_MyBase::data.begin() + M, _MyBase::data.end());
+		} else if (M > (int)_MyBase::data.size()) {
+			_MyBase::data.insert(_MyBase::data.end(), M - _MyBase::data.size(), T());
 		}
 	}
 	int LBound(int d = 1) const {
@@ -184,30 +204,30 @@ struct Array1D : public Array0 < T > {
 	}
 	int UBound(int d = 1) const {
 		switch (d) {
-		case 1: return L1 + data.size() - 1;
+		case 1: return L1 + _MyBase::data.size() - 1;
 		default: return -1;
 		}
 	}
 };
 
 template <typename T, int L1, int L2>
-struct Array2D : public Array0 < T > {
+struct Array2D : public _MyBase {
 	Array2D() : M1(0), M2(0) {}
 	const T& operator()(int i1, int i2) const {
-		return data[_ArrayBoundsCheckVB6_2D(i1, L1, M1, i2, L2, M2)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_2D(i1, L1, M1, i2, L2, M2)];
 	}
 	T& operator()(int i1, int i2) {
-		return data[_ArrayBoundsCheckVB6_2D(i1, L1, M1, i2, L2, M2)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_2D(i1, L1, M1, i2, L2, M2)];
 	}
 	void clear() {
-		data.clear();
+		_MyBase::data.clear();
 		M1 = M2 = 0;
 	}
 	void ReDim(int U1, int U2) {
 		M1 = U1 - L1 + 1;
 		M2 = U2 - L2 + 1;
 		if (M1 > 0 && M2 > 0) {
-			data.resize(M1*M2);
+			_MyBase::data.resize(M1*M2);
 		} else {
 			clear();
 		}
@@ -218,10 +238,10 @@ struct Array2D : public Array0 < T > {
 		if (M < 0) {
 			clear();
 		} else if (M < M2) {
-			data.erase(data.begin() + (M1*M), data.end());
+			_MyBase::data.erase(_MyBase::data.begin() + (M1*M), _MyBase::data.end());
 			M2 = M;
 		} else if (M > M2) {
-			data.insert(data.end(), (M1*M) - data.size(), T());
+			_MyBase::data.insert(_MyBase::data.end(), (M1*M) - _MyBase::data.size(), T());
 			M2 = M;
 		}
 	}
@@ -244,16 +264,16 @@ private:
 };
 
 template <typename T, int L1, int L2, int L3>
-struct Array3D : public Array0 < T > {
+struct Array3D : public _MyBase {
 	Array3D() : M1(0), M2(0), M3(0) {}
 	const T& operator()(int i1, int i2, int i3) const {
-		return data[_ArrayBoundsCheckVB6_3D(i1, L1, M1, i2, L2, M2, i3, L3, M3)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_3D(i1, L1, M1, i2, L2, M2, i3, L3, M3)];
 	}
 	T& operator()(int i1, int i2, int i3) {
-		return data[_ArrayBoundsCheckVB6_3D(i1, L1, M1, i2, L2, M2, i3, L3, M3)];
+		return _MyBase::data[_ArrayBoundsCheckVB6_3D(i1, L1, M1, i2, L2, M2, i3, L3, M3)];
 	}
 	void clear() {
-		data.clear();
+		_MyBase::data.clear();
 		M1 = M2 = M3 = 0;
 	}
 	void ReDim(int U1, int U2, int U3) {
@@ -261,7 +281,7 @@ struct Array3D : public Array0 < T > {
 		M2 = U2 - L2 + 1;
 		M3 = U3 - L3 + 1;
 		if (M1 > 0 && M2 > 0 && M3 > 0) {
-			data.resize(M1*M2*M3);
+			_MyBase::data.resize(M1*M2*M3);
 		} else {
 			clear();
 		}
@@ -272,10 +292,10 @@ struct Array3D : public Array0 < T > {
 		if (M < 0) {
 			clear();
 		} else if (M < M3) {
-			data.erase(data.begin() + (M1*M2*M), data.end());
+			_MyBase::data.erase(_MyBase::data.begin() + (M1*M2*M), _MyBase::data.end());
 			M3 = M;
 		} else if (M > M3) {
-			data.insert(data.end(), (M1*M2*M) - data.size(), T());
+			_MyBase::data.insert(_MyBase::data.end(), (M1*M2*M) - _MyBase::data.size(), T());
 			M3 = M;
 		}
 	}
@@ -298,3 +318,7 @@ struct Array3D : public Array0 < T > {
 private:
 	int M1, M2, M3;
 };
+
+#ifdef _MyBase
+#undef _MyBase
+#endif
